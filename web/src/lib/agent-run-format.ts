@@ -44,7 +44,4 @@ export function formatPayload(payload: unknown) {
   }
 }
 
-/** Whether two id lists hold the same ids in the same order. */
-export const sameIds = (left: readonly string[], right: readonly string[]) =>
-  left.length === right.length &&
-  left.every((id, index) => id === right[index]);
+export { sameIds } from "./keyed-rows";

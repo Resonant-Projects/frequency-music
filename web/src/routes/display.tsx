@@ -1,4 +1,5 @@
 import { createSignal, For, onMount, Show } from "solid-js";
+import { createKeyedRows } from "../lib/keyed-rows";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import { StatTiles } from "../components/stat-tiles";
@@ -110,6 +111,12 @@ export function DisplayPage() {
   const inboxRows = createQueryWithStatus(api.inbox.list, () => ({
     limit: DISPLAY_QUEUE_LIMIT,
   }));
+  // Rows keyed by id so a refresh after Mark Triaged / Promote Followers
+  // keeps the neighbouring row (and the focus handed to it) mounted.
+  const inboxRowList = createKeyedRows<InboxRow>(
+    () => inboxRows.data(),
+    (row) => row._id,
+  );
   const counts = createQuery(api.inbox.counts);
   const editorialSignals = createQuery(api.dashboard.editorialSignals, () => ({
     limit: 6,
@@ -355,100 +362,108 @@ export function DisplayPage() {
         />
         <Show when={!inboxRows.isLoading()}>
           <div class={css({ display: "grid", gap: "3" })}>
-            <For each={inboxRows.data() ?? []}>
-              {(row: InboxRow) => (
-                <div data-testid="display-row" class={rowClass}>
-                  <div class={rowBadgesClass}>
-                    <UIBadge tone={statusTone(row.status)}>
-                      {row.status}
-                    </UIBadge>
-                    <UIBadge tone="cream">{row.type}</UIBadge>
-                    <Show when={row.blockedReason}>
-                      <UIBadge tone="cream">
-                        blocked: {row.blockedReason}
-                      </UIBadge>
-                    </Show>
-                  </div>
-
-                  <h3 class={rowTitleClass}>
-                    {row.title ?? "Untitled source"}
-                  </h3>
-                  <p class={helperSpacedClass}>
-                    Next action: <strong>{row.nextAction}</strong>
-                  </p>
-
-                  <Show when={row.extractionPreview}>
-                    {(preview) => (
-                      <div class={clusterClass}>
-                        <p class={helperSpacedClass}>{preview().summary}</p>
-                        <Show when={preview().claimPreviews.length > 0}>
-                          <div class={stackClass}>
-                            <For each={preview().claimPreviews}>
-                              {(claim) => (
-                                <div class={claimClass}>
-                                  <p class={claimTextClass}>{claim.text}</p>
-                                  <div class={badgeRowClass}>
-                                    <Show when={claim.truthConfidence}>
-                                      {(value) => (
-                                        <UIBadge tone={confidenceTone(value())}>
-                                          truth: {value()}
-                                        </UIBadge>
-                                      )}
-                                    </Show>
-                                    <Show when={claim.interestLevel}>
-                                      {(value) => (
-                                        <UIBadge tone={confidenceTone(value())}>
-                                          interest: {value()}
-                                        </UIBadge>
-                                      )}
-                                    </Show>
-                                  </div>
-                                </div>
-                              )}
-                            </For>
-                          </div>
+            <For each={inboxRowList.ids()}>
+              {(id) => (
+                <Show when={inboxRowList.byId().get(id)}>
+                  {(row) => (
+                    <div data-testid="display-row" class={rowClass}>
+                      <div class={rowBadgesClass}>
+                        <UIBadge tone={statusTone(row().status)}>
+                          {row().status}
+                        </UIBadge>
+                        <UIBadge tone="cream">{row().type}</UIBadge>
+                        <Show when={row().blockedReason}>
+                          <UIBadge tone="cream">
+                            blocked: {row().blockedReason}
+                          </UIBadge>
                         </Show>
                       </div>
-                    )}
-                  </Show>
 
-                  <div class={badgeRowClass}>
-                    {/* aria-busy, not disabled, while a row action is in
+                      <h3 class={rowTitleClass}>
+                        {row().title ?? "Untitled source"}
+                      </h3>
+                      <p class={helperSpacedClass}>
+                        Next action: <strong>{row().nextAction}</strong>
+                      </p>
+
+                      <Show when={row().extractionPreview}>
+                        {(preview) => (
+                          <div class={clusterClass}>
+                            <p class={helperSpacedClass}>{preview().summary}</p>
+                            <Show when={preview().claimPreviews.length > 0}>
+                              <div class={stackClass}>
+                                <For each={preview().claimPreviews}>
+                                  {(claim) => (
+                                    <div class={claimClass}>
+                                      <p class={claimTextClass}>{claim.text}</p>
+                                      <div class={badgeRowClass}>
+                                        <Show when={claim.truthConfidence}>
+                                          {(value) => (
+                                            <UIBadge
+                                              tone={confidenceTone(value())}
+                                            >
+                                              truth: {value()}
+                                            </UIBadge>
+                                          )}
+                                        </Show>
+                                        <Show when={claim.interestLevel}>
+                                          {(value) => (
+                                            <UIBadge
+                                              tone={confidenceTone(value())}
+                                            >
+                                              interest: {value()}
+                                            </UIBadge>
+                                          )}
+                                        </Show>
+                                      </div>
+                                    </div>
+                                  )}
+                                </For>
+                              </div>
+                            </Show>
+                          </div>
+                        )}
+                      </Show>
+
+                      <div class={badgeRowClass}>
+                        {/* aria-busy, not disabled, while a row action is in
                         flight: disabling the pressed button would blur it.
                         withRowPending ignores repeat presses. */}
-                    <UIButton
-                      variant="outline"
-                      disabled={row.status !== "text_ready"}
-                      aria-busy={isRowPending(row._id)}
-                      aria-label={`Run extraction for ${row.title ?? "Untitled source"}`}
-                      onClick={(event) =>
-                        runRowExtraction(row._id, event.currentTarget)
-                      }
-                    >
-                      Run Extraction
-                    </UIButton>
-                    <UIButton
-                      variant="outline"
-                      aria-busy={isRowPending(row._id)}
-                      aria-label={`Mark ${row.title ?? "Untitled source"} as triaged`}
-                      onClick={(event) =>
-                        markTriaged(row._id, event.currentTarget)
-                      }
-                    >
-                      Mark Triaged
-                    </UIButton>
-                    <UIButton
-                      variant="ghost"
-                      aria-busy={isRowPending(row._id)}
-                      aria-label={`Promote ${row.title ?? "Untitled source"} to followers`}
-                      onClick={(event) =>
-                        promoteFollowers(row._id, event.currentTarget)
-                      }
-                    >
-                      Promote Followers
-                    </UIButton>
-                  </div>
-                </div>
+                        <UIButton
+                          variant="outline"
+                          disabled={row().status !== "text_ready"}
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Run extraction for ${row().title ?? "Untitled source"}`}
+                          onClick={(event) =>
+                            runRowExtraction(row()._id, event.currentTarget)
+                          }
+                        >
+                          Run Extraction
+                        </UIButton>
+                        <UIButton
+                          variant="outline"
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Mark ${row().title ?? "Untitled source"} as triaged`}
+                          onClick={(event) =>
+                            markTriaged(row()._id, event.currentTarget)
+                          }
+                        >
+                          Mark Triaged
+                        </UIButton>
+                        <UIButton
+                          variant="ghost"
+                          aria-busy={isRowPending(row()._id)}
+                          aria-label={`Promote ${row().title ?? "Untitled source"} to followers`}
+                          onClick={(event) =>
+                            promoteFollowers(row()._id, event.currentTarget)
+                          }
+                        >
+                          Promote Followers
+                        </UIButton>
+                      </div>
+                    </div>
+                  )}
+                </Show>
               )}
             </For>
           </div>

@@ -19,6 +19,7 @@ import {
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { css, cva, cx } from "../../styled-system/css";
+import { sameIds } from "../lib/keyed-rows";
 import { token } from "../../styled-system/tokens";
 import {
   createAnnouncer,
@@ -798,10 +799,6 @@ type LinkedDoc = { _id: string; title?: string; status: string };
 
 function toListItem(doc: LinkedDoc): PipelineListItem {
   return { id: doc._id, title: doc.title, status: doc.status };
-}
-
-function sameIds(a: readonly string[], b: readonly string[]) {
-  return a.length === b.length && a.every((id, i) => id === b[i]);
 }
 
 /** A live list's keys, unchanged (same array) while a push keeps them. */

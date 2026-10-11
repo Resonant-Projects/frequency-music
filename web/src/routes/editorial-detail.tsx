@@ -274,8 +274,10 @@ export function EditorialDetailPage() {
   }
 
   // The save step of every action. Callers claim `busyAction` first, so it
-  // never runs twice at once.
-  async function saveDraft() {
+  // never runs twice at once. A plain save keeps work in progress (an
+  // evidence card may still be missing its title or summary); submit,
+  // approve and publish pass `requireComplete` so nothing unfinished moves on.
+  async function saveDraft(requireComplete = false) {
     const current = draft();
     const row = detail();
     if (!current || !row) return false;
@@ -291,11 +293,14 @@ export function EditorialDetailPage() {
             : null,
       }))
       .find((entry) => entry.field !== null);
-    if (incomplete?.field) {
-      const fieldName =
-        incomplete.field === "source-title" ? "a source title" : "a summary";
+    const incompleteNote = incomplete?.field
+      ? `Evidence card ${incomplete.index + 1} still needs ${
+          incomplete.field === "source-title" ? "a source title" : "a summary"
+        }.`
+      : null;
+    if (incompleteNote && requireComplete) {
       setNoticeError(
-        `Save blocked: evidence card ${incomplete.index + 1} needs ${fieldName}.`,
+        `${incompleteNote} Complete it before moving the artifact on.`,
       );
       return false;
     }
@@ -321,7 +326,11 @@ export function EditorialDetailPage() {
           interestLevel: card.interestLevel,
         })),
       });
-      setNotice("Editorial artifact saved.");
+      setNotice(
+        incompleteNote
+          ? `Editorial artifact saved. ${incompleteNote}`
+          : "Editorial artifact saved.",
+      );
       return true;
     } catch (error) {
       setNoticeError(`Save failed: ${describeError(error)}`);
@@ -343,7 +352,7 @@ export function EditorialDetailPage() {
     setNotice(null);
     setNoticeError(null);
     try {
-      if (!(await saveDraft())) return;
+      if (!(await saveDraft(true))) return;
       await run(row.artifact._id);
       setNotice(success);
     } catch (error) {

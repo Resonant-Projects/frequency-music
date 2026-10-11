@@ -13,6 +13,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { PENDING_DRAFT_CAP } from "../../../convex/shared/agentContract";
 import { css, cx } from "../../styled-system/css";
+import { sameIds } from "../lib/keyed-rows";
 import {
   type DraftReviewContext,
   DraftReviewStory,
@@ -130,13 +131,6 @@ type DecidedDraft = { draftId: DraftId; message: string };
 
 const queueButtonDomId = (draftId: string) => `draft-queue-${draftId}`;
 const PAGE_TITLE_ID = "draft-review-title";
-
-function sameIds(previous: readonly string[], next: readonly string[]) {
-  return (
-    previous.length === next.length &&
-    previous.every((id, index) => id === next[index])
-  );
-}
 
 /**
  * The row that should take over when `removedId` leaves the queue: the next

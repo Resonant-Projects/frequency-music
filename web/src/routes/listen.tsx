@@ -10,6 +10,7 @@ import {
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { createKeyedRows } from "../lib/keyed-rows";
 import { AudioPlayer } from "../components/audio-player";
 import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
@@ -661,129 +662,149 @@ function ShootoutGroup(props: {
       </h3>
       <UINotice error={groupError()} />
       <Show when={projection()}>
-        {(group) => (
-          <For each={group().members}>
-            {(member) => (
-              <UICard>
-                <AudioPlayer
-                  src={member.playbackUrl}
-                  label={member.label}
-                  durationSecs={member.durationSecs}
-                  headingLevel={4}
-                  headingId={takeHeadingId(member.memberId)}
-                />
-                <Show
-                  when={!group().revealed && !ratedIds().has(member.memberId)}
-                >
-                  <div class={ratingGridClass}>
-                    <For each={RATING_KEYS}>
-                      {(key) => (
-                        <div class={fieldClass}>
-                          <label
-                            class={fieldLabelClass}
-                            for={fieldId(member.memberId, key)}
-                          >
-                            {RATING_LABELS[key]} (0-5)
-                          </label>
+        {(group) => {
+          // Keyed by memberId: the reveal projection delivers fresh member
+          // objects, and the take heading holding focus must survive it.
+          const members = createKeyedRows(
+            () => group().members,
+            (member) => member.memberId,
+          );
+          return (
+            <For each={members.ids()}>
+              {(id) => (
+                <Show when={members.byId().get(id)}>
+                  {(member) => (
+                    <UICard>
+                      <AudioPlayer
+                        src={member().playbackUrl}
+                        label={member().label}
+                        durationSecs={member().durationSecs}
+                        headingLevel={4}
+                        headingId={takeHeadingId(member().memberId)}
+                      />
+                      <Show
+                        when={
+                          !group().revealed &&
+                          !ratedIds().has(member().memberId)
+                        }
+                      >
+                        <div class={ratingGridClass}>
+                          <For each={RATING_KEYS}>
+                            {(key) => (
+                              <div class={fieldClass}>
+                                <label
+                                  class={fieldLabelClass}
+                                  for={fieldId(member().memberId, key)}
+                                >
+                                  {RATING_LABELS[key]} (0-5)
+                                </label>
+                                <UIInput
+                                  id={fieldId(member().memberId, key)}
+                                  type="number"
+                                  min="0"
+                                  max="5"
+                                  step="1"
+                                  placeholder="0-5"
+                                  inputmode="numeric"
+                                  aria-invalid={
+                                    feedbackFor(member().memberId).field === key
+                                      ? "true"
+                                      : undefined
+                                  }
+                                  aria-describedby={
+                                    key === "clean"
+                                      ? helpId(member().memberId)
+                                      : undefined
+                                  }
+                                  value={formFor(member().memberId)[key]}
+                                  onInput={(event) =>
+                                    update(
+                                      member().memberId,
+                                      key,
+                                      event.currentTarget.value,
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+                          </For>
+                        </div>
+                        <p
+                          id={helpId(member().memberId)}
+                          class={ratingHelpClass}
+                        >
+                          Clean: 5 means no artifacts.
+                        </p>
+                        <div class={actionsClass}>
                           <UIInput
-                            id={fieldId(member.memberId, key)}
-                            type="number"
-                            min="0"
-                            max="5"
-                            step="1"
-                            placeholder="0-5"
-                            inputmode="numeric"
-                            aria-invalid={
-                              feedbackFor(member.memberId).field === key
-                                ? "true"
-                                : undefined
-                            }
-                            aria-describedby={
-                              key === "clean"
-                                ? helpId(member.memberId)
-                                : undefined
-                            }
-                            value={formFor(member.memberId)[key]}
+                            placeholder="Notes"
+                            aria-label="Notes"
+                            value={formFor(member().memberId).notes}
                             onInput={(event) =>
                               update(
-                                member.memberId,
-                                key,
+                                member().memberId,
+                                "notes",
                                 event.currentTarget.value,
                               )
                             }
                           />
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                  <p id={helpId(member.memberId)} class={ratingHelpClass}>
-                    Clean: 5 means no artifacts.
-                  </p>
-                  <div class={actionsClass}>
-                    <UIInput
-                      placeholder="Notes"
-                      aria-label="Notes"
-                      value={formFor(member.memberId).notes}
-                      onInput={(event) =>
-                        update(
-                          member.memberId,
-                          "notes",
-                          event.currentTarget.value,
-                        )
-                      }
-                    />
-                    <UIButton
-                      type="button"
-                      aria-busy={savingId() === member.memberId}
-                      onClick={(event) =>
-                        rate(member.memberId, event.currentTarget)
-                      }
-                    >
-                      Save rating
-                    </UIButton>
-                  </div>
-                </Show>
-                <UINotice
-                  status={feedbackFor(member.memberId).status}
-                  error={feedbackFor(member.memberId).error}
-                />
-                <Show
-                  when={ratedIds().has(member.memberId) && !group().revealed}
-                >
-                  <div class={actionsClass}>
-                    <UIBadge>rated</UIBadge>
-                  </div>
-                </Show>
-                <Show when={group().revealed}>
-                  <div class={actionsClass}>
-                    <UIBadge tone="cream">
-                      {voiceName(ratingFor(member.memberId)?.voiceId)}
-                    </UIBadge>
-                    <Show when={ratingFor(member.memberId)?.voiceId}>
-                      {(voiceId) => (
-                        <>
-                          {/* The current voice stays selectable: a voice
-                              seeded internally still needs the first human
-                              choice to start the initial narration. */}
-                          <Show when={voiceId() === props.houseVoiceId}>
-                            <UIBadge>house voice</UIBadge>
-                          </Show>
                           <UIButton
                             type="button"
-                            aria-busy={choosing()}
-                            onClick={() => chooseHouseVoice(voiceId())}
+                            aria-busy={savingId() === member().memberId}
+                            onClick={(event) =>
+                              rate(member().memberId, event.currentTarget)
+                            }
                           >
-                            Set as house voice
+                            Save rating
                           </UIButton>
-                        </>
-                      )}
-                    </Show>
-                  </div>
+                        </div>
+                      </Show>
+                      <UINotice
+                        status={feedbackFor(member().memberId).status}
+                        error={feedbackFor(member().memberId).error}
+                      />
+                      <Show
+                        when={
+                          ratedIds().has(member().memberId) && !group().revealed
+                        }
+                      >
+                        <div class={actionsClass}>
+                          <UIBadge>rated</UIBadge>
+                        </div>
+                      </Show>
+                      <Show when={group().revealed}>
+                        <div class={actionsClass}>
+                          <UIBadge tone="cream">
+                            {voiceName(ratingFor(member().memberId)?.voiceId)}
+                          </UIBadge>
+                          <Show when={ratingFor(member().memberId)?.voiceId}>
+                            {(voiceId) => (
+                              <>
+                                {/* The current voice stays selectable: a voice
+                              seeded internally still needs the first human
+                              choice to start the initial narration. */}
+                                <Show when={voiceId() === props.houseVoiceId}>
+                                  <UIBadge>house voice</UIBadge>
+                                </Show>
+                                <UIButton
+                                  type="button"
+                                  aria-busy={choosing()}
+                                  onClick={() => chooseHouseVoice(voiceId())}
+                                >
+                                  Set as house voice
+                                </UIButton>
+                              </>
+                            )}
+                          </Show>
+                        </div>
+                      </Show>
+                    </UICard>
+                  )}
                 </Show>
-              </UICard>
-            )}
-          </For>
-        )}
+              )}
+            </For>
+          );
+        }}
       </Show>
     </>
   );

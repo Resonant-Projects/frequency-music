@@ -11,6 +11,7 @@ import {
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import { entityCellClass } from "../components/entity-card";
+import { createKeyedRows } from "../lib/keyed-rows";
 import {
   backLink,
   badgeRowClass,
@@ -576,337 +577,382 @@ export function CompositionDetailPage() {
       </UICard>
 
       <Show when={lineage()}>
-        {(row) => (
-          <UICard>
-            <div class={cx(badgeRowClass, css({ mb: "2" }))}>
-              <UIBadge tone="gold">{row().composition.status}</UIBadge>
-              <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
-              <UIBadge tone="cream">{row().composition.version}</UIBadge>
-              <Show when={row().summary.localFailureStatus}>
-                {(status) => <UIBadge tone="cream">local: {status()}</UIBadge>}
-              </Show>
-              <Show when={row().summary.branchFailureStatus}>
-                {(status) => <UIBadge tone="cream">branch: {status()}</UIBadge>}
-              </Show>
-            </div>
-
-            <h1 class={detailTitleClass}>{row().composition.title}</h1>
-
-            <div class={css({ display: "flex", gap: "2", mt: "3" })}>
-              <UIButton
-                ref={(element) => {
-                  deleteTrigger = element;
-                }}
-                variant="outline"
-                disabled={deleting()}
-                onClick={() => {
-                  setDeleteError(null);
-                  setDeleteConfirmOpen(true);
-                }}
-              >
-                Delete composition
-              </UIButton>
-            </div>
-
-            <Show when={deleteConfirmOpen()}>
-              <div
-                role="alertdialog"
-                aria-modal="false"
-                aria-label="Confirm composition deletion"
-                onKeyDown={(event) => {
-                  if (event.key !== "Escape" || deleting()) return;
-                  event.preventDefault();
-                  closeDeleteConfirm();
-                }}
-                class={cx(violetPanelClass, css({ gap: "3" }))}
-              >
-                <p class={css({ color: "zodiac.cream/74" })}>
-                  Delete “{row().composition.title}”? This uses the existing
-                  composition deletion path and cannot be undone from this
-                  screen.
-                </p>
-                <div class={badgeRowClass}>
-                  <UIButton
-                    ref={(element) => {
-                      deleteConfirmButton = element;
-                    }}
-                    variant="solid"
-                    aria-busy={deleting()}
-                    onClick={handleDeleteComposition}
-                  >
-                    {deleting() ? "Deleting…" : "Confirm delete"}
-                  </UIButton>
-                  <UIButton
-                    variant="ghost"
-                    disabled={deleting()}
-                    onClick={closeDeleteConfirm}
-                  >
-                    Cancel
-                  </UIButton>
-                </div>
-                <UINotice error={deleteError()} />
+        {(row) => {
+          // Keyed by id: a correction or visibility save refreshes the lineage
+          // with fresh objects, and the control that must take focus back
+          // (or show the confirmation) has to survive that refresh.
+          const extractionRows = createKeyedRows(
+            () => row().extractions,
+            (extraction) => extraction._id,
+          );
+          const sessionRows = createKeyedRows(
+            () => row().listeningSessions,
+            (session) => session._id,
+          );
+          return (
+            <UICard>
+              <div class={cx(badgeRowClass, css({ mb: "2" }))}>
+                <UIBadge tone="gold">{row().composition.status}</UIBadge>
+                <UIBadge tone="violet">
+                  {row().composition.artifactType}
+                </UIBadge>
+                <UIBadge tone="cream">{row().composition.version}</UIBadge>
+                <Show when={row().summary.localFailureStatus}>
+                  {(status) => (
+                    <UIBadge tone="cream">local: {status()}</UIBadge>
+                  )}
+                </Show>
+                <Show when={row().summary.branchFailureStatus}>
+                  {(status) => (
+                    <UIBadge tone="cream">branch: {status()}</UIBadge>
+                  )}
+                </Show>
               </div>
-            </Show>
 
-            <p
-              class={css({
-                color: "zodiac.cream/66",
-                fontSize: "sm",
-                lineHeight: "1.7",
-              })}
-            >
-              Depth {row().summary.depth} in revision branch
-              <Show when={row().summary.revisionVariable}>
-                {(variable) => <> · changed variable: {variable()}</>}
-              </Show>
-              <Show when={row().summary.latestExpandVerdict}>
-                {(verdict) => <> · latest expand verdict: {verdict()}</>}
-              </Show>
-            </p>
+              <h1 class={detailTitleClass}>{row().composition.title}</h1>
 
-            <Show
-              when={
-                row().summary.localFailureStatus ||
-                row().summary.branchFailureStatus
-              }
-            >
-              <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Archive Signal</h2>
-              <Show when={row().summary.localFailureStatus}>
-                {(status) => (
-                  <p class={cx(proseClass, css({ mb: "2" }))}>
-                    This composition is currently classified locally as{" "}
-                    <code>{status()}</code> based on its own listening history.
+              <div class={css({ display: "flex", gap: "2", mt: "3" })}>
+                <UIButton
+                  ref={(element) => {
+                    deleteTrigger = element;
+                  }}
+                  variant="outline"
+                  disabled={deleting()}
+                  onClick={() => {
+                    setDeleteError(null);
+                    setDeleteConfirmOpen(true);
+                  }}
+                >
+                  Delete composition
+                </UIButton>
+              </div>
+
+              <Show when={deleteConfirmOpen()}>
+                <div
+                  role="alertdialog"
+                  aria-modal="false"
+                  aria-label="Confirm composition deletion"
+                  onKeyDown={(event) => {
+                    if (event.key !== "Escape" || deleting()) return;
+                    event.preventDefault();
+                    closeDeleteConfirm();
+                  }}
+                  class={cx(violetPanelClass, css({ gap: "3" }))}
+                >
+                  <p class={css({ color: "zodiac.cream/74" })}>
+                    Delete “{row().composition.title}”? This uses the existing
+                    composition deletion path and cannot be undone from this
+                    screen.
                   </p>
-                )}
-              </Show>
-              <Show when={row().summary.branchFailureStatus}>
-                {(status) => (
-                  <p class={proseClass}>
-                    This revision branch is currently classified as{" "}
-                    <code>{status()}</code> in the derived failure archive.
-                  </p>
-                )}
-              </Show>
-            </Show>
-
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Lineage</h2>
-            <div class={cellStackClass}>
-              <For each={row().ancestry}>
-                {(ancestor) => (
-                  <div class={entityCellClass}>
-                    <Link
-                      to="/compositions/$compositionId"
-                      params={{ compositionId: String(ancestor._id) }}
-                      class={recordLinkClass}
+                  <div class={badgeRowClass}>
+                    <UIButton
+                      ref={(element) => {
+                        deleteConfirmButton = element;
+                      }}
+                      variant="solid"
+                      aria-busy={deleting()}
+                      onClick={handleDeleteComposition}
                     >
-                      {ancestor.title}
-                    </Link>
-                    <p class={subLineSpaced}>
-                      {ancestor.version}
-                      <Show when={ancestor.revisionVariable}>
-                        {(variable) => <> · variable: {variable()}</>}
-                      </Show>
-                    </p>
+                      {deleting() ? "Deleting…" : "Confirm delete"}
+                    </UIButton>
+                    <UIButton
+                      variant="ghost"
+                      disabled={deleting()}
+                      onClick={closeDeleteConfirm}
+                    >
+                      Cancel
+                    </UIButton>
                   </div>
-                )}
-              </For>
-              <div class={entityCellClass}>
-                <div class={css({ color: "zodiac.gold" })}>
-                  {row().composition.title}
+                  <UINotice error={deleteError()} />
                 </div>
-                <p class={subLineSpaced}>current node</p>
-              </div>
-            </div>
+              </Show>
 
-            <Show when={row().children.length > 0}>
+              <p
+                class={css({
+                  color: "zodiac.cream/66",
+                  fontSize: "sm",
+                  lineHeight: "1.7",
+                })}
+              >
+                Depth {row().summary.depth} in revision branch
+                <Show when={row().summary.revisionVariable}>
+                  {(variable) => <> · changed variable: {variable()}</>}
+                </Show>
+                <Show when={row().summary.latestExpandVerdict}>
+                  {(verdict) => <> · latest expand verdict: {verdict()}</>}
+                </Show>
+              </p>
+
+              <Show
+                when={
+                  row().summary.localFailureStatus ||
+                  row().summary.branchFailureStatus
+                }
+              >
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Archive Signal</h2>
+                <Show when={row().summary.localFailureStatus}>
+                  {(status) => (
+                    <p class={cx(proseClass, css({ mb: "2" }))}>
+                      This composition is currently classified locally as{" "}
+                      <code>{status()}</code> based on its own listening
+                      history.
+                    </p>
+                  )}
+                </Show>
+                <Show when={row().summary.branchFailureStatus}>
+                  {(status) => (
+                    <p class={proseClass}>
+                      This revision branch is currently classified as{" "}
+                      <code>{status()}</code> in the derived failure archive.
+                    </p>
+                  )}
+                </Show>
+              </Show>
+
               <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Direct Revisions</h2>
+              <h2 class={sectionLabel}>Lineage</h2>
               <div class={cellStackClass}>
-                <For each={row().children}>
-                  {(child) => (
+                <For each={row().ancestry}>
+                  {(ancestor) => (
                     <div class={entityCellClass}>
                       <Link
                         to="/compositions/$compositionId"
-                        params={{ compositionId: String(child._id) }}
+                        params={{ compositionId: String(ancestor._id) }}
                         class={recordLinkClass}
                       >
-                        {child.title}
+                        {ancestor.title}
                       </Link>
                       <p class={subLineSpaced}>
-                        {child.version}
-                        <Show when={child.revisionVariable}>
+                        {ancestor.version}
+                        <Show when={ancestor.revisionVariable}>
                           {(variable) => <> · variable: {variable()}</>}
                         </Show>
                       </p>
                     </div>
                   )}
                 </For>
-              </div>
-            </Show>
-
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Provenance</h2>
-            <div class={css({ display: "grid", gap: "3" })}>
-              <Show when={row().recipe}>
-                {(recipe) => (
-                  <div class={entityCellClass}>
-                    <h3 class={provenanceLabelClass}>Recipe</h3>
-                    <Link
-                      to="/recipes/$recipeId"
-                      params={{ recipeId: String(recipe()._id) }}
-                      class={recordLinkClass}
-                    >
-                      {recipe().title}
-                    </Link>
+                <div class={entityCellClass}>
+                  <div class={css({ color: "zodiac.gold" })}>
+                    {row().composition.title}
                   </div>
-                )}
-              </Show>
-              <Show when={row().hypothesis}>
-                {(hypothesis) => (
-                  <div class={entityCellClass}>
-                    <h3 class={provenanceLabelClass}>Hypothesis</h3>
-                    <Link
-                      to="/hypotheses/$hypothesisId"
-                      params={{ hypothesisId: String(hypothesis()._id) }}
-                      class={recordLinkClass}
-                    >
-                      {hypothesis().title}
-                    </Link>
-                  </div>
-                )}
-              </Show>
-              <Show when={row().thesis}>
-                {(thesis) => (
-                  <div class={entityCellClass}>
-                    <h3 class={provenanceLabelClass}>Thesis</h3>
-                    <Link
-                      to="/theses/$thesisId"
-                      params={{ thesisId: String(thesis()._id) }}
-                      class={recordLinkClass}
-                    >
-                      {thesis().title}
-                    </Link>
-                  </div>
-                )}
-              </Show>
-            </div>
-
-            <Show when={row().sources.length > 0}>
-              <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Linked Sources</h2>
-              <div class={cellStackClass}>
-                <For each={row().sources}>
-                  {(source) => (
-                    <div class={entityCellClass}>
-                      <div class={cellTitleClass}>
-                        {source.title ?? "Untitled source"}
-                      </div>
-                      <p class={subLineSpaced}>{source.type}</p>
-                    </div>
-                  )}
-                </For>
+                  <p class={subLineSpaced}>current node</p>
+                </div>
               </div>
-            </Show>
 
-            <Show when={row().extractions.length > 0}>
-              <hr class={goldDivider} />
-              <h2 class={sectionLabel}>Extractions</h2>
-              <div class={cellStackClass}>
-                <For each={row().extractions}>
-                  {(extraction) => (
-                    <div class={entityCellClass}>
-                      <div class={extractionSummaryClass}>
-                        {extraction.summary}
-                      </div>
-                      <p class={helperClass}>
-                        {extraction.claims.length} claims ·{" "}
-                        {extraction.compositionParameters.length} parameters
-                      </p>
-                      <ExtractionCorrection extraction={extraction} />
-                    </div>
-                  )}
-                </For>
-              </div>
-            </Show>
-
-            <hr class={goldDivider} />
-            <h2 class={sectionLabel}>Listening History</h2>
-            <Show
-              when={row().listeningSessions.length > 0}
-              fallback={
-                <p class={helperClass}>
-                  No listening sessions logged for this composition yet.
-                </p>
-              }
-            >
-              <div class={cellStackClass}>
-                <For each={row().listeningSessions}>
-                  {(session) => (
-                    <div class={entityCellClass}>
-                      <div class={sessionBadgesClass}>
-                        <Show when={session.expandVerdict}>
-                          {(verdict) => (
-                            <UIBadge tone="gold">{verdict()}</UIBadge>
-                          )}
-                        </Show>
-                        <Show
-                          when={session.ratings.expandability !== undefined}
+              <Show when={row().children.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Direct Revisions</h2>
+                <div class={cellStackClass}>
+                  <For each={row().children}>
+                    {(child) => (
+                      <div class={entityCellClass}>
+                        <Link
+                          to="/compositions/$compositionId"
+                          params={{ compositionId: String(child._id) }}
+                          class={recordLinkClass}
                         >
-                          {(score) => (
-                            <UIBadge tone="cream">
-                              expandability {score()}
-                            </UIBadge>
-                          )}
-                        </Show>
+                          {child.title}
+                        </Link>
+                        <p class={subLineSpaced}>
+                          {child.version}
+                          <Show when={child.revisionVariable}>
+                            {(variable) => <> · variable: {variable()}</>}
+                          </Show>
+                        </p>
                       </div>
-                      <div
-                        class={cx(
-                          sessionFeedbackClass,
-                          (hasBodyNotes(session) ||
-                            hasStandoutMoments(session)) &&
-                            spacedBelowClass,
-                        )}
+                    )}
+                  </For>
+                </div>
+              </Show>
+
+              <hr class={goldDivider} />
+              <h2 class={sectionLabel}>Provenance</h2>
+              <div class={css({ display: "grid", gap: "3" })}>
+                <Show when={row().recipe}>
+                  {(recipe) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Recipe</h3>
+                      <Link
+                        to="/recipes/$recipeId"
+                        params={{ recipeId: String(recipe()._id) }}
+                        class={recordLinkClass}
                       >
-                        <Markdown content={session.feedbackMd} />
-                      </div>
-                      <Show when={hasBodyNotes(session)}>
-                        <div
-                          class={cx(
-                            sessionNotesClass,
-                            hasStandoutMoments(session) && spacedBelowClass,
-                          )}
-                        >
-                          <Show when={(session.feltQualities?.length ?? 0) > 0}>
-                            <p>Felt: {session.feltQualities?.join(", ")}</p>
-                          </Show>
-                          <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
-                            <p>Body map: {session.bodyMapTags?.join(", ")}</p>
-                          </Show>
-                          <Show when={session.bodyMapNotes}>
-                            {(value) => <p>Body notes: {value()}</p>}
-                          </Show>
-                        </div>
-                      </Show>
-                      <Show when={hasStandoutMoments(session)}>
-                        <div class={sessionNotesClass}>
-                          <p>Standout moments:</p>
-                          <ul class={standoutListClass}>
-                            <For each={session.standoutMoments}>
-                              {(moment) => <li>{moment}</li>}
-                            </For>
-                          </ul>
-                        </div>
-                      </Show>
-                      <ListeningVisibilityControl session={session} />
+                        {recipe().title}
+                      </Link>
                     </div>
                   )}
-                </For>
+                </Show>
+                <Show when={row().hypothesis}>
+                  {(hypothesis) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Hypothesis</h3>
+                      <Link
+                        to="/hypotheses/$hypothesisId"
+                        params={{ hypothesisId: String(hypothesis()._id) }}
+                        class={recordLinkClass}
+                      >
+                        {hypothesis().title}
+                      </Link>
+                    </div>
+                  )}
+                </Show>
+                <Show when={row().thesis}>
+                  {(thesis) => (
+                    <div class={entityCellClass}>
+                      <h3 class={provenanceLabelClass}>Thesis</h3>
+                      <Link
+                        to="/theses/$thesisId"
+                        params={{ thesisId: String(thesis()._id) }}
+                        class={recordLinkClass}
+                      >
+                        {thesis().title}
+                      </Link>
+                    </div>
+                  )}
+                </Show>
               </div>
-            </Show>
-          </UICard>
-        )}
+
+              <Show when={row().sources.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Linked Sources</h2>
+                <div class={cellStackClass}>
+                  <For each={row().sources}>
+                    {(source) => (
+                      <div class={entityCellClass}>
+                        <div class={cellTitleClass}>
+                          {source.title ?? "Untitled source"}
+                        </div>
+                        <p class={subLineSpaced}>{source.type}</p>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+
+              <Show when={row().extractions.length > 0}>
+                <hr class={goldDivider} />
+                <h2 class={sectionLabel}>Extractions</h2>
+                <div class={cellStackClass}>
+                  <For each={extractionRows.ids()}>
+                    {(id) => (
+                      <Show when={extractionRows.byId().get(id)}>
+                        {(extraction) => (
+                          <div class={entityCellClass}>
+                            <div class={extractionSummaryClass}>
+                              {extraction().summary}
+                            </div>
+                            <p class={helperClass}>
+                              {extraction().claims.length} claims ·{" "}
+                              {extraction().compositionParameters.length}{" "}
+                              parameters
+                            </p>
+                            <ExtractionCorrection extraction={extraction()} />
+                          </div>
+                        )}
+                      </Show>
+                    )}
+                  </For>
+                </div>
+              </Show>
+
+              <hr class={goldDivider} />
+              <h2 class={sectionLabel}>Listening History</h2>
+              <Show
+                when={row().listeningSessions.length > 0}
+                fallback={
+                  <p class={helperClass}>
+                    No listening sessions logged for this composition yet.
+                  </p>
+                }
+              >
+                <div class={cellStackClass}>
+                  <For each={sessionRows.ids()}>
+                    {(id) => (
+                      <Show when={sessionRows.byId().get(id)}>
+                        {(session) => (
+                          <div class={entityCellClass}>
+                            <div class={sessionBadgesClass}>
+                              <Show when={session().expandVerdict}>
+                                {(verdict) => (
+                                  <UIBadge tone="gold">{verdict()}</UIBadge>
+                                )}
+                              </Show>
+                              <Show
+                                when={
+                                  session().ratings.expandability !== undefined
+                                }
+                              >
+                                {(score) => (
+                                  <UIBadge tone="cream">
+                                    expandability {score()}
+                                  </UIBadge>
+                                )}
+                              </Show>
+                            </div>
+                            <div
+                              class={cx(
+                                sessionFeedbackClass,
+                                (hasBodyNotes(session()) ||
+                                  hasStandoutMoments(session())) &&
+                                  spacedBelowClass,
+                              )}
+                            >
+                              <Markdown content={session().feedbackMd} />
+                            </div>
+                            <Show when={hasBodyNotes(session())}>
+                              <div
+                                class={cx(
+                                  sessionNotesClass,
+                                  hasStandoutMoments(session()) &&
+                                    spacedBelowClass,
+                                )}
+                              >
+                                <Show
+                                  when={
+                                    (session().feltQualities?.length ?? 0) > 0
+                                  }
+                                >
+                                  <p>
+                                    Felt: {session().feltQualities?.join(", ")}
+                                  </p>
+                                </Show>
+                                <Show
+                                  when={
+                                    (session().bodyMapTags?.length ?? 0) > 0
+                                  }
+                                >
+                                  <p>
+                                    Body map:{" "}
+                                    {session().bodyMapTags?.join(", ")}
+                                  </p>
+                                </Show>
+                                <Show when={session().bodyMapNotes}>
+                                  {(value) => <p>Body notes: {value()}</p>}
+                                </Show>
+                              </div>
+                            </Show>
+                            <Show when={hasStandoutMoments(session())}>
+                              <div class={sessionNotesClass}>
+                                <p>Standout moments:</p>
+                                <ul class={standoutListClass}>
+                                  <For each={session().standoutMoments}>
+                                    {(moment) => <li>{moment}</li>}
+                                  </For>
+                                </ul>
+                              </div>
+                            </Show>
+                            <ListeningVisibilityControl session={session()} />
+                          </div>
+                        )}
+                      </Show>
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </UICard>
+          );
+        }}
       </Show>
     </section>
   );
