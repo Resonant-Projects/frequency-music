@@ -1,5 +1,5 @@
 import { Link, useParams } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, Index, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
@@ -38,6 +38,7 @@ import {
   describeLoad,
 } from "../integrations/convex";
 import { runStatusTone } from "../lib/agent-run-format";
+import { createKeyedRows } from "../lib/keyed-rows";
 import { api } from "../../../convex/_generated/api";
 
 type PublicReviewDraft = {
@@ -238,6 +239,14 @@ export function AgentRunDetailPage() {
     }),
   );
 
+  // Rows render by draft id: listByRun sorts by updatedAt, so a newer draft
+  // can move above the one being reviewed, and a positional row would carry
+  // its half-written note onto a different draft.
+  const persistedDraftRows = createKeyedRows(
+    () => persistedDrafts.data() as PersistedReviewDraft[] | undefined,
+    (draft) => String(draft._id),
+  );
+
   onMount(() => {
     document.title = "Agent Run — Frequency Music";
   });
@@ -367,76 +376,80 @@ export function AgentRunDetailPage() {
                 }
               >
                 <UIList class={sectionStackClass}>
-                  {/* <Index>, not <For>: every live update hands back fresh
-                      objects, and <For> would rebuild each row, dropping focus
-                      and any half-written decision note. */}
-                  <Index
-                    each={
-                      (persistedDrafts.data() ?? []) as PersistedReviewDraft[]
-                    }
-                  >
-                    {(draft) => (
-                      <li class={draftItemClass}>
-                        <article
-                          aria-labelledby={draftTitleId(draft())}
-                          class={stackClass}
-                        >
-                          <div class={draftHeaderClass}>
-                            <div class={badgeRowClass}>
-                              <UIBadge tone="gold">
-                                {draftLabel(draft().kind)}
-                              </UIBadge>
-                              <UIBadge
-                                tone={
-                                  draft().status === "pending_review"
-                                    ? "violet"
-                                    : "cream"
-                                }
-                              >
-                                {draft().status}
-                              </UIBadge>
-                            </div>
-                            <DateTime
-                              format="datetime"
-                              class={metaLine}
-                              value={draft().createdAt}
-                            />
-                          </div>
-                          <h3
-                            id={draftTitleId(draft())}
-                            tabIndex={-1}
-                            class={cx(persistedDraftTitleClass, focusRingClass)}
-                          >
-                            {draft().title}
-                          </h3>
-                          <p class={helperClass}>{draft().summary}</p>
-                          <DraftPayloadPreview
-                            kind={draft().kind}
-                            payload={draft().payload}
-                          />
-                          <div>
-                            <div class={fieldLabelClass}>Draft Row</div>
-                            <span class={metaLine}>{String(draft()._id)}</span>
-                          </div>
-                          <div>
-                            <div class={fieldLabelClass}>Candidate IDs</div>
-                            <div class={labelledBadgeRowClass}>
-                              <For each={draft().candidateIds}>
-                                {(candidateId) => (
-                                  <UIBadge tone="cream">{candidateId}</UIBadge>
+                  <For each={persistedDraftRows.ids()}>
+                    {(id) => (
+                      <Show when={persistedDraftRows.byId().get(id)}>
+                        {(draft) => (
+                          <li class={draftItemClass}>
+                            <article
+                              aria-labelledby={draftTitleId(draft())}
+                              class={stackClass}
+                            >
+                              <div class={draftHeaderClass}>
+                                <div class={badgeRowClass}>
+                                  <UIBadge tone="gold">
+                                    {draftLabel(draft().kind)}
+                                  </UIBadge>
+                                  <UIBadge
+                                    tone={
+                                      draft().status === "pending_review"
+                                        ? "violet"
+                                        : "cream"
+                                    }
+                                  >
+                                    {draft().status}
+                                  </UIBadge>
+                                </div>
+                                <DateTime
+                                  format="datetime"
+                                  class={metaLine}
+                                  value={draft().createdAt}
+                                />
+                              </div>
+                              <h3
+                                id={draftTitleId(draft())}
+                                tabIndex={-1}
+                                class={cx(
+                                  persistedDraftTitleClass,
+                                  focusRingClass,
                                 )}
-                              </For>
-                            </div>
-                          </div>
-                          <PersistedDraftActions
-                            draft={draft()}
-                            focusTargetId={draftTitleId(draft())}
-                            onDecided={setDraftDecision}
-                          />
-                        </article>
-                      </li>
+                              >
+                                {draft().title}
+                              </h3>
+                              <p class={helperClass}>{draft().summary}</p>
+                              <DraftPayloadPreview
+                                kind={draft().kind}
+                                payload={draft().payload}
+                              />
+                              <div>
+                                <div class={fieldLabelClass}>Draft Row</div>
+                                <span class={metaLine}>
+                                  {String(draft()._id)}
+                                </span>
+                              </div>
+                              <div>
+                                <div class={fieldLabelClass}>Candidate IDs</div>
+                                <div class={labelledBadgeRowClass}>
+                                  <For each={draft().candidateIds}>
+                                    {(candidateId) => (
+                                      <UIBadge tone="cream">
+                                        {candidateId}
+                                      </UIBadge>
+                                    )}
+                                  </For>
+                                </div>
+                              </div>
+                              <PersistedDraftActions
+                                draft={draft()}
+                                focusTargetId={draftTitleId(draft())}
+                                onDecided={setDraftDecision}
+                              />
+                            </article>
+                          </li>
+                        )}
+                      </Show>
                     )}
-                  </Index>
+                  </For>
                 </UIList>
               </Show>
             </UICard>
