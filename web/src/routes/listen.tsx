@@ -13,8 +13,8 @@ import { css, cx } from "../../styled-system/css";
 import { AudioPlayer } from "../components/audio-player";
 import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
+  DateTime,
   fieldLabelClass,
-  focusRingClass,
   helperClass,
   pageClass,
   pageTitleClass,
@@ -23,6 +23,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
 } from "../components/ui";
 import {
@@ -60,6 +61,13 @@ const EMPTY_FORM: MemberForm = {
 };
 const RATING_REQUIRED = "Every rating needs a whole number from 0 to 5.";
 
+type TakeFeedback = {
+  status: string | null;
+  error: string | null;
+  field: RatingKey | null;
+};
+const NO_FEEDBACK: TakeFeedback = { status: null, error: null, field: null };
+
 // Listener-facing names for the catalog ids in convex/shared/voices.ts. An id
 // missing here (a voice added later) falls back to the raw id.
 const VOICE_NAMES: Record<string, string> = {
@@ -70,7 +78,8 @@ const VOICE_NAMES: Record<string, string> = {
   "cartesia-sonic-nandi": "Cartesia Sonic (Nandi)",
   "cartesia-sonic-quentin": "Cartesia Sonic (Quentin)",
 };
-const voiceName = (voiceId: string) => VOICE_NAMES[voiceId] ?? voiceId;
+const voiceName = (voiceId: string | null | undefined, unset = "unrated") =>
+  voiceId ? (VOICE_NAMES[voiceId] ?? voiceId) : unset;
 
 // Episodes after the first few load nothing until played, so a long feed does
 // not fetch metadata for every file on page load.
@@ -85,49 +94,47 @@ function parseRating(raw: string): number | null {
 }
 
 const bannerClass = css({ color: "zodiac.cream/82", mt: "2" });
-const listClass = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "1",
-  listStyle: "none",
-  m: "0",
-  p: "0",
-});
+const listClass = css({ display: "flex", flexDirection: "column", gap: "1" });
 // The selected shootout carries a gold left rule as well as gold text, so the
-// selection never depends on colour alone (WCAG 1.4.1).
-const rowButtonClass = cx(
-  css({
-    alignItems: "center",
-    bg: "transparent",
-    borderLeftColor: "transparent",
-    borderLeftStyle: "solid",
-    borderLeftWidth: "2px",
-    color: "zodiac.cream/82",
-    cursor: "pointer",
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "2",
-    minH: "9",
-    pl: "2",
-    py: "1",
-    textAlign: "left",
-    w: "full",
-    _hover: { color: "zodiac.cream" },
-    _coarsePointer: { minH: "11" },
-    "&[aria-pressed='true']": {
-      borderLeftColor: "zodiac.gold",
-      color: "zodiac.gold",
-    },
-  }),
-  focusRingClass,
-);
-const groupHeadingClass = css({
-  color: "zodiac.gold",
-  fontFamily: "mono",
-  fontSize: "sm",
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
+// selection never depends on colour alone (WCAG 1.4.1). The focus ring is the
+// global `button:focus-visible` default.
+const rowButtonClass = css({
+  alignItems: "center",
+  bg: "transparent",
+  borderLeftColor: "transparent",
+  borderLeftWidth: "2px",
+  color: "zodiac.cream/82",
+  cursor: "pointer",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  minH: "9",
+  pl: "2",
+  py: "1",
+  textAlign: "left",
+  w: "full",
+  _hover: { color: "zodiac.cream" },
+  _coarsePointer: { minH: "11" },
+  "&[aria-pressed='true']": {
+    borderLeftColor: "zodiac.gold",
+    color: "zodiac.gold",
+  },
 });
+const groupSlotClass = css({ display: "contents" });
+const episodesHeaderClass = css({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+const episodeClass = css({
+  py: "5",
+  borderBottomWidth: "1px",
+  borderColor: "zodiac.gold/22",
+  _last: { borderBottom: "none", pb: "0" },
+});
+const episodeDateClass = css({ color: "zodiac.cream/66", mt: "2" });
 const ratingGridClass = css({
   display: "grid",
   gridTemplateColumns: {
@@ -181,10 +188,6 @@ const FEED_NOT_CONFIGURED: Record<FeedNotConfiguredReason, string> = {
     "The private feed is set up incorrectly, so there is no address to share yet.",
 };
 
-function formatShootoutDate(createdAt: number) {
-  return new Date(createdAt).toLocaleString();
-}
-
 export function ListenPage() {
   onMount(() => {
     document.title = "Listen — Frequency Music";
@@ -204,7 +207,6 @@ export function ListenPage() {
     const first = shootouts.data()?.[0]?.groupId;
     if (groupId() === null && first) setGroupId(first);
   });
-  const selected = groupId;
   const shootoutsStatus = () => {
     if (shootouts.isLoading()) return "Loading shootouts...";
     if (shootouts.error() || (shootouts.data() ?? []).length > 0) return null;
@@ -217,8 +219,7 @@ export function ListenPage() {
   const houseVoiceLabel = () => {
     if (houseVoice.isLoading()) return "loading...";
     if (houseVoice.error()) return "unavailable";
-    const voiceId = houseVoice.data()?.voiceId;
-    return voiceId ? voiceName(voiceId) : "not chosen";
+    return voiceName(houseVoice.data()?.voiceId, "not chosen");
   };
   const houseVoiceError = () =>
     houseVoice.error()
@@ -263,22 +264,20 @@ export function ListenPage() {
         </p>
         <UINotice status={shootoutsStatus()} error={shootoutsError()} />
         <Show when={(shootouts.data()?.length ?? 0) > 0}>
-          <ul role="list" class={listClass}>
+          <UIList class={listClass}>
             <For each={shootouts.data() ?? []}>
               {(row) => (
                 <li>
                   <button
                     type="button"
                     class={rowButtonClass}
-                    aria-pressed={selected() === row.groupId}
+                    aria-pressed={groupId() === row.groupId}
                     aria-controls={SHOOTOUT_GROUP_ID}
                     onClick={() => setGroupId(row.groupId)}
                   >
                     <span>
-                      <time datetime={new Date(row.createdAt).toISOString()}>
-                        {formatShootoutDate(row.createdAt)}
-                      </time>{" "}
-                      · {row.memberCount} takes
+                      <DateTime value={row.createdAt} format="datetime" /> ·{" "}
+                      {row.memberCount} takes
                     </span>
                     <Show when={row.revealed}>
                       <UIBadge tone="gold">revealed</UIBadge>
@@ -290,7 +289,7 @@ export function ListenPage() {
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
         </Show>
       </UICard>
 
@@ -298,8 +297,8 @@ export function ListenPage() {
 
       {/* Always mounted so the shootout buttons' aria-controls resolves;
           display: contents keeps its children on the page grid. */}
-      <div id={SHOOTOUT_GROUP_ID} class={css({ display: "contents" })}>
-        <Show when={selected()} keyed>
+      <div id={SHOOTOUT_GROUP_ID} class={groupSlotClass}>
+        <Show when={groupId()} keyed>
           {(id) => (
             <ShootoutGroup
               groupId={id}
@@ -390,15 +389,7 @@ function PodcastEpisodes(props: { feedUrl: string }) {
 
   return (
     <UICard>
-      <div
-        class={css({
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "3",
-          justifyContent: "space-between",
-          alignItems: "center",
-        })}
-      >
+      <div class={episodesHeaderClass}>
         <h2 class={sectionTitleClass}>Episodes</h2>
         {/* aria-busy, not disabled: the 60 s poll would otherwise blur the
             button out from under a keyboard user; refresh() ignores repeats. */}
@@ -424,18 +415,10 @@ function PodcastEpisodes(props: { feedUrl: string }) {
         }
         error={error()}
       />
-      <ol role="list" class={css({ listStyle: "none", m: "0", p: "0" })}>
+      <UIList as="ol">
         <For each={episodes()}>
           {(episode, index) => (
-            <li
-              class={css({
-                py: "5",
-                borderBottomWidth: "1px",
-                borderBottomStyle: "solid",
-                borderColor: "zodiac.gold/22",
-                _last: { borderBottom: "none", pb: "0" },
-              })}
-            >
+            <li class={episodeClass}>
               <AudioPlayer
                 src={episode.playbackUrl}
                 label={episode.title}
@@ -443,19 +426,13 @@ function PodcastEpisodes(props: { feedUrl: string }) {
                 headingLevel={3}
                 preload={index() < EAGER_EPISODES ? "metadata" : "none"}
               />
-              <p class={css({ color: "zodiac.cream/66", mt: "2", mb: "0" })}>
-                <time datetime={new Date(episode.createdAt).toISOString()}>
-                  {new Date(episode.createdAt).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </time>
+              <p class={episodeDateClass}>
+                <DateTime value={episode.createdAt} />
               </p>
             </li>
           )}
         </For>
-      </ol>
+      </UIList>
     </UICard>
   );
 }
@@ -577,23 +554,25 @@ function ShootoutGroup(props: {
   const submit = createMutation(api.voiceRatings.submit);
   const setHouseVoice = createMutation(api.settings.setHouseVoice);
   const [form, setForm] = createSignal<Record<string, MemberForm>>({});
-  // Per-take feedback sits beside the take, not at the top of the page.
-  const [takeErrors, setTakeErrors] = createSignal<
-    Record<string, string | null>
-  >({});
-  const [invalidFields, setInvalidFields] = createSignal<
-    Record<string, RatingKey | null>
-  >({});
+  // Both outcomes of rating a take sit beside the take, not at the top of
+  // the page; `field` is the rating input that failed validation.
+  const [feedback, setFeedback] = createSignal<Record<string, TakeFeedback>>(
+    {},
+  );
   const [savingId, setSavingId] = createSignal<string | null>(null);
 
   const formFor = (memberId: string) => form()[memberId] ?? EMPTY_FORM;
+  const feedbackFor = (memberId: string) => feedback()[memberId] ?? NO_FEEDBACK;
+  const setTakeFeedback = (memberId: string, next: Partial<TakeFeedback>) =>
+    setFeedback((all) => ({
+      ...all,
+      [memberId]: { ...(all[memberId] ?? NO_FEEDBACK), ...next },
+    }));
   const update = (memberId: string, key: keyof MemberForm, value: string) => {
     setForm({ ...form(), [memberId]: { ...formFor(memberId), [key]: value } });
-    if (invalidFields()[memberId] === key)
-      setInvalidFields({ ...invalidFields(), [memberId]: null });
+    if (feedbackFor(memberId).field === key)
+      setTakeFeedback(memberId, { field: null });
   };
-  const setTakeError = (memberId: string, text: string | null) =>
-    setTakeErrors({ ...takeErrors(), [memberId]: text });
   const ratedIds = createMemo(
     () => new Set((ratings() ?? []).map((row) => row.memberId)),
   );
@@ -612,15 +591,17 @@ function ShootoutGroup(props: {
     for (const key of RATING_KEYS) {
       const value = parseRating(values[key]);
       if (value === null) {
-        setInvalidFields({ ...invalidFields(), [memberId]: key });
-        setTakeError(memberId, `${RATING_REQUIRED} (${RATING_LABELS[key]})`);
+        setTakeFeedback(memberId, {
+          status: null,
+          error: `${RATING_REQUIRED} (${RATING_LABELS[key]})`,
+          field: key,
+        });
         document.getElementById(fieldId(memberId, key))?.focus();
         return;
       }
       parsed[key] = value;
     }
-    setInvalidFields({ ...invalidFields(), [memberId]: null });
-    setTakeError(memberId, null);
+    setTakeFeedback(memberId, NO_FEEDBACK);
     setSavingId(memberId);
     // A saved rating unmounts this form (and the last one reveals the group),
     // so park focus on the take's heading before the swap rather than letting
@@ -633,13 +614,13 @@ function ShootoutGroup(props: {
         ratings: parsed as Record<RatingKey, number>,
         notes: values.notes.trim() || undefined,
       });
-      props.onNotice(
-        result.revealed
+      setTakeFeedback(memberId, {
+        status: result.revealed
           ? "All takes rated. Revealed below."
           : `${result.remaining} take(s) left to rate.`,
-      );
+      });
     } catch (error) {
-      setTakeError(memberId, describeError(error));
+      setTakeFeedback(memberId, { error: describeError(error) });
       if (trigger.isConnected) trigger.focus();
     } finally {
       setSavingId(null);
@@ -669,19 +650,16 @@ function ShootoutGroup(props: {
 
   return (
     <>
-      <h3 id={headingId} class={groupHeadingClass}>
+      <h3 id={headingId} class={sectionTitleClass}>
         <Show when={props.createdAt} fallback="Shootout">
           {(createdAt) => (
             <>
-              Shootout from{" "}
-              <time datetime={new Date(createdAt()).toISOString()}>
-                {formatShootoutDate(createdAt())}
-              </time>
+              Shootout from <DateTime value={createdAt()} format="datetime" />
             </>
           )}
         </Show>
       </h3>
-      <UINotice status={null} error={groupError()} />
+      <UINotice error={groupError()} />
       <Show when={projection()}>
         {(group) => (
           <For each={group().members}>
@@ -716,7 +694,7 @@ function ShootoutGroup(props: {
                             placeholder="0-5"
                             inputmode="numeric"
                             aria-invalid={
-                              invalidFields()[member.memberId] === key
+                              feedbackFor(member.memberId).field === key
                                 ? "true"
                                 : undefined
                             }
@@ -765,7 +743,10 @@ function ShootoutGroup(props: {
                     </UIButton>
                   </div>
                 </Show>
-                <UINotice error={takeErrors()[member.memberId] ?? null} />
+                <UINotice
+                  status={feedbackFor(member.memberId).status}
+                  error={feedbackFor(member.memberId).error}
+                />
                 <Show
                   when={ratedIds().has(member.memberId) && !group().revealed}
                 >
@@ -776,10 +757,7 @@ function ShootoutGroup(props: {
                 <Show when={group().revealed}>
                   <div class={actionsClass}>
                     <UIBadge tone="cream">
-                      {(() => {
-                        const voiceId = ratingFor(member.memberId)?.voiceId;
-                        return voiceId ? voiceName(voiceId) : "unrated";
-                      })()}
+                      {voiceName(ratingFor(member.memberId)?.voiceId)}
                     </UIBadge>
                     <Show when={ratingFor(member.memberId)?.voiceId}>
                       {(voiceId) => (

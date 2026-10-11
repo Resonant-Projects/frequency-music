@@ -13,16 +13,17 @@ import { css, cx } from "../../styled-system/css";
 import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
-  focusRingClass,
   goldDivider,
   helperClass,
   Markdown,
   metaLine,
   pageClass,
   proseClass,
+  recordLinkClass,
   sectionLabel,
   UIBadge,
   UIButton,
@@ -36,34 +37,86 @@ import {
   createMutation,
   createQueryWithStatus,
   describeError,
+  describeLoad,
 } from "../integrations/convex";
+import { parseLines } from "../lib/markdown-utils";
 import { api } from "../../../convex/_generated/api";
 import { useClerkAuthSnapshot } from "../integrations/clerk";
 
-const lineItem = entityCellClass;
+/** Secondary line under a lineage or source title. */
+const subLineSpaced = cx(helperClass, css({ mt: "1" }));
 
-/** Secondary line under a lineage, source or extraction title. */
-const subLine = css({
-  color: "zodiac.cream/66",
-  fontSize: "sm",
+/** A vertical stack of entity cells. */
+const cellStackClass = css({ display: "grid", gap: "2" });
+
+const violetPanelClass = css({
+  bg: "zodiac.violet/7",
+  borderColor: "zodiac.violet/30",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  mt: "3",
+  p: "3",
 });
 
-/** A record title that links to its own page. */
-const recordLink = cx(
-  css({
-    color: "zodiac.cream",
-    textDecoration: "none",
-    _hover: { textDecoration: "underline" },
-  }),
-  focusRingClass,
+const extractionMetaRowClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between", mt: "2" }),
 );
 
-/** Split a textarea into trimmed, non-empty lines. */
-function parseLines(value: string) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
+const correctionPanelClass = cx(violetPanelClass, css({ gap: "2" }));
+
+const correctionNoteClass = css({ color: "zodiac.cream/68" });
+
+const claimsFieldClass = css({ minH: "72" });
+
+const parametersFieldClass = css({ minH: "56" });
+
+const correctionNoticeClass = css({ mt: "2" });
+
+const visibilityControlClass = css({ display: "grid", gap: "2", mt: "3" });
+
+const visibilitySelectClass = css({ maxW: "52" });
+
+const cellTitleClass = css({ color: "zodiac.cream" });
+
+const extractionSummaryClass = css({ color: "zodiac.cream", mb: "1" });
+
+const provenanceLabelClass = css({
+  color: "zodiac.gold",
+  fontSize: "sm",
+  mb: "1",
+});
+
+const sessionBadgesClass = cx(badgeRowClass, css({ mb: "1" }));
+
+const sessionFeedbackClass = css({
+  color: "zodiac.cream/70",
+  lineHeight: "1.7",
+});
+
+const sessionNotesClass = css({
+  color: "zodiac.cream/66",
+  fontSize: "sm",
+  lineHeight: "1.7",
+});
+
+const spacedBelowClass = css({ mb: "2" });
+
+const standoutListClass = css({ listStyleType: "disc", paddingLeft: "5" });
+
+type ListeningSession = Doc<"listeningSessions">;
+
+function hasBodyNotes(session: ListeningSession) {
+  return (
+    (session.feltQualities?.length ?? 0) > 0 ||
+    (session.bodyMapTags?.length ?? 0) > 0 ||
+    Boolean(session.bodyMapNotes)
+  );
+}
+
+function hasStandoutMoments(session: ListeningSession) {
+  return (session.standoutMoments?.length ?? 0) > 0;
 }
 
 function parseJsonArray<T>(value: string, label: string): T[] {
@@ -103,10 +156,10 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
   let correctTrigger: HTMLButtonElement | undefined;
 
   // Closing the panel unmounts the focused Save/Cancel button; hand focus
-  // back to the "Correct extraction" trigger that opened it.
+  // back to the always-mounted "Correct extraction" trigger that opened it.
   function closeEditor() {
     setEditMode(false);
-    queueMicrotask(() => correctTrigger?.focus());
+    correctTrigger?.focus();
   }
 
   const originalClaimsJson = () =>
@@ -158,7 +211,8 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
     setNotice(null);
     setNoticeError(null);
     setEditMode(true);
-    // The trigger disables itself, so move focus into the panel it opened.
+    // The trigger disables itself, so move focus into the panel it opened;
+    // deferred because the summary field mounts in this same tick.
     queueMicrotask(() => summaryField?.focus());
   }
 
@@ -217,16 +271,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
 
   return (
     <>
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "2",
-          justifyContent: "space-between",
-          mt: "2",
-        })}
-      >
+      <div class={extractionMetaRowClass}>
         <span class={metaLine}>
           confidence {props.extraction.confidence} ·{" "}
           {props.extraction.topics.length} topics
@@ -244,24 +289,13 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
       </div>
 
       <Show when={editMode()}>
-        <div
-          class={css({
-            bg: "zodiac.violet/7",
-            borderColor: "zodiac.violet/30",
-            borderRadius: "l2",
-            borderWidth: "1px",
-            display: "grid",
-            gap: "2",
-            mt: "3",
-            p: "3",
-          })}
-        >
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <div class={correctionPanelClass}>
+          <div class={badgeRowClass}>
             <For each={changedFields()}>
               {(field) => <UIBadge tone="violet">changed: {field}</UIBadge>}
             </For>
           </div>
-          <p class={css({ color: "zodiac.cream/68" })}>
+          <p class={correctionNoteClass}>
             Saving preserves the generated and edited field sets as eval
             provenance. Claims and parameters use their stored JSON shape.
           </p>
@@ -289,7 +323,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             id={`extraction-claims-${props.extraction._id}`}
             value={claimsJson()}
             onInput={(event) => setClaimsJson(event.currentTarget.value)}
-            class={css({ minH: "72" })}
+            class={claimsFieldClass}
           />
           <label
             class={fieldLabelClass}
@@ -301,7 +335,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             id={`extraction-parameters-${props.extraction._id}`}
             value={parametersJson()}
             onInput={(event) => setParametersJson(event.currentTarget.value)}
-            class={css({ minH: "56" })}
+            class={parametersFieldClass}
           />
           <label
             class={fieldLabelClass}
@@ -338,7 +372,7 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
             value={confidenceText()}
             onInput={(event) => setConfidenceText(event.currentTarget.value)}
           />
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             <UIButton
               variant="outline"
               aria-busy={saving()}
@@ -354,10 +388,9 @@ function ExtractionCorrection(props: { extraction: Doc<"extractions"> }) {
         </div>
       </Show>
 
+      {/* An empty notice collapses itself, so the margin only shows with text. */}
       <UINotice
-        class={
-          notice() || noticeError() ? css({ mt: "2" }) : collapsedNoticeClass
-        }
+        class={correctionNoticeClass}
         status={notice()}
         error={noticeError()}
       />
@@ -414,21 +447,14 @@ function ListeningVisibilityControl(props: {
   }
 
   return (
-    <div class={css({ display: "grid", gap: "2", mt: "3" })}>
+    <div class={visibilityControlClass}>
       <label
         class={fieldLabelClass}
         for={`listening-visibility-${props.session._id}`}
       >
         Session visibility
       </label>
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "2",
-        })}
-      >
+      <div class={badgeRowClass}>
         <UISelect
           id={`listening-visibility-${props.session._id}`}
           value={visibility()}
@@ -436,7 +462,7 @@ function ListeningVisibilityControl(props: {
           onChange={(event) =>
             setVisibility(event.currentTarget.value as Visibility)
           }
-          class={css({ maxW: "52" })}
+          class={visibilitySelectClass}
         >
           <option value="private">Private</option>
           <option value="followers">Followers</option>
@@ -463,11 +489,7 @@ function ListeningVisibilityControl(props: {
           to the session creator.
         </p>
       </Show>
-      <UINotice
-        class={notice() || noticeError() ? undefined : collapsedNoticeClass}
-        status={notice()}
-        error={noticeError()}
-      />
+      <UINotice status={notice()} error={noticeError()} />
     </div>
   );
 }
@@ -509,7 +531,7 @@ export function CompositionDetailPage() {
 
   function closeDeleteConfirm() {
     setDeleteConfirmOpen(false);
-    queueMicrotask(() => deleteTrigger?.focus());
+    deleteTrigger?.focus();
   }
 
   async function handleDeleteComposition() {
@@ -527,16 +549,7 @@ export function CompositionDetailPage() {
     }
   }
 
-  const lineageErrorText = () =>
-    lineageQuery.error()
-      ? `Unable to load composition: ${lineageQuery.error()?.message}`
-      : null;
-  const lineageStatus = () => {
-    if (lineageQuery.error() || lineage()) return null;
-    return lineageQuery.isLoading()
-      ? "Loading composition..."
-      : "Composition not found.";
-  };
+  const load = describeLoad(lineageQuery, "composition");
 
   createEffect(() => {
     const row = lineage()?.composition;
@@ -544,6 +557,7 @@ export function CompositionDetailPage() {
   });
 
   createEffect(() => {
+    // Deferred: the confirm button mounts in the same tick that opens the panel.
     if (deleteConfirmOpen()) {
       queueMicrotask(() => deleteConfirmButton?.focus());
     }
@@ -558,20 +572,13 @@ export function CompositionDetailPage() {
       </div>
 
       <UICard class={lineage() ? collapsedNoticeClass : undefined}>
-        <UINotice status={lineageStatus()} error={lineageErrorText()} />
+        <UINotice status={load.status()} error={load.error()} />
       </UICard>
 
       <Show when={lineage()}>
         {(row) => (
           <UICard>
-            <div
-              class={css({
-                display: "flex",
-                gap: "2",
-                flexWrap: "wrap",
-                mb: "2",
-              })}
-            >
+            <div class={cx(badgeRowClass, css({ mb: "2" }))}>
               <UIBadge tone="gold">{row().composition.status}</UIBadge>
               <UIBadge tone="violet">{row().composition.artifactType}</UIBadge>
               <UIBadge tone="cream">{row().composition.version}</UIBadge>
@@ -611,25 +618,14 @@ export function CompositionDetailPage() {
                   event.preventDefault();
                   closeDeleteConfirm();
                 }}
-                class={css({
-                  bg: "zodiac.violet/7",
-                  borderColor: "zodiac.violet/30",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  display: "grid",
-                  gap: "3",
-                  mt: "3",
-                  p: "3",
-                })}
+                class={cx(violetPanelClass, css({ gap: "3" }))}
               >
                 <p class={css({ color: "zodiac.cream/74" })}>
                   Delete “{row().composition.title}”? This uses the existing
                   composition deletion path and cannot be undone from this
                   screen.
                 </p>
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
+                <div class={badgeRowClass}>
                   <UIButton
                     ref={(element) => {
                       deleteConfirmButton = element;
@@ -648,10 +644,7 @@ export function CompositionDetailPage() {
                     Cancel
                   </UIButton>
                 </div>
-                <UINotice
-                  class={deleteError() ? undefined : collapsedNoticeClass}
-                  error={deleteError()}
-                />
+                <UINotice error={deleteError()} />
               </div>
             </Show>
 
@@ -699,18 +692,18 @@ export function CompositionDetailPage() {
 
             <hr class={goldDivider} />
             <h2 class={sectionLabel}>Lineage</h2>
-            <div class={css({ display: "grid", gap: "2" })}>
+            <div class={cellStackClass}>
               <For each={row().ancestry}>
                 {(ancestor) => (
-                  <div class={lineItem}>
+                  <div class={entityCellClass}>
                     <Link
                       to="/compositions/$compositionId"
                       params={{ compositionId: String(ancestor._id) }}
-                      class={recordLink}
+                      class={recordLinkClass}
                     >
                       {ancestor.title}
                     </Link>
-                    <p class={cx(subLine, css({ mt: "1" }))}>
+                    <p class={subLineSpaced}>
                       {ancestor.version}
                       <Show when={ancestor.revisionVariable}>
                         {(variable) => <> · variable: {variable()}</>}
@@ -719,29 +712,29 @@ export function CompositionDetailPage() {
                   </div>
                 )}
               </For>
-              <div class={lineItem}>
+              <div class={entityCellClass}>
                 <div class={css({ color: "zodiac.gold" })}>
                   {row().composition.title}
                 </div>
-                <p class={cx(subLine, css({ mt: "1" }))}>current node</p>
+                <p class={subLineSpaced}>current node</p>
               </div>
             </div>
 
             <Show when={row().children.length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Direct Revisions</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={cellStackClass}>
                 <For each={row().children}>
                   {(child) => (
-                    <div class={lineItem}>
+                    <div class={entityCellClass}>
                       <Link
                         to="/compositions/$compositionId"
                         params={{ compositionId: String(child._id) }}
-                        class={recordLink}
+                        class={recordLinkClass}
                       >
                         {child.title}
                       </Link>
-                      <p class={cx(subLine, css({ mt: "1" }))}>
+                      <p class={subLineSpaced}>
                         {child.version}
                         <Show when={child.revisionVariable}>
                           {(variable) => <> · variable: {variable()}</>}
@@ -758,20 +751,12 @@ export function CompositionDetailPage() {
             <div class={css({ display: "grid", gap: "3" })}>
               <Show when={row().recipe}>
                 {(recipe) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Recipe
-                    </h3>
+                  <div class={entityCellClass}>
+                    <h3 class={provenanceLabelClass}>Recipe</h3>
                     <Link
                       to="/recipes/$recipeId"
                       params={{ recipeId: String(recipe()._id) }}
-                      class={recordLink}
+                      class={recordLinkClass}
                     >
                       {recipe().title}
                     </Link>
@@ -780,20 +765,12 @@ export function CompositionDetailPage() {
               </Show>
               <Show when={row().hypothesis}>
                 {(hypothesis) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Hypothesis
-                    </h3>
+                  <div class={entityCellClass}>
+                    <h3 class={provenanceLabelClass}>Hypothesis</h3>
                     <Link
                       to="/hypotheses/$hypothesisId"
                       params={{ hypothesisId: String(hypothesis()._id) }}
-                      class={recordLink}
+                      class={recordLinkClass}
                     >
                       {hypothesis().title}
                     </Link>
@@ -802,20 +779,12 @@ export function CompositionDetailPage() {
               </Show>
               <Show when={row().thesis}>
                 {(thesis) => (
-                  <div class={lineItem}>
-                    <h3
-                      class={css({
-                        color: "zodiac.gold",
-                        fontSize: "sm",
-                        mb: "1",
-                      })}
-                    >
-                      Thesis
-                    </h3>
+                  <div class={entityCellClass}>
+                    <h3 class={provenanceLabelClass}>Thesis</h3>
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis()._id) }}
-                      class={recordLink}
+                      class={recordLinkClass}
                     >
                       {thesis().title}
                     </Link>
@@ -827,14 +796,14 @@ export function CompositionDetailPage() {
             <Show when={row().sources.length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Linked Sources</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={cellStackClass}>
                 <For each={row().sources}>
                   {(source) => (
-                    <div class={lineItem}>
-                      <div class={css({ color: "zodiac.cream" })}>
+                    <div class={entityCellClass}>
+                      <div class={cellTitleClass}>
                         {source.title ?? "Untitled source"}
                       </div>
-                      <p class={cx(subLine, css({ mt: "1" }))}>{source.type}</p>
+                      <p class={subLineSpaced}>{source.type}</p>
                     </div>
                   )}
                 </For>
@@ -844,14 +813,14 @@ export function CompositionDetailPage() {
             <Show when={row().extractions.length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Extractions</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={cellStackClass}>
                 <For each={row().extractions}>
                   {(extraction) => (
-                    <div class={lineItem}>
-                      <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                    <div class={entityCellClass}>
+                      <div class={extractionSummaryClass}>
                         {extraction.summary}
                       </div>
-                      <p class={subLine}>
+                      <p class={helperClass}>
                         {extraction.claims.length} claims ·{" "}
                         {extraction.compositionParameters.length} parameters
                       </p>
@@ -872,18 +841,11 @@ export function CompositionDetailPage() {
                 </p>
               }
             >
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={cellStackClass}>
                 <For each={row().listeningSessions}>
                   {(session) => (
-                    <div class={lineItem}>
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "1",
-                        })}
-                      >
+                    <div class={entityCellClass}>
+                      <div class={sessionBadgesClass}>
                         <Show when={session.expandVerdict}>
                           {(verdict) => (
                             <UIBadge tone="gold">{verdict()}</UIBadge>
@@ -900,37 +862,21 @@ export function CompositionDetailPage() {
                         </Show>
                       </div>
                       <div
-                        class={css({
-                          color: "zodiac.cream/70",
-                          lineHeight: "1.7",
-                          marginBottom:
-                            (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.bodyMapTags?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes) ||
-                            (session.standoutMoments?.length ?? 0) > 0
-                              ? "2"
-                              : "0",
-                        })}
+                        class={cx(
+                          sessionFeedbackClass,
+                          (hasBodyNotes(session) ||
+                            hasStandoutMoments(session)) &&
+                            spacedBelowClass,
+                        )}
                       >
                         <Markdown content={session.feedbackMd} />
                       </div>
-                      <Show
-                        when={
-                          (session.feltQualities?.length ?? 0) > 0 ||
-                          (session.bodyMapTags?.length ?? 0) > 0 ||
-                          Boolean(session.bodyMapNotes)
-                        }
-                      >
+                      <Show when={hasBodyNotes(session)}>
                         <div
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                            lineHeight: "1.7",
-                            marginBottom:
-                              (session.standoutMoments?.length ?? 0) > 0
-                                ? "2"
-                                : "0",
-                          })}
+                          class={cx(
+                            sessionNotesClass,
+                            hasStandoutMoments(session) && spacedBelowClass,
+                          )}
                         >
                           <Show when={(session.feltQualities?.length ?? 0) > 0}>
                             <p>Felt: {session.feltQualities?.join(", ")}</p>
@@ -943,21 +889,10 @@ export function CompositionDetailPage() {
                           </Show>
                         </div>
                       </Show>
-                      <Show when={(session.standoutMoments?.length ?? 0) > 0}>
-                        <div
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                            lineHeight: "1.7",
-                          })}
-                        >
+                      <Show when={hasStandoutMoments(session)}>
+                        <div class={sessionNotesClass}>
                           <p>Standout moments:</p>
-                          <ul
-                            class={css({
-                              paddingLeft: "5",
-                              listStyleType: "disc",
-                            })}
-                          >
+                          <ul class={standoutListClass}>
                             <For each={session.standoutMoments}>
                               {(moment) => <li>{moment}</li>}
                             </For>

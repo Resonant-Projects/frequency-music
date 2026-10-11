@@ -13,17 +13,20 @@ import { entityCellClass } from "../components/entity-card";
 import { StatTiles } from "../components/stat-tiles";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
-  focusRingClass,
   goldDivider,
+  helperClass,
   pageClass,
   proseClass,
+  recordLinkClass,
   sectionLabel,
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
   UISelect,
 } from "../components/ui";
@@ -31,27 +34,45 @@ import {
   createMutation,
   createQueryWithStatus,
   describeError,
+  describeLoad,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
-const linkList = css({
-  display: "grid",
-  gap: "2",
-  listStyle: "none",
+const linkList = css({ display: "grid", gap: "2" });
+
+const headerBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const actionRowClass = cx(badgeRowClass, css({ mt: "3" }));
+
+const statementClass = css({
+  color: "zodiac.cream/82",
+  fontFamily: "display",
+  fontSize: "lg",
+  lineHeight: "1.7",
+  maxW: "72ch",
 });
 
-const linkListItem = cx(
+const campaignRowClass = cx(
+  entityCellClass,
   css({
     alignItems: "center",
-    color: "zodiac.cream/78",
-    display: "inline-flex",
-    minH: "6",
-    textDecoration: "none",
-    _hover: { color: "zodiac.cream", textDecoration: "underline" },
-    _coarsePointer: { minH: "11" },
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "3",
+    justifyContent: "space-between",
   }),
-  focusRingClass,
 );
+
+const campaignTextClass = css({ minW: 0 });
+
+const campaignTitleClass = css({ color: "zodiac.cream", mb: "1" });
+
+const campaignErrorClass = css({
+  color: "zodiac.error",
+  fontFamily: "display",
+  fontSize: "sm",
+  mt: "2",
+});
 
 export function ThesisDetailPage() {
   const params = useParams({ from: "/theses/$thesisId" });
@@ -100,14 +121,7 @@ export function ThesisDetailPage() {
     if (thesis) document.title = `${thesis.title} — Frequency Music`;
   });
 
-  const loadErrorText = () =>
-    detailQuery.error()
-      ? `Unable to load thesis: ${detailQuery.error()?.message}`
-      : null;
-  const loadStatus = () => {
-    if (detailQuery.error() || detail()) return null;
-    return detailQuery.isLoading() ? "Loading thesis..." : "Thesis not found.";
-  };
+  const load = describeLoad(detailQuery, "thesis");
 
   function focusCampaignSelect() {
     const element = document.getElementById("thesis-campaign-select");
@@ -149,8 +163,8 @@ export function ThesisDetailPage() {
       });
       setNotice("Thesis detached from campaign.");
       // The detached row unmounts with the next Convex push; hand focus to
-      // the section heading first so it never falls to <body>.
-      queueMicrotask(() => campaignsHeading?.focus());
+      // the always-mounted section heading first so it never falls to <body>.
+      campaignsHeading?.focus();
     } catch (error) {
       setNoticeError(`Detach failed: ${describeError(error)}`);
     } finally {
@@ -210,21 +224,14 @@ export function ThesisDetailPage() {
       </div>
 
       <UICard class={detail() ? collapsedNoticeClass : undefined}>
-        <UINotice status={loadStatus()} error={loadErrorText()} />
+        <UINotice status={load.status()} error={load.error()} />
       </UICard>
 
       <Show when={detail()}>
         {(row) => (
           <>
             <UICard>
-              <div
-                class={css({
-                  display: "flex",
-                  gap: "2",
-                  flexWrap: "wrap",
-                  mb: "2",
-                })}
-              >
+              <div class={headerBadgesClass}>
                 <UIBadge tone="gold">{row().thesis.status}</UIBadge>
                 <UIBadge tone="cream">{row().thesis.visibility}</UIBadge>
                 <UIBadge tone="cream">
@@ -237,26 +244,9 @@ export function ThesisDetailPage() {
               </div>
 
               <h1 class={detailTitleClass}>{row().thesis.title}</h1>
-              <p
-                class={css({
-                  color: "zodiac.cream/82",
-                  fontFamily: "display",
-                  fontSize: "lg",
-                  lineHeight: "1.7",
-                  maxW: "72ch",
-                })}
-              >
-                {row().thesis.statement}
-              </p>
+              <p class={statementClass}>{row().thesis.statement}</p>
 
-              <div
-                class={css({
-                  display: "flex",
-                  gap: "2",
-                  flexWrap: "wrap",
-                  mt: "3",
-                })}
-              >
+              <div class={actionRowClass}>
                 <UIButton
                   variant="outline"
                   onClick={handleCreateSummary}
@@ -322,45 +312,19 @@ export function ThesisDetailPage() {
                 <Show
                   when={row().campaigns.length > 0}
                   fallback={
-                    <p class={css({ color: "zodiac.cream/66" })}>
+                    <p class={helperClass}>
                       This thesis is not attached to a campaign yet.
                     </p>
                   }
                 >
                   <For each={row().campaigns}>
                     {(campaign) => (
-                      <div
-                        class={cx(
-                          entityCellClass,
-                          css({
-                            alignItems: "center",
-                            display: "flex",
-                            gap: "3",
-                            justifyContent: "space-between",
-                            flexWrap: "wrap",
-                          }),
-                        )}
-                      >
-                        <div class={css({ minW: 0 })}>
-                          <div class={css({ color: "zodiac.cream", mb: "1" })}>
-                            {campaign.title}
-                          </div>
-                          <div
-                            class={css({
-                              color: "zodiac.cream/66",
-                              fontSize: "sm",
-                            })}
-                          >
-                            {campaign.question}
-                          </div>
+                      <div class={campaignRowClass}>
+                        <div class={campaignTextClass}>
+                          <div class={campaignTitleClass}>{campaign.title}</div>
+                          <div class={helperClass}>{campaign.question}</div>
                         </div>
-                        <div
-                          class={css({
-                            display: "flex",
-                            gap: "2",
-                            flexWrap: "wrap",
-                          })}
-                        >
+                        <div class={badgeRowClass}>
                           <UIBadge tone="gold">{campaign.status}</UIBadge>
                           <UIButton
                             variant="outline"
@@ -383,9 +347,7 @@ export function ThesisDetailPage() {
                   >
                     Attach To Campaign
                   </label>
-                  <div
-                    class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}
-                  >
+                  <div class={badgeRowClass}>
                     <UISelect
                       id="thesis-campaign-select"
                       data-testid="thesis-campaign-select"
@@ -414,15 +376,7 @@ export function ThesisDetailPage() {
                   </div>
                   <Show when={campaignError()}>
                     {(message) => (
-                      <p
-                        id="thesis-campaign-error"
-                        class={css({
-                          color: "zodiac.error",
-                          fontFamily: "display",
-                          fontSize: "sm",
-                          mt: "2",
-                        })}
-                      >
+                      <p id="thesis-campaign-error" class={campaignErrorClass}>
                         {message()}
                       </p>
                     )}
@@ -443,80 +397,80 @@ export function ThesisDetailPage() {
 
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Hypotheses</h2>
-              <ul role="list" class={linkList}>
+              <UIList class={linkList}>
                 <For each={row().hypotheses}>
                   {(hypothesis) => (
                     <li>
                       <Link
                         to="/hypotheses/$hypothesisId"
                         params={{ hypothesisId: String(hypothesis._id) }}
-                        class={linkListItem}
+                        class={recordLinkClass}
                       >
                         {hypothesis.title}
                       </Link>
                     </li>
                   )}
                 </For>
-              </ul>
+              </UIList>
 
               <Show when={row().recipes.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Recipes</h2>
-                <ul role="list" class={linkList}>
+                <UIList class={linkList}>
                   <For each={row().recipes}>
                     {(recipe) => (
                       <li>
                         <Link
                           to="/recipes/$recipeId"
                           params={{ recipeId: String(recipe._id) }}
-                          class={linkListItem}
+                          class={recordLinkClass}
                         >
                           {recipe.title}
                         </Link>
                       </li>
                     )}
                   </For>
-                </ul>
+                </UIList>
               </Show>
 
               <Show when={row().compositions.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Compositions</h2>
-                <ul role="list" class={linkList}>
+                <UIList class={linkList}>
                   <For each={row().compositions}>
                     {(composition) => (
                       <li>
                         <Link
                           to="/compositions/$compositionId"
                           params={{ compositionId: String(composition._id) }}
-                          class={linkListItem}
+                          class={recordLinkClass}
                         >
                           {composition.title}
                         </Link>
                       </li>
                     )}
                   </For>
-                </ul>
+                </UIList>
               </Show>
 
               <Show when={row().recentWeeklyBriefIds.length > 0}>
                 <hr class={goldDivider} />
                 <h2 class={sectionLabel}>Recent Weekly Briefs</h2>
-                <ul role="list" class={linkList}>
+                <UIList class={linkList}>
                   <For each={row().recentWeeklyBriefIds}>
                     {(briefId) => (
                       <li>
                         <Link
                           to="/weekly-turns/$briefId"
                           params={{ briefId: String(briefId) }}
-                          class={linkListItem}
+                          class={recordLinkClass}
                         >
                           Weekly brief {String(briefId).slice(-6)}
                         </Link>
                       </li>
                     )}
                   </For>
-                </ul>
+                </UIList>
               </Show>
             </UICard>
           </>

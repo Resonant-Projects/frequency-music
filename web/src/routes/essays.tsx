@@ -1,9 +1,9 @@
-import { createSignal, createUniqueId, For, onMount, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { css, cx } from "../../styled-system/css";
 import {
   EssayCard,
   EssayDateBadge,
-  EssayStretchedLink,
+  EssayTitleLink,
   essayCardLiftClass,
   essayDisplayTitleClass,
   essayHeroClass,
@@ -13,6 +13,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   eyebrowClass,
   pageClass,
   sectionTitleClass,
@@ -41,10 +42,8 @@ const heroLead = css({
 const heroFeaturedZone = css({
   p: { base: "5", md: "6" },
   borderTopWidth: { base: "1px", lg: "0" },
-  borderTopStyle: "solid",
   borderTopColor: "zodiac.gold/10",
   borderLeftWidth: { base: "0", lg: "1px" },
-  borderLeftStyle: "solid",
   borderLeftColor: "zodiac.gold/10",
   display: "grid",
   alignContent: "start",
@@ -62,7 +61,6 @@ const heroBody = css({
   lineHeight: "1.75",
   maxW: "36rem",
   mt: "16px",
-  mb: "0",
 });
 
 const statRow = css({
@@ -73,7 +71,6 @@ const statRow = css({
 });
 
 const featuredCard = css({
-  position: "relative",
   display: "grid",
   gap: "12px",
   borderColor: "zodiac.cream/14",
@@ -93,7 +90,6 @@ const featuredTitle = css({
   fontWeight: "normal",
   lineHeight: "1.08",
   letterSpacing: "-0.012em",
-  m: "0",
 });
 
 const featuredExcerpt = css({
@@ -101,7 +97,6 @@ const featuredExcerpt = css({
   fontSize: "14px",
   fontWeight: "400",
   lineHeight: "1.65",
-  m: "0",
 });
 
 const archiveGrid = css({
@@ -112,9 +107,6 @@ const archiveGrid = css({
     md: "repeat(2, minmax(0, 1fr))",
     xl: "repeat(3, minmax(0, 1fr))",
   },
-  listStyle: "none",
-  m: "0",
-  p: "0",
 });
 
 // Lets each card stretch to its grid row's height.
@@ -134,10 +126,9 @@ export function EssaysPage() {
   // The newest essay is the hero's featured dispatch, so the archive starts
   // with the one after it and never repeats it.
   const [featured, ...archiveList] = essayLibrary;
-  const featuredTitleId = createUniqueId();
   const [visibleCount, setVisibleCount] = createSignal(ARCHIVE_PAGE_SIZE);
   const visibleArchive = () => archiveList.slice(0, visibleCount());
-  let archiveListRef: HTMLUListElement | undefined;
+  let archiveListRef: HTMLElement | undefined;
 
   function showMore() {
     const firstRevealed = visibleCount();
@@ -186,14 +177,10 @@ export function EssaysPage() {
                     {featured.readTimeMinutes} min read
                   </UIBadge>
                 </div>
-                <h2 id={featuredTitleId} class={featuredTitle}>
-                  {featured.title}
+                <h2 class={featuredTitle}>
+                  <EssayTitleLink essay={featured} />
                 </h2>
                 <p class={featuredExcerpt}>{featured.excerpt}</p>
-                <EssayStretchedLink
-                  slug={featured.slug}
-                  labelledBy={featuredTitleId}
-                />
               </article>
             </div>
           ) : null}
@@ -203,8 +190,7 @@ export function EssaysPage() {
       <Show when={archiveList.length > 0}>
         <UICard>
           <h2 class={sectionTitleClass}>Archive</h2>
-          <ul
-            role="list"
+          <UIList
             class={archiveGrid}
             ref={(element) => {
               archiveListRef = element;
@@ -217,7 +203,7 @@ export function EssaysPage() {
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
           <Show when={visibleCount() < archiveList.length}>
             <div class={showMoreRow}>
               <UIButton variant="outline" onClick={showMore}>

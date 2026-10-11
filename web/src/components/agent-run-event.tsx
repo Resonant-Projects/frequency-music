@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { createMemo, For, Index, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
@@ -6,18 +6,21 @@ import {
   eventTone,
   formatDuration,
   formatPayload,
-  formatTime,
-  isoTime,
+  sameIds,
 } from "../lib/agent-run-format";
-import { focusRingClass, helperClass, metaLine, UIBadge } from "./ui";
+import {
+  DateTime,
+  helperClass,
+  jsonBlockClass,
+  metaLabelClass,
+  metaLine,
+  UIBadge,
+  UIList,
+} from "./ui";
 
-const eventListClass = css({
-  display: "grid",
-  gap: "4",
-  listStyleType: "none",
-  m: "0",
-  p: "0",
-});
+type AgentRunEvent = Doc<"agentRunEvents">;
+
+const eventListClass = css({ display: "grid", gap: "4" });
 
 const eventClass = css({
   borderColor: "zodiac.cream/12",
@@ -51,57 +54,27 @@ const eventMessageClass = css({
   color: "zodiac.cream",
   lineHeight: "1.55",
   maxW: "72ch",
-  overflowWrap: "anywhere",
 });
 
-const payloadClass = css({
-  bg: "zodiac.void/60",
-  borderColor: "zodiac.cream/12",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  color: "zodiac.cream/72",
-  fontFamily: "mono",
-  fontSize: "xs",
-  maxH: "18rem",
-  overflow: "auto",
-  p: "3",
-  whiteSpace: "pre-wrap",
-  overflowWrap: "anywhere",
+const timesListClass = css({
+  alignItems: "baseline",
+  display: "grid",
+  gap: "2",
+  gridTemplateColumns: "auto minmax(0, 1fr)",
 });
-
-/** Uppercase mono term in a run's timing list. */
-const timeTermClass = cx(
-  metaLine,
-  css({ letterSpacing: "0.14em", textTransform: "uppercase" }),
-);
-
-/**
- * A run timestamp as `<time datetime>`, or an em dash (not a `<time>`) when
- * the moment has not happened yet.
- */
-export function AgentRunTime(props: { value?: number; class?: string }) {
-  return (
-    <Show when={props.value} fallback={<span class={props.class}>—</span>}>
-      {(value) => (
-        <time class={props.class} datetime={isoTime(value())}>
-          {formatTime(value())}
-        </time>
-      )}
-    </Show>
-  );
-}
 
 /** One timeline entry: kind badge, timestamp, message, optional payload. */
-function AgentRunEventItem(props: {
-  event: Doc<"agentRunEvents">;
-  testId?: string;
-}) {
-  const payload = () => formatPayload(props.event.payload);
+function AgentRunEventItem(props: { event: AgentRunEvent; testId?: string }) {
+  const payload = createMemo(() => formatPayload(props.event.payload));
   return (
     <li class={eventClass} data-testid={props.testId}>
       <div class={eventHeaderClass}>
         <UIBadge tone={eventTone(props.event.kind)}>{props.event.kind}</UIBadge>
-        <AgentRunTime class={metaLine} value={props.event.createdAt} />
+        <DateTime
+          format="datetime"
+          class={metaLine}
+          value={props.event.createdAt}
+        />
       </div>
       <p class={eventMessageClass}>{props.event.message}</p>
       <Show when={payload()}>
@@ -110,7 +83,7 @@ function AgentRunEventItem(props: {
             role="group"
             tabIndex={0}
             aria-label={`Payload for ${props.event.kind} event`}
-            class={cx(payloadClass, focusRingClass, "zodiac-scroll")}
+            class={cx(jsonBlockClass, "zodiac-scroll")}
           >
             {text()}
           </pre>
@@ -122,18 +95,38 @@ function AgentRunEventItem(props: {
 
 /** An agent run's event timeline as a list, shared by the index and detail pages. */
 export function AgentRunEventList(props: {
-  events: Doc<"agentRunEvents">[];
+  events: AgentRunEvent[];
   /** `data-testid` for each entry. */
   itemTestId?: string;
 }) {
+  // Events are append-only and never edited, so rows are keyed by id and each
+  // id keeps the first copy it was given: a live update mounts only the new
+  // entries and never re-formats a payload already on screen.
+  const ids = createMemo(() => props.events.map((event) => event._id), [], {
+    equals: sameIds,
+  });
+  const byId = createMemo(
+    (previous: ReadonlyMap<string, AgentRunEvent>) =>
+      new Map(
+        props.events.map((event) => [
+          event._id,
+          previous.get(event._id) ?? event,
+        ]),
+      ),
+    new Map(),
+  );
   return (
-    <ul role="list" class={eventListClass}>
-      <For each={props.events}>
-        {(event) => (
-          <AgentRunEventItem event={event} testId={props.itemTestId} />
+    <UIList class={eventListClass}>
+      <For each={ids()}>
+        {(id) => (
+          <Show when={byId().get(id)} keyed>
+            {(event) => (
+              <AgentRunEventItem event={event} testId={props.itemTestId} />
+            )}
+          </Show>
         )}
       </For>
-    </ul>
+    </UIList>
   );
 }
 
@@ -142,31 +135,24 @@ export function AgentRunTimesList(props: {
   run: AgentRunTimes;
   class?: string;
 }) {
+  const times = (): Array<[label: string, value: number | undefined]> => [
+    ["Created", props.run.createdAt],
+    ["Started", props.run.startedAt],
+    ["Finished", props.run.finishedAt],
+  ];
   return (
-    <dl
-      class={cx(
-        css({
-          alignItems: "baseline",
-          display: "grid",
-          gap: "2",
-          gridTemplateColumns: "auto minmax(0, 1fr)",
-        }),
-        props.class,
-      )}
-    >
-      <dt class={timeTermClass}>Created</dt>
-      <dd class={helperClass}>
-        <AgentRunTime value={props.run.createdAt} />
-      </dd>
-      <dt class={timeTermClass}>Started</dt>
-      <dd class={helperClass}>
-        <AgentRunTime value={props.run.startedAt} />
-      </dd>
-      <dt class={timeTermClass}>Finished</dt>
-      <dd class={helperClass}>
-        <AgentRunTime value={props.run.finishedAt} />
-      </dd>
-      <dt class={timeTermClass}>Duration</dt>
+    <dl class={cx(timesListClass, props.class)}>
+      <Index each={times()}>
+        {(entry) => (
+          <>
+            <dt class={metaLabelClass}>{entry()[0]}</dt>
+            <dd class={helperClass}>
+              <DateTime format="datetime" value={entry()[1]} />
+            </dd>
+          </>
+        )}
+      </Index>
+      <dt class={metaLabelClass}>Duration</dt>
       <dd class={helperClass}>{formatDuration(props.run)}</dd>
     </dl>
   );

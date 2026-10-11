@@ -4,16 +4,18 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import { entityCardClass } from "../components/entity-card";
 import {
+  badgeRowClass,
   fieldLabelClass,
-  focusRingClass,
   helperClass,
   pageClass,
   pageTitleClass,
+  recordLinkClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
 } from "../components/ui";
@@ -25,26 +27,33 @@ import {
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
-/**
- * The row's current status: the outline face with a lit gold border and gold
- * label (DESIGN.md: pressed state is a border, never a second solid).
- */
-const pressedClass = css({
-  _pressed: {
-    borderColor: "zodiac.gold/75",
-    color: "zodiac.gold",
-    _hover: { color: "zodiac.gold" },
+type CompositionRow = {
+  _id: string;
+  status: string;
+  artifactType: string;
+  version: string;
+  title: string;
+  revisionParentId?: string;
+  revisionVariable?: string;
+};
+
+const fieldGridClass = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
   },
+  marginTop: "3",
 });
 
-const titleLinkClass = cx(
-  css({
-    color: "zodiac.cream",
-    textDecoration: "none",
-    _hover: { textDecoration: "underline" },
-  }),
-  focusRingClass,
-);
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ marginBottom: "2" }));
+
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "2" });
+
+const revisionOfClass = cx(helperClass, css({ mb: "2" }));
 
 export function CompositionsPage() {
   onMount(() => {
@@ -145,17 +154,7 @@ export function CompositionsPage() {
           placeholder="Drift Study A"
         />
 
-        <div
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: {
-              base: "minmax(0, 1fr)",
-              md: "repeat(2, minmax(0, 1fr))",
-            },
-            marginTop: "3",
-          })}
-        >
+        <div class={fieldGridClass}>
           <div>
             <label class={fieldLabelClass} for="composition-recipe">
               Recipe
@@ -190,17 +189,7 @@ export function CompositionsPage() {
           </div>
         </div>
 
-        <div
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: {
-              base: "minmax(0, 1fr)",
-              md: "repeat(2, minmax(0, 1fr))",
-            },
-            marginTop: "3",
-          })}
-        >
+        <div class={fieldGridClass}>
           <div>
             <label class={fieldLabelClass} for="composition-revision-parent">
               Revision Of
@@ -214,7 +203,7 @@ export function CompositionsPage() {
             >
               <option value="">Original composition</option>
               <For each={compositions.data() ?? []}>
-                {(item: { _id: string; title: string; version: string }) => (
+                {(item: CompositionRow) => (
                   <option value={String(item._id)}>
                     {item.title} ({item.version})
                   </option>
@@ -284,20 +273,9 @@ export function CompositionsPage() {
         />
         <Show when={!compositions.isLoading()}>
           <Show when={(compositions.data() ?? []).length > 0}>
-            <ul
-              role="list"
-              class={css({ display: "grid", gap: "3", listStyle: "none" })}
-            >
+            <UIList class={listClass}>
               <For each={compositions.data() ?? []}>
-                {(item: {
-                  _id: string;
-                  status: string;
-                  artifactType: string;
-                  version: string;
-                  title: string;
-                  revisionParentId?: string;
-                  revisionVariable?: string;
-                }) => {
+                {(item: CompositionRow) => {
                   const revisionParent = () =>
                     (compositions.data() ?? []).find(
                       (candidate: { _id: string }) =>
@@ -306,14 +284,7 @@ export function CompositionsPage() {
 
                   return (
                     <li data-testid="entity-row" class={entityCardClass}>
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                          marginBottom: "2",
-                        })}
-                      >
+                      <div class={rowBadgesClass}>
                         <UIBadge tone="gold">{item.status}</UIBadge>
                         <UIBadge tone="violet">{item.artifactType}</UIBadge>
                         <UIBadge tone="cream">{item.version}</UIBadge>
@@ -324,39 +295,26 @@ export function CompositionsPage() {
                         </Show>
                       </div>
 
-                      <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                      <h3 class={rowTitleClass}>
                         <Link
                           to="/compositions/$compositionId"
                           params={{ compositionId: String(item._id) }}
-                          class={titleLinkClass}
+                          class={recordLinkClass}
                         >
                           {item.title}
                         </Link>
                       </h3>
 
                       <Show when={item.revisionParentId}>
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                            mb: "2",
-                          })}
-                        >
+                        <p class={revisionOfClass}>
                           Revision of{" "}
                           {revisionParent()?.title ?? "an earlier composition"}
                         </p>
                       </Show>
 
-                      <div
-                        class={css({
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                        })}
-                      >
+                      <div class={badgeRowClass}>
                         <UIButton
                           variant="outline"
-                          class={pressedClass}
                           aria-pressed={item.status === "in_progress"}
                           aria-label={`Set ${item.title} to in progress`}
                           onClick={() =>
@@ -367,7 +325,6 @@ export function CompositionsPage() {
                         </UIButton>
                         <UIButton
                           variant="outline"
-                          class={pressedClass}
                           aria-pressed={item.status === "rendered"}
                           aria-label={`Set ${item.title} to rendered`}
                           onClick={() =>
@@ -377,8 +334,7 @@ export function CompositionsPage() {
                           Rendered
                         </UIButton>
                         <UIButton
-                          variant="ghost"
-                          class={pressedClass}
+                          variant="outline"
                           aria-pressed={item.status === "published"}
                           aria-label={`Set ${item.title} to published`}
                           onClick={() =>
@@ -392,7 +348,7 @@ export function CompositionsPage() {
                   );
                 }}
               </For>
-            </ul>
+            </UIList>
           </Show>
         </Show>
       </UICard>

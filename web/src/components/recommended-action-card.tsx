@@ -1,6 +1,7 @@
-import { Link } from "@tanstack/solid-router";
+import { Link, linkOptions } from "@tanstack/solid-router";
 import { css, cx } from "../../styled-system/css";
-import { focusRingClass, UIBadge } from "./ui";
+import { linkCardClass } from "./entity-card";
+import { badgeRowClass, UIBadge } from "./ui";
 
 /** One steering recommendation, as stored on a weekly brief or previewed live. */
 export type RecommendedActionCardAction = {
@@ -11,32 +12,32 @@ export type RecommendedActionCardAction = {
   reason: string;
 };
 
-const linkClass = cx(
-  css({
-    borderColor: "zodiac.gold/20",
-    borderRadius: "l2",
-    borderWidth: "1px",
-    color: "inherit",
-    display: "block",
-    p: "3",
-    textDecoration: "none",
-    transitionDuration: "normal",
-    transitionProperty: "border-color",
-    _hover: { borderColor: "zodiac.gold/45" },
-  }),
-  focusRingClass,
-);
-
-const badgeRowClass = css({
-  display: "flex",
-  gap: "2",
-  flexWrap: "wrap",
-  mb: "1",
-});
+const badgesClass = cx(badgeRowClass, css({ mb: "1" }));
 
 const targetClass = css({ color: "zodiac.cream", mb: "1" });
 
 const reasonClass = css({ color: "zodiac.cream/68" });
+
+/** The detail route a recommendation's target opens. */
+function actionTarget(action: RecommendedActionCardAction) {
+  switch (action.targetType) {
+    case "hypothesis":
+      return linkOptions({
+        to: "/hypotheses/$hypothesisId",
+        params: { hypothesisId: action.targetId },
+      });
+    case "recipe":
+      return linkOptions({
+        to: "/recipes/$recipeId",
+        params: { recipeId: action.targetId },
+      });
+    case "composition":
+      return linkOptions({
+        to: "/compositions/$compositionId",
+        params: { compositionId: action.targetId },
+      });
+  }
+}
 
 /**
  * A recommended next action linking to its hypothesis, recipe or composition.
@@ -45,9 +46,9 @@ const reasonClass = css({ color: "zodiac.cream/68" });
 export function RecommendedActionCard(props: {
   action: RecommendedActionCardAction;
 }) {
-  const body = () => (
-    <>
-      <div class={badgeRowClass}>
+  return (
+    <Link {...actionTarget(props.action)} class={linkCardClass}>
+      <div class={badgesClass}>
         <UIBadge tone="gold">{props.action.durationBucket}</UIBadge>
         <UIBadge tone="cream">{props.action.kind}</UIBadge>
       </div>
@@ -55,32 +56,6 @@ export function RecommendedActionCard(props: {
         {props.action.targetType} {props.action.targetId.slice(-6)}
       </div>
       <p class={reasonClass}>{props.action.reason}</p>
-    </>
-  );
-
-  return props.action.targetType === "hypothesis" ? (
-    <Link
-      to="/hypotheses/$hypothesisId"
-      params={{ hypothesisId: props.action.targetId }}
-      class={linkClass}
-    >
-      {body()}
-    </Link>
-  ) : props.action.targetType === "recipe" ? (
-    <Link
-      to="/recipes/$recipeId"
-      params={{ recipeId: props.action.targetId }}
-      class={linkClass}
-    >
-      {body()}
-    </Link>
-  ) : (
-    <Link
-      to="/compositions/$compositionId"
-      params={{ compositionId: props.action.targetId }}
-      class={linkClass}
-    >
-      {body()}
     </Link>
   );
 }

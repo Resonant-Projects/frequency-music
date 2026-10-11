@@ -70,6 +70,10 @@ const variantStyles: Record<ButtonVariant, string> = {
       bg: "zodiac.gold/8",
       color: "zodiac.cream",
     },
+    _pressed: {
+      borderColor: "zodiac.gold/75",
+      color: "zodiac.gold",
+    },
   }),
 };
 

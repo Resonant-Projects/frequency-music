@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/solid-router";
-import { createUniqueId, Show } from "solid-js";
+import { Show } from "solid-js";
 import { css, cx } from "../../styled-system/css";
 import type { EssaySummary } from "../lib/essays";
-import { focusRingClass, UIBadge } from "./ui";
+import { UIBadge } from "./ui";
 
 /** Gold-washed hero surface shared by the essay archive and an essay page. */
 export const essayHeroClass = css({
@@ -31,7 +31,6 @@ export const essayDisplayTitleClass = css({
   fontWeight: "normal",
   lineHeight: "0.96",
   letterSpacing: "-0.015em",
-  m: "0",
 });
 
 /** The badge row (date, read time, word count) above an essay title. */
@@ -42,8 +41,14 @@ export const essayMetaClass = css({
   alignItems: "center",
 });
 
-/** Hover lift for a whole-card essay link. Cards are flat at rest. */
+/**
+ * A card that is one essay link. The link lives inside the card's heading
+ * (`EssayTitleLink`) and its `::after` overlay stretches the hit area over the
+ * whole card; the card owns the hover lift and draws the focus ring while that
+ * link is focused. Cards are flat at rest.
+ */
 export const essayCardLiftClass = css({
+  position: "relative",
   transition:
     "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
   _hover: {
@@ -52,10 +57,15 @@ export const essayCardLiftClass = css({
     boxShadow: "cardHover",
     _motionReduce: { transform: "none" },
   },
+  "&:has(a:focus-visible)": {
+    borderColor: "zodiac.gold/48",
+    outline: "2px solid",
+    outlineColor: "zodiac.gold",
+    outlineOffset: "2px",
+  },
 });
 
 const essayCardClass = css({
-  position: "relative",
   display: "grid",
   alignContent: "start",
   gap: "2",
@@ -75,7 +85,6 @@ const essayCardTitleClass = css({
   fontWeight: "normal",
   lineHeight: "1.08",
   letterSpacing: "-0.01em",
-  m: "0",
 });
 
 const essayCardExcerptClass = css({
@@ -83,7 +92,6 @@ const essayCardExcerptClass = css({
   fontSize: "14px",
   fontWeight: "400",
   lineHeight: "1.65",
-  m: "0",
 });
 
 const essayCardFooterClass = css({
@@ -95,28 +103,29 @@ const essayCardFooterClass = css({
   mt: "3",
 });
 
-// Covers the whole card so it stays one click target, while the heading sits
-// outside the anchor and names it through aria-labelledby.
-const stretchedLinkClass = css({
-  position: "absolute",
-  inset: "0",
-  zIndex: "1",
-  borderRadius: "l3",
+// Essay cards use `l3` corners, so this is the essay twin of
+// `entityCardTitleLinkClass` (whose overlay is `l2`).
+const essayTitleLinkClass = css({
+  color: "inherit",
+  textDecoration: "none",
+  _after: {
+    borderRadius: "l3",
+    content: '""',
+    inset: "0",
+    position: "absolute",
+  },
+  // The card draws the ring (see `essayCardLiftClass`).
+  _focusVisible: { outline: "none" },
 });
 
 /** An essay's date badge, with a machine-readable `<time>` when it parses. */
 export function EssayDateBadge(props: { essay: EssaySummary }) {
-  const iso = () =>
-    props.essay.dateValue === null
-      ? null
-      : new Date(props.essay.dateValue).toISOString();
+  const label = () => props.essay.dateLabel ?? "Research essay";
   return (
     <UIBadge tone="gold">
-      <Show when={iso()} fallback={props.essay.dateLabel ?? "Research essay"}>
-        {(datetime) => (
-          <time datetime={datetime()}>
-            {props.essay.dateLabel ?? "Research essay"}
-          </time>
+      <Show when={props.essay.dateValue} fallback={label()}>
+        {(value) => (
+          <time datetime={new Date(value()).toISOString()}>{label()}</time>
         )}
       </Show>
     </UIBadge>
@@ -124,34 +133,31 @@ export function EssayDateBadge(props: { essay: EssaySummary }) {
 }
 
 /**
- * A link that covers its `position: relative` parent card. It has no content
- * of its own: `labelledBy` must name the card's heading id.
+ * The essay title as the card's one link; place it inside the card's heading
+ * on an `essayCardLiftClass` card so its overlay covers the whole card.
  */
-export function EssayStretchedLink(props: {
-  slug: string;
-  labelledBy: string;
-}) {
+export function EssayTitleLink(props: { essay: EssaySummary }) {
   return (
     <Link
       to="/essays/$essaySlug"
-      params={{ essaySlug: props.slug }}
-      aria-labelledby={props.labelledBy}
-      class={cx(focusRingClass, stretchedLinkClass)}
-    />
+      params={{ essaySlug: props.essay.slug }}
+      class={essayTitleLinkClass}
+    >
+      {props.essay.title}
+    </Link>
   );
 }
 
 /** An archive or related-essay card; the whole card links to the essay. */
 export function EssayCard(props: { essay: EssaySummary; footer?: boolean }) {
-  const titleId = createUniqueId();
   return (
     <article class={cx(essayCardClass, essayCardLiftClass)}>
       <div class={essayMetaClass}>
         <EssayDateBadge essay={props.essay} />
         <UIBadge tone="cream">{props.essay.readTimeMinutes} min</UIBadge>
       </div>
-      <h3 id={titleId} class={essayCardTitleClass}>
-        {props.essay.title}
+      <h3 class={essayCardTitleClass}>
+        <EssayTitleLink essay={props.essay} />
       </h3>
       <p class={essayCardExcerptClass}>{props.essay.excerpt}</p>
       <Show when={props.footer}>
@@ -159,7 +165,6 @@ export function EssayCard(props: { essay: EssaySummary; footer?: boolean }) {
           Read essay
         </div>
       </Show>
-      <EssayStretchedLink slug={props.essay.slug} labelledBy={titleId} />
     </article>
   );
 }

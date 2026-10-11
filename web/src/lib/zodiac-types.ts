@@ -37,6 +37,14 @@ export type OrbitalRecipe = Pick<
   "_id" | "title" | "hypothesisId" | "status"
 >;
 
+/** The live pipeline items drawn as orbiting bodies. */
+export interface PipelineItems {
+  sources: OrbitalSource[];
+  extractions: OrbitalExtraction[];
+  hypotheses: OrbitalHypothesis[];
+  recipes: OrbitalRecipe[];
+}
+
 export interface ItemRelation {
   id: string;
   type: string;

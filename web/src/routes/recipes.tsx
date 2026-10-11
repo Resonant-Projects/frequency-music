@@ -8,7 +8,9 @@ import {
   entityCardTitleLinkClass,
 } from "../components/entity-card";
 import {
+  badgeRowClass,
   fieldLabelClass,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -16,6 +18,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -27,35 +30,21 @@ import {
   createQueryWithStatus,
   describeError,
 } from "../integrations/convex";
+import { stripMarkdown } from "../lib/essay-parse";
+import { parseLines } from "../lib/markdown-utils";
 import { api } from "../../../convex/_generated/api";
 
 type HypothesisRow = { _id: string; title: string };
 type RecipeRow = FunctionReturnType<typeof api.recipes.listByStatus>[number];
 
 function parseParameters(input: string) {
-  return input
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [type, ...rest] = line.split(":");
-      return {
-        type: type?.trim() || "custom",
-        value: rest.join(":").trim() || line,
-      };
-    });
-}
-
-function parseLines(value: string) {
-  return value
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-/** Plain-text preview of a markdown body: drops heading, emphasis and code marks. */
-function stripMarkdown(value: string) {
-  return value.replace(/[#*_`]+/g, "").trim();
+  return parseLines(input).map((line) => {
+    const [type, ...rest] = line.split(":");
+    return {
+      type: type?.trim() || "custom",
+      value: rest.join(":").trim() || line,
+    };
+  });
 }
 
 /** Recipe cards add the gold discovery glow to the shared hover lift. */
@@ -63,6 +52,20 @@ const recipeCardClass = cx(
   entityCardLinkClass,
   css({ _hover: { boxShadow: "goldGlow" } }),
 );
+
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ marginBottom: "2" }));
+
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "2" });
+
+/** Three lines of the plain-text body. */
+const bodyPreviewClass = cx(
+  helperClass,
+  css({ lineClamp: 3, overflow: "hidden" }),
+);
+
+const rowWhyClass = cx(helperClass, css({ marginTop: "2" }));
 
 export function RecipesPage() {
   onMount(() => {
@@ -298,27 +301,17 @@ export function RecipesPage() {
         />
         <Show when={!recipes.isLoading()}>
           <Show when={(recipes.data() ?? []).length > 0}>
-            <ul
-              role="list"
-              class={css({ display: "grid", gap: "3", listStyle: "none" })}
-            >
+            <UIList class={listClass}>
               <For each={recipes.data() ?? []}>
                 {(recipe: RecipeRow) => (
                   <li data-testid="entity-row" class={recipeCardClass}>
-                    <div
-                      class={css({
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                        marginBottom: "2",
-                      })}
-                    >
+                    <div class={rowBadgesClass}>
                       <UIBadge tone="gold">{recipe.status}</UIBadge>
                       <UIBadge tone="cream">
                         {recipe.parameters.length} params
                       </UIBadge>
                     </div>
-                    <h3 class={css({ fontSize: "xl", marginBottom: "2" })}>
+                    <h3 class={rowTitleClass}>
                       <Link
                         to="/recipes/$recipeId"
                         params={{ recipeId: recipe._id }}
@@ -327,35 +320,18 @@ export function RecipesPage() {
                         {recipe.title}
                       </Link>
                     </h3>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/66",
-                        lineClamp: 3,
-                        marginBottom: recipe.whyThisMatters ? "2" : "0",
-                        fontSize: "sm",
-                        maxW: "72ch",
-                        overflow: "hidden",
-                      })}
-                    >
+                    <p class={bodyPreviewClass}>
                       {stripMarkdown(recipe.bodyMd)}
                     </p>
                     <Show when={recipe.whyThisMatters}>
                       {(value) => (
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                            maxW: "72ch",
-                          })}
-                        >
-                          Why this matters: {value()}
-                        </p>
+                        <p class={rowWhyClass}>Why this matters: {value()}</p>
                       )}
                     </Show>
                   </li>
                 )}
               </For>
-            </ul>
+            </UIList>
           </Show>
         </Show>
       </UICard>

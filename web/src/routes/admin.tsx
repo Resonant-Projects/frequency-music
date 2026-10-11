@@ -1,11 +1,19 @@
 import { Link } from "@tanstack/solid-router";
-import { createSignal, For, onMount, Show } from "solid-js";
-import type { FunctionArgs } from "convex/server";
+import {
+  type ComponentProps,
+  createSignal,
+  For,
+  onMount,
+  Show,
+} from "solid-js";
+import type { FunctionArgs, FunctionReturnType } from "convex/server";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { SOURCE_STATUSES } from "../../../convex/shared/statuses";
 import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
   fieldLabelClass,
+  formActionsClass,
   helperClass,
   inlineActionLink,
   pageClass,
@@ -26,6 +34,28 @@ import {
 import { api } from "../../../convex/_generated/api";
 
 type SourceStatus = FunctionArgs<typeof api.admin.setSourceStatus>["status"];
+type BadgeTone = NonNullable<ComponentProps<typeof UIBadge>["tone"]>;
+type Snapshot = FunctionReturnType<typeof api.admin.workspaceSnapshot>;
+type ReviewSummary = FunctionReturnType<typeof api.vocabulary.reviewSummary>;
+
+const SNAPSHOT_COUNTS: Array<
+  [label: string, tone: BadgeTone, key: keyof Snapshot]
+> = [
+  ["Sources", "gold", "sources"],
+  ["Hypotheses", "violet", "hypotheses"],
+  ["Recipes", "cream", "recipes"],
+  ["Compositions", "gold", "compositions"],
+  ["Weekly Briefs", "violet", "weeklyBriefs"],
+  ["Feeds", "cream", "feeds"],
+];
+
+const PROVISIONAL_TERMS: Array<
+  [label: string, tone: BadgeTone, key: keyof ReviewSummary]
+> = [
+  ["Parameter Kinds", "gold", "provisionalParameterKinds"],
+  ["Concept Domains", "violet", "provisionalConceptDomains"],
+  ["Relationship Kinds", "cream", "provisionalRelationshipKinds"],
+];
 
 const SOURCE_ID_REQUIRED = "Source ID is required.";
 
@@ -36,18 +66,18 @@ const countClass = css({
   mt: "2",
 });
 
-const badgeRowClass = css({
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "2",
-  marginTop: "2",
+const snapshotGridClass = css({
+  display: "grid",
+  gap: "3",
+  gridTemplateColumns: {
+    base: "repeat(2, minmax(0, 1fr))",
+    md: "repeat(3, minmax(0, 1fr))",
+  },
 });
 
-const formActionsClass = css({
-  display: "flex",
-  justifyContent: "flex-end",
-  marginTop: "3",
-});
+const termsRowClass = cx(badgeRowClass, css({ mt: "2" }));
+
+const actionsRowClass = cx(formActionsClass, css({ mt: "3" }));
 
 export function AdminPage() {
   onMount(() => {
@@ -73,18 +103,7 @@ export function AdminPage() {
   let sourceIdField: HTMLInputElement | undefined;
 
   /** A snapshot count, or an em dash until the snapshot has loaded. */
-  const count = (
-    key:
-      | "sources"
-      | "hypotheses"
-      | "recipes"
-      | "compositions"
-      | "weeklyBriefs"
-      | "feeds",
-  ) => {
-    const data = snapshot.data();
-    return data ? data[key] : "—";
-  };
+  const count = (key: keyof Snapshot) => snapshot.data()?.[key] ?? "—";
 
   async function submitSourceStatus(event: SubmitEvent) {
     event.preventDefault();
@@ -160,52 +179,17 @@ export function AdminPage() {
               : null
           }
         />
-        <dl
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: {
-              base: "repeat(2, minmax(0, 1fr))",
-              md: "repeat(3, minmax(0, 1fr))",
-            },
-          })}
-        >
-          <div>
-            <dt>
-              <UIBadge tone="gold">Sources</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("sources")}</dd>
-          </div>
-          <div>
-            <dt>
-              <UIBadge tone="violet">Hypotheses</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("hypotheses")}</dd>
-          </div>
-          <div>
-            <dt>
-              <UIBadge tone="cream">Recipes</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("recipes")}</dd>
-          </div>
-          <div>
-            <dt>
-              <UIBadge tone="gold">Compositions</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("compositions")}</dd>
-          </div>
-          <div>
-            <dt>
-              <UIBadge tone="violet">Weekly Briefs</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("weeklyBriefs")}</dd>
-          </div>
-          <div>
-            <dt>
-              <UIBadge tone="cream">Feeds</UIBadge>
-            </dt>
-            <dd class={countClass}>{count("feeds")}</dd>
-          </div>
+        <dl class={snapshotGridClass}>
+          <For each={SNAPSHOT_COUNTS}>
+            {([label, tone, key]) => (
+              <div>
+                <dt>
+                  <UIBadge tone={tone}>{label}</UIBadge>
+                </dt>
+                <dd class={countClass}>{count(key)}</dd>
+              </div>
+            )}
+          </For>
         </dl>
       </UICard>
 
@@ -229,7 +213,7 @@ export function AdminPage() {
           onInput={(event) => setBatchLimit(event.currentTarget.value)}
           placeholder="25"
         />
-        <div class={formActionsClass}>
+        <div class={actionsRowClass}>
           <UIButton type="submit" variant="solid" aria-busy={isQueueing()}>
             Queue Batch Extraction
           </UIButton>
@@ -253,33 +237,16 @@ export function AdminPage() {
           }
         />
         <div class={css({ display: "grid", gap: "4", marginTop: "3" })}>
-          <div>
-            <UIBadge tone="gold">Parameter Kinds</UIBadge>
-            <div class={badgeRowClass}>
-              <ProvisionalTerms
-                loaded={Boolean(reviewSummary.data())}
-                terms={reviewSummary.data()?.provisionalParameterKinds}
-              />
-            </div>
-          </div>
-          <div>
-            <UIBadge tone="violet">Concept Domains</UIBadge>
-            <div class={badgeRowClass}>
-              <ProvisionalTerms
-                loaded={Boolean(reviewSummary.data())}
-                terms={reviewSummary.data()?.provisionalConceptDomains}
-              />
-            </div>
-          </div>
-          <div>
-            <UIBadge tone="cream">Relationship Kinds</UIBadge>
-            <div class={badgeRowClass}>
-              <ProvisionalTerms
-                loaded={Boolean(reviewSummary.data())}
-                terms={reviewSummary.data()?.provisionalRelationshipKinds}
-              />
-            </div>
-          </div>
+          <For each={PROVISIONAL_TERMS}>
+            {([label, tone, key]) => (
+              <div>
+                <UIBadge tone={tone}>{label}</UIBadge>
+                <div class={termsRowClass}>
+                  <ProvisionalTerms terms={reviewSummary.data()?.[key]} />
+                </div>
+              </div>
+            )}
+          </For>
         </div>
       </UICard>
 
@@ -337,7 +304,7 @@ export function AdminPage() {
           </For>
         </UISelect>
 
-        <div class={formActionsClass}>
+        <div class={actionsRowClass}>
           <UIButton type="submit" variant="outline" aria-busy={isApplying()}>
             Apply Status
           </UIButton>
@@ -348,11 +315,11 @@ export function AdminPage() {
 }
 
 /** Provisional vocabulary terms as badges; "None" once loaded and empty. */
-function ProvisionalTerms(props: { loaded: boolean; terms?: string[] }) {
+function ProvisionalTerms(props: { terms?: string[] }) {
   return (
     <Show
       when={(props.terms?.length ?? 0) > 0}
-      fallback={<span class={helperClass}>{props.loaded ? "None" : "—"}</span>}
+      fallback={<span class={helperClass}>{props.terms ? "None" : "—"}</span>}
     >
       <For each={props.terms ?? []}>
         {(item) => <UIBadge tone="cream">{item}</UIBadge>}

@@ -24,22 +24,6 @@ export function eventTone(kind: AgentRunEventKind): AgentRunBadgeTone {
   return "cream";
 }
 
-const timeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "medium",
-});
-
-/** Medium date and time in the reader's locale, or an em dash when unset. */
-export function formatTime(value?: number) {
-  if (!value) return "—";
-  return timeFormatter.format(new Date(value));
-}
-
-/** Machine-readable `datetime` value for a `<time>` element. */
-export function isoTime(value?: number) {
-  return value ? new Date(value).toISOString() : undefined;
-}
-
 /** Wall-clock duration from start (or creation) to finish (or last update). */
 export function formatDuration(run: AgentRunTimes) {
   const start = run.startedAt ?? run.createdAt;
@@ -59,3 +43,8 @@ export function formatPayload(payload: unknown) {
     return String(payload);
   }
 }
+
+/** Whether two id lists hold the same ids in the same order. */
+export const sameIds = (left: readonly string[], right: readonly string[]) =>
+  left.length === right.length &&
+  left.every((id, index) => id === right[index]);

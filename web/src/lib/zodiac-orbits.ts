@@ -3,13 +3,7 @@
 
 import * as THREE from "three";
 import { COLORS, R, SECTORS, STATUS_COLORS } from "./zodiac-data";
-import type {
-  ItemRelation,
-  OrbitalExtraction,
-  OrbitalHypothesis,
-  OrbitalRecipe,
-  OrbitalSource,
-} from "./zodiac-types";
+import type { ItemRelation, PipelineItems } from "./zodiac-types";
 
 export interface OrbitalItem {
   id: string;
@@ -17,6 +11,9 @@ export interface OrbitalItem {
   status: string;
   sectorId?: string; // inferred from topics/concepts
 }
+
+/** The orbiting bodies, one list per ring, keyed like `PipelineItems`. */
+export type OrbitalItemGroups = Record<keyof PipelineItems, OrbitalItem[]>;
 
 /** The sector an orbiting body is drawn in; unplaced items sit in Music. */
 export function orbitalItemSector(item: OrbitalItem): string {
@@ -40,7 +37,8 @@ export interface OrbitalSystem {
 const reusableOrbitDummy = new THREE.Object3D();
 
 // Stable per-item value in [0, 1): a live data refresh rebuilds the rings, and
-// a body must keep its orbital speed across rebuilds instead of re-rolling it.
+// a body must keep its place and speed across rebuilds instead of re-rolling
+// them or shifting when another item arrives or leaves.
 function hashUnit(id: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < id.length; i++) {
@@ -93,6 +91,10 @@ function getSectorAngleRange(sectorId: string): { start: number; end: number } {
   return { start: sector.startAngle, end: sector.endAngle };
 }
 
+// Bodies keep this fraction of the sector span clear at each end, so none sits
+// on a sector spoke.
+const SECTOR_EDGE_MARGIN = 0.08;
+
 function buildOrbitalRing(
   ringRadius: number,
   items: OrbitalItem[],
@@ -100,22 +102,6 @@ function buildOrbitalRing(
   label: string,
   z: number,
 ): OrbitalRing {
-  const count = items.length;
-  if (count === 0) {
-    const dummy = new THREE.InstancedMesh(
-      geometry,
-      new THREE.MeshBasicMaterial(),
-      0,
-    );
-    return {
-      mesh: dummy,
-      items,
-      radius: ringRadius,
-      label,
-      dispose: () => dummy.dispose(),
-    };
-  }
-
   const mat = new THREE.MeshStandardMaterial({
     color: COLORS.void,
     emissive: COLORS.gold,
@@ -126,67 +112,40 @@ function buildOrbitalRing(
     opacity: 0.85,
   });
 
-  const mesh = new THREE.InstancedMesh(geometry, mat, count);
+  const mesh = new THREE.InstancedMesh(geometry, mat, items.length);
   mesh.userData = { type: "orbital-ring", label, ringRadius };
 
-  const dummy = new THREE.Object3D();
+  const baseAngles = new Float32Array(items.length);
+  const speeds = new Float32Array(items.length);
   const color = new THREE.Color();
 
-  // Pre-compute per-instance angles grouped by sector
-  const angleAttrib = new Float32Array(count);
-  const speedAttrib = new Float32Array(count);
-  const colorAttrib = new Float32Array(count * 3);
-
-  // Group items by sector to create density clusters
-  const sectorGroups = new Map<string, number[]>();
   items.forEach((item, i) => {
-    const sid = orbitalItemSector(item);
-    if (!sectorGroups.has(sid)) sectorGroups.set(sid, []);
-    sectorGroups.get(sid)!.push(i);
-  });
+    // Phase within the sector and orbital speed both come from the id, so a
+    // body's position depends on nothing but itself.
+    const { start, end } = getSectorAngleRange(orbitalItemSector(item));
+    const phase =
+      SECTOR_EDGE_MARGIN +
+      hashUnit(`${item.id}:phase`) * (1 - 2 * SECTOR_EDGE_MARGIN);
+    const angle = start + phase * (end - start);
+    baseAngles[i] = angle;
+    speeds[i] = 0.02 + hashUnit(item.id) * 0.01; // slow orbit
 
-  for (const [sectorId, indices] of sectorGroups) {
-    const { start, end } = getSectorAngleRange(sectorId);
-    indices.forEach((idx, j) => {
-      const t = indices.length > 1 ? j / (indices.length - 1) : 0.5;
-      angleAttrib[idx] = start + t * (end - start);
-      speedAttrib[idx] = 0.02 + hashUnit(items[idx].id) * 0.01; // slow orbit
-
-      // Color by status
-      const statusColor = STATUS_COLORS[items[idx].status] ?? COLORS.gold;
-      color.set(statusColor);
-      colorAttrib[idx * 3] = color.r;
-      colorAttrib[idx * 3 + 1] = color.g;
-      colorAttrib[idx * 3 + 2] = color.b;
-    });
-  }
-
-  // Set instance transforms (positioned at origin, orbit shader moves them)
-  items.forEach((_, i) => {
-    const angle = angleAttrib[i];
-    dummy.position.set(
+    reusableOrbitDummy.position.set(
       ringRadius * Math.cos(angle),
       -ringRadius * Math.sin(angle),
       z,
     );
-    dummy.updateMatrix();
-    mesh.setMatrixAt(i, dummy.matrix);
-
-    // Set instance color from status
-    color.set(
-      colorAttrib[i * 3],
-      colorAttrib[i * 3 + 1],
-      colorAttrib[i * 3 + 2],
-    );
-    mesh.setColorAt(i, color);
+    reusableOrbitDummy.updateMatrix();
+    mesh.setMatrixAt(i, reusableOrbitDummy.matrix);
+    mesh.setColorAt(i, color.set(STATUS_COLORS[item.status] ?? COLORS.gold));
   });
 
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
   // Store angle/speed for animation
-  mesh.userData.baseAngles = angleAttrib;
-  mesh.userData.speeds = speedAttrib;
+  mesh.userData.baseAngles = baseAngles;
+  mesh.userData.speeds = speeds;
   mesh.userData.zOffset = z;
 
   return {
@@ -205,36 +164,28 @@ function buildOrbitalRing(
 /** Pipeline items as orbiting bodies, one list per ring. The sidebar reads
  *  the same lists so its keyboard path names exactly what the scene draws. */
 export function buildOrbitalItemGroups(
-  sources: OrbitalSource[],
-  extractions: OrbitalExtraction[],
-  hypotheses: OrbitalHypothesis[],
-  recipes: OrbitalRecipe[],
-): {
-  sources: OrbitalItem[];
-  extractions: OrbitalItem[];
-  hypotheses: OrbitalItem[];
-  recipes: OrbitalItem[];
-} {
+  items: PipelineItems,
+): OrbitalItemGroups {
   return {
-    sources: sources.map((s) => ({
+    sources: items.sources.map((s) => ({
       id: s._id,
       title: s.title ?? "Untitled",
       status: s.status,
       sectorId: inferSectorFromTopics(s.topics ?? []),
     })),
-    extractions: extractions.map((e) => ({
+    extractions: items.extractions.map((e) => ({
       id: e._id,
       title: `Extraction (${e.topics.slice(0, 2).join(", ")})`,
       status: e.confidence > 0.7 ? "extracted" : "review_needed",
       sectorId: inferSectorFromTopics(e.topics),
     })),
-    hypotheses: hypotheses.map((h) => ({
+    hypotheses: items.hypotheses.map((h) => ({
       id: h._id,
       title: h.title,
       status: h.status,
       sectorId: inferSectorFromTopics(h.concepts ?? []),
     })),
-    recipes: recipes.map((r) => ({
+    recipes: items.recipes.map((r) => ({
       id: r._id,
       title: r.title,
       status: r.status,
@@ -242,26 +193,14 @@ export function buildOrbitalItemGroups(
   };
 }
 
-export function buildOrbitalSystem(
-  sources: OrbitalSource[],
-  extractions: OrbitalExtraction[],
-  hypotheses: OrbitalHypothesis[],
-  recipes: OrbitalRecipe[],
-): OrbitalSystem {
+export function buildOrbitalSystem(groups: OrbitalItemGroups): OrbitalSystem {
   const group = new THREE.Group();
   group.userData.type = "orbital-system";
-
-  const {
-    sources: sourceItems,
-    extractions: extractionItems,
-    hypotheses: hypothesisItems,
-    recipes: recipeItems,
-  } = buildOrbitalItemGroups(sources, extractions, hypotheses, recipes);
 
   // Build each ring
   const sourcesRing = buildOrbitalRing(
     R.sources,
-    sourceItems,
+    groups.sources,
     new THREE.SphereGeometry(1.8, 8, 6),
     "Sources",
     -40,
@@ -269,7 +208,7 @@ export function buildOrbitalSystem(
 
   const extractionsRing = buildOrbitalRing(
     R.extract,
-    extractionItems,
+    groups.extractions,
     new THREE.SphereGeometry(2.5, 8, 6),
     "Extractions",
     -30,
@@ -277,7 +216,7 @@ export function buildOrbitalSystem(
 
   const hypothesesRing = buildOrbitalRing(
     R.hypothesis,
-    hypothesisItems,
+    groups.hypotheses,
     new THREE.IcosahedronGeometry(3, 0),
     "Hypotheses",
     -20,
@@ -285,7 +224,7 @@ export function buildOrbitalSystem(
 
   const recipesRing = buildOrbitalRing(
     R.recipe,
-    recipeItems,
+    groups.recipes,
     new THREE.OctahedronGeometry(3.5, 0),
     "Recipes",
     -10,
@@ -334,9 +273,11 @@ export function updateOrbits(system: OrbitalSystem, time: number): void {
 const PULL_LINE_SEGMENTS = 20;
 
 export interface PullLines {
-  group: THREE.Group;
+  /** Every link in one geometry: a single draw call however many there are. */
+  object: THREE.LineSegments;
   /** Re-trace every line from the bodies' current instance matrices. */
   update: () => void;
+  dispose: () => void;
 }
 
 // Build pull-lines from a clicked item to its related items on other rings.
@@ -348,44 +289,38 @@ export function buildPullLines(
   relations: ItemRelation[],
   allRings: OrbitalRing[],
 ): PullLines {
-  const group = new THREE.Group();
-  group.userData.type = "pull-lines";
-
-  const links: Array<{ line: THREE.Line; ring: OrbitalRing; index: number }> =
-    [];
-
+  const targets: Array<{ ring: OrbitalRing; index: number }> = [];
   for (const relation of relations) {
     // Find the target item across all rings
     for (const ring of allRings) {
-      const targetIdx = ring.items.findIndex((item) => item.id === relation.id);
-      if (targetIdx === -1) continue;
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute(
-        "position",
-        new THREE.BufferAttribute(
-          new Float32Array((PULL_LINE_SEGMENTS + 1) * 3),
-          3,
-        ),
-      );
-      const mat = new THREE.LineBasicMaterial({
-        color: COLORS.gold,
-        transparent: true,
-        opacity: 0.5,
-        depthWrite: false,
-      });
-      const line = new THREE.Line(geo, mat);
-      // The geometry moves every frame; a stale bounding sphere would cull it.
-      line.frustumCulled = false;
-      group.add(line);
-      links.push({ line, ring, index: targetIdx });
+      const index = ring.items.findIndex((item) => item.id === relation.id);
+      if (index !== -1) targets.push({ ring, index });
     }
   }
+
+  // Each link is a curve of PULL_LINE_SEGMENTS segments, two vertices apiece.
+  const position = new THREE.BufferAttribute(
+    new Float32Array(targets.length * PULL_LINE_SEGMENTS * 2 * 3),
+    3,
+  );
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", position);
+  const material = new THREE.LineBasicMaterial({
+    color: COLORS.gold,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+  });
+  const object = new THREE.LineSegments(geometry, material);
+  object.userData.type = "pull-lines";
+  // The geometry moves every frame; a stale bounding sphere would cull it.
+  object.frustumCulled = false;
 
   const matrix = new THREE.Matrix4();
   const srcPos = new THREE.Vector3();
   const tgtPos = new THREE.Vector3();
   const midPoint = new THREE.Vector3();
+  const prev = new THREE.Vector3();
   const point = new THREE.Vector3();
   // Catmull-Rom curve through a midpoint raised above the disc. The curve
   // holds these vectors by reference, so mutating them re-shapes it.
@@ -394,25 +329,33 @@ export function buildPullLines(
   function update() {
     clickedRing.mesh.getMatrixAt(clickedIndex, matrix);
     srcPos.setFromMatrixPosition(matrix);
-    for (const link of links) {
-      link.ring.mesh.getMatrixAt(link.index, matrix);
+    let vertex = 0;
+    for (const target of targets) {
+      target.ring.mesh.getMatrixAt(target.index, matrix);
       tgtPos.setFromMatrixPosition(matrix);
       midPoint.set(
         (srcPos.x + tgtPos.x) / 2,
         (srcPos.y + tgtPos.y) / 2,
         Math.max(srcPos.z, tgtPos.z) + 30,
       );
-      const position = link.line.geometry.getAttribute(
-        "position",
-      ) as THREE.BufferAttribute;
-      for (let i = 0; i <= PULL_LINE_SEGMENTS; i++) {
+      curve.getPoint(0, prev);
+      for (let i = 1; i <= PULL_LINE_SEGMENTS; i++) {
         curve.getPoint(i / PULL_LINE_SEGMENTS, point);
-        position.setXYZ(i, point.x, point.y, point.z);
+        position.setXYZ(vertex++, prev.x, prev.y, prev.z);
+        position.setXYZ(vertex++, point.x, point.y, point.z);
+        prev.copy(point);
       }
-      position.needsUpdate = true;
     }
+    position.needsUpdate = true;
   }
 
   update();
-  return { group, update };
+  return {
+    object,
+    update,
+    dispose: () => {
+      geometry.dispose();
+      material.dispose();
+    },
+  };
 }

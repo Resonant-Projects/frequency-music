@@ -1,25 +1,23 @@
 import type { FunctionArgs, FunctionReturnType } from "convex/server";
-import {
-  createMemo,
-  createSignal,
-  For,
-  onCleanup,
-  onMount,
-  Show,
-} from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { DECISION_NOTE_MAX_LENGTH } from "../../../convex/shared/vocabularyTriage";
 import { css } from "../../styled-system/css";
 import {
+  badgeRowClass,
+  createAnnouncer,
+  DateTime,
   eyebrowClass,
   fieldLabelClass,
   helperClass,
+  metaLabelClass,
   pageClass,
   pageTitleClass,
   UIBadge,
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
 } from "../components/ui";
@@ -62,35 +60,17 @@ const SECTIONS = [
   tone: "violet" | "cream";
 }>;
 
-/** Mono uppercase row metadata: added date and mention count. */
-const rowMetaClass = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-});
-
 /**
  * UICard already sets a gold hairline; the doubled selector outranks it so the
- * violet override does not depend on atomic stylesheet order.
+ * override does not depend on atomic stylesheet order.
  */
-const violetCardClass = css({ "&&": { borderColor: "zodiac.violet/22" } });
-
-/** Selected decision: lit gold border and label, never a solid fill. */
-const pressedDecisionClass = css({
-  _pressed: {
-    borderColor: "zodiac.gold/75",
-    color: "zodiac.gold",
-  },
-});
+const violetCardClass = css({ "&&": { borderColor: "zodiac.violet/24" } });
 
 const termHeadingClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "xl",
   fontWeight: "normal",
-  overflowWrap: "anywhere",
 });
 
 const triageRowClass = css({
@@ -102,17 +82,44 @@ const triageRowClass = css({
   p: { base: "3", md: "4" },
 });
 
+const triageRowHeaderClass = css({
+  alignItems: "flex-start",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "space-between",
+});
+
+const stackClass = css({ display: "grid", gap: "2" });
+const entryNotesClass = css({ display: "grid", gap: "1" });
+
+const decisionPanelClass = css({
+  bg: "zodiac.glow-inner/32",
+  borderRadius: "l2",
+  display: "grid",
+  gap: "3",
+  p: "3",
+  // Violet at rest marks the speculative choice; focus keeps the fields' own
+  // gold border and ring.
+  "& select:not(:focus), & input:not(:focus)": {
+    borderColor: "zodiac.violet/42",
+  },
+});
+
+const sectionHeadingClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  fontWeight: "normal",
+  lineHeight: "1.2",
+  textWrap: "balance",
+});
+
+const triageListClass = css({ display: "grid", gap: "3" });
+
 function mentionLabel(entry: TriageEntry) {
   if (entry.mentionCount === null) return null;
   return `${entry.mentionCount}${entry.mentionCountCapped ? "+" : ""} mention${entry.mentionCount === 1 ? "" : "s"}`;
-}
-
-const createdAtFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-});
-
-function formatCreatedAt(createdAt: number) {
-  return createdAtFormatter.format(new Date(createdAt));
 }
 
 function TriageRow(props: {
@@ -194,24 +201,9 @@ function TriageRow(props: {
 
   return (
     <article class={triageRowClass}>
-      <div
-        class={css({
-          alignItems: "flex-start",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "3",
-          justifyContent: "space-between",
-        })}
-      >
-        <div class={css({ display: "grid", gap: "2" })}>
-          <div
-            class={css({
-              alignItems: "center",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "2",
-            })}
-          >
+      <div class={triageRowHeaderClass}>
+        <div class={stackClass}>
+          <div class={badgeRowClass}>
             <h3 id={headingId()} tabIndex={-1} class={termHeadingClass}>
               {term()}
             </h3>
@@ -219,20 +211,16 @@ function TriageRow(props: {
               <UIBadge tone="violet">Domain</UIBadge>
             </Show>
           </div>
-          <p class={rowMetaClass}>
-            Added{" "}
-            <time datetime={new Date(props.entry.createdAt).toISOString()}>
-              {formatCreatedAt(props.entry.createdAt)}
-            </time>
+          <p class={metaLabelClass}>
+            Added <DateTime value={props.entry.createdAt} />
             <Show when={mentionLabel(props.entry)}>
               {(label) => ` · ${label()}`}
             </Show>
           </p>
         </div>
-        <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <div class={badgeRowClass}>
           <UIButton
             variant="outline"
-            class={pressedDecisionClass}
             aria-pressed={decision() === "promote"}
             disabled={busy()}
             onClick={() => chooseDecision("promote")}
@@ -241,7 +229,6 @@ function TriageRow(props: {
           </UIButton>
           <UIButton
             variant="outline"
-            class={pressedDecisionClass}
             aria-pressed={decision() === "merge"}
             disabled={busy() || props.knownTargets.length === 0}
             onClick={() => chooseDecision("merge")}
@@ -249,8 +236,9 @@ function TriageRow(props: {
             Merge <span aria-hidden="true">→</span>
           </UIButton>
           <UIButton
-            variant="ghost"
-            class={pressedDecisionClass}
+            // Ghost at rest; pressed takes the outline face, which is the one
+            // UIButton styles for `aria-pressed`.
+            variant={decision() === "reject" ? "outline" : "ghost"}
             aria-pressed={decision() === "reject"}
             disabled={busy()}
             onClick={() => chooseDecision("reject")}
@@ -261,7 +249,7 @@ function TriageRow(props: {
       </div>
 
       <Show when={props.entry.description || props.entry.notes}>
-        <div class={css({ display: "grid", gap: "1" })}>
+        <div class={entryNotesClass}>
           <Show when={props.entry.description}>
             {(description) => <p class={helperClass}>{description()}</p>}
           </Show>
@@ -273,22 +261,9 @@ function TriageRow(props: {
 
       <Show when={decision()}>
         {(selectedDecision) => (
-          <div
-            class={css({
-              bg: "zodiac.glow-inner/32",
-              borderRadius: "l2",
-              display: "grid",
-              gap: "3",
-              p: "3",
-              // Violet at rest marks the speculative choice; focus keeps the
-              // fields' own gold border and ring.
-              "& select:not(:focus), & input:not(:focus)": {
-                borderColor: "zodiac.violet/42",
-              },
-            })}
-          >
+          <div class={decisionPanelClass}>
             <Show when={selectedDecision() === "merge"}>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <div class={stackClass}>
                 <label
                   class={fieldLabelClass}
                   for={`merge-target-${props.entry._id}`}
@@ -311,7 +286,7 @@ function TriageRow(props: {
                 </UISelect>
               </div>
             </Show>
-            <div class={css({ display: "grid", gap: "2" })}>
+            <div class={stackClass}>
               <label
                 class={fieldLabelClass}
                 for={`decision-note-${props.entry._id}`}
@@ -327,7 +302,7 @@ function TriageRow(props: {
               />
             </div>
             <UINotice error={error()} />
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <div class={badgeRowClass}>
               <UIButton
                 variant="solid"
                 disabled={!canConfirm()}
@@ -362,18 +337,7 @@ function TriageSection(props: {
   const headingId = () => `triage-heading-${props.list}`;
   return (
     <UICard class={violetCardClass}>
-      <h2
-        id={headingId()}
-        tabIndex={-1}
-        class={css({
-          color: "zodiac.cream",
-          fontFamily: "display",
-          fontSize: "2xl",
-          fontWeight: "normal",
-          lineHeight: "1.2",
-          textWrap: "balance",
-        })}
-      >
+      <h2 id={headingId()} tabIndex={-1} class={sectionHeadingClass}>
         {props.title}
       </h2>
       <div class={css({ display: "grid", gap: "3", mt: "4" })}>
@@ -386,7 +350,7 @@ function TriageSection(props: {
           }
         />
         <Show when={props.data.provisional.length > 0}>
-          <ul role="list" class={css({ display: "grid", gap: "3" })}>
+          <UIList class={triageListClass}>
             <For each={props.data.provisional}>
               {(entry, index) => (
                 <li>
@@ -404,7 +368,7 @@ function TriageSection(props: {
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
         </Show>
       </div>
     </UICard>
@@ -417,18 +381,7 @@ export function VocabularyTriagePage() {
   });
 
   const board = createQueryWithStatus(api.vocabulary.triageBoard);
-  const [announcement, setAnnouncement] = createSignal<string | null>(null);
-  let announcementTimer: ReturnType<typeof setTimeout> | undefined;
-
-  // Retire the announcement once assistive tech has had time to read it;
-  // leaving it mounted re-announces a stale decision on the next load flip.
-  function announce(message: string) {
-    clearTimeout(announcementTimer);
-    setAnnouncement(message);
-    announcementTimer = setTimeout(() => setAnnouncement(null), 5000);
-  }
-
-  onCleanup(() => clearTimeout(announcementTimer));
+  const [announcement, announce] = createAnnouncer();
 
   return (
     <section class={pageClass}>

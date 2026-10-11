@@ -10,11 +10,12 @@ import {
 } from "../components/agent-draft";
 import {
   AgentRunEventList,
-  AgentRunTime,
   AgentRunTimesList,
 } from "../components/agent-run-event";
 import {
   backLink,
+  badgeRowClass,
+  DateTime,
   detailTitleClass,
   fieldLabelClass,
   focusRingClass,
@@ -26,6 +27,7 @@ import {
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
   UITextarea,
 } from "../components/ui";
@@ -33,6 +35,7 @@ import {
   createMutation,
   createQueryWithStatus,
   describeError,
+  describeLoad,
 } from "../integrations/convex";
 import { runStatusTone } from "../lib/agent-run-format";
 import { api } from "../../../convex/_generated/api";
@@ -49,19 +52,42 @@ type PublicAgentRun = Omit<Doc<"agentRuns">, "input"> & {
   reviewDraft?: PublicReviewDraft;
 };
 
-const draftListClass = css({
+const sectionStackClass = css({ display: "grid", gap: "4" });
+
+const draftItemClass = css({
+  borderColor: "zodiac.cream/12",
+  borderRadius: "l2",
+  borderWidth: "1px",
   display: "grid",
-  gap: "4",
-  listStyleType: "none",
-  m: "0",
-  p: "0",
+  gap: "3",
+  minW: "0",
+  p: "4",
 });
 
-const badgeRowClass = css({
-  alignItems: "center",
-  display: "flex",
-  flexWrap: "wrap",
-  gap: "2",
+const stackClass = css({ display: "grid", gap: "3" });
+
+const draftActionsClass = css({ display: "grid", gap: "2" });
+
+const draftHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+
+/** Badge row under a field label. */
+const labelledBadgeRowClass = cx(badgeRowClass, css({ mt: "2" }));
+
+const reviewDraftTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  lineHeight: "1.2",
+});
+
+const persistedDraftTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  lineHeight: "1.2",
 });
 
 /** Id of a persisted draft's title, the focus target once it is decided. */
@@ -134,7 +160,7 @@ function PersistedDraftActions(props: {
         when={props.draft.status === "pending_review"}
         fallback={<DecisionState draft={props.draft} />}
       >
-        <div class={css({ display: "grid", gap: "2" })}>
+        <div class={draftActionsClass}>
           <label class={fieldLabelClass} for={`note-${props.draft._id}`}>
             Decision Note (required to reject)
           </label>
@@ -150,7 +176,7 @@ function PersistedDraftActions(props: {
               can only be rejected with a note.
             </p>
           </Show>
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             {/* aria-busy plus the in-flight guard, not `disabled`: disabling
                 the activated button would blur it before the swap. */}
             <UIButton
@@ -204,12 +230,7 @@ export function AgentRunDetailPage() {
   const runRow = () => run.data() as PublicAgentRun | null | undefined;
   const [draftDecision, setDraftDecision] = createSignal<string | null>(null);
 
-  const runErrorText = () =>
-    run.error() ? `Unable to load agent run: ${run.error()?.message}` : null;
-  const runStatusText = () => {
-    if (run.error() || run.data()) return null;
-    return run.isLoading() ? "Loading agent run..." : "Agent run not found.";
-  };
+  const runLoad = describeLoad(run, "agent run");
   const persistedDraftsError = () =>
     persistedDrafts.error()
       ? `Unable to load persisted drafts: ${persistedDrafts.error()?.message}`
@@ -238,7 +259,7 @@ export function AgentRunDetailPage() {
       </div>
 
       <UICard>
-        <UINotice status={runStatusText()} error={runErrorText()} />
+        <UINotice status={runLoad.status()} error={runLoad.error()} />
         <Show when={runRow()}>
           {(row) => (
             <>
@@ -289,27 +310,18 @@ export function AgentRunDetailPage() {
                 }
               >
                 {(draft) => (
-                  <div class={css({ display: "grid", gap: "4" })}>
+                  <div class={sectionStackClass}>
                     <div class={badgeRowClass}>
                       <UIBadge tone="gold">{draftLabel(draft().kind)}</UIBadge>
                       <UIBadge tone={draft().needsReview ? "violet" : "cream"}>
                         {draft().needsReview ? "Needs Review" : "Read Only"}
                       </UIBadge>
                     </div>
-                    <h3
-                      class={css({
-                        color: "zodiac.cream",
-                        fontFamily: "display",
-                        fontSize: "2xl",
-                        lineHeight: "1.2",
-                      })}
-                    >
-                      {draft().title}
-                    </h3>
+                    <h3 class={reviewDraftTitleClass}>{draft().title}</h3>
                     <p class={helperClass}>{draft().summary}</p>
                     <div>
                       <div class={fieldLabelClass}>Candidate IDs</div>
-                      <div class={cx(badgeRowClass, css({ mt: "2" }))}>
+                      <div class={labelledBadgeRowClass}>
                         <For each={draft().candidateIds}>
                           {(candidateId) => (
                             <UIBadge tone="cream">{candidateId}</UIBadge>
@@ -339,7 +351,7 @@ export function AgentRunDetailPage() {
                   (persistedDrafts.data() ?? []).length > 0
                 }
               >
-                <ul role="list" class={draftListClass}>
+                <UIList class={sectionStackClass}>
                   {/* <Index>, not <For>: every live update hands back fresh
                       objects, and <For> would rebuild each row, dropping focus
                       and any half-written decision note. */}
@@ -349,27 +361,12 @@ export function AgentRunDetailPage() {
                     }
                   >
                     {(draft) => (
-                      <li
-                        class={css({
-                          borderColor: "zodiac.cream/12",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          display: "grid",
-                          gap: "3",
-                          minW: "0",
-                          p: "4",
-                        })}
-                      >
+                      <li class={draftItemClass}>
                         <article
                           aria-labelledby={draftTitleId(draft())}
-                          class={css({ display: "grid", gap: "3" })}
+                          class={stackClass}
                         >
-                          <div
-                            class={cx(
-                              badgeRowClass,
-                              css({ justifyContent: "space-between" }),
-                            )}
-                          >
+                          <div class={draftHeaderClass}>
                             <div class={badgeRowClass}>
                               <UIBadge tone="gold">
                                 {draftLabel(draft().kind)}
@@ -384,7 +381,8 @@ export function AgentRunDetailPage() {
                                 {draft().status}
                               </UIBadge>
                             </div>
-                            <AgentRunTime
+                            <DateTime
+                              format="datetime"
                               class={metaLine}
                               value={draft().createdAt}
                             />
@@ -392,15 +390,7 @@ export function AgentRunDetailPage() {
                           <h3
                             id={draftTitleId(draft())}
                             tabIndex={-1}
-                            class={cx(
-                              css({
-                                color: "zodiac.cream",
-                                fontFamily: "display",
-                                fontSize: "xl",
-                                lineHeight: "1.2",
-                              }),
-                              focusRingClass,
-                            )}
+                            class={cx(persistedDraftTitleClass, focusRingClass)}
                           >
                             {draft().title}
                           </h3>
@@ -415,7 +405,7 @@ export function AgentRunDetailPage() {
                           </div>
                           <div>
                             <div class={fieldLabelClass}>Candidate IDs</div>
-                            <div class={cx(badgeRowClass, css({ mt: "2" }))}>
+                            <div class={labelledBadgeRowClass}>
                               <For each={draft().candidateIds}>
                                 {(candidateId) => (
                                   <UIBadge tone="cream">{candidateId}</UIBadge>
@@ -432,7 +422,7 @@ export function AgentRunDetailPage() {
                       </li>
                     )}
                   </Index>
-                </ul>
+                </UIList>
               </Show>
             </UICard>
 

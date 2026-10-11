@@ -9,12 +9,15 @@ import {
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { entityCellClass } from "../components/entity-card";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
   goldDivider,
+  jsonBlockClass,
   pageClass,
   sectionLabel,
   UIBadge,
@@ -29,6 +32,7 @@ import {
   createMutation,
   createQueryWithStatus,
   describeError,
+  describeLoad,
 } from "../integrations/convex";
 import {
   evidenceStatusTone,
@@ -88,6 +92,27 @@ const threeColumnGrid = css({
   },
 });
 
+const headerBadgeRowClass = cx(badgeRowClass, css({ mb: "2" }));
+const actionRowClass = cx(badgeRowClass, css({ mt: "4" }));
+const mutedClass = css({ color: "zodiac.cream/66" });
+const linkedCountsClass = css({ color: "zodiac.cream/66", mt: "1" });
+const evidenceHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+const evidenceCardHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between", mb: "2" }),
+);
+const evidenceListClass = css({ display: "grid", gap: "3", mt: "3" });
+const checkListClass = css({ display: "grid", gap: "2", mt: "3" });
+const checkBase = { borderRadius: "l2", borderWidth: "1px", p: "3" } as const;
+const checkPassClass = css({ ...checkBase, borderColor: "zodiac.success/28" });
+const checkBlockClass = css({ ...checkBase, borderColor: "zodiac.error/28" });
+const checkVerdictClass = css({ color: "zodiac.cream", mb: "1" });
+
+type BusyAction = "save" | "submit" | "approve" | "publish";
+
 const EVIDENCE_HEADING_ID = "evidence-card-review-heading";
 
 export function EditorialDetailPage() {
@@ -108,24 +133,15 @@ export function EditorialDetailPage() {
   const [loadedVersion, setLoadedVersion] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
-  const [saving, setSaving] = createSignal(false);
-  const [submitting, setSubmitting] = createSignal(false);
-  const [approving, setApproving] = createSignal(false);
-  const [publishing, setPublishing] = createSignal(false);
-  const isBusy = () => saving() || submitting() || approving() || publishing();
   // The action the user activated. Its button stays enabled and focused, marked
   // aria-busy; the others are aria-disabled so none of them drops focus when a
   // run starts or when the artifact's new status makes it unavailable.
-  const activeAction = () =>
-    publishing()
-      ? "publish"
-      : approving()
-        ? "approve"
-        : submitting()
-          ? "submit"
-          : saving()
-            ? "save"
-            : null;
+  const [busyAction, setBusyAction] = createSignal<BusyAction | null>(null);
+  const blocked = (action: BusyAction) =>
+    busyAction() !== null && busyAction() !== action;
+  const load = describeLoad(detailQuery, "editorial artifact", () =>
+    Boolean(detail()),
+  );
 
   createEffect(() => {
     if (detailQuery.isLoading() || detail()) return;
@@ -247,17 +263,22 @@ export function EditorialDetailPage() {
     });
   }
 
-  function handleSaveClick() {
-    if (isBusy()) return;
-    void handleSave();
+  async function handleSaveClick() {
+    if (busyAction()) return;
+    setBusyAction("save");
+    try {
+      await saveDraft();
+    } finally {
+      setBusyAction(null);
+    }
   }
 
-  // Also the first step of submit, approve, and publish, which set their own
-  // busy flag first; so this guards only against a second concurrent save.
-  async function handleSave() {
+  // The save step of every action. Callers claim `busyAction` first, so it
+  // never runs twice at once.
+  async function saveDraft() {
     const current = draft();
     const row = detail();
-    if (!current || !row || saving()) return false;
+    if (!current || !row) return false;
     setNotice(null);
     setNoticeError(null);
     const incomplete = current.publicEvidenceCards
@@ -278,7 +299,6 @@ export function EditorialDetailPage() {
       );
       return false;
     }
-    setSaving(true);
     try {
       await updateArtifact({
         id: row.artifact._id,
@@ -306,70 +326,62 @@ export function EditorialDetailPage() {
     } catch (error) {
       setNoticeError(`Save failed: ${describeError(error)}`);
       return false;
-    } finally {
-      setSaving(false);
     }
   }
 
-  async function handleSubmitForReview() {
+  // Saves the draft, then runs `action` on the saved artifact.
+  async function saveThen(
+    action: Exclude<BusyAction, "save">,
+    allowed: boolean,
+    run: (id: Id<"editorialArtifacts">) => Promise<unknown>,
+    success: string,
+    failure: string,
+  ) {
     const row = detail();
-    if (!row || isBusy() || !validation().canSubmitForReview) return;
-    setSubmitting(true);
+    if (!row || busyAction() || !allowed) return;
+    setBusyAction(action);
     setNotice(null);
     setNoticeError(null);
     try {
-      if (!(await handleSave())) return;
-      await submitForReview({ id: row.artifact._id });
-      setNotice("Artifact moved to in review.");
+      if (!(await saveDraft())) return;
+      await run(row.artifact._id);
+      setNotice(success);
     } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
+      // saveDraft may already have reported success; drop it so the two live
       // regions never contradict each other for one action.
       setNotice(null);
-      setNoticeError(`Submit for review failed: ${describeError(error)}`);
+      setNoticeError(`${failure} failed: ${describeError(error)}`);
     } finally {
-      setSubmitting(false);
+      setBusyAction(null);
     }
   }
 
-  async function handleApprove() {
-    const row = detail();
-    if (!row || isBusy() || row.artifact.status !== "in_review") return;
-    setApproving(true);
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      if (!(await handleSave())) return;
-      await approveArtifact({ id: row.artifact._id });
-      setNotice("Artifact approved.");
-    } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
-      // regions never contradict each other for one action.
-      setNotice(null);
-      setNoticeError(`Approve failed: ${describeError(error)}`);
-    } finally {
-      setApproving(false);
-    }
-  }
+  const handleSubmitForReview = () =>
+    saveThen(
+      "submit",
+      validation().canSubmitForReview,
+      (id) => submitForReview({ id }),
+      "Artifact moved to in review.",
+      "Submit for review",
+    );
 
-  async function handlePublish() {
-    const row = detail();
-    if (!row || isBusy() || !validation().canPublish) return;
-    setPublishing(true);
-    setNotice(null);
-    setNoticeError(null);
-    try {
-      if (!(await handleSave())) return;
-      await publishArtifact({ id: row.artifact._id });
-      setNotice("Artifact published and ready for export.");
-    } catch (error) {
-      // handleSave may already have reported success; drop it so the two live
-      // regions never contradict each other for one action.
-      setNotice(null);
-      setNoticeError(`Publish failed: ${describeError(error)}`);
-    } finally {
-      setPublishing(false);
-    }
-  }
+  const handleApprove = () =>
+    saveThen(
+      "approve",
+      detail()?.artifact.status === "in_review",
+      (id) => approveArtifact({ id }),
+      "Artifact approved.",
+      "Approve",
+    );
+
+  const handlePublish = () =>
+    saveThen(
+      "publish",
+      validation().canPublish,
+      (id) => publishArtifact({ id }),
+      "Artifact published and ready for export.",
+      "Publish",
+    );
 
   return (
     <section class={pageClass}>
@@ -382,21 +394,10 @@ export function EditorialDetailPage() {
       <UINotice
         class={detail() && draft() ? collapsedNoticeClass : undefined}
         status={
-          detailQuery.isLoading()
-            ? "Loading editorial artifact..."
-            : detailQuery.isError()
-              ? null
-              : !detail()
-                ? "Editorial artifact not found."
-                : !draft()
-                  ? "Loading editorial draft..."
-                  : null
+          load.status() ??
+          (detail() && !draft() ? "Loading editorial draft..." : null)
         }
-        error={
-          detailQuery.isError()
-            ? `Unable to load editorial artifact: ${detailQuery.error()?.message ?? "unknown error"}`
-            : null
-        }
+        error={load.error()}
       />
 
       {/* Not keyed: a live update to the artifact must not remount the form and
@@ -408,14 +409,7 @@ export function EditorialDetailPage() {
           return (
             <Show when={current()}>
               <UICard>
-                <div
-                  class={css({
-                    display: "flex",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    mb: "2",
-                  })}
-                >
+                <div class={headerBadgeRowClass}>
                   <UIBadge tone="gold">
                     {formatEditorialKind(detailRow().artifact.kind)}
                   </UIBadge>
@@ -433,11 +427,11 @@ export function EditorialDetailPage() {
                 </div>
 
                 <h1 class={detailTitleClass}>{detailRow().artifact.title}</h1>
-                <p class={css({ color: "zodiac.cream/66" })}>
+                <p class={mutedClass}>
                   Primary ref: {detailRow().artifact.primaryRef.type}{" "}
                   {detailRow().artifact.primaryRef.id.slice(-6)}
                 </p>
-                <p class={css({ color: "zodiac.cream/66", mt: "1" })}>
+                <p class={linkedCountsClass}>
                   linked: {detailRow().artifact.linkedIds.thesisIds.length}{" "}
                   theses · {detailRow().artifact.linkedIds.hypothesisIds.length}{" "}
                   hypotheses · {detailRow().artifact.linkedIds.recipeIds.length}{" "}
@@ -446,54 +440,47 @@ export function EditorialDetailPage() {
                   compositions
                 </p>
 
-                <div
-                  class={css({
-                    display: "flex",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    mt: "4",
-                  })}
-                >
+                <div class={actionRowClass}>
                   <UIButton
                     variant="outline"
                     onClick={handleSaveClick}
-                    aria-busy={activeAction() === "save"}
-                    aria-disabled={isBusy() && activeAction() !== "save"}
+                    aria-busy={busyAction() === "save"}
+                    aria-disabled={blocked("save")}
                   >
-                    {saving() ? "Saving..." : "Save draft"}
+                    {busyAction() === "save" ? "Saving..." : "Save draft"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleSubmitForReview}
-                    aria-busy={activeAction() === "submit"}
+                    aria-busy={busyAction() === "submit"}
                     aria-disabled={
-                      (isBusy() && activeAction() !== "submit") ||
-                      !validation().canSubmitForReview
+                      blocked("submit") || !validation().canSubmitForReview
                     }
                   >
-                    {submitting() ? "Submitting..." : "Submit for review"}
+                    {busyAction() === "submit"
+                      ? "Submitting..."
+                      : "Submit for review"}
                   </UIButton>
                   <UIButton
                     variant="outline"
                     onClick={handleApprove}
-                    aria-busy={activeAction() === "approve"}
+                    aria-busy={busyAction() === "approve"}
                     aria-disabled={
-                      (isBusy() && activeAction() !== "approve") ||
+                      blocked("approve") ||
                       detailRow().artifact.status !== "in_review"
                     }
                   >
-                    {approving() ? "Approving..." : "Approve"}
+                    {busyAction() === "approve" ? "Approving..." : "Approve"}
                   </UIButton>
                   <UIButton
                     variant="solid"
                     onClick={handlePublish}
-                    aria-busy={activeAction() === "publish"}
+                    aria-busy={busyAction() === "publish"}
                     aria-disabled={
-                      (isBusy() && activeAction() !== "publish") ||
-                      !validation().canPublish
+                      blocked("publish") || !validation().canPublish
                     }
                   >
-                    {publishing() ? "Publishing..." : "Publish"}
+                    {busyAction() === "publish" ? "Publishing..." : "Publish"}
                   </UIButton>
                 </div>
 
@@ -658,15 +645,7 @@ export function EditorialDetailPage() {
               </UICard>
 
               <UICard>
-                <div
-                  class={css({
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "2",
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  })}
-                >
+                <div class={evidenceHeaderClass}>
                   <h2
                     id={EVIDENCE_HEADING_ID}
                     tabIndex={-1}
@@ -679,27 +658,11 @@ export function EditorialDetailPage() {
                   </UIButton>
                 </div>
 
-                <div class={css({ display: "grid", gap: "3", mt: "3" })}>
+                <div class={evidenceListClass}>
                   <Index each={d().publicEvidenceCards}>
                     {(card, index) => (
-                      <div
-                        class={css({
-                          borderColor: "zodiac.gold/18",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          p: "3",
-                        })}
-                      >
-                        <div
-                          class={css({
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "2",
-                            alignItems: "center",
-                            mb: "2",
-                            flexWrap: "wrap",
-                          })}
-                        >
+                      <div class={entityCellClass}>
+                        <div class={evidenceCardHeaderClass}>
                           <UIBadge tone="gold">Card {index + 1}</UIBadge>
                           <UIButton
                             variant="outline"
@@ -853,25 +816,14 @@ export function EditorialDetailPage() {
 
               <UICard>
                 <h2 class={sectionLabel}>Pre-publish Checklist</h2>
-                <div class={css({ display: "grid", gap: "2", mt: "3" })}>
+                <div class={checkListClass}>
                   <For each={validation().checks}>
                     {(check) => (
-                      <div
-                        class={css({
-                          borderColor: check.ok
-                            ? "zodiac.success/28"
-                            : "zodiac.error/28",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          p: "3",
-                        })}
-                      >
-                        <div class={css({ color: "zodiac.cream", mb: "1" })}>
+                      <div class={check.ok ? checkPassClass : checkBlockClass}>
+                        <div class={checkVerdictClass}>
                           {check.ok ? "Pass" : "Block"}
                         </div>
-                        <div class={css({ color: "zodiac.cream/66" })}>
-                          {check.message}
-                        </div>
+                        <div class={mutedClass}>{check.message}</div>
                       </div>
                     )}
                   </For>
@@ -885,19 +837,7 @@ export function EditorialDetailPage() {
                   role="group"
                   tabIndex={0}
                   aria-label="Export preview JSON"
-                  class={cx(
-                    "zodiac-scroll",
-                    css({
-                      color: "zodiac.cream/70",
-                      fontFamily: "mono",
-                      fontSize: "sm",
-                      lineHeight: "1.6",
-                      maxH: "70vh",
-                      overflow: "auto",
-                      overflowWrap: "anywhere",
-                      whiteSpace: "pre-wrap",
-                    }),
-                  )}
+                  class={cx(jsonBlockClass, "zodiac-scroll")}
                 >
                   {exportPreview()}
                 </pre>

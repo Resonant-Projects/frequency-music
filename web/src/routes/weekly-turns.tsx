@@ -9,10 +9,16 @@ import {
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import {
+  entityCardClass,
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+} from "../components/entity-card";
 import { RecommendedActionCard } from "../components/recommended-action-card";
 import {
+  badgeRowClass,
+  DateTime,
   fieldLabelClass,
-  focusRingClass,
   goldDivider,
   helperClass,
   metaLine,
@@ -23,6 +29,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -92,6 +99,83 @@ type CampaignSaveArgs = {
   status: CampaignStatus;
 };
 
+const cardHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "2",
+  mb: "3",
+  flexWrap: "wrap",
+});
+
+const campaignTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  fontWeight: "normal",
+  lineHeight: "1.35",
+  mb: "2",
+});
+
+const attachedThesesClass = css({ marginTop: "3" });
+
+const cardFooterClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+  justifyContent: "space-between",
+  mt: "4",
+});
+
+const pushEndClass = css({ ml: "auto" });
+
+const pageHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  justifyContent: "space-between",
+  gap: "3",
+  flexWrap: "wrap",
+});
+
+const noticeSpacingClass = css({ mt: "3" });
+
+const formEndClass = css({
+  display: "flex",
+  justifyContent: "flex-end",
+  marginTop: "4",
+});
+
+const stackClass = css({ display: "grid", gap: "3" });
+
+const limitNoteClass = cx(helperClass, css({ mb: "3" }));
+
+const emptyBriefsClass = css({
+  color: "zodiac.cream/66",
+  fontFamily: "display",
+  fontSize: "md",
+  lineHeight: "1.6",
+  textAlign: "center",
+  py: "8",
+});
+
+const briefBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const publishedBadgeClass = css({ gap: "1" });
+
+const briefTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "lg",
+  fontWeight: "normal",
+  lineHeight: "1.4",
+  mb: "2",
+});
+
+const campaignMarkClass = css({ ml: "2", verticalAlign: "middle" });
+
+const briefExcerptClass = cx(helperClass, css({ mb: "2" }));
+
 function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
   return {
     title: campaign.title,
@@ -104,9 +188,9 @@ function buildDraft(campaign: Doc<"campaigns">): CampaignDraft {
 function CampaignCard(props: {
   campaign: Doc<"campaigns">;
   thesisTitleById: Map<string, string>;
-  onActivate: (id: Id<"campaigns">) => Promise<void>;
+  onActivate: (id: Id<"campaigns">) => Promise<unknown>;
   onCreateRecap: (id: Id<"campaigns">) => Promise<void>;
-  onSave: (args: CampaignSaveArgs) => Promise<void>;
+  onSave: (args: CampaignSaveArgs) => Promise<unknown>;
 }) {
   const [draft, setDraft] = createSignal<CampaignDraft>(
     buildDraft(props.campaign),
@@ -229,26 +313,9 @@ function CampaignCard(props: {
   }
 
   return (
-    <div
-      data-testid="campaign-card"
-      class={css({
-        borderColor: "zodiac.gold/22",
-        borderRadius: "l2",
-        borderWidth: "1px",
-        p: "4",
-      })}
-    >
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "2",
-          mb: "3",
-          flexWrap: "wrap",
-        })}
-      >
-        <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+    <div data-testid="campaign-card" class={entityCardClass}>
+      <div class={cardHeaderClass}>
+        <div class={badgeRowClass}>
           <UIBadge tone={props.campaign.status === "active" ? "gold" : "cream"}>
             {props.campaign.status}
           </UIBadge>
@@ -281,14 +348,7 @@ function CampaignCard(props: {
           heading = element;
         }}
         tabindex="-1"
-        class={css({
-          color: "zodiac.cream",
-          fontFamily: "display",
-          fontSize: "xl",
-          fontWeight: "normal",
-          lineHeight: "1.35",
-          mb: "2",
-        })}
+        class={campaignTitleClass}
       >
         {draft().title || "Untitled campaign"}
       </h3>
@@ -350,9 +410,9 @@ function CampaignCard(props: {
       </UISelect>
 
       <Show when={props.campaign.thesisIds.length > 0}>
-        <div class={css({ marginTop: "3" })}>
+        <div class={attachedThesesClass}>
           <p class={fieldLabelClass}>Attached Theses</p>
-          <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+          <div class={badgeRowClass}>
             <For each={props.campaign.thesisIds}>
               {(thesisId) => (
                 <UIBadge tone="cream">
@@ -365,16 +425,7 @@ function CampaignCard(props: {
         </div>
       </Show>
 
-      <div
-        class={css({
-          alignItems: "center",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "3",
-          justifyContent: "space-between",
-          mt: "4",
-        })}
-      >
+      <div class={cardFooterClass}>
         <UINotice status={notice()} error={noticeError()} />
         <UIButton
           ref={(element) => {
@@ -382,7 +433,7 @@ function CampaignCard(props: {
           }}
           type="button"
           variant="outline"
-          class={css({ ml: "auto" })}
+          class={pushEndClass}
           onClick={() => void handleSave()}
           aria-busy={saving()}
           aria-disabled={busy() || undefined}
@@ -495,16 +546,8 @@ export function WeeklyTurnsPage() {
     }
   }
 
-  // The card reports the outcome of these three in its own notice, so they
-  // only run the call and let a failure reach it.
-  async function handleActivateCampaign(id: Id<"campaigns">) {
-    await setActiveCampaign({ id });
-  }
-
-  async function handleSaveCampaign(args: CampaignSaveArgs) {
-    await updateCampaign(args);
-  }
-
+  // The card reports the outcome of its activate, save and recap calls in its
+  // own notice, so they only run the call and let a failure reach it.
   async function handleCreateCampaignRecap(id: Id<"campaigns">) {
     const artifactId = await createCampaignDraft({ campaignId: id });
     void navigate({
@@ -521,15 +564,7 @@ export function WeeklyTurnsPage() {
           void handleCreateCampaign(e);
         }}
       >
-        <div
-          class={css({
-            alignItems: "center",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "3",
-            flexWrap: "wrap",
-          })}
-        >
+        <div class={pageHeaderClass}>
           <div>
             <h1 class={pageTitleClass}>Weekly Turns</h1>
             <p class={helperClass}>
@@ -550,7 +585,7 @@ export function WeeklyTurnsPage() {
         </div>
 
         <UINotice
-          class={css({ mt: "3" })}
+          class={noticeSpacingClass}
           status={notice()}
           error={noticeError()}
         />
@@ -603,13 +638,7 @@ export function WeeklyTurnsPage() {
           <option value="completed">completed</option>
         </UISelect>
 
-        <div
-          class={css({
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "4",
-          })}
-        >
+        <div class={formEndClass}>
           <UIButton type="submit" variant="outline">
             Create Campaign
           </UIButton>
@@ -628,8 +657,8 @@ export function WeeklyTurnsPage() {
         />
         <Show when={steering.data()}>
           {(preview) => (
-            <div class={css({ display: "grid", gap: "3" })}>
-              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+            <div class={stackClass}>
+              <div class={badgeRowClass}>
                 <UIBadge tone={preview().campaign ? "gold" : "cream"}>
                   {preview().campaign
                     ? `Active Campaign: ${preview().campaign?.title}`
@@ -649,7 +678,7 @@ export function WeeklyTurnsPage() {
                   </p>
                 }
               >
-                <ul role="list" class={css({ display: "grid", gap: "3" })}>
+                <UIList class={stackClass}>
                   <For each={preview().actions}>
                     {(action) => (
                       <li>
@@ -657,7 +686,7 @@ export function WeeklyTurnsPage() {
                       </li>
                     )}
                   </For>
-                </ul>
+                </UIList>
               </Show>
             </div>
           )}
@@ -684,11 +713,11 @@ export function WeeklyTurnsPage() {
           <Show when={!campaigns.isError()}>
             <Show when={campaignRows().length > 0}>
               <Show when={campaignRows().length >= CAMPAIGN_LIMIT}>
-                <p class={cx(helperClass, css({ mb: "3" }))}>
+                <p class={limitNoteClass}>
                   Showing the {CAMPAIGN_LIMIT} most recently updated campaigns.
                 </p>
               </Show>
-              <ul role="list" class={css({ display: "grid", gap: "3" })}>
+              <UIList class={stackClass}>
                 <For each={campaignIds()}>
                   {(campaignId) => (
                     <Show when={campaignById().get(campaignId)}>
@@ -697,16 +726,16 @@ export function WeeklyTurnsPage() {
                           <CampaignCard
                             campaign={campaign()}
                             thesisTitleById={thesisTitleById()}
-                            onActivate={handleActivateCampaign}
+                            onActivate={(id) => setActiveCampaign({ id })}
                             onCreateRecap={handleCreateCampaignRecap}
-                            onSave={handleSaveCampaign}
+                            onSave={updateCampaign}
                           />
                         </li>
                       )}
                     </Show>
                   )}
                 </For>
-              </ul>
+              </UIList>
             </Show>
           </Show>
         </Show>
@@ -728,137 +757,73 @@ export function WeeklyTurnsPage() {
             <Show
               when={briefRows().length > 0}
               fallback={
-                <p
-                  class={css({
-                    color: "zodiac.cream/66",
-                    fontFamily: "display",
-                    fontSize: "md",
-                    lineHeight: "1.6",
-                    textAlign: "center",
-                    py: "8",
-                  })}
-                >
+                <p class={emptyBriefsClass}>
                   No weekly turns yet. Generate one to summarize the latest
                   ingest cycle.
                 </p>
               }
             >
               <Show when={briefRows().length >= BRIEF_LIMIT}>
-                <p class={cx(helperClass, css({ mb: "3" }))}>
+                <p class={limitNoteClass}>
                   Showing the {BRIEF_LIMIT} most recent weekly turns.
                 </p>
               </Show>
-              <ul role="list" class={css({ display: "grid", gap: "3" })}>
+              <UIList class={stackClass}>
                 <For each={briefRows()}>
                   {(brief) => (
-                    <li>
-                      <Link
-                        to="/weekly-turns/$briefId"
-                        params={{ briefId: String(brief._id) }}
-                        class={cx(
-                          css({
-                            borderColor: "zodiac.gold/25",
-                            borderRadius: "l2",
-                            borderWidth: "1px",
-                            display: "block",
-                            p: "4",
-                            textDecoration: "none",
-                            transition: "border-color 0.15s",
-                            _hover: {
-                              borderColor: "zodiac.gold/50",
-                            },
-                          }),
-                          focusRingClass,
-                        )}
-                      >
-                        <div
-                          class={css({
-                            alignItems: "center",
-                            display: "flex",
-                            gap: "2",
-                            justifyContent: "space-between",
-                            marginBottom: "2",
-                          })}
+                    <li class={entityCardLinkClass}>
+                      <div class={briefBadgesClass}>
+                        <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
+                        <UIBadge tone="cream">{brief.visibility}</UIBadge>
+                        <Show when={(brief.activeThesisIds ?? []).length > 0}>
+                          <UIBadge tone="cream">
+                            {(brief.activeThesisIds ?? []).length} theses
+                          </UIBadge>
+                        </Show>
+                        <Show
+                          when={(brief.recommendedActions ?? []).length > 0}
                         >
-                          <div
-                            class={css({
-                              display: "flex",
-                              gap: "2",
-                              flexWrap: "wrap",
-                            })}
-                          >
-                            <UIBadge tone="gold">Week {brief.weekOf}</UIBadge>
-                            <UIBadge tone="cream">{brief.visibility}</UIBadge>
-                            <Show when={brief.campaignId}>
-                              <UIBadge tone="cream">campaign</UIBadge>
-                            </Show>
-                            <Show
-                              when={(brief.activeThesisIds ?? []).length > 0}
-                            >
-                              <UIBadge tone="cream">
-                                {(brief.activeThesisIds ?? []).length} theses
-                              </UIBadge>
-                            </Show>
-                            <Show
-                              when={(brief.recommendedActions ?? []).length > 0}
-                            >
-                              <UIBadge tone="cream">
-                                {(brief.recommendedActions ?? []).length}{" "}
-                                actions
-                              </UIBadge>
-                            </Show>
-                            <Show when={brief.publishedAt}>
-                              {(ts) => (
-                                <UIBadge tone="gold" class={css({ gap: "1" })}>
-                                  Published
-                                  <time datetime={new Date(ts()).toISOString()}>
-                                    {new Date(ts()).toLocaleDateString(
-                                      "en-US",
-                                      {
-                                        month: "short",
-                                        day: "numeric",
-                                      },
-                                    )}
-                                  </time>
-                                </UIBadge>
-                              )}
-                            </Show>
-                          </div>
-                        </div>
+                          <UIBadge tone="cream">
+                            {(brief.recommendedActions ?? []).length} actions
+                          </UIBadge>
+                        </Show>
+                        <Show when={brief.publishedAt}>
+                          {(ts) => (
+                            <UIBadge tone="gold" class={publishedBadgeClass}>
+                              Published
+                              <DateTime value={ts()} />
+                            </UIBadge>
+                          )}
+                        </Show>
+                      </div>
 
-                        <h3
-                          class={css({
-                            color: "zodiac.cream",
-                            fontFamily: "display",
-                            fontSize: "lg",
-                            fontWeight: "normal",
-                            lineHeight: "1.4",
-                            mb: "2",
-                          })}
+                      <h3 class={briefTitleClass}>
+                        <Link
+                          to="/weekly-turns/$briefId"
+                          params={{ briefId: String(brief._id) }}
+                          class={entityCardTitleLinkClass}
                         >
                           {extractTitle(brief.bodyMd)}
-                        </h3>
+                          {/* Inside the link so the link names its campaign. */}
+                          <Show when={brief.campaignId}>
+                            <UIBadge tone="cream" class={campaignMarkClass}>
+                              campaign
+                            </UIBadge>
+                          </Show>
+                        </Link>
+                      </h3>
 
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontFamily: "body",
-                            fontSize: "sm",
-                            lineHeight: "1.6",
-                            mb: "2",
-                          })}
-                        >
-                          {extractExcerpt(brief.bodyMd)}
-                        </p>
+                      <p class={briefExcerptClass}>
+                        {extractExcerpt(brief.bodyMd)}
+                      </p>
 
-                        <p class={metaLine}>
-                          model: {brief.model} · prompt: {brief.promptVersion}
-                        </p>
-                      </Link>
+                      <p class={metaLine}>
+                        model: {brief.model} · prompt: {brief.promptVersion}
+                      </p>
                     </li>
                   )}
                 </For>
-              </ul>
+              </UIList>
             </Show>
           </Show>
         </Show>

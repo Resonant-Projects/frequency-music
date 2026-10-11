@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
   entityCardLinkClass,
   entityCardTitleLinkClass,
 } from "../components/entity-card";
 import {
+  badgeRowClass,
   fieldLabelClass,
   helperClass,
   pageClass,
@@ -16,11 +17,24 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UITextarea,
 } from "../components/ui";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const rowTitleClass = css({ color: "zodiac.cream", fontSize: "xl", mb: "2" });
+
+const rowStatementClass = css({
+  color: "zodiac.cream/66",
+  lineHeight: "1.7",
+  maxW: "72ch",
+});
 
 export function ThesesPage() {
   onMount(() => {
@@ -58,31 +72,15 @@ export function ThesesPage() {
           <h2 id={headingId} class={sectionTitleClass}>
             {label}
           </h2>
-          <ul
-            role="list"
-            class={css({ display: "grid", gap: "3", listStyle: "none" })}
-          >
+          <UIList class={listClass}>
             <For each={rows}>
               {(thesis) => (
                 <li class={entityCardLinkClass}>
-                  <div
-                    class={css({
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      mb: "2",
-                    })}
-                  >
+                  <div class={rowBadgesClass}>
                     <UIBadge tone="gold">{thesis.status}</UIBadge>
                     <UIBadge tone="cream">{thesis.visibility}</UIBadge>
                   </div>
-                  <h3
-                    class={css({
-                      color: "zodiac.cream",
-                      fontSize: "xl",
-                      mb: "2",
-                    })}
-                  >
+                  <h3 class={rowTitleClass}>
                     <Link
                       to="/theses/$thesisId"
                       params={{ thesisId: String(thesis._id) }}
@@ -91,19 +89,11 @@ export function ThesesPage() {
                       {thesis.title}
                     </Link>
                   </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/66",
-                      lineHeight: "1.7",
-                      maxW: "72ch",
-                    })}
-                  >
-                    {thesis.statement}
-                  </p>
+                  <p class={rowStatementClass}>{thesis.statement}</p>
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
         </section>
       </Show>
     );

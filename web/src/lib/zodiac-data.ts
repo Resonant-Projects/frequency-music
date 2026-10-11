@@ -6,6 +6,7 @@ import type {
   RecipeStatus,
   SourceStatus,
 } from "../../../convex/shared/statuses";
+import type { Token } from "../../styled-system/tokens";
 
 // Three.js needs plain hex strings, so these mirror the `zodiac.*` semantic
 // tokens in `web/panda.config.ts`. Panda is the source of truth: if a value
@@ -22,13 +23,6 @@ export const COLORS = {
   error: "#f87171",
   glowInner: "#1a0f35",
 } as const;
-
-// The violet sectors only reach 4.66:1 on the void at full alpha, so any
-// sector-coloured text below heading size substitutes the lighter text-safe
-// violet. Gold and cream are legible as they are.
-export function textSafeSectorColor(color: string): string {
-  return color === COLORS.violet ? COLORS.violetText : color;
-}
 
 export const TAU = 2 * Math.PI;
 export const BASE = -Math.PI / 2;
@@ -53,7 +47,14 @@ export const R = {
 export interface SectorDef {
   id: string;
   label: string;
+  /** Hex for Three.js materials. */
   color: string;
+  /** The same colour as a design token, for DOM borders and headings. */
+  colorToken: Token;
+  /** The token for sector-coloured text below heading size. The violet
+   *  sectors only reach 4.66:1 on the void at full alpha, so their text uses
+   *  the lighter text-safe violet; gold and cream are legible as they are. */
+  textToken: Token;
   startAngle: number;
   endAngle: number;
   summary: string;
@@ -72,6 +73,8 @@ export const SECTORS: SectorDef[] = [
     id: "math",
     label: "Mathematics",
     color: "#8b5cf6",
+    colorToken: "colors.zodiac.violet",
+    textToken: "colors.zodiac.violetText",
     startAngle: BASE,
     endAngle: BASE + STEP,
     summary:
@@ -86,6 +89,8 @@ export const SECTORS: SectorDef[] = [
     id: "wave",
     label: "Wave Physics",
     color: "#c8a84b",
+    colorToken: "colors.zodiac.gold",
+    textToken: "colors.zodiac.gold",
     startAngle: BASE + STEP,
     endAngle: BASE + 2 * STEP,
     summary:
@@ -101,6 +106,8 @@ export const SECTORS: SectorDef[] = [
     id: "music",
     label: "Music Theory",
     color: "#f5f0e8",
+    colorToken: "colors.zodiac.cream",
+    textToken: "colors.zodiac.cream",
     startAngle: BASE + 2 * STEP,
     endAngle: BASE + 3 * STEP,
     summary:
@@ -115,6 +122,8 @@ export const SECTORS: SectorDef[] = [
     id: "psycho",
     label: "Psychoacoustics",
     color: "#8b5cf6",
+    colorToken: "colors.zodiac.violet",
+    textToken: "colors.zodiac.violetText",
     startAngle: BASE + 3 * STEP,
     endAngle: BASE + 4 * STEP,
     summary:
@@ -128,6 +137,8 @@ export const SECTORS: SectorDef[] = [
     id: "geometry",
     label: "Geometry",
     color: "#c8a84b",
+    colorToken: "colors.zodiac.gold",
+    textToken: "colors.zodiac.gold",
     startAngle: BASE + 4 * STEP,
     endAngle: BASE + 5 * STEP,
     summary:
@@ -142,6 +153,8 @@ export const SECTORS: SectorDef[] = [
     id: "synthesis",
     label: "Synthesis",
     color: "#f5f0e8",
+    colorToken: "colors.zodiac.cream",
+    textToken: "colors.zodiac.cream",
     startAngle: BASE + 5 * STEP,
     endAngle: BASE + TAU,
     summary:

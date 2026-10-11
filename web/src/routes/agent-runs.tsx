@@ -5,10 +5,11 @@ import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
   AgentRunEventList,
-  AgentRunTime,
   AgentRunTimesList,
 } from "../components/agent-run-event";
 import {
+  badgeRowClass,
+  DateTime,
   fieldLabelClass,
   focusRingClass,
   helperClass,
@@ -20,6 +21,7 @@ import {
   UIBadge,
   UICard,
   UINotice,
+  UIList,
   UISelect,
 } from "../components/ui";
 import { createQueryWithStatus } from "../integrations/convex";
@@ -27,6 +29,7 @@ import {
   type AgentRunStatus,
   formatDuration,
   runStatusTone,
+  sameIds,
 } from "../lib/agent-run-format";
 import { api } from "../../../convex/_generated/api";
 
@@ -60,13 +63,32 @@ const metricGridClass = css({
   },
 });
 
-const runListClass = css({
+const countValueClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "2xl",
+  mt: "2",
+});
+
+const filterGridClass = css({
   display: "grid",
   gap: "3",
-  listStyleType: "none",
-  m: "0",
-  p: "0",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
 });
+
+const runsLayoutClass = css({
+  display: "grid",
+  gap: "4",
+  gridTemplateColumns: {
+    base: "minmax(0, 1fr)",
+    xl: "minmax(0, 1.08fr) minmax(360px, 0.92fr)",
+  },
+});
+
+const runListClass = css({ display: "grid", gap: "3" });
 
 const runRowClass = css({
   bg: "zodiac.cream/2.5",
@@ -91,20 +113,36 @@ const runRowClass = css({
  * detail Link — a link must never be a descendant of a button.
  */
 const runRowTriggerClass = css({
-  bg: "transparent",
-  color: "inherit",
   cursor: "pointer",
   display: "grid",
   gap: "3",
   minW: "0",
-  p: "0",
   textAlign: "left",
   width: "100%",
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
+});
+
+const runHeaderClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+
+const runSummaryClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "lg",
+  lineHeight: "1.35",
+});
+
+const runMetaClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "3",
+});
+
+const detailsCardClass = css({
+  minW: "0",
+  scrollMarginTop: "calc(var(--app-header-height) + 1rem)",
 });
 
 const selectedRunRowClass = css({
@@ -162,9 +200,20 @@ export function AgentRunsPage() {
     return runId ? { runId, limit: 80 } : "skip";
   });
 
-  const selectedRun = createMemo(() =>
-    (runs.data() ?? []).find((run: AgentRun) => run._id === selectedRunId()),
+  // Keyed by id: a live update re-renders a row in place instead of
+  // rebuilding it, so the focused row button survives.
+  const runIds = createMemo(
+    () => (runs.data() ?? []).map((run: AgentRun) => run._id),
+    [],
+    { equals: sameIds },
   );
+  const runsById = createMemo(
+    () => new Map((runs.data() ?? []).map((run: AgentRun) => [run._id, run])),
+  );
+  const selectedRun = createMemo(() => {
+    const runId = selectedRunId();
+    return runId ? runsById().get(runId) : undefined;
+  });
   const listError = createMemo(() => runs.error() ?? counts.error());
   // The Runs card already announces `runs.error()` with more specific copy;
   // repeating it here fired two role="alert" regions for one failure.
@@ -232,15 +281,7 @@ export function AgentRunsPage() {
         </Link>
 
         <Show when={listError()}>
-          <div
-            class={css({
-              alignItems: "center",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "2",
-              mt: "5",
-            })}
-          >
+          <div class={cx(badgeRowClass, css({ mt: "5" }))}>
             <UIBadge tone="violet">Convex Query Error</UIBadge>
             <h2 class={cx(sectionTitleClass, css({ mb: "0" }))}>
               Agent run data is not available yet
@@ -266,14 +307,7 @@ export function AgentRunsPage() {
                 <UIBadge tone={item.value === "failed" ? "violet" : "cream"}>
                   {item.label}
                 </UIBadge>
-                <p
-                  class={css({
-                    color: "zodiac.cream",
-                    fontFamily: "display",
-                    fontSize: "2xl",
-                    mt: "2",
-                  })}
-                >
+                <p class={countValueClass}>
                   {counts.isLoading()
                     ? "—"
                     : (counts.data()?.[item.value as AgentRunStatus] ?? 0)}
@@ -286,16 +320,7 @@ export function AgentRunsPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Filters</h2>
-        <div
-          class={css({
-            display: "grid",
-            gap: "3",
-            gridTemplateColumns: {
-              base: "minmax(0, 1fr)",
-              md: "repeat(2, minmax(0, 1fr))",
-            },
-          })}
-        >
+        <div class={filterGridClass}>
           <div>
             <label class={fieldLabelClass} for="agent-run-status">
               Status
@@ -333,102 +358,74 @@ export function AgentRunsPage() {
         </div>
       </UICard>
 
-      <div
-        class={css({
-          display: "grid",
-          gap: "4",
-          gridTemplateColumns: {
-            base: "minmax(0, 1fr)",
-            xl: "minmax(0, 1.08fr) minmax(360px, 0.92fr)",
-          },
-        })}
-      >
+      <div class={runsLayoutClass}>
         <UICard>
           <h2 class={sectionTitleClass}>Runs</h2>
           <UINotice status={runsStatus()} error={runsError()} />
           <Show when={!runs.isLoading() && (runs.data() ?? []).length > 0}>
-            <ul role="list" class={runListClass}>
-              <For each={runs.data() ?? []}>
-                {(run: AgentRun) => (
-                  <li
-                    class={
-                      run._id === selectedRunId()
-                        ? cx(runRowClass, selectedRunRowClass)
-                        : runRowClass
-                    }
-                  >
-                    <button
-                      type="button"
-                      data-testid="agent-run-row"
-                      class={runRowTriggerClass}
-                      onClick={() => selectRun(run)}
-                      aria-expanded={run._id === selectedRunId()}
-                      aria-controls={DETAILS_CARD_ID}
-                    >
-                      <div
-                        class={css({
-                          alignItems: "center",
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "2",
-                          justifyContent: "space-between",
-                        })}
+            <UIList class={runListClass}>
+              <For each={runIds()}>
+                {(runId) => (
+                  <Show when={runsById().get(runId)}>
+                    {(run) => (
+                      <li
+                        class={
+                          runId === selectedRunId()
+                            ? cx(runRowClass, selectedRunRowClass)
+                            : runRowClass
+                        }
                       >
-                        <div
-                          class={css({
-                            display: "flex",
-                            flexWrap: "wrap",
-                            gap: "2",
-                          })}
+                        <button
+                          type="button"
+                          data-testid="agent-run-row"
+                          class={runRowTriggerClass}
+                          onClick={() => selectRun(run())}
+                          aria-expanded={runId === selectedRunId()}
+                          aria-controls={DETAILS_CARD_ID}
                         >
-                          <UIBadge tone={runStatusTone(run.status)}>
-                            {run.status}
-                          </UIBadge>
-                          <UIBadge tone="cream">{run.graphName}</UIBadge>
-                          <Show when={isSmokeRun(run)}>
-                            <UIBadge tone="cream">Smoke</UIBadge>
-                          </Show>
+                          <div class={runHeaderClass}>
+                            <div class={badgeRowClass}>
+                              <UIBadge tone={runStatusTone(run().status)}>
+                                {run().status}
+                              </UIBadge>
+                              <UIBadge tone="cream">{run().graphName}</UIBadge>
+                              <Show when={isSmokeRun(run())}>
+                                <UIBadge tone="cream">Smoke</UIBadge>
+                              </Show>
+                            </div>
+                            <span class={metaLine}>
+                              {formatDuration(run())}
+                            </span>
+                          </div>
+                          <p class={runSummaryClass}>
+                            {run().summary ?? "No summary yet"}
+                          </p>
+                        </button>
+                        <div class={runMetaClass}>
+                          <span class={metaLine}>
+                            Updated{" "}
+                            <DateTime
+                              format="datetime"
+                              value={run().updatedAt}
+                            />
+                          </span>
+                          <span class={metaLine}>
+                            Run {String(runId).slice(0, 12)}
+                          </span>
+                          <Link
+                            to="/agent-runs/$runId"
+                            params={{ runId: String(runId) }}
+                            class={inlineActionLink}
+                          >
+                            Open Detail <span aria-hidden="true">↗</span>
+                          </Link>
                         </div>
-                        <span class={metaLine}>{formatDuration(run)}</span>
-                      </div>
-                      <p
-                        class={css({
-                          color: "zodiac.cream",
-                          fontFamily: "display",
-                          fontSize: "lg",
-                          lineHeight: "1.35",
-                          overflowWrap: "anywhere",
-                        })}
-                      >
-                        {run.summary ?? "No summary yet"}
-                      </p>
-                    </button>
-                    <div
-                      class={css({
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "3",
-                        alignItems: "center",
-                      })}
-                    >
-                      <span class={metaLine}>
-                        Updated <AgentRunTime value={run.updatedAt} />
-                      </span>
-                      <span class={metaLine}>
-                        Run {String(run._id).slice(0, 12)}
-                      </span>
-                      <Link
-                        to="/agent-runs/$runId"
-                        params={{ runId: String(run._id) }}
-                        class={inlineActionLink}
-                      >
-                        Open Detail <span aria-hidden="true">↗</span>
-                      </Link>
-                    </div>
-                  </li>
+                      </li>
+                    )}
+                  </Show>
                 )}
               </For>
-            </ul>
+            </UIList>
           </Show>
         </UICard>
 
@@ -438,10 +435,7 @@ export function AgentRunsPage() {
             detailsCard = element;
           }}
           aria-labelledby={DETAILS_TITLE_ID}
-          class={css({
-            minW: "0",
-            scrollMarginTop: "calc(var(--app-header-height) + 1rem)",
-          })}
+          class={detailsCardClass}
         >
           <h2
             id={DETAILS_TITLE_ID}
@@ -464,15 +458,7 @@ export function AgentRunsPage() {
             {(run) => (
               <div class={css({ display: "grid", gap: "4" })}>
                 <div>
-                  <div
-                    class={css({
-                      alignItems: "center",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      mb: "3",
-                    })}
-                  >
+                  <div class={cx(badgeRowClass, css({ mb: "3" }))}>
                     <UIBadge tone={runStatusTone(run().status)}>
                       {run().status}
                     </UIBadge>

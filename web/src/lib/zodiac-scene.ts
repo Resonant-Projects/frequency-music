@@ -18,11 +18,12 @@ import {
   setAutoRotate as setControlsAutoRotate,
   watchReducedMotion,
 } from "./zodiac-camera";
-import { COLORS, SECTORS, textSafeSectorColor } from "./zodiac-data";
+import { token } from "../../styled-system/tokens";
+import { COLORS, SECTORS } from "./zodiac-data";
 import {
   buildDomainEdges,
   buildHubEdges,
-  setEdgeActivity,
+  setSectorEdgesActive,
 } from "./zodiac-edges";
 import {
   buildBackgroundDots,
@@ -51,7 +52,12 @@ import {
   animateArmillarySpring,
   updateArmillaryRotation,
 } from "./zodiac-armillary";
-import type { OrbitalRing, OrbitalSystem, PullLines } from "./zodiac-orbits";
+import type {
+  OrbitalItemGroups,
+  OrbitalRing,
+  OrbitalSystem,
+  PullLines,
+} from "./zodiac-orbits";
 import {
   buildOrbitalSystem,
   updateOrbits,
@@ -61,10 +67,6 @@ import { pickAny, configureRaycaster } from "./zodiac-orbit-picking";
 import type {
   ConstellationConcept,
   ItemRelation,
-  OrbitalExtraction,
-  OrbitalHypothesis,
-  OrbitalRecipe,
-  OrbitalSource,
   ZodiacSubTopic,
 } from "./zodiac-types";
 
@@ -80,12 +82,7 @@ export interface ZodiacHandle {
     edges: ConstellationEdge[],
   ) => void;
   loadArmillaryRings: (sectorId: string, subTopics: ZodiacSubTopic[]) => void;
-  loadOrbitalBodies: (
-    sources: OrbitalSource[],
-    extractions: OrbitalExtraction[],
-    hypotheses: OrbitalHypothesis[],
-    recipes: OrbitalRecipe[],
-  ) => void;
+  loadOrbitalBodies: (groups: OrbitalItemGroups) => void;
   showPullLines: (itemId: string, relations: ItemRelation[]) => void;
   clearPullLines: () => void;
   setAutoRotate: (enabled: boolean) => void;
@@ -99,6 +96,14 @@ const REDUCED_MOTION_TIME_SCALE = 0.25;
 // A pointer that travels further than this between down and click was a drag
 // (an orbit), not a pick.
 const DRAG_CLICK_TOLERANCE_PX = 4;
+
+// Orbital ring label -> the item type the sidebar's item-detail mode expects.
+const ORBITAL_ITEM_TYPES: Record<string, string> = {
+  Sources: "source",
+  Extractions: "extraction",
+  Hypotheses: "hypothesis",
+  Recipes: "recipe",
+};
 
 export interface ZodiacSceneOptions {
   /** Class for the hover tooltip; the scene sets only its position. */
@@ -201,7 +206,7 @@ export function initZodiacScene(
   const sectorGroups = new Map<string, THREE.Group>();
   const sectorFillMeshes: THREE.Mesh[] = [];
   SECTORS.forEach((sector) => {
-    const g = buildSectorGroup(sector, false);
+    const g = buildSectorGroup(sector);
     scene.add(g);
     sectorGroups.set(sector.id, g);
     g.traverse((child) => {
@@ -223,7 +228,7 @@ export function initZodiacScene(
     el.style.fontFamily = "'Cormorant Garamond', Georgia, serif";
     el.style.fontSize = "12px";
     el.style.letterSpacing = "0.2em";
-    el.style.color = textSafeSectorColor(sector.color);
+    el.style.color = token.var(sector.textToken);
     el.style.opacity = "0.85";
     el.style.transition = "opacity 0.25s ease";
     el.style.userSelect = "none";
@@ -276,15 +281,8 @@ export function initZodiacScene(
 
   function disposePullLines() {
     if (pullLines) {
-      scene.remove(pullLines.group);
-      pullLines.group.traverse((child) => {
-        if ("geometry" in child && child.geometry) {
-          (child.geometry as THREE.BufferGeometry).dispose();
-        }
-        if ("material" in child && child.material) {
-          (child.material as THREE.Material).dispose();
-        }
-      });
+      scene.remove(pullLines.object);
+      pullLines.dispose();
       pullLines = null;
     }
   }
@@ -316,23 +314,27 @@ export function initZodiacScene(
       relations,
       orbitalSystem.rings,
     );
-    scene.add(pullLines.group);
+    scene.add(pullLines.object);
     // Mark the body the sidebar selected, the same as clicking it.
     attachSelectionHalo(itemId);
   }
 
-  // Lit = selected or previewed. Only opacities change; nothing is rebuilt.
+  // Lit = selected or previewed. Only opacities change; nothing is rebuilt,
+  // and only the sectors whose state flipped are touched.
+  const litSectorIds = new Set<string>();
+
   function refreshSectorVisuals() {
-    const lit = new Set<string>();
-    if (activeSectorId) lit.add(activeSectorId);
-    if (previewSectorId) lit.add(previewSectorId);
-    sectorGroups.forEach((group, id) => {
-      setSectorGroupActive(group, lit.has(id));
-    });
-    sectorLabels.forEach((el, id) => {
-      el.style.opacity = lit.has(id) ? "1" : "0.85";
-    });
-    setEdgeActivity(hubEdges, domainEdges, lit);
+    for (const { id } of SECTORS) {
+      const lit = id === activeSectorId || id === previewSectorId;
+      if (lit === litSectorIds.has(id)) continue;
+      if (lit) litSectorIds.add(id);
+      else litSectorIds.delete(id);
+      const group = sectorGroups.get(id);
+      if (group) setSectorGroupActive(group, lit);
+      const label = sectorLabels.get(id);
+      if (label) label.style.opacity = lit ? "1" : "0.85";
+      setSectorEdgesActive(hubEdges, domainEdges, id, lit);
+    }
   }
 
   function previewSector(id: string | null) {
@@ -398,16 +400,9 @@ export function initZodiacScene(
         return;
       }
       if (pick.type === "orbital-item" && onOrbitalClick) {
-        // Infer type from ring label
-        const typeMap: Record<string, string> = {
-          Sources: "source",
-          Extractions: "extraction",
-          Hypotheses: "hypothesis",
-          Recipes: "recipe",
-        };
         onOrbitalClick(
           pick.id,
-          typeMap[pick.ringLabel ?? ""] ?? "source",
+          ORBITAL_ITEM_TYPES[pick.ringLabel ?? ""] ?? "source",
           pick.label,
         );
         return;
@@ -447,8 +442,21 @@ export function initZodiacScene(
   tooltipEl.style.display = "none";
   cssContainer.appendChild(tooltipEl);
 
-  // Selection halo. When it marks an orbiting body it follows that body.
-  let selectionHalo: THREE.Mesh | null = null;
+  // Selection halo: built once and shown, hidden or moved, never rebuilt.
+  // When it marks an orbiting body it follows that body.
+  const haloMaterial = new THREE.MeshBasicMaterial({
+    color: COLORS.gold,
+    transparent: true,
+    opacity: 0.7,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const selectionHalo = new THREE.Mesh(
+    new THREE.RingGeometry(4, 6, 24),
+    haloMaterial,
+  );
+  selectionHalo.visible = false;
+  scene.add(selectionHalo);
   let haloItemId: string | null = null;
   let haloBody: { ring: OrbitalRing; index: number } | null = null;
   const haloMatrix = new THREE.Matrix4();
@@ -456,43 +464,32 @@ export function initZodiacScene(
   function clearSelectionHalo() {
     haloItemId = null;
     haloBody = null;
-    if (selectionHalo) {
-      scene.remove(selectionHalo);
-      selectionHalo.geometry.dispose();
-      (selectionHalo.material as THREE.Material).dispose();
-      selectionHalo = null;
-    }
+    selectionHalo.visible = false;
   }
 
   function syncHaloToBody() {
-    if (!selectionHalo || !haloBody) return;
+    if (!haloBody) return;
     haloBody.ring.mesh.getMatrixAt(haloBody.index, haloMatrix);
     selectionHalo.position.setFromMatrixPosition(haloMatrix);
   }
 
   function attachSelectionHalo(itemId: string) {
+    if (haloBody && haloItemId === itemId) return; // already marking it
     const body = findOrbitalBody(itemId);
     if (!body) return;
-    showSelectionHalo(new THREE.Vector3());
     haloItemId = itemId;
     haloBody = body;
     syncHaloToBody();
+    selectionHalo.lookAt(camera.position);
+    selectionHalo.visible = true;
   }
 
   function showSelectionHalo(position: THREE.Vector3) {
-    clearSelectionHalo();
-    const haloGeo = new THREE.RingGeometry(4, 6, 24);
-    const haloMat = new THREE.MeshBasicMaterial({
-      color: COLORS.gold,
-      transparent: true,
-      opacity: 0.7,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    selectionHalo = new THREE.Mesh(haloGeo, haloMat);
+    haloItemId = null;
+    haloBody = null;
     selectionHalo.position.copy(position);
     selectionHalo.lookAt(camera.position);
-    scene.add(selectionHalo);
+    selectionHalo.visible = true;
   }
 
   function hideTooltip() {
@@ -533,11 +530,18 @@ export function initZodiacScene(
 
   // --- Resize handler --------------------------------------------------------
   // Sized from the container: the canvas fills it via CSS. A collapsed
-  // container (0px) is skipped rather than producing a NaN aspect.
+  // container (0px) is skipped rather than producing a NaN aspect, and an
+  // unchanged size (including the observer's first call) is skipped too.
+  let appliedWidth = initialWidth;
+  let appliedHeight = initialHeight;
+
   function onResize() {
     const w = cssContainer.clientWidth;
     const h = cssContainer.clientHeight;
     if (w <= 0 || h <= 0) return;
+    if (w === appliedWidth && h === appliedHeight) return;
+    appliedWidth = w;
+    appliedHeight = h;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h, false);
@@ -546,14 +550,11 @@ export function initZodiacScene(
     composer.setSize(w, h);
   }
 
-  window.addEventListener("resize", onResize);
-  // The layout can resize the canvas without a window resize (breakpoints,
-  // sidebar content), so observe the container itself.
-  const resizeObserver =
-    typeof ResizeObserver === "undefined"
-      ? null
-      : new ResizeObserver(() => onResize());
-  resizeObserver?.observe(cssContainer);
+  // The container, not the window: the layout can resize the canvas without a
+  // window resize (breakpoints, sidebar content), and a window resize that
+  // changes the canvas reaches the container too.
+  const resizeObserver = new ResizeObserver(onResize);
+  resizeObserver.observe(cssContainer);
 
   // --- Motion preference -----------------------------------------------------
   let reducedMotion = prefersReducedMotion();
@@ -573,9 +574,7 @@ export function initZodiacScene(
       sourceNodes.forEach(({ mesh }) => {
         (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.4;
       });
-      if (selectionHalo) {
-        (selectionHalo.material as THREE.MeshBasicMaterial).opacity = 0.7;
-      }
+      haloMaterial.opacity = 0.7;
     }
   });
 
@@ -650,9 +649,8 @@ export function initZodiacScene(
     }
 
     // Selection halo pulse (held at a fixed opacity under reduced motion)
-    if (selectionHalo) {
-      const material = selectionHalo.material as THREE.MeshBasicMaterial;
-      material.opacity = reducedMotion ? 0.7 : 0.5 + 0.3 * Math.sin(t * 3);
+    if (selectionHalo.visible) {
+      haloMaterial.opacity = reducedMotion ? 0.7 : 0.5 + 0.3 * Math.sin(t * 3);
       selectionHalo.lookAt(camera.position);
     }
 
@@ -705,8 +703,7 @@ export function initZodiacScene(
       stopReducedMotionWatch();
       visibilityObserver?.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("resize", onResize);
-      resizeObserver?.disconnect();
+      resizeObserver.disconnect();
       canvas.removeEventListener("pointerdown", onCanvasPointerDown);
       canvas.removeEventListener("click", onCanvasClick);
       canvas.removeEventListener("pointermove", onCanvasPointerMove);
@@ -769,14 +766,10 @@ export function initZodiacScene(
     },
 
     // Phase 3: Load orbital bodies (rebuilt whenever live pipeline items change)
-    loadOrbitalBodies(
-      sources: OrbitalSource[],
-      extractions: OrbitalExtraction[],
-      hypotheses: OrbitalHypothesis[],
-      recipes: OrbitalRecipe[],
-    ) {
+    loadOrbitalBodies(groups: OrbitalItemGroups) {
       // Lines and the halo index into the old rings; drop them before the
-      // rings go, then replay them against the new system.
+      // rings go, then replay them against the new system. Replaying the
+      // lines re-marks their body, so the halo replay is then a no-op.
       const replayPullLines = pullLinesRequest;
       const replayHaloItemId = haloItemId;
       disposePullLines();
@@ -787,12 +780,7 @@ export function initZodiacScene(
         orbitalSystem.dispose();
       }
 
-      orbitalSystem = buildOrbitalSystem(
-        sources,
-        extractions,
-        hypotheses,
-        recipes,
-      );
+      orbitalSystem = buildOrbitalSystem(groups);
       scene.add(orbitalSystem.group);
 
       if (replayPullLines) {

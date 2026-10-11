@@ -1,7 +1,9 @@
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { StatTiles } from "../components/stat-tiles";
 import {
+  badgeRowClass,
   helperClass,
   pageClass,
   pageTitleClass,
@@ -20,29 +22,6 @@ import {
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 
-const statGridClass = css({
-  display: "grid",
-  gap: "3",
-  gridTemplateColumns: {
-    base: "repeat(2, minmax(0, 1fr))",
-    md: "repeat(4, minmax(0, 1fr))",
-  },
-});
-
-/** dt must precede dd in the DOM; the tile still reads value-over-label. */
-const statTileClass = css({
-  display: "flex",
-  flexDirection: "column-reverse",
-});
-
-const statLabelClass = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-});
-
 function statusTone(status: string): "gold" | "violet" | "cream" {
   if (status === "text_ready") return "violet";
   if (status === "review_needed" || status === "extracted") return "cream";
@@ -58,8 +37,36 @@ function confidenceTone(value: string): "gold" | "violet" | "cream" {
 const DISPLAY_QUEUE_LIMIT = import.meta.env.VITE_E2E_MODE === "1" ? 200 : 24;
 
 const ACTION_QUEUE_HEADING_ID = "display-action-queue-heading";
-const mutedTextClass = css({ color: "zodiac.cream/66" });
-const clusterMetaClass = css({ color: "zodiac.cream/66", fontSize: "sm" });
+const clusterHeadingClass = css({
+  color: "zodiac.gold",
+  fontSize: "sm",
+  mb: "2",
+});
+const clusterClass = css({ mb: "2" });
+const clusterDomainClass = css({ color: "zodiac.cream" });
+const helperSpacedClass = cx(helperClass, css({ mb: "2" }));
+const rowClass = css({
+  borderColor: "zodiac.gold/24",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "4",
+});
+const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "1" });
+const claimClass = css({
+  bg: "zodiac.cream/2",
+  borderColor: "zodiac.gold/16",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  p: "2.5",
+});
+const claimTextClass = css({
+  color: "zodiac.cream/68",
+  maxW: "72ch",
+  fontSize: "sm",
+  marginBottom: "2",
+});
+const stackClass = css({ display: "grid", gap: "2" });
 
 /**
  * Where focus goes when `row` is about to leave the queue (or its action is
@@ -242,32 +249,30 @@ export function DisplayPage() {
 
       <UICard>
         <h2 class={sectionTitleClass}>Inbox Totals</h2>
-        <dl class={statGridClass}>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Ingested</dt>
-            <dd class={css({ color: "zodiac.gold", fontSize: "3xl" })}>
-              {counts()?.ingested ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Text Ready</dt>
-            <dd class={css({ color: "zodiac.violet", fontSize: "3xl" })}>
-              {counts()?.textReady ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Review Needed</dt>
-            <dd class={css({ color: "zodiac.cream", fontSize: "3xl" })}>
-              {counts()?.reviewNeeded ?? 0}
-            </dd>
-          </div>
-          <div class={statTileClass}>
-            <dt class={statLabelClass}>Blocked</dt>
-            <dd class={css({ color: "zodiac.error", fontSize: "3xl" })}>
-              {counts()?.blocked ?? 0}
-            </dd>
-          </div>
-        </dl>
+        <StatTiles
+          items={[
+            {
+              label: "Ingested",
+              value: counts()?.ingested ?? 0,
+              tone: "gold",
+            },
+            {
+              label: "Text Ready",
+              value: counts()?.textReady ?? 0,
+              tone: "violet",
+            },
+            {
+              label: "Review Needed",
+              value: counts()?.reviewNeeded ?? 0,
+              tone: "cream",
+            },
+            {
+              label: "Blocked",
+              value: counts()?.blocked ?? 0,
+              tone: "error",
+            },
+          ]}
+        />
       </UICard>
 
       <UICard>
@@ -287,22 +292,16 @@ export function DisplayPage() {
           })}
         >
           <div>
-            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
-              High-yield areas
-            </h3>
+            <h3 class={clusterHeadingClass}>High-yield areas</h3>
             <Show
               when={(editorialSignals()?.highYieldClusters ?? []).length > 0}
-              fallback={
-                <p class={mutedTextClass}>No high-yield clusters yet.</p>
-              }
+              fallback={<p class={helperClass}>No high-yield clusters yet.</p>}
             >
               <For each={editorialSignals()?.highYieldClusters ?? []}>
                 {(cluster) => (
-                  <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>
-                      {cluster.domain}
-                    </div>
-                    <div class={clusterMetaClass}>
+                  <div class={clusterClass}>
+                    <div class={clusterDomainClass}>{cluster.domain}</div>
+                    <div class={helperClass}>
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>
@@ -311,22 +310,16 @@ export function DisplayPage() {
             </Show>
           </div>
           <div>
-            <h3 class={css({ color: "zodiac.gold", fontSize: "sm", mb: "2" })}>
-              Low-yield areas
-            </h3>
+            <h3 class={clusterHeadingClass}>Low-yield areas</h3>
             <Show
               when={(editorialSignals()?.lowYieldClusters ?? []).length > 0}
-              fallback={
-                <p class={mutedTextClass}>No low-yield clusters yet.</p>
-              }
+              fallback={<p class={helperClass}>No low-yield clusters yet.</p>}
             >
               <For each={editorialSignals()?.lowYieldClusters ?? []}>
                 {(cluster) => (
-                  <div class={css({ mb: "2" })}>
-                    <div class={css({ color: "zodiac.cream" })}>
-                      {cluster.domain}
-                    </div>
-                    <div class={clusterMetaClass}>
+                  <div class={clusterClass}>
+                    <div class={clusterDomainClass}>{cluster.domain}</div>
+                    <div class={helperClass}>
                       {cluster.conceptNames.join(", ")} · score {cluster.score}
                     </div>
                   </div>
@@ -364,24 +357,8 @@ export function DisplayPage() {
           <div class={css({ display: "grid", gap: "3" })}>
             <For each={inboxRows.data() ?? []}>
               {(row: InboxRow) => (
-                <div
-                  data-testid="display-row"
-                  class={css({
-                    borderColor: "zodiac.gold/24",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    p: "4",
-                  })}
-                >
-                  <div
-                    class={css({
-                      alignItems: "center",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      marginBottom: "2",
-                    })}
-                  >
+                <div data-testid="display-row" class={rowClass}>
+                  <div class={rowBadgesClass}>
                     <UIBadge tone={statusTone(row.status)}>
                       {row.status}
                     </UIBadge>
@@ -393,62 +370,24 @@ export function DisplayPage() {
                     </Show>
                   </div>
 
-                  <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                  <h3 class={rowTitleClass}>
                     {row.title ?? "Untitled source"}
                   </h3>
-                  <p
-                    class={css({
-                      color: "zodiac.cream/66",
-                      fontSize: "sm",
-                      marginBottom: "2",
-                    })}
-                  >
+                  <p class={helperSpacedClass}>
                     Next action: <strong>{row.nextAction}</strong>
                   </p>
 
                   <Show when={row.extractionPreview}>
                     {(preview) => (
-                      <div class={css({ marginBottom: "2" })}>
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            maxW: "72ch",
-                            fontSize: "sm",
-                            marginBottom: "2",
-                          })}
-                        >
-                          {preview().summary}
-                        </p>
+                      <div class={clusterClass}>
+                        <p class={helperSpacedClass}>{preview().summary}</p>
                         <Show when={preview().claimPreviews.length > 0}>
-                          <div class={css({ display: "grid", gap: "2" })}>
+                          <div class={stackClass}>
                             <For each={preview().claimPreviews}>
                               {(claim) => (
-                                <div
-                                  class={css({
-                                    bg: "zodiac.cream/2",
-                                    borderColor: "zodiac.gold/16",
-                                    borderRadius: "l2",
-                                    borderWidth: "1px",
-                                    p: "2.5",
-                                  })}
-                                >
-                                  <p
-                                    class={css({
-                                      color: "zodiac.cream/68",
-                                      maxW: "72ch",
-                                      fontSize: "sm",
-                                      marginBottom: "2",
-                                    })}
-                                  >
-                                    {claim.text}
-                                  </p>
-                                  <div
-                                    class={css({
-                                      display: "flex",
-                                      flexWrap: "wrap",
-                                      gap: "2",
-                                    })}
-                                  >
+                                <div class={claimClass}>
+                                  <p class={claimTextClass}>{claim.text}</p>
+                                  <div class={badgeRowClass}>
                                     <Show when={claim.truthConfidence}>
                                       {(value) => (
                                         <UIBadge tone={confidenceTone(value())}>
@@ -473,9 +412,7 @@ export function DisplayPage() {
                     )}
                   </Show>
 
-                  <div
-                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                  >
+                  <div class={badgeRowClass}>
                     {/* aria-busy, not disabled, while a row action is in
                         flight: disabling the pressed button would blur it.
                         withRowPending ignores repeat presses. */}

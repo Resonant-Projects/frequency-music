@@ -9,22 +9,34 @@ import {
   createMemo,
   createSignal,
   For,
+  Index,
   type JSX,
   on,
   onCleanup,
   onMount,
   Show,
+  untrack,
 } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { css, cva, cx } from "../../styled-system/css";
+import { token } from "../../styled-system/tokens";
+import {
+  createAnnouncer,
+  eyebrowClass,
+  focusRingStyle,
+  srOnlyClass,
+  UIList,
+  UINotice,
+} from "../components/ui";
 import { createQuery, createQueryWithStatus } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import type { ConstellationEdge } from "../lib/zodiac-constellations";
 import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
-import { COLORS, SECTORS, textSafeSectorColor } from "../lib/zodiac-data";
+import { SECTORS, type SectorDef } from "../lib/zodiac-data";
 import {
   buildOrbitalItemGroups,
   type OrbitalItem,
+  type OrbitalItemGroups,
   orbitalItemSector,
 } from "../lib/zodiac-orbits";
 import { initZodiacScene, type ZodiacHandle } from "../lib/zodiac-scene";
@@ -32,10 +44,7 @@ import type {
   ConceptDetailData,
   ConstellationConcept,
   ItemRelation,
-  OrbitalExtraction,
-  OrbitalHypothesis,
-  OrbitalRecipe,
-  OrbitalSource,
+  PipelineItems,
   ZodiacConstellationEdge,
   ZodiacSubTopic,
 } from "../lib/zodiac-types";
@@ -43,17 +52,6 @@ import type {
 // ---------------------------------------------------------------------------
 // PandaCSS style constants — Sidebar
 // ---------------------------------------------------------------------------
-
-const focusRing = {
-  _focusVisible: {
-    borderColor: "zodiac.gold",
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
-} as const;
-
-const srOnly = css({ srOnly: true });
 
 // -- Layout --
 
@@ -108,7 +106,6 @@ const sceneTooltip = css({
   color: "zodiac.gold",
   background: "zodiac.void/88",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/35",
   padding: "4px 8px",
 });
@@ -118,10 +115,8 @@ const sidebarContainer = css({
   display: "flex",
   flexDirection: "column",
   borderLeftWidth: { base: "0", lg: "1px" },
-  borderLeftStyle: "solid",
   borderLeftColor: "zodiac.gold/12",
   borderTopWidth: { base: "1px", lg: "0" },
-  borderTopStyle: "solid",
   borderTopColor: "zodiac.gold/12",
   overflowY: "auto",
   flexShrink: 0,
@@ -133,7 +128,6 @@ const sidebarContainer = css({
 
 const sectionDivider = {
   borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
   borderBottomColor: "zodiac.gold/10",
 } as const;
 
@@ -147,11 +141,14 @@ const sidebarSectionCompact = css({
   ...sectionDivider,
 });
 
-const sidebarSectionScrollable = css({
-  padding: "16px 26px",
-  flex: "1",
-  overflowY: "auto",
-});
+const sidebarSectionScrollable = cx(
+  css({
+    padding: "16px 26px",
+    flex: "1",
+    overflowY: "auto",
+  }),
+  "zodiac-scroll",
+);
 
 const sidebarSectionDomain = css({
   padding: "22px 26px",
@@ -168,42 +165,36 @@ const sidebarSectionWorkflow = css({
   padding: "0 26px 16px",
   flexShrink: 0,
   borderTopWidth: "1px",
-  borderTopStyle: "solid",
   borderTopColor: "zodiac.gold/10",
 });
 
 const sidebarSectionPipeline = css({
   padding: "14px 26px 24px",
   borderTopWidth: "1px",
-  borderTopStyle: "solid",
   borderTopColor: "zodiac.gold/10",
 });
 
 // -- Typography --
 
-// Every eyebrow and section heading in the sidebar: 10px mono uppercase,
-// tracked wide, gold at the 78% floor unless a tone says otherwise.
-const eyebrow = cva({
+// Every eyebrow and section heading in the sidebar is the shared eyebrow
+// plus a tone, tracking and spacing. Tone and tracking override the shared
+// class, so they use the doubled `&&` selector to win regardless of order.
+const eyebrowVariant = cva({
   base: {
-    fontFamily: "mono",
-    fontSize: "10px",
     fontWeight: "400",
     lineHeight: "1.4",
-    letterSpacing: "0.3em",
-    textTransform: "uppercase",
-    color: "zodiac.gold/78",
   },
   variants: {
     tone: {
       gold: {},
-      violet: { color: "zodiac.violetText" },
+      violet: { "&&": { color: "zodiac.violetText" } },
       // Text-safe per-sector colour set on an ancestor (see sectorStyle).
-      sector: { color: "var(--sector-text)" },
+      sector: { "&&": { color: "var(--sector-text)" } },
     },
     tracking: {
       normal: {},
-      wide: { letterSpacing: "0.35em" },
-      widest: { letterSpacing: "0.4em" },
+      wide: { "&&": { letterSpacing: "0.35em" } },
+      widest: { "&&": { letterSpacing: "0.4em" } },
     },
     space: {
       tight: { marginBottom: "8px" },
@@ -215,6 +206,9 @@ const eyebrow = cva({
   },
   defaultVariants: { tone: "gold", tracking: "normal", space: "tight" },
 });
+
+const eyebrow = (variant?: Parameters<typeof eyebrowVariant>[0]) =>
+  cx(eyebrowClass, eyebrowVariant(variant));
 
 const sidebarEyebrow = eyebrow({ tracking: "widest", space: "loose" });
 const sidebarEyebrowSector = eyebrow({
@@ -264,12 +258,13 @@ const sidebarTitleItem = css({
   lineHeight: "1.3",
 });
 
+const sidebarTitleEmphasis = css({ color: "zodiac.gold" });
+
 const sidebarBody = css({
   fontSize: "14px",
   fontWeight: "400",
   lineHeight: "1.65",
   color: "zodiac.cream/66",
-  margin: "0",
 });
 
 const sidebarBodySm = css({
@@ -321,7 +316,6 @@ const statCellGold = css({
   flex: "1",
   padding: "10px",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/18",
   textAlign: "center",
 });
@@ -330,7 +324,6 @@ const statCellViolet = css({
   flex: "1",
   padding: "10px",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.violet/18",
   textAlign: "center",
 });
@@ -366,7 +359,6 @@ const conceptTag = css({
   cursor: "pointer",
   background: "zodiac.violet/10",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.violet/25",
   color: "zodiac.gold",
   padding: "5px 10px",
@@ -377,7 +369,7 @@ const conceptTag = css({
     minHeight: "44px",
     padding: "10px 14px",
   },
-  ...focusRing,
+  ...focusRingStyle,
 });
 
 const conceptTagCount = css({
@@ -405,7 +397,6 @@ const openDomainLink = css({
   textAlign: "center",
   textDecoration: "none",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/45",
   background: "zodiac.gold",
   color: "zodiac.void",
@@ -414,13 +405,7 @@ const openDomainLink = css({
   _coarsePointer: {
     minHeight: "48px",
   },
-  ...focusRing,
-});
-
-const plainList = css({
-  listStyle: "none",
-  margin: "0",
-  padding: "0",
+  ...focusRingStyle,
 });
 
 const subTopicList = css({
@@ -436,7 +421,6 @@ const sectorButton = css({
   marginBottom: "3px",
   cursor: "pointer",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/10",
   background: "transparent",
   transition: "all 0.2s",
@@ -450,7 +434,7 @@ const sectorButton = css({
   _coarsePointer: {
     minHeight: "44px",
   },
-  ...focusRing,
+  ...focusRingStyle,
 });
 
 // Inactive labels drop the sector hue: the rest state is cream and only the
@@ -483,7 +467,6 @@ const workspaceLink = css({
   textAlign: "center",
   textDecoration: "none",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/20",
   background: "zodiac.glow-inner/55",
   color: "zodiac.cream",
@@ -492,7 +475,7 @@ const workspaceLink = css({
   _coarsePointer: {
     minHeight: "44px",
   },
-  ...focusRing,
+  ...focusRingStyle,
 });
 
 // Back, pause/resume and show-all toggles share one bar-button face.
@@ -500,7 +483,6 @@ const barButton = css({
   ...buttonFace,
   cursor: "pointer",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/25",
   background: "transparent",
   color: "zodiac.gold",
@@ -509,7 +491,7 @@ const barButton = css({
   _coarsePointer: {
     minHeight: "44px",
   },
-  ...focusRing,
+  ...focusRingStyle,
 });
 
 const motionToggleOverview = cx(barButton, css({ marginTop: "12px" }));
@@ -570,7 +552,6 @@ const listButtonBase = {
   minHeight: "36px",
   marginBottom: "3px",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/12",
   background: "transparent",
   color: "zodiac.cream",
@@ -579,7 +560,7 @@ const listButtonBase = {
   _coarsePointer: {
     minHeight: "44px",
   },
-  ...focusRing,
+  ...focusRingStyle,
 } as const;
 
 const listButton = css(listButtonBase);
@@ -636,7 +617,6 @@ const fallbackGrid = css({
 
 const fallbackCard = css({
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/20",
   padding: "18px",
   borderRadius: "8px",
@@ -668,7 +648,6 @@ const fallbackTitle = css({
 });
 
 const fallbackBody = css({
-  margin: "0",
   fontSize: "14px",
   color: "zodiac.cream/66",
   lineHeight: "1.6",
@@ -688,13 +667,12 @@ const fallbackLink = css({
   textDecoration: "none",
   background: "zodiac.glow-inner",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/55",
   padding: "11px 12px",
   minHeight: "44px",
   color: "zodiac.cream",
   textAlign: "left",
-  ...focusRing,
+  ...focusRingStyle,
 });
 
 const fallbackPipelineRow = css({
@@ -708,7 +686,6 @@ const fallbackPipelineCell = css({
   minWidth: "72px",
   padding: "8px",
   borderWidth: "1px",
-  borderStyle: "solid",
   borderColor: "zodiac.gold/20",
   textAlign: "center",
 });
@@ -756,20 +733,12 @@ const workspaceLinks = [
   { label: "Admin", to: "/admin" },
 ] as const;
 
-// Sector colours are design tokens; DOM text and borders reference them as
-// CSS variables rather than raw hex, so per-sector colour stays dynamic.
-const COLOR_VARS: Record<string, string> = {
-  [COLORS.violet]: "var(--colors-zodiac-violet)",
-  [COLORS.violetText]: "var(--colors-zodiac-violet-text)",
-  [COLORS.gold]: "var(--colors-zodiac-gold)",
-  [COLORS.cream]: "var(--colors-zodiac-cream)",
-};
-
-function sectorStyle(color: string): JSX.CSSProperties {
+// Per-sector colour reaches DOM text and borders through CSS variables on an
+// ancestor, so one class serves every sector.
+function sectorStyle(sector: SectorDef): JSX.CSSProperties {
   return {
-    "--sector-color": COLOR_VARS[color] ?? COLOR_VARS[COLORS.gold],
-    "--sector-text":
-      COLOR_VARS[textSafeSectorColor(color)] ?? COLOR_VARS[COLORS.gold],
+    "--sector-color": token.var(sector.colorToken),
+    "--sector-text": token.var(sector.textToken),
   };
 }
 
@@ -802,16 +771,45 @@ type SectorMetricRow = {
   claims: number;
 };
 
-type SidebarMode =
+type SidebarView =
   | { kind: "overview" }
   | { kind: "concept-detail"; conceptId: Id<"concepts"> }
   | { kind: "sub-topic"; label: string; conceptNames: string[] }
   | { kind: "item-detail"; itemId: string; itemType: string; title: string };
 
-type PipelineListItem = { _id: string; title?: string; status: string };
+/** Where focus goes once the panel a mode change mounts is in the page. */
+type FocusIntent = {
+  /** On Back: the overview control to return to, if it still exists. */
+  originKey?: string;
+  /** Canvas-driven changes must not scroll the page to the sidebar. */
+  preventScroll?: boolean;
+};
 
-function toPipelineListItem(item: OrbitalItem): PipelineListItem {
-  return { _id: item.id, title: item.title, status: item.status };
+type SidebarMode = SidebarView & {
+  /** The overview control that opened this drill-down, for Back. */
+  origin?: string;
+  /** Present on every user-driven change; absent on first render. */
+  focus?: FocusIntent;
+};
+
+type PipelineListItem = { id: string; title?: string; status: string };
+
+type LinkedDoc = { _id: string; title?: string; status: string };
+
+function toListItem(doc: LinkedDoc): PipelineListItem {
+  return { id: doc._id, title: doc.title, status: doc.status };
+}
+
+function sameIds(a: readonly string[], b: readonly string[]) {
+  return a.length === b.length && a.every((id, i) => id === b[i]);
+}
+
+/** A live list's keys, unchanged (same array) while a push keeps them. */
+function createIds<T, K extends string>(
+  list: () => readonly T[],
+  idOf: (item: T) => K,
+) {
+  return createMemo<K[]>(() => list().map(idOf), [], { equals: sameIds });
 }
 
 export function Zodiac3D() {
@@ -831,7 +829,7 @@ export function Zodiac3D() {
   );
   // Polite announcement of mode changes that start on the canvas, where focus
   // cannot follow (the panel title announces sidebar-driven changes itself).
-  const [liveStatus, setLiveStatus] = createSignal("");
+  const [liveStatus, announce] = createAnnouncer();
 
   // --- Convex Queries (existing, stable) ---
   const sectorMetrics = createQuery(api.dashboard.zodiacSectors, () => ({
@@ -852,9 +850,16 @@ export function Zodiac3D() {
   const domainConcepts = createMemo<ConstellationConcept[]>(
     () => (domainConceptsQ.data() ?? []) as ConstellationConcept[],
   );
+  const conceptsById = createMemo(
+    () => new Map(domainConcepts().map((concept) => [concept._id, concept])),
+  );
+  const conceptsByName = createMemo(
+    () => new Map(domainConcepts().map((concept) => [concept.name, concept])),
+  );
 
-  // Phase 1: Edges between those concepts
-  const conceptNames = createMemo(() => domainConcepts().map((c) => c.name));
+  // Phase 1: Edges between those concepts. The names are the next query's
+  // argument, so they only change when the names do.
+  const conceptNames = createIds(domainConcepts, (c) => c.name);
   const conceptEdgesQ = createQueryWithStatus(
     api.graph.getConceptEdges,
     () => ({
@@ -904,51 +909,39 @@ export function Zodiac3D() {
   const subTopics = createMemo<ZodiacSubTopic[]>(
     () => (subTopicsQ.data() ?? []) as ZodiacSubTopic[],
   );
+  const subTopicsByLabel = createMemo(
+    () => new Map(subTopics().map((subTopic) => [subTopic.label, subTopic])),
+  );
+  const subTopicLabels = createIds(subTopics, (subTopic) => subTopic.label);
 
-  // Phase 3: Pipeline items (live)
+  // Phase 3: Pipeline items (live), grouped by orbital ring once per push and
+  // shared by the scene and the sidebar.
   const pipelineItemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
-  const pipelineItems = createMemo<
-    | {
-        sources: OrbitalSource[];
-        extractions: OrbitalExtraction[];
-        hypotheses: OrbitalHypothesis[];
-        recipes: OrbitalRecipe[];
-      }
-    | undefined
-  >(
-    () =>
-      pipelineItemsQ.data() as
-        | {
-            sources: OrbitalSource[];
-            extractions: OrbitalExtraction[];
-            hypotheses: OrbitalHypothesis[];
-            recipes: OrbitalRecipe[];
-          }
-        | undefined,
-  );
-
-  // The orbiting bodies drawn in the selected sector, grouped by ring: the
-  // keyboard path to everything a body click reaches.
-  const domainPipelineGroups = createMemo(() => {
-    const items = pipelineItems();
-    if (!items) return [];
-    const groups = buildOrbitalItemGroups(
-      items.sources,
-      items.extractions,
-      items.hypotheses,
-      items.recipes,
-    );
-    const sector = selSector();
-    return ORBITAL_GROUPS.map((group) => ({
-      ...group,
-      items: groups[group.key]
-        .filter((item) => orbitalItemSector(item) === sector)
-        .map(toPipelineListItem),
-    })).filter((group) => group.items.length > 0);
+  const orbitalGroups = createMemo<OrbitalItemGroups | undefined>(() => {
+    const items = pipelineItemsQ.data() as PipelineItems | undefined;
+    return items ? buildOrbitalItemGroups(items) : undefined;
   });
-  const domainPipelineCount = createMemo(() =>
-    domainPipelineGroups().reduce((sum, group) => sum + group.items.length, 0),
-  );
+
+  // The orbiting bodies drawn in the selected sector, per ring: the keyboard
+  // path to everything a body click reaches.
+  const sectorOrbitalItems = createMemo<OrbitalItemGroups | undefined>(() => {
+    const groups = orbitalGroups();
+    if (!groups) return undefined;
+    const sector = selSector();
+    const inSector = (items: OrbitalItem[]) =>
+      items.filter((item) => orbitalItemSector(item) === sector);
+    return {
+      sources: inSector(groups.sources),
+      extractions: inSector(groups.extractions),
+      hypotheses: inSector(groups.hypotheses),
+      recipes: inSector(groups.recipes),
+    };
+  });
+  const domainPipelineCount = createMemo(() => {
+    const groups = sectorOrbitalItems();
+    if (!groups) return 0;
+    return ORBITAL_GROUPS.reduce((sum, { key }) => sum + groups[key].length, 0);
+  });
 
   // Phase 3: Item relations — conditional
   const activeItem = createMemo(() => {
@@ -1028,19 +1021,6 @@ export function Zodiac3D() {
     setAutoRotate(next);
   }
 
-  // --- Sidebar focus management ---------------------------------------------
-  // Each panel registers its title (tabIndex -1). After a mode change focus
-  // moves to the new title, or — on Back — to the overview control that
-  // started the drill-down, so focus never falls to <body>.
-  let panelTitleEl: HTMLElement | undefined;
-  const registerPanelTitle = (el: HTMLElement) => {
-    panelTitleEl = el;
-  };
-  let overviewOriginKey: string | null = null;
-  let restoreOriginOnRender = false;
-  let modeChangeFromCanvas = false;
-  let titleFocusPending = false;
-
   function isExpanded(key: string) {
     return expandedLists().has(key);
   }
@@ -1052,84 +1032,49 @@ export function Zodiac3D() {
     setExpandedLists(next);
   }
 
-  function announce(message: string) {
-    setLiveStatus("");
-    queueMicrotask(() => setLiveStatus(message));
-  }
+  // --- Sidebar focus management ---------------------------------------------
+  // Every user-driven mode change carries a focus intent and mounts a fresh
+  // panel (the sidebar's <Show> is keyed on the mode). The panel's title
+  // claims focus as it mounts — or, on Back, the overview control that
+  // started the drill-down — so focus never falls to <body>.
 
   function openPanel(
-    mode: SidebarMode,
+    view: SidebarView,
     options: { originKey?: string; fromCanvas?: boolean } = {},
   ) {
-    if (sidebarMode().kind === "overview") {
-      overviewOriginKey = options.originKey ?? null;
-    }
-    modeChangeFromCanvas = options.fromCanvas ?? false;
-    setSidebarMode(mode);
+    const current = sidebarMode();
+    setSidebarMode({
+      ...view,
+      origin: current.kind === "overview" ? options.originKey : current.origin,
+      focus: { preventScroll: options.fromCanvas },
+    });
   }
 
-  function focusPanelTitle(preventScroll: boolean) {
-    if (panelTitleEl?.isConnected) {
-      titleFocusPending = false;
-      panelTitleEl.focus({ preventScroll });
-      return;
-    }
-    // The title is not rendered yet (concept detail still loading): hold
-    // focus on the panel's loading text until the title arrives.
-    const fallback = sidebarRef?.querySelector<HTMLElement>(
-      "[data-panel-fallback]",
-    );
-    if (fallback) {
-      titleFocusPending = true;
-      fallback.focus({ preventScroll });
-    }
+  function goBack() {
+    const current = sidebarMode();
+    if (current.kind === "overview") return;
+    setSidebarMode({ kind: "overview", focus: { originKey: current.origin } });
+    sceneHandle?.clearPullLines();
   }
 
-  createEffect(
-    on(
-      sidebarMode,
-      (mode, prev) => {
-        // Re-selecting a domain within the overview keeps focus on its button.
-        if (mode.kind === "overview" && prev?.kind === "overview") return;
-        const fromCanvas = modeChangeFromCanvas;
-        modeChangeFromCanvas = false;
-        const originKey = restoreOriginOnRender ? overviewOriginKey : null;
-        restoreOriginOnRender = false;
-        requestAnimationFrame(() => {
-          if (originKey) {
-            const origin = sidebarRef?.querySelector<HTMLElement>(
-              `[data-focus-key="${CSS.escape(originKey)}"]`,
-            );
-            if (origin) {
-              origin.focus();
-              return;
-            }
-          }
-          // A canvas click must not scroll the page to the sidebar.
-          focusPanelTitle(fromCanvas);
-        });
-      },
-      { defer: true },
-    ),
-  );
-
-  // When a loading panel's title arrives, finish the pending focus move.
-  createEffect(
-    on(
-      () => Boolean(conceptDetail()),
-      (ready) => {
-        if (!ready || !titleFocusPending) return;
-        requestAnimationFrame(() => {
-          // The loading text that held focus is gone; only reclaim focus if
-          // it fell to <body> (the reader has not moved on).
-          const active = document.activeElement;
-          if (active && active !== document.body) return;
-          focusPanelTitle(true);
-        });
-      },
-      { defer: true },
-    ),
-  );
+  /** Ref for a panel title, or the text that stands in while it loads. */
+  function claimFocus(el: HTMLElement) {
+    const intent = untrack(sidebarMode).focus;
+    if (!intent) return;
+    // The panel mounts in this tick; focus it once it is in the document.
+    queueMicrotask(() => {
+      // Focus left <body> only if the reader moved on (the control that made
+      // the change, or a loading stand-in, unmounted with the old content).
+      const active = document.activeElement;
+      if (active && active !== document.body) return;
+      const origin = intent.originKey
+        ? sidebarRef.querySelector<HTMLElement>(
+            `[data-focus-key="${CSS.escape(intent.originKey)}"]`,
+          )
+        : null;
+      (origin ?? el).focus({ preventScroll: intent.preventScroll });
+    });
+  }
 
   onMount(() => {
     try {
@@ -1151,9 +1096,7 @@ export function Zodiac3D() {
             { kind: "concept-detail", conceptId },
             { fromCanvas: true },
           );
-          const name = domainConcepts().find(
-            (c) => c._id === conceptId,
-          )?.displayName;
+          const name = conceptsById().get(conceptId)?.displayName;
           announce(name ? `Concept: ${name}` : "Loading concept details…");
         },
         // onOrbitalClick
@@ -1196,42 +1139,28 @@ export function Zodiac3D() {
 
   // Phase 1: Load constellations when concepts arrive for the selected sector
   createEffect(
-    on([domainConcepts, conceptEdges], () => {
-      const concepts = domainConcepts();
-      const edges = conceptEdges();
-      if (!concepts || !sceneHandle) return;
-
-      sceneHandle.loadConstellations(selSector(), concepts, edges ?? []);
+    on([domainConcepts, conceptEdges], ([concepts, edges]) => {
+      sceneHandle?.loadConstellations(selSector(), concepts, edges);
     }),
   );
 
   // Phase 2: Load armillary rings when sub-topics arrive
   createEffect(
-    on(subTopics, () => {
-      const st = subTopics();
-      if (!st || !sceneHandle) return;
-      sceneHandle.loadArmillaryRings(selSector(), st);
+    on(subTopics, (st) => {
+      sceneHandle?.loadArmillaryRings(selSector(), st);
     }),
   );
 
   // Phase 3: Load orbital bodies when pipeline items arrive
   createEffect(
-    on(pipelineItems, () => {
-      const items = pipelineItems();
-      if (!items || !sceneHandle) return;
-      sceneHandle.loadOrbitalBodies(
-        items.sources,
-        items.extractions,
-        items.hypotheses,
-        items.recipes,
-      );
+    on(orbitalGroups, (groups) => {
+      if (groups) sceneHandle?.loadOrbitalBodies(groups);
     }),
   );
 
   // Phase 3: Show pull-lines when viewing item detail
   createEffect(
-    on(itemRelations, () => {
-      const relations = itemRelations();
+    on(itemRelations, (relations) => {
       const mode = sidebarMode();
       if (!sceneHandle) return;
       if (mode.kind === "item-detail" && relations) {
@@ -1242,9 +1171,9 @@ export function Zodiac3D() {
     }),
   );
 
+  // Domain buttons live in the overview, so selecting one never changes mode.
   function handleSectorSelect(id: string) {
     setSelSector(id);
-    if (sidebarMode().kind !== "overview") setSidebarMode({ kind: "overview" });
     sceneHandle?.setActiveSector(id);
   }
 
@@ -1252,14 +1181,6 @@ export function Zodiac3D() {
   // never touches the selected sector's overlays.
   function handleSectorPreview(id: string | null) {
     sceneHandle?.previewSector(id);
-  }
-
-  function goBack() {
-    if (sidebarMode().kind === "overview") return;
-    restoreOriginOnRender = true;
-    modeChangeFromCanvas = false;
-    setSidebarMode({ kind: "overview" });
-    sceneHandle?.clearPullLines();
   }
 
   function openConcept(conceptId: Id<"concepts">) {
@@ -1273,11 +1194,11 @@ export function Zodiac3D() {
     openPanel(
       {
         kind: "item-detail",
-        itemId: item._id,
+        itemId: item.id,
         itemType: type,
         title: item.title ?? "Untitled",
       },
-      { originKey: `item:${item._id}` },
+      { originKey: `item:${item.id}` },
     );
   }
 
@@ -1309,7 +1230,7 @@ export function Zodiac3D() {
         ) : (
           <>
             Show all {props.total}
-            <span class={srOnly}> {props.label}</span>
+            <span class={srOnlyClass}> {props.label}</span>
           </>
         )}
       </button>
@@ -1317,10 +1238,14 @@ export function Zodiac3D() {
   }
 
   function SidebarOverview() {
-    const visibleConcepts = createMemo(() =>
-      isExpanded("concepts")
-        ? domainConcepts()
-        : domainConcepts().slice(0, CONCEPT_PREVIEW_COUNT),
+    const conceptIds = createIds(domainConcepts, (concept) => concept._id);
+    const visibleConceptIds = createMemo(
+      () =>
+        isExpanded("concepts")
+          ? conceptIds()
+          : conceptIds().slice(0, CONCEPT_PREVIEW_COUNT),
+      [],
+      { equals: sameIds },
     );
 
     return (
@@ -1332,7 +1257,7 @@ export function Zodiac3D() {
           <h1 class={sidebarTitle}>
             Astrolabe
             <br />
-            <em class={css({ color: "zodiac.gold" })}>Knowledge</em>
+            <em class={sidebarTitleEmphasis}>Knowledge</em>
             <br />
             Orrery
           </h1>
@@ -1343,14 +1268,11 @@ export function Zodiac3D() {
           <MotionToggle class={motionToggleOverview} />
         </div>
 
-        <div
-          class={sidebarSectionDomain}
-          style={sectorStyle(activeSector().color)}
-        >
+        <div class={sidebarSectionDomain} style={sectorStyle(activeSector())}>
           <div class={sidebarEyebrowSector}>
             {activeSector().id.toUpperCase()} DOMAIN
           </div>
-          <h2 class={sidebarTitleDomain} tabIndex={-1} ref={registerPanelTitle}>
+          <h2 class={sidebarTitleDomain} tabIndex={-1} ref={claimFocus}>
             {activeSector().label}
           </h2>
           <p class={sidebarBodySm}>{activeSector().summary}</p>
@@ -1369,91 +1291,99 @@ export function Zodiac3D() {
             </div>
           </div>
 
-          <Show when={domainConcepts().length > 0}>
+          <Show when={conceptIds().length > 0}>
             <h3 class={sidebarEyebrowGroup}>
-              CONCEPTS ({domainConcepts().length})
+              CONCEPTS ({conceptIds().length})
             </h3>
-            <ul
-              role="list"
-              id="zodiac-list-concepts"
-              class={cx(plainList, conceptTagRow)}
-            >
-              <For each={visibleConcepts()}>
-                {(concept) => (
-                  <li>
-                    <button
-                      type="button"
-                      data-focus-key={`concept:${concept._id}`}
-                      onClick={() => openConcept(concept._id)}
-                      class={conceptTag}
-                    >
-                      {concept.displayName}
-                      <span class={conceptTagCount}>
-                        {concept.mentionCount}
-                        <span class={srOnly}> mentions</span>
-                      </span>
-                    </button>
-                  </li>
-                )}
+            <UIList id="zodiac-list-concepts" class={conceptTagRow}>
+              <For each={visibleConceptIds()}>
+                {(id) => {
+                  const concept = () => conceptsById().get(id);
+                  return (
+                    <li>
+                      <button
+                        type="button"
+                        data-focus-key={`concept:${id}`}
+                        onClick={() => openConcept(id)}
+                        class={conceptTag}
+                      >
+                        {concept()?.displayName}
+                        <span class={conceptTagCount}>
+                          {concept()?.mentionCount}
+                          <span class={srOnlyClass}> mentions</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                }}
               </For>
-            </ul>
-            <Show when={domainConcepts().length > CONCEPT_PREVIEW_COUNT}>
+            </UIList>
+            <Show when={conceptIds().length > CONCEPT_PREVIEW_COUNT}>
               <ShowAllToggle
                 listKey="concepts"
-                total={domainConcepts().length}
+                total={conceptIds().length}
                 label="concepts"
               />
             </Show>
           </Show>
 
-          <Show when={subTopics().length > 0}>
+          <Show when={subTopicLabels().length > 0}>
             <h3 class={sidebarEyebrowGroup}>
-              SUB-TOPICS ({subTopics().length})
+              SUB-TOPICS ({subTopicLabels().length})
             </h3>
-            <ul role="list" class={cx(plainList, subTopicList)}>
-              <For each={subTopics()}>
-                {(subTopic) => (
-                  <li>
-                    <button
-                      type="button"
-                      data-focus-key={`subtopic:${subTopic.label}`}
-                      onClick={() =>
-                        openPanel(
-                          {
-                            kind: "sub-topic",
-                            label: subTopic.label,
-                            conceptNames: subTopic.conceptNames,
-                          },
-                          { originKey: `subtopic:${subTopic.label}` },
-                        )
-                      }
-                      class={listButton}
-                    >
-                      {subTopic.label}
-                      <span class={listButtonMeta}>
-                        {subTopic.conceptNames.length} concepts
-                      </span>
-                    </button>
-                  </li>
-                )}
+            <UIList class={subTopicList}>
+              <For each={subTopicLabels()}>
+                {(label) => {
+                  const conceptNames = () =>
+                    subTopicsByLabel().get(label)?.conceptNames ?? [];
+                  return (
+                    <li>
+                      <button
+                        type="button"
+                        data-focus-key={`subtopic:${label}`}
+                        onClick={() =>
+                          openPanel(
+                            {
+                              kind: "sub-topic",
+                              label,
+                              conceptNames: conceptNames(),
+                            },
+                            { originKey: `subtopic:${label}` },
+                          )
+                        }
+                        class={listButton}
+                      >
+                        {label}
+                        <span class={listButtonMeta}>
+                          {conceptNames().length} concepts
+                        </span>
+                      </button>
+                    </li>
+                  );
+                }}
               </For>
-            </ul>
+            </UIList>
           </Show>
 
           <Show when={domainPipelineCount() > 0}>
             <h3 class={sidebarEyebrowGroup}>
               PIPELINE ITEMS ({domainPipelineCount()})
             </h3>
-            <For each={domainPipelineGroups()}>
-              {(group) => (
-                <PipelineSection
-                  label={group.label}
-                  items={group.items}
-                  type={group.type}
-                  headingLevel="h4"
-                  listKey={`pipeline-${group.key}`}
-                />
-              )}
+            <For each={ORBITAL_GROUPS}>
+              {(group) => {
+                const items = () => sectorOrbitalItems()?.[group.key] ?? [];
+                return (
+                  <Show when={items().length > 0}>
+                    <PipelineSection
+                      label={group.label}
+                      items={items()}
+                      type={group.type}
+                      headingLevel="h4"
+                      listKey={`pipeline-${group.key}`}
+                    />
+                  </Show>
+                );
+              }}
             </For>
           </Show>
 
@@ -1464,35 +1394,35 @@ export function Zodiac3D() {
 
         <div class={sidebarSectionDomains}>
           <h2 class={sidebarEyebrowSection}>ALL DOMAINS</h2>
-          <ul role="list" class={plainList}>
-            <For each={sectors()}>
+          <UIList>
+            <Index each={sectors()}>
               {(sector) => (
                 <li>
                   <button
                     type="button"
                     class={sectorButton}
-                    aria-pressed={selSector() === sector.id}
-                    style={sectorStyle(sector.color)}
-                    onClick={() => handleSectorSelect(sector.id)}
-                    onMouseEnter={() => handleSectorPreview(sector.id)}
+                    aria-pressed={selSector() === sector().id}
+                    style={sectorStyle(sector())}
+                    onClick={() => handleSectorSelect(sector().id)}
+                    onMouseEnter={() => handleSectorPreview(sector().id)}
                     onMouseLeave={() => handleSectorPreview(null)}
-                    onFocus={() => handleSectorPreview(sector.id)}
+                    onFocus={() => handleSectorPreview(sector().id)}
                     onBlur={() => handleSectorPreview(null)}
                   >
-                    <span class={sectorButtonLabel}>{sector.label}</span>
+                    <span class={sectorButtonLabel}>{sector().label}</span>
                     <span class={sectorButtonMeta}>
-                      {formatCount(sector.sources)} src
+                      {formatCount(sector().sources)} src
                     </span>
                   </button>
                 </li>
               )}
-            </For>
-          </ul>
+            </Index>
+          </UIList>
         </div>
 
         <div class={sidebarSectionWorkflow}>
           <h2 class={sidebarEyebrowSectionTop}>WORKFLOW SHORTCUTS</h2>
-          <ul role="list" class={cx(plainList, workspaceGrid)}>
+          <UIList class={workspaceGrid}>
             <For each={workspaceLinks}>
               {(link) => (
                 <li>
@@ -1506,27 +1436,27 @@ export function Zodiac3D() {
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
         </div>
 
         <div class={sidebarSectionPipeline}>
           <h2 class={sidebarEyebrowTight}>PIPELINE</h2>
           <div class={pipelineRow}>
-            <For each={pipelineSummary()}>
+            <Index each={pipelineSummary()}>
               {(item, index) => (
                 <>
                   <div class={pipelineCell}>
-                    <div class={pipelineCellValue}>{item.value}</div>
-                    <div class={pipelineCellLabel}>{item.label}</div>
+                    <div class={pipelineCellValue}>{item().value}</div>
+                    <div class={pipelineCellLabel}>{item().label}</div>
                   </div>
-                  <Show when={index() < pipelineSummary().length - 1}>
+                  <Show when={index < pipelineSummary().length - 1}>
                     <div class={pipelineArrow} aria-hidden="true">
                       →
                     </div>
                   </Show>
                 </>
               )}
-            </For>
+            </Index>
           </div>
         </div>
       </>
@@ -1534,37 +1464,30 @@ export function Zodiac3D() {
   }
 
   function SidebarConceptDetail() {
-    const detail = createMemo<ConceptDetailData | undefined>(() =>
-      conceptDetail(),
-    );
     return (
       <>
         <div class={sidebarSectionCompact}>
           <BackBar />
-          <Show when={detail()}>
-            {(detailData) => (
+          <Show when={conceptDetail()}>
+            {(detail) => (
               <>
                 <div class={sidebarEyebrowViolet}>CONCEPT</div>
-                <h2
-                  class={sidebarTitleSm}
-                  tabIndex={-1}
-                  ref={registerPanelTitle}
-                >
-                  {detailData().concept.displayName}
+                <h2 class={sidebarTitleSm} tabIndex={-1} ref={claimFocus}>
+                  {detail().concept.displayName}
                 </h2>
                 <div class={sidebarMeta}>
-                  {detailData().concept.domain} &middot;{" "}
-                  {detailData().concept.mentionCount} mentions &middot;{" "}
-                  {detailData().edgeCount} edges
+                  {detail().concept.domain} &middot;{" "}
+                  {detail().concept.mentionCount} mentions &middot;{" "}
+                  {detail().edgeCount} edges
                 </div>
-                <Show when={detailData().concept.description}>
+                <Show when={detail().concept.description}>
                   <p class={sidebarBodyDetail}>
-                    {detailData().concept.description}
+                    {detail().concept.description}
                   </p>
                 </Show>
-                <Show when={detailData().concept.aliases?.length > 0}>
+                <Show when={detail().concept.aliases?.length > 0}>
                   <div class={sidebarAliases}>
-                    Also: {detailData().concept.aliases.join(", ")}
+                    Also: {detail().concept.aliases.join(", ")}
                   </div>
                 </Show>
               </>
@@ -1572,72 +1495,67 @@ export function Zodiac3D() {
           </Show>
         </div>
 
-        <Show when={detail()}>
-          {(detailData) => (
-            <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
-              <Show when={detailData().linkedSources.length > 0}>
+        <Show
+          when={conceptDetail()}
+          fallback={
+            // Holds focus until the title arrives and claims it.
+            <div class={sidebarLoading} tabIndex={-1} ref={claimFocus}>
+              Loading concept details...
+            </div>
+          }
+        >
+          {(detail) => (
+            <div class={sidebarSectionScrollable}>
+              <Show when={detail().linkedSources.length > 0}>
                 <PipelineSection
                   label="SOURCES"
-                  items={detailData().linkedSources}
+                  items={detail().linkedSources.map(toListItem)}
                   type="source"
                 />
               </Show>
-              <Show when={detailData().linkedHypotheses.length > 0}>
+              <Show when={detail().linkedHypotheses.length > 0}>
                 <PipelineSection
                   label="HYPOTHESES"
-                  items={detailData().linkedHypotheses}
+                  items={detail().linkedHypotheses.map(toListItem)}
                   type="hypothesis"
                 />
               </Show>
-              <Show when={detailData().linkedRecipes.length > 0}>
+              <Show when={detail().linkedRecipes.length > 0}>
                 <PipelineSection
                   label="RECIPES"
-                  items={detailData().linkedRecipes}
+                  items={detail().linkedRecipes.map(toListItem)}
                   type="recipe"
                 />
               </Show>
             </div>
           )}
         </Show>
-
-        <Show when={!detail()}>
-          <div class={sidebarLoading} tabIndex={-1} data-panel-fallback>
-            Loading concept details...
-          </div>
-        </Show>
       </>
     );
   }
 
-  function SidebarSubTopic() {
-    const mode = () =>
-      sidebarMode() as {
-        kind: "sub-topic";
-        label: string;
-        conceptNames: string[];
-      };
+  function SidebarSubTopic(props: {
+    mode: Extract<SidebarView, { kind: "sub-topic" }>;
+  }) {
     return (
       <>
         <div class={sidebarSectionCompact}>
           <BackBar />
           <div class={sidebarEyebrowGold}>SUB-TOPIC</div>
-          <h2
-            class={sidebarTitleSubTopic}
-            tabIndex={-1}
-            ref={registerPanelTitle}
-          >
-            {mode().label}
+          <h2 class={sidebarTitleSubTopic} tabIndex={-1} ref={claimFocus}>
+            {props.mode.label}
           </h2>
-          <div class={sidebarMeta}>{mode().conceptNames.length} concepts</div>
+          <div class={sidebarMeta}>
+            {props.mode.conceptNames.length} concepts
+          </div>
         </div>
 
-        <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
+        <div class={sidebarSectionScrollable}>
           <h3 class={sidebarEyebrowSection}>CONCEPTS IN CLUSTER</h3>
-          <ul role="list" class={plainList}>
-            <For each={mode().conceptNames}>
+          <UIList>
+            <For each={props.mode.conceptNames}>
               {(name) => {
-                const concept = () =>
-                  domainConcepts().find((c) => c.name === name);
+                const concept = () => conceptsByName().get(name);
                 return (
                   <li>
                     <button
@@ -1650,48 +1568,52 @@ export function Zodiac3D() {
                     >
                       {concept()?.displayName ?? name}
                       <Show when={concept()}>
-                        <span class={listButtonMeta}>
-                          {concept()?.mentionCount} mentions
-                        </span>
+                        {(c) => (
+                          <span class={listButtonMeta}>
+                            {c().mentionCount} mentions
+                          </span>
+                        )}
                       </Show>
                     </button>
                   </li>
                 );
               }}
             </For>
-          </ul>
+          </UIList>
         </div>
       </>
     );
   }
 
-  function SidebarItemDetail() {
-    const mode = () =>
-      sidebarMode() as {
-        kind: "item-detail";
-        itemId: string;
-        itemType: string;
-        title: string;
-      };
+  function SidebarItemDetail(props: {
+    mode: Extract<SidebarView, { kind: "item-detail" }>;
+  }) {
     const relations = createMemo<ItemRelation[]>(() => itemRelations() ?? []);
 
     return (
       <>
         <div class={sidebarSectionCompact}>
           <BackBar />
-          <div class={sidebarEyebrowGold}>{mode().itemType.toUpperCase()}</div>
-          <h2 class={sidebarTitleItem} tabIndex={-1} ref={registerPanelTitle}>
-            {mode().title}
+          <div class={sidebarEyebrowGold}>
+            {props.mode.itemType.toUpperCase()}
+          </div>
+          <h2 class={sidebarTitleItem} tabIndex={-1} ref={claimFocus}>
+            {props.mode.title}
           </h2>
         </div>
 
-        <div class={cx(sidebarSectionScrollable, "zodiac-scroll")}>
-          <Show when={relations().length > 0}>
+        <div class={sidebarSectionScrollable}>
+          <Show
+            when={relations().length > 0}
+            fallback={
+              <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
+            }
+          >
             <h3 class={sidebarEyebrowSection}>
               RELATED ITEMS ({relations().length})
             </h3>
-            <ul role="list" class={plainList}>
-              <For each={relations()}>
+            <UIList>
+              <Index each={relations()}>
                 {(rel) => (
                   <li>
                     <button
@@ -1699,25 +1621,22 @@ export function Zodiac3D() {
                       onClick={() =>
                         openPanel({
                           kind: "item-detail",
-                          itemId: rel.id,
-                          itemType: rel.type,
-                          title: rel.title,
+                          itemId: rel().id,
+                          itemType: rel().type,
+                          title: rel().title,
                         })
                       }
                       class={relationButton}
                     >
                       <div class={relationTypeLabel}>
-                        {rel.type.toUpperCase()} &middot; {rel.relationship}
+                        {rel().type.toUpperCase()} &middot; {rel().relationship}
                       </div>
-                      <div class={relationTitle}>{rel.title}</div>
+                      <div class={relationTitle}>{rel().title}</div>
                     </button>
                   </li>
                 )}
-              </For>
-            </ul>
-          </Show>
-          <Show when={relations().length === 0}>
-            <div class={sidebarEmpty}>No cross-pipeline relations found.</div>
+              </Index>
+            </UIList>
           </Show>
         </div>
       </>
@@ -1739,16 +1658,26 @@ export function Zodiac3D() {
 
   function PipelineSection(props: {
     label: string;
-    items: PipelineListItem[];
+    items: readonly PipelineListItem[];
     type: string;
     headingLevel?: "h3" | "h4";
     /** When set, the list previews a few items behind a Show-all toggle. */
     listKey?: string;
   }) {
-    const visibleItems = createMemo(() =>
-      props.listKey && !isExpanded(props.listKey)
-        ? props.items.slice(0, PIPELINE_ITEM_PREVIEW_COUNT)
-        : props.items,
+    const itemsById = createMemo(
+      () => new Map(props.items.map((item) => [item.id, item])),
+    );
+    // Rows are keyed by id: a live push that keeps the ids re-renders no row,
+    // and a reorder moves rows (and a focused button) rather than relabelling.
+    const visibleIds = createMemo(
+      () => {
+        const ids = props.items.map((item) => item.id);
+        return props.listKey && !isExpanded(props.listKey)
+          ? ids.slice(0, PIPELINE_ITEM_PREVIEW_COUNT)
+          : ids;
+      },
+      [],
+      { equals: sameIds },
     );
     return (
       <div class={pipelineSectionContainer}>
@@ -1758,27 +1687,29 @@ export function Zodiac3D() {
         >
           {props.label} ({props.items.length})
         </Dynamic>
-        <ul
-          role="list"
-          class={plainList}
-          id={props.listKey ? `zodiac-list-${props.listKey}` : undefined}
-        >
-          <For each={visibleItems()}>
-            {(item) => (
-              <li>
-                <button
-                  type="button"
-                  data-focus-key={`item:${item._id}`}
-                  onClick={() => openItem(item, props.type)}
-                  class={listButton}
-                >
-                  <div>{item.title ?? "Untitled"}</div>
-                  <div class={pipelineItemStatus}>{item.status}</div>
-                </button>
-              </li>
-            )}
+        <UIList id={props.listKey ? `zodiac-list-${props.listKey}` : undefined}>
+          <For each={visibleIds()}>
+            {(id) => {
+              const item = () => itemsById().get(id);
+              return (
+                <li>
+                  <button
+                    type="button"
+                    data-focus-key={`item:${id}`}
+                    onClick={() => {
+                      const current = item();
+                      if (current) openItem(current, props.type);
+                    }}
+                    class={listButton}
+                  >
+                    <div>{item()?.title ?? "Untitled"}</div>
+                    <div class={pipelineItemStatus}>{item()?.status}</div>
+                  </button>
+                </li>
+              );
+            }}
           </For>
-        </ul>
+        </UIList>
         <Show
           when={
             props.listKey && props.items.length > PIPELINE_ITEM_PREVIEW_COUNT
@@ -1810,7 +1741,7 @@ export function Zodiac3D() {
 
           <div class={fallbackCard}>
             <h2 class={fallbackEyebrow({ space: "loose" })}>QUICK ACCESS</h2>
-            <ul role="list" class={cx(plainList, fallbackLinkGrid)}>
+            <UIList class={fallbackLinkGrid}>
               <For each={workspaceLinks}>
                 {(link) => (
                   <li>
@@ -1824,7 +1755,7 @@ export function Zodiac3D() {
                   </li>
                 )}
               </For>
-            </ul>
+            </UIList>
           </div>
 
           <div class={fallbackCard}>
@@ -1832,21 +1763,21 @@ export function Zodiac3D() {
               PIPELINE SNAPSHOT
             </h2>
             <div class={fallbackPipelineRow}>
-              <For each={pipelineSummary()}>
+              <Index each={pipelineSummary()}>
                 {(item, index) => (
                   <>
                     <div class={fallbackPipelineCell}>
-                      <div class={fallbackPipelineValue}>{item.value}</div>
-                      <div class={fallbackPipelineLabel}>{item.label}</div>
+                      <div class={fallbackPipelineValue}>{item().value}</div>
+                      <div class={fallbackPipelineLabel}>{item().label}</div>
                     </div>
-                    <Show when={index() < pipelineSummary().length - 1}>
+                    <Show when={index < pipelineSummary().length - 1}>
                       <div class={fallbackPipelineArrow} aria-hidden="true">
                         →
                       </div>
                     </Show>
                   </>
                 )}
-              </For>
+              </Index>
             </div>
           </div>
         </div>
@@ -1871,23 +1802,25 @@ export function Zodiac3D() {
         </div>
 
         <div ref={sidebarRef} class={cx(sidebarContainer, "zodiac-scroll")}>
-          <p role="status" aria-live="polite" class={srOnly}>
-            {liveStatus()}
-          </p>
+          <UINotice status={liveStatus()} class={srOnlyClass} />
           <Show when={sidebarMode().kind !== "overview"}>
-            <h1 class={srOnly}>Astrolabe Knowledge Orrery</h1>
+            <h1 class={srOnlyClass}>Astrolabe Knowledge Orrery</h1>
           </Show>
-          <Show when={sidebarMode().kind === "overview"}>
-            <SidebarOverview />
-          </Show>
-          <Show when={sidebarMode().kind === "concept-detail"}>
-            <SidebarConceptDetail />
-          </Show>
-          <Show when={sidebarMode().kind === "sub-topic"}>
-            <SidebarSubTopic />
-          </Show>
-          <Show when={sidebarMode().kind === "item-detail"}>
-            <SidebarItemDetail />
+          {/* Keyed: every mode change mounts a fresh panel, whose title then
+              claims the focus the change carries. */}
+          <Show when={sidebarMode()} keyed>
+            {(mode) => {
+              switch (mode.kind) {
+                case "overview":
+                  return <SidebarOverview />;
+                case "concept-detail":
+                  return <SidebarConceptDetail />;
+                case "sub-topic":
+                  return <SidebarSubTopic mode={mode} />;
+                case "item-detail":
+                  return <SidebarItemDetail mode={mode} />;
+              }
+            }}
           </Show>
         </div>
       </div>

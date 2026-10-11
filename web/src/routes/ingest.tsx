@@ -1,9 +1,12 @@
-import { createSignal, For, Index, onMount, Show } from "solid-js";
+import { createSignal, Index, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
+  DateTime,
   fieldLabelClass,
   focusRingClass,
+  formActionsClass,
   helperClass,
   inlineActionLink,
   metaLine,
@@ -14,6 +17,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -44,20 +48,58 @@ const sourceListClass = css({
     base: "minmax(0, 1fr)",
     md: "repeat(2, minmax(0, 1fr))",
   },
-  listStyleType: "none",
-  m: "0",
-  p: "0",
 });
 
-const formActionsClass = css({
+/** A section heading with its trailing control or badge. */
+const headerRowClass = cx(
+  badgeRowClass,
+  css({ justifyContent: "space-between" }),
+);
+
+const sectionHeaderClass = cx(headerRowClass, css({ mb: "3" }));
+
+/** The submit row closing the URL and YouTube forms. */
+const formFooterClass = cx(formActionsClass, css({ mt: "4" }));
+
+const insetCardClass = css({ bg: "zodiac.void/38" });
+
+const feedListClass = css({
+  display: "grid",
+  gap: "2",
+  gridTemplateColumns: "minmax(0, 1fr)",
+  maxH: "96",
+  overflowY: "auto",
+  overflowX: "hidden",
+});
+
+const feedRowClass = css({
+  alignItems: "center",
+  borderColor: "zodiac.gold/24",
+  borderRadius: "l2",
+  borderWidth: "1px",
   display: "flex",
-  justifyContent: "flex-end",
-  marginTop: "4",
+  gap: "2",
+  justifyContent: "space-between",
+  minW: 0,
+  p: "3",
 });
 
-function formatTimestamp(timestamp: number) {
-  return new Date(timestamp).toLocaleString();
-}
+const feedTextClass = css({ flex: "1", minW: 0, overflow: "hidden" });
+
+const feedMetaClass = cx(
+  metaLine,
+  css({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }),
+);
+
+const feedToggleClass = css({ flexShrink: 0 });
+
+const sourceCardClass = css({ bg: "zodiac.void/38", minW: 0, p: "4" });
+
+const sourceTitleClass = cx(sectionTitleClass, css({ mb: "1" }));
+
+const sourceBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+
+const sourceLinkRowClass = cx(badgeRowClass, css({ mt: "3" }));
 
 export function IngestPage() {
   onMount(() => {
@@ -270,16 +312,7 @@ export function IngestPage() {
       </UICard>
 
       <UICard>
-        <div
-          class={css({
-            alignItems: "center",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "2",
-            justifyContent: "space-between",
-            marginBottom: "3",
-          })}
-        >
+        <div class={sectionHeaderClass}>
           <h2 class={sectionTitleClass}>Feed Intake</h2>
           <UIButton
             data-testid="ingest-poll-feeds-btn"
@@ -300,7 +333,7 @@ export function IngestPage() {
             data-testid="ingest-feed-form"
             onSubmit={submitFeed}
             aria-busy={isAddingFeed()}
-            class={css({ bg: "zodiac.void/38" })}
+            class={insetCardClass}
           >
             <h3 class={sectionTitleClass}>Add Feed</h3>
 
@@ -337,7 +370,7 @@ export function IngestPage() {
               <option value="youtube">youtube</option>
             </UISelect>
 
-            <div class={cx(formActionsClass, css({ marginTop: "3" }))}>
+            <div class={cx(formActionsClass, css({ mt: "3" }))}>
               <UIButton
                 type="submit"
                 variant="solid"
@@ -348,20 +381,11 @@ export function IngestPage() {
             </div>
           </UICard>
 
-          <UICard class={css({ bg: "zodiac.void/38" })}>
-            <div
-              class={css({
-                alignItems: "center",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                justifyContent: "space-between",
-                marginBottom: "2",
-              })}
-            >
+          <UICard class={insetCardClass}>
+            <div class={cx(headerRowClass, css({ mb: "2" }))}>
               <h3 class={sectionTitleClass}>Feed List</h3>
               <UIBadge tone="violet">
-                {feeds.data() ? feeds.data()?.length : "—"} feeds
+                {feeds.data()?.length ?? "—"} feeds
               </UIBadge>
             </div>
             <UINotice
@@ -372,68 +396,26 @@ export function IngestPage() {
                   : null
               }
             />
-            <ul
-              role="list"
+            <UIList
               tabIndex={0}
               aria-label="Feed list"
-              class={cx(
-                css({
-                  display: "grid",
-                  gap: "2",
-                  gridTemplateColumns: "minmax(0, 1fr)",
-                  listStyleType: "none",
-                  margin: 0,
-                  maxH: "96",
-                  overflowY: "auto",
-                  overflowX: "hidden",
-                  padding: 0,
-                }),
-                focusRingClass,
-                "zodiac-scroll",
-              )}
+              class={cx(feedListClass, focusRingClass, "zodiac-scroll")}
             >
               {/* <Index>, not <For>: each live update hands back fresh objects,
                   and <For> would rebuild every row, unmounting the toggle that
                   was just pressed and dropping focus to <body>. */}
               <Index each={(feeds.data() ?? []) as FeedRow[]}>
                 {(feed) => (
-                  <li
-                    data-testid="ingest-feed-row"
-                    class={css({
-                      alignItems: "center",
-                      borderColor: "zodiac.gold/24",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      display: "flex",
-                      gap: "2",
-                      justifyContent: "space-between",
-                      minW: 0,
-                      p: "3",
-                    })}
-                  >
-                    <div
-                      class={css({ flex: "1", minW: 0, overflow: "hidden" })}
-                    >
-                      <p class={css({ margin: 0, overflowWrap: "anywhere" })}>
-                        {feed().name}
-                      </p>
-                      <p
-                        class={cx(
-                          metaLine,
-                          css({
-                            margin: 0,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }),
-                        )}
-                      >
+                  <li data-testid="ingest-feed-row" class={feedRowClass}>
+                    <div class={feedTextClass}>
+                      <p>{feed().name}</p>
+                      <p class={feedMetaClass}>
                         {feed().type} · {feed().url}
                       </p>
                     </div>
                     <UIButton
                       variant="outline"
-                      class={css({ flexShrink: 0 })}
+                      class={feedToggleClass}
                       aria-label={`${feed().enabled ? "Disable" : "Enable"} feed ${feed().name}`}
                       onClick={() =>
                         toggleFeed(String(feed()._id), Boolean(feed().enabled))
@@ -444,7 +426,7 @@ export function IngestPage() {
                   </li>
                 )}
               </Index>
-            </ul>
+            </UIList>
           </UICard>
         </div>
       </UICard>
@@ -493,7 +475,7 @@ export function IngestPage() {
             placeholder="Paste text if fetch step is not automated yet"
           />
 
-          <div class={formActionsClass}>
+          <div class={formFooterClass}>
             <UIButton
               type="submit"
               variant="outline"
@@ -551,7 +533,7 @@ export function IngestPage() {
             placeholder="Paste transcript text if already available"
           />
 
-          <div class={formActionsClass}>
+          <div class={formFooterClass}>
             <UIButton
               type="submit"
               variant="outline"
@@ -564,16 +546,7 @@ export function IngestPage() {
       </div>
 
       <UICard>
-        <div
-          class={css({
-            alignItems: "center",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "2",
-            justifyContent: "space-between",
-            marginBottom: "3",
-          })}
-        >
+        <div class={sectionHeaderClass}>
           <h2 class={sectionTitleClass}>Recent Sources</h2>
           <UIBadge tone="violet">Convex Live</UIBadge>
         </div>
@@ -588,62 +561,41 @@ export function IngestPage() {
           }
         />
         <Show when={!recentSources.isLoading()}>
-          <ul role="list" class={sourceListClass}>
-            <For each={recentSources.data() ?? []}>
-              {(source: RecentSourceRow) => (
-                <UICard
-                  as="li"
-                  class={css({ bg: "zodiac.void/38", minW: 0, p: "4" })}
-                >
-                  <div
-                    class={css({
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "2",
-                      marginBottom: "2",
-                    })}
-                  >
-                    <UIBadge tone="cream">{source.type}</UIBadge>
-                    <UIBadge tone="gold">{source.status}</UIBadge>
+          <UIList class={sourceListClass}>
+            <Index each={(recentSources.data() ?? []) as RecentSourceRow[]}>
+              {(source) => (
+                <UICard as="li" class={sourceCardClass}>
+                  <div class={sourceBadgesClass}>
+                    <UIBadge tone="cream">{source().type}</UIBadge>
+                    <UIBadge tone="gold">{source().status}</UIBadge>
                   </div>
 
-                  <h3
-                    class={cx(
-                      sectionTitleClass,
-                      css({ marginBottom: "1", overflowWrap: "anywhere" }),
-                    )}
-                  >
-                    {source.title ?? "Untitled source"}
+                  <h3 class={sourceTitleClass}>
+                    {source().title ?? "Untitled source"}
                   </h3>
                   <p class={metaLine}>
                     Updated{" "}
-                    <time datetime={new Date(source.updatedAt).toISOString()}>
-                      {formatTimestamp(source.updatedAt)}
-                    </time>
+                    <DateTime format="datetime" value={source().updatedAt} />
                   </p>
 
-                  <Show when={source.canonicalUrl}>
-                    <div
-                      class={css({
-                        display: "flex",
-                        gap: "2",
-                        marginTop: "3",
-                      })}
-                    >
-                      <a
-                        href={source.canonicalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        class={inlineActionLink}
-                      >
-                        Open
-                      </a>
-                    </div>
+                  <Show when={source().canonicalUrl}>
+                    {(href) => (
+                      <div class={sourceLinkRowClass}>
+                        <a
+                          href={href()}
+                          target="_blank"
+                          rel="noreferrer"
+                          class={inlineActionLink}
+                        >
+                          Open
+                        </a>
+                      </div>
+                    )}
                   </Show>
                 </UICard>
               )}
-            </For>
-          </ul>
+            </Index>
+          </UIList>
         </Show>
       </UICard>
     </section>

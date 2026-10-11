@@ -36,11 +36,9 @@ const alertClass = css({
 });
 
 /**
- * Collapses the notice wrapper itself so an empty region reserves no grid or
- * flex row. Pass it as `class` while both messages are empty.
- *
- * Usually unnecessary — `wrapperClass` already does this automatically — but
- * kept for call sites that want the collapse driven by their own signal.
+ * Collapses a card that holds only a notice while the notice is empty, so the
+ * load-state card on a detail page reserves no row. `UINotice` already
+ * collapses itself; this is for the wrapper around it.
  */
 export const collapsedNoticeClass = css({ display: "contents" });
 

@@ -3,8 +3,10 @@ import { createUniqueId, For, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import { css, cx } from "../../styled-system/css";
 import {
+  DateTime,
   UIBadge,
   UICard,
+  UIList,
   UINotice,
   helperClass,
   metaLine,
@@ -53,21 +55,29 @@ const rowLinkClass = css({
     bg: "zodiac.violet/8",
     borderColor: "zodiac.violet/48",
   },
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
-  },
 });
 
-const updatedAtFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
+const introClass = css({ color: "zodiac.cream/70", maxW: "72ch" });
+
+const sectionHeaderClass = css({
+  alignItems: "baseline",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+  mb: "2",
 });
 
-function formatUpdatedAt(value: number) {
-  return updatedAtFormatter.format(new Date(value));
-}
+const sectionHelperClass = cx(helperClass, css({ mb: "3" }));
+
+const rowListClass = css({ display: "grid", gap: "2" });
+
+const statementClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "lg",
+  lineHeight: "1.35",
+});
 
 export function CorrespondencesPage() {
   const sections = STATUS_SECTIONS.map((section) => ({
@@ -83,7 +93,7 @@ export function CorrespondencesPage() {
       <UICard>
         <UIBadge tone="violet">Adjudication</UIBadge>
         <h1 class={pageTitleClass}>Correspondences</h1>
-        <p class={css({ color: "zodiac.cream/70", maxW: "72ch" })}>
+        <p class={introClass}>
           Review the current lifecycle state and evidence for cross-domain
           correspondences. This surface decides existing work; it does not
           author conjectures or evidence.
@@ -108,16 +118,7 @@ export function CorrespondencesPage() {
 
           return (
             <UICard aria-labelledby={headingId}>
-              <div
-                class={css({
-                  alignItems: "baseline",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "2",
-                  justifyContent: "space-between",
-                  mb: "2",
-                })}
-              >
+              <div class={sectionHeaderClass}>
                 <h2 class={sectionLabel} id={headingId}>
                   {section.status}
                 </h2>
@@ -127,11 +128,9 @@ export function CorrespondencesPage() {
                   )}
                 </Show>
               </div>
-              <p class={cx(helperClass, css({ mb: "3" }))}>
-                {section.description}
-              </p>
+              <p class={sectionHelperClass}>{section.description}</p>
               <Show when={(section.query.data() ?? []).length >= LIST_LIMIT}>
-                <p class={cx(helperClass, css({ mb: "3" }))}>
+                <p class={sectionHelperClass}>
                   Showing the {LIST_LIMIT} most recently updated.
                 </p>
               </Show>
@@ -144,7 +143,7 @@ export function CorrespondencesPage() {
                   (section.query.data() ?? []).length > 0
                 }
               >
-                <ul role="list" class={css({ display: "grid", gap: "2" })}>
+                <UIList class={rowListClass}>
                   <For each={section.query.data() ?? []}>
                     {(row) => (
                       <li>
@@ -153,29 +152,16 @@ export function CorrespondencesPage() {
                           params={{ correspondenceId: String(row._id) }}
                           class={rowLinkClass}
                         >
-                          <span
-                            class={css({
-                              color: "zodiac.cream",
-                              fontFamily: "display",
-                              fontSize: "lg",
-                              lineHeight: "1.35",
-                            })}
-                          >
-                            {row.statement}
-                          </span>
+                          <span class={statementClass}>{row.statement}</span>
                           <span class={metaLine}>
                             {row.evidence.length} evidence · updated{" "}
-                            <time
-                              datetime={new Date(row.updatedAt).toISOString()}
-                            >
-                              {formatUpdatedAt(row.updatedAt)}
-                            </time>
+                            <DateTime value={row.updatedAt} format="datetime" />
                           </span>
                         </Link>
                       </li>
                     )}
                   </For>
-                </ul>
+                </UIList>
               </Show>
             </UICard>
           );

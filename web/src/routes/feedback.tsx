@@ -2,8 +2,10 @@ import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
   fieldLabelClass,
-  focusRingClass,
+  helperClass,
+  metaLine,
   pageClass,
   pageTitleClass,
   proseClass,
@@ -82,23 +84,34 @@ function appendCommaValue(current: string, next: string): string {
     : [...values, next].join(", ");
 }
 
-const helperChipClass = cx(
-  css({
-    borderColor: "zodiac.gold/22",
-    borderRadius: "full",
-    borderWidth: "1px",
-    color: "zodiac.cream/72",
-    fontSize: "xs",
-    minHeight: "7",
-    px: "2.5",
-    py: "1",
-    _coarsePointer: {
-      minHeight: "11",
-      py: "2.5",
-    },
-  }),
-  focusRingClass,
-);
+// The focus ring comes from the global `button:focus-visible` default.
+const helperChipClass = css({
+  borderColor: "zodiac.gold/22",
+  borderRadius: "full",
+  borderWidth: "1px",
+  color: "zodiac.cream/72",
+  fontSize: "xs",
+  minHeight: "7",
+  px: "2.5",
+  py: "1",
+  _coarsePointer: {
+    minHeight: "11",
+    py: "2.5",
+  },
+});
+
+const chipRowClass = cx(badgeRowClass, css({ mt: "2" }));
+const sessionListClass = css({ display: "grid", gap: "3" });
+// Grid gap spaces the card's lines, so no line needs a conditional margin.
+const sessionCardClass = css({
+  borderColor: "zodiac.gold/24",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "2",
+  p: "4",
+});
+const preWrapHelperClass = cx(helperClass, css({ whiteSpace: "pre-wrap" }));
 
 export function FeedbackPage() {
   onMount(() => {
@@ -344,14 +357,7 @@ export function FeedbackPage() {
               onInput={(event) => setFeltQualities(event.currentTarget.value)}
               placeholder="weightless, suspended, glassy"
             />
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                mt: "2",
-              })}
-            >
+            <div class={chipRowClass}>
               <For each={FELT_QUALITY_HELPERS}>
                 {(helper) => (
                   <button
@@ -380,14 +386,7 @@ export function FeedbackPage() {
               onInput={(event) => setBodyMapTags(event.currentTarget.value)}
               placeholder="chest, jaw, spine"
             />
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "2",
-                mt: "2",
-              })}
-            >
+            <div class={chipRowClass}>
               <For each={BODY_MAP_HELPERS}>
                 {(helper) => (
                   <button
@@ -463,25 +462,11 @@ export function FeedbackPage() {
         />
         <Show when={!sessions.isLoading()}>
           <Show when={!sessions.isError()}>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <div class={sessionListClass}>
               <For each={sessions.data() ?? []}>
                 {(session: Doc<"listeningSessions">) => (
-                  <div
-                    class={css({
-                      borderColor: "zodiac.gold/24",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      p: "4",
-                    })}
-                  >
-                    <div
-                      class={css({
-                        display: "flex",
-                        gap: "2",
-                        marginBottom: "2",
-                        flexWrap: "wrap",
-                      })}
-                    >
+                  <div class={sessionCardClass}>
+                    <div class={badgeRowClass}>
                       <UIBadge tone="gold">
                         {compositionById().get(String(session.compositionId)) ??
                           "Composition"}
@@ -493,105 +478,34 @@ export function FeedbackPage() {
                         {(value) => <UIBadge tone="gold">{value()}</UIBadge>}
                       </Show>
                     </div>
-                    <p class={cx(proseClass, css({ marginBottom: "2" }))}>
-                      {session.feedbackMd}
-                    </p>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/66",
-                        fontFamily: "mono",
-                        fontSize: "xs",
-                        marginBottom:
-                          session.ratings?.expandability !== undefined ||
-                          (session.feltQualities?.length ?? 0) > 0 ||
-                          (session.standoutMoments?.length ?? 0) > 0 ||
-                          (session.bodyMapTags?.length ?? 0) > 0 ||
-                          Boolean(session.bodyMapNotes)
-                            ? "2"
-                            : "0",
-                      })}
-                    >
+                    <p class={proseClass}>{session.feedbackMd}</p>
+                    <p class={metaLine}>
                       pleasantness: {session.ratings?.bodilyPleasantness ?? "-"}{" "}
                       · goosebumps: {session.ratings?.goosebumps ?? "-"} ·
                       musicality: {session.ratings?.musicality ?? "-"}
                     </p>
                     <Show when={session.ratings?.expandability !== undefined}>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/66",
-                          fontFamily: "mono",
-                          fontSize: "xs",
-                          marginBottom:
-                            (session.feltQualities?.length ?? 0) > 0 ||
-                            (session.standoutMoments?.length ?? 0) > 0 ||
-                            (session.bodyMapTags?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes)
-                              ? "2"
-                              : "0",
-                        })}
-                      >
+                      <p class={metaLine}>
                         expandability: {session.ratings?.expandability}
                       </p>
                     </Show>
                     <Show when={(session.feltQualities?.length ?? 0) > 0}>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/66",
-                          maxW: "72ch",
-                          fontSize: "sm",
-                          marginBottom:
-                            (session.standoutMoments?.length ?? 0) > 0 ||
-                            (session.bodyMapTags?.length ?? 0) > 0 ||
-                            Boolean(session.bodyMapNotes)
-                              ? "2"
-                              : "0",
-                        })}
-                      >
+                      <p class={helperClass}>
                         Felt: {session.feltQualities?.join(", ")}
                       </p>
                     </Show>
                     <Show when={(session.bodyMapTags?.length ?? 0) > 0}>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/66",
-                          maxW: "72ch",
-                          fontSize: "sm",
-                          marginBottom:
-                            Boolean(session.bodyMapNotes) ||
-                            (session.standoutMoments?.length ?? 0) > 0
-                              ? "2"
-                              : "0",
-                        })}
-                      >
+                      <p class={helperClass}>
                         Body map: {session.bodyMapTags?.join(", ")}
                       </p>
                     </Show>
                     <Show when={session.bodyMapNotes}>
                       {(value) => (
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            maxW: "72ch",
-                            fontSize: "sm",
-                            whiteSpace: "pre-wrap",
-                            marginBottom:
-                              (session.standoutMoments?.length ?? 0) > 0
-                                ? "2"
-                                : "0",
-                          })}
-                        >
-                          Body notes: {value()}
-                        </p>
+                        <p class={preWrapHelperClass}>Body notes: {value()}</p>
                       )}
                     </Show>
                     <Show when={(session.standoutMoments?.length ?? 0) > 0}>
-                      <p
-                        class={css({
-                          color: "zodiac.cream/66",
-                          maxW: "72ch",
-                          fontSize: "sm",
-                        })}
-                      >
+                      <p class={helperClass}>
                         Standout:{" "}
                         {truncate(
                           session.standoutMoments?.slice(0, 2).join(" • ") ??

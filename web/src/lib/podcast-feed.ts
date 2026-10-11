@@ -23,9 +23,11 @@ export function parseDuration(raw: string | undefined): number | undefined {
 function parseItem(item: Element, origin: string): PodcastEpisode | null {
   const id = item.querySelector("guid")?.textContent?.trim();
   const title = item.querySelector("title")?.textContent?.trim();
-  const date = item.querySelector("pubDate")?.textContent ?? "";
+  const createdAt = Date.parse(
+    item.querySelector("pubDate")?.textContent ?? "",
+  );
   const src = item.querySelector("enclosure")?.getAttribute("url");
-  if (!id || !title || !src || !Number.isFinite(Date.parse(date))) return null;
+  if (!id || !title || !src || !Number.isFinite(createdAt)) return null;
   let playback: URL;
   try {
     playback = new URL(src);
@@ -43,7 +45,7 @@ function parseItem(item: Element, origin: string): PodcastEpisode | null {
   return {
     id,
     title,
-    createdAt: Date.parse(date),
+    createdAt,
     durationSecs: parseDuration(rawDuration),
     playbackUrl: playback.href,
   };

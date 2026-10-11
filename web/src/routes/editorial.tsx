@@ -1,22 +1,21 @@
 import { Link } from "@tanstack/solid-router";
-import {
-  createMemo,
-  createSignal,
-  createUniqueId,
-  For,
-  onMount,
-  Show,
-} from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
-  focusRingClass,
+  entityCardLinkClass,
+  entityCardTitleLinkClass,
+  linkCardClass,
+} from "../components/entity-card";
+import {
+  badgeRowClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
 } from "../components/ui";
 import {
@@ -30,49 +29,18 @@ import {
 } from "../lib/editorial-format";
 import { api } from "../../../convex/_generated/api";
 
-const auditLinkClass = cx(
-  focusRingClass,
-  css({
-    borderColor: "zodiac.gold/18",
-    borderRadius: "l2",
-    borderWidth: "1px",
-    color: "inherit",
-    display: "block",
-    p: "3",
-    textDecoration: "none",
-    transition: "border-color 0.2s ease",
-    _hover: { borderColor: "zodiac.gold/45" },
-  }),
-);
-
-const artifactCardClass = css({
-  position: "relative",
-  borderColor: "zodiac.gold/22",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  p: "4",
-  transition: "border-color 0.2s ease",
-  _hover: { borderColor: "zodiac.gold/45" },
+const auditListClass = css({ display: "grid", gap: "2" });
+const artifactListClass = css({ display: "grid", gap: "3" });
+const artifactBadgeRowClass = cx(badgeRowClass, css({ mb: "2" }));
+const artifactTitleClass = css({
+  color: "zodiac.cream",
+  fontFamily: "display",
+  fontSize: "xl",
+  lineHeight: "1.4",
+  mb: "2",
 });
-
-// Covers the whole card so it stays one click target, while the heading sits
-// outside the anchor and names it through aria-labelledby.
-const stretchedLinkClass = cx(
-  focusRingClass,
-  css({
-    position: "absolute",
-    inset: "0",
-    zIndex: "1",
-    borderRadius: "l2",
-  }),
-);
-
-const plainListClass = css({
-  display: "grid",
-  listStyle: "none",
-  m: "0",
-  p: "0",
-});
+const mutedClass = css({ color: "zodiac.cream/66" });
+const auditQuestionClass = css({ color: "zodiac.cream/66", mt: "1" });
 
 export function EditorialPage() {
   onMount(() => {
@@ -193,26 +161,22 @@ export function EditorialPage() {
             These hypotheses still have no <em>why this matters</em> copy and
             should be cleaned up before they feed public artifacts.
           </p>
-          <ul role="list" class={cx(plainListClass, css({ gap: "2" }))}>
+          <UIList class={auditListClass}>
             <For each={missingWhyThisMatters() ?? []}>
               {(hypothesis) => (
                 <li>
                   <Link
                     to="/hypotheses/$hypothesisId"
                     params={{ hypothesisId: String(hypothesis._id) }}
-                    class={auditLinkClass}
+                    class={linkCardClass}
                   >
-                    <div class={css({ color: "zodiac.cream" })}>
-                      {hypothesis.title}
-                    </div>
-                    <div class={css({ color: "zodiac.cream/66", mt: "1" })}>
-                      {hypothesis.question}
-                    </div>
+                    <div>{hypothesis.title}</div>
+                    <div class={auditQuestionClass}>{hypothesis.question}</div>
                   </Link>
                 </li>
               )}
             </For>
-          </ul>
+          </UIList>
         </UICard>
       </Show>
 
@@ -234,60 +198,39 @@ export function EditorialPage() {
         />
         <Show when={!artifacts.isLoading()}>
           <Show when={rows().length > 0}>
-            <ul role="list" class={cx(plainListClass, css({ gap: "3" }))}>
+            <UIList class={artifactListClass}>
               <For each={rows()}>
-                {(artifact) => {
-                  const titleId = createUniqueId();
-                  return (
-                    <li class={artifactCardClass}>
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "2",
-                        })}
+                {(artifact) => (
+                  <li class={entityCardLinkClass}>
+                    <div class={artifactBadgeRowClass}>
+                      <UIBadge tone="gold">
+                        {formatEditorialKind(artifact.kind)}
+                      </UIBadge>
+                      <UIBadge tone="cream">{artifact.status}</UIBadge>
+                      <UIBadge tone="cream">{artifact.visibility}</UIBadge>
+                      <UIBadge
+                        tone={evidenceStatusTone(artifact.evidenceStatus)}
                       >
-                        <UIBadge tone="gold">
-                          {formatEditorialKind(artifact.kind)}
-                        </UIBadge>
-                        <UIBadge tone="cream">{artifact.status}</UIBadge>
-                        <UIBadge tone="cream">{artifact.visibility}</UIBadge>
-                        <UIBadge
-                          tone={evidenceStatusTone(artifact.evidenceStatus)}
-                        >
-                          {artifact.evidenceStatus}
-                        </UIBadge>
-                        <UIBadge tone="cream">
-                          {artifact.publicEvidenceCards.length} evidence cards
-                        </UIBadge>
-                      </div>
-                      <h3
-                        id={titleId}
-                        class={css({
-                          color: "zodiac.cream",
-                          fontFamily: "display",
-                          fontSize: "xl",
-                          lineHeight: "1.4",
-                          mb: "2",
-                        })}
-                      >
-                        {artifact.title}
-                      </h3>
-                      <p class={css({ color: "zodiac.cream/66" })}>
-                        {artifact.dek}
-                      </p>
+                        {artifact.evidenceStatus}
+                      </UIBadge>
+                      <UIBadge tone="cream">
+                        {artifact.publicEvidenceCards.length} evidence cards
+                      </UIBadge>
+                    </div>
+                    <h3 class={artifactTitleClass}>
                       <Link
                         to="/editorial/$artifactId"
                         params={{ artifactId: String(artifact._id) }}
-                        aria-labelledby={titleId}
-                        class={stretchedLinkClass}
-                      />
-                    </li>
-                  );
-                }}
+                        class={entityCardTitleLinkClass}
+                      >
+                        {artifact.title}
+                      </Link>
+                    </h3>
+                    <p class={mutedClass}>{artifact.dek}</p>
+                  </li>
+                )}
               </For>
-            </ul>
+            </UIList>
           </Show>
         </Show>
       </UICard>

@@ -12,10 +12,12 @@ import {
   backLink,
   collapsedNoticeClass,
   Markdown,
+  metaLabelClass,
   pageClass,
   sectionTitleClass,
   UIBadge,
   UICard,
+  UIList,
   UINotice,
 } from "../components/ui";
 import { essayLibrary, getEssayBySlug } from "../lib/essays";
@@ -47,14 +49,6 @@ const articleHeader = css({
   mb: "8",
 });
 
-const articleLabel = css({
-  color: "zodiac.cream/66",
-  fontFamily: "mono",
-  fontSize: "xs",
-  letterSpacing: "0.2em",
-  textTransform: "uppercase",
-});
-
 const relatedGrid = css({
   display: "grid",
   gap: "3",
@@ -62,9 +56,6 @@ const relatedGrid = css({
     base: "minmax(0, 1fr)",
     lg: "repeat(3, minmax(0, 1fr))",
   },
-  listStyle: "none",
-  m: "0",
-  p: "0",
 });
 
 // Lets each card stretch to its grid row's height.
@@ -147,7 +138,7 @@ export function EssayDetailPage() {
               <UICard class={articleCard}>
                 <div class={articleBody}>
                   <div class={articleHeader}>
-                    <div class={articleLabel}>Essay text</div>
+                    <div class={metaLabelClass}>Essay text</div>
                   </div>
                   <Markdown content={entry().body} />
                 </div>
@@ -156,7 +147,7 @@ export function EssayDetailPage() {
               <Show when={related().length > 0}>
                 <UICard>
                   <h2 class={sectionTitleClass}>Continue Reading</h2>
-                  <ul role="list" class={relatedGrid}>
+                  <UIList class={relatedGrid}>
                     <For each={related()}>
                       {(nextEssay) => (
                         <li class={relatedItem}>
@@ -164,7 +155,7 @@ export function EssayDetailPage() {
                         </li>
                       )}
                     </For>
-                  </ul>
+                  </UIList>
                 </UICard>
               </Show>
             </>

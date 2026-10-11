@@ -3,8 +3,9 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
   fieldLabelClass,
-  focusRingClass,
+  focusRingStyle,
   helperClass,
   pageClass,
   pageTitleClass,
@@ -44,18 +45,29 @@ const REASON_LABELS: Record<Reason, string> = {
 const reasonLabel = (value: string) => REASON_LABELS[value as Reason] ?? value;
 
 // Standalone links to the related records: violet text (provisional work),
-// at least 24px tall (44px on touch), with the gold focus ring.
-const archiveLinkClass = cx(
-  css({
-    alignItems: "center",
-    color: "zodiac.violetText",
-    display: "inline-flex",
-    minH: "6",
-    _hover: { textDecoration: "underline" },
-    _coarsePointer: { minH: "11" },
-  }),
-  focusRingClass,
-);
+// at least 24px tall (44px on touch), with the gold focus ring. Neither
+// `inlineActionLink` (gold) nor `recordLinkClass` (cream) carries the colour.
+const archiveLinkClass = css({
+  alignItems: "center",
+  color: "zodiac.violetText",
+  display: "inline-flex",
+  minH: "6",
+  _hover: { textDecoration: "underline" },
+  ...focusRingStyle,
+  _coarsePointer: { minH: "11" },
+});
+
+const listClass = css({ display: "grid", gap: "3" });
+const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
+const rowTitleClass = css({ color: "zodiac.cream", fontSize: "xl", mb: "2" });
+const rowProseClass = cx(proseClass, css({ mb: "2" }));
+const rowHelperClass = cx(helperClass, css({ mb: "2" }));
+const rowLinksClass = css({
+  display: "flex",
+  gap: "3",
+  flexWrap: "wrap",
+  fontSize: "sm",
+});
 
 export function FailuresPage() {
   onMount(() => {
@@ -148,7 +160,7 @@ export function FailuresPage() {
           }
         />
         <Show when={!archive.isLoading() && (archive.data() ?? []).length > 0}>
-          <div class={css({ display: "grid", gap: "3" })}>
+          <div class={listClass}>
             <For each={archive.data() ?? []}>
               {(entry) => (
                 <div
@@ -157,42 +169,16 @@ export function FailuresPage() {
                   data-testid="failure-row"
                   class={rowClass}
                 >
-                  <div
-                    class={css({
-                      display: "flex",
-                      gap: "2",
-                      flexWrap: "wrap",
-                      mb: "2",
-                    })}
-                  >
+                  <div class={rowBadgesClass}>
                     <UIBadge tone="gold">{reasonLabel(entry.reason)}</UIBadge>
                     <UIBadge tone="cream">
                       {entry.recommendedNextAction}
                     </UIBadge>
                   </div>
-                  <h3
-                    class={css({
-                      color: "zodiac.cream",
-                      fontSize: "xl",
-                      mb: "2",
-                    })}
-                  >
-                    {entry.title}
-                  </h3>
-                  <p class={cx(proseClass, css({ mb: "2" }))}>
-                    {entry.explanation}
-                  </p>
-                  <p class={cx(helperClass, css({ mb: "2" }))}>
-                    {entry.summary}
-                  </p>
-                  <div
-                    class={css({
-                      display: "flex",
-                      gap: "3",
-                      flexWrap: "wrap",
-                      fontSize: "sm",
-                    })}
-                  >
+                  <h3 class={rowTitleClass}>{entry.title}</h3>
+                  <p class={rowProseClass}>{entry.explanation}</p>
+                  <p class={rowHelperClass}>{entry.summary}</p>
+                  <div class={rowLinksClass}>
                     <Show when={entry.hypothesisId}>
                       {(hypothesisId) => (
                         <Link

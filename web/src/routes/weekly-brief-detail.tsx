@@ -10,22 +10,26 @@ import {
 } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
+import { entityCellClass, linkCardClass } from "../components/entity-card";
 import { RecommendedActionCard } from "../components/recommended-action-card";
 import {
+  badgeRowClass,
+  DateTime,
   Markdown,
   UIBadge,
   UIButton,
   UICard,
+  UIList,
   UINotice,
   UITextarea,
   backLink,
   detailTitleClass,
   fieldLabelClass,
-  focusRingClass,
   goldDivider,
   metaLine,
   pageClass,
   sectionLabel,
+  srOnlyClass,
 } from "../components/ui";
 import {
   createAction,
@@ -33,11 +37,16 @@ import {
   createQuery,
   createQueryWithStatus,
   describeError,
+  describeLoad,
   useConvexClient,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
 import { MAX_FEED_ENABLE_STATE_IDS } from "../../../convex/shared/agentContract";
-import { extractTitle } from "../lib/markdown-utils";
+import {
+  bodyWithoutTitle,
+  extractTitle,
+  parseLines,
+} from "../lib/markdown-utils";
 
 const loopSubheadingClass = css({
   color: "zodiac.cream",
@@ -59,7 +68,6 @@ const loopEyebrowClass = css({
 
 const loopLinkClass = css({
   borderBottomWidth: "1px",
-  borderBottomStyle: "solid",
   borderBottomColor: "zodiac.gold/16",
   color: "inherit",
   display: "grid",
@@ -71,11 +79,6 @@ const loopLinkClass = css({
   _hover: {
     bg: "zodiac.gold/5",
     borderColor: "zodiac.gold/42",
-  },
-  _focusVisible: {
-    outline: "2px solid",
-    outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
   },
 });
 
@@ -108,34 +111,119 @@ const violetAccentContainerClass = css({
   p: "3",
 });
 
-const studioPromptBoxClass = css({
-  borderColor: "zodiac.gold/18",
-  borderRadius: "l2",
-  borderWidth: "1px",
-  p: "3",
-});
+const promptBodyClass = css({ mt: "2" });
 
 /** One stored studio prompt, or the fallback copy for an older brief. */
 function StudioPromptBox(props: { label: string; content: string }) {
   return (
-    <div class={studioPromptBoxClass}>
+    <div class={entityCellClass}>
       <UIBadge tone="gold">{props.label}</UIBadge>
-      <div class={css({ mt: "2" })}>
+      <div class={promptBodyClass}>
         <Markdown content={props.content} />
       </div>
     </div>
   );
 }
 
-const TITLE_LINE = /^#\s+.+(?:\r?\n)?/m;
+const badgesClass = cx(badgeRowClass, css({ mb: "2" }));
 
-/**
- * The body without the `# …` line that `extractTitle` lifts into the page
- * `<h1>`, so the rendered markdown does not emit a second `<h1>`.
- */
-function bodyWithoutTitle(bodyMd: string): string {
-  return bodyMd.replace(TITLE_LINE, "");
-}
+const actionRowClass = cx(badgeRowClass, css({ mt: "3" }));
+
+const publishDialogClass = cx(violetAccentContainerClass, css({ gap: "3" }));
+
+const editPanelClass = cx(violetAccentContainerClass, css({ gap: "2" }));
+
+const panelHeaderClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+});
+
+const panelCopyClass = css({ color: "zodiac.cream/72" });
+
+const editNoteClass = css({ color: "zodiac.cream/68" });
+
+const bodyFieldClass = css({ minH: "96" });
+
+const noticeSpacingClass = css({ mt: "2" });
+
+const stackClass = css({ display: "grid", gap: "3" });
+
+const listClass = css({ display: "grid", gap: "2" });
+
+const statGridClass = css({
+  borderBottomWidth: "1px",
+  borderBottomColor: "zodiac.cream/10",
+  borderTopWidth: "1px",
+  borderTopColor: "zodiac.cream/10",
+  display: "grid",
+  gridTemplateColumns: {
+    base: "repeat(2, minmax(0, 1fr))",
+    md: "repeat(4, minmax(0, 1fr))",
+  },
+});
+
+const statCellClass = css({ p: { base: "3", md: "4" } });
+
+const statValueClass = css({
+  color: "zodiac.gold",
+  fontFamily: "mono",
+  fontSize: "xl",
+  mt: "1",
+});
+
+const loopListClass = css({
+  borderTopWidth: "1px",
+  borderTopColor: "zodiac.gold/16",
+});
+
+const loopRowClass = css({
+  alignItems: "center",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+});
+
+const feedRowClass = css({
+  alignItems: { base: "start", md: "center" },
+  borderBottomWidth: "1px",
+  borderBottomColor: "zodiac.gold/16",
+  display: "flex",
+  flexDirection: { base: "column", md: "row" },
+  gap: "3",
+  justifyContent: "space-between",
+  p: "3",
+});
+
+const feedLinkClass = css({
+  color: "zodiac.cream",
+  textDecorationColor: "zodiac.gold/45",
+  textUnderlineOffset: "3px",
+});
+
+const feedRationaleClass = css({ color: "zodiac.cream/68", mt: "1" });
+
+const todoListClass = css({
+  color: "zodiac.cream/70",
+  fontFamily: "display",
+  listStyleType: "disc",
+  pl: "5",
+});
+
+const todoItemClass = css({ py: "1" });
+
+const thesisChipLinkClass = css({
+  alignItems: "center",
+  display: "inline-flex",
+  minHeight: "6",
+  textDecoration: "none",
+  _coarsePointer: { minHeight: "11" },
+});
+
+const failureBadgesClass = cx(badgeRowClass, css({ mb: "1" }));
 
 const sameIds = (left: readonly string[], right: readonly string[]) =>
   left.join(",") === right.join(",");
@@ -190,18 +278,31 @@ export function WeeklyBriefDetailPage() {
     id: params().briefId as Id<"weeklyBriefs">,
   }));
   const brief = briefQuery.data;
+  const load = describeLoad(briefQuery, "weekly brief");
+  // Every argument derived from `brief()` is compared by value: `brief()`
+  // changes on every field update (an edit, a publish), and a fresh argument
+  // object would restart its subscription and flash the loading state.
+  const campaignId = createMemo(() => brief()?.campaignId);
+  const activeThesisIds = createMemo(
+    () => (brief()?.activeThesisIds ?? []) as Id<"theses">[],
+    [],
+    { equals: sameIds },
+  );
+  const referencedFailureKeys = createMemo(
+    () => brief()?.referencedFailureKeys ?? [],
+    [],
+    { equals: sameIds },
+  );
   const campaignQuery = createQueryWithStatus(api.campaigns.get, () => {
-    const campaignId = brief()?.campaignId;
-    return campaignId ? { id: campaignId } : "skip";
+    const id = campaignId();
+    return id ? { id } : "skip";
   });
   const activeThesesQuery = createQuery(api.theses.getByIds, () => ({
-    ids: (brief()?.activeThesisIds ?? []) as Id<"theses">[],
+    ids: activeThesisIds(),
   }));
   const referencedFailureEntries = createQuery(api.failures.getByKeys, () => ({
-    keys: brief()?.referencedFailureKeys ?? [],
+    keys: referencedFailureKeys(),
   }));
-  // Compared by value: `brief()` changes on every field update, and a fresh
-  // array here would resubscribe every `getByIds` batch.
   const proposedFeedIds = createMemo(
     () => (brief()?.loopReport?.proposedFeeds ?? []).map((feed) => feed.feedId),
     [],
@@ -273,7 +374,7 @@ export function WeeklyBriefDetailPage() {
     const fields: string[] = [];
     if (bodyMd() !== row.bodyMd) fields.push("bodyMd");
     if (
-      JSON.stringify(parseTodo(todoText())) !== JSON.stringify(row.todo ?? [])
+      JSON.stringify(parseLines(todoText())) !== JSON.stringify(row.todo ?? [])
     ) {
       fields.push("todo");
     }
@@ -287,13 +388,6 @@ export function WeeklyBriefDetailPage() {
     return fields;
   });
 
-  function parseTodo(value: string) {
-    return value
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
   function beginEdit() {
     const row = brief();
     if (!row || editMode() || savingEdit()) return;
@@ -305,6 +399,7 @@ export function WeeklyBriefDetailPage() {
     setNotice(null);
     setNoticeError(null);
     setEditMode(true);
+    // The body field mounts with the edit panel this tick; focus it once it exists.
     queueMicrotask(() => bodyField?.focus());
   }
 
@@ -351,7 +446,7 @@ export function WeeklyBriefDetailPage() {
       await editBrief({
         id: row._id,
         ...(fields.includes("bodyMd") ? { bodyMd: bodyMd() } : {}),
-        ...(fields.includes("todo") ? { todo: parseTodo(todoText()) } : {}),
+        ...(fields.includes("todo") ? { todo: parseLines(todoText()) } : {}),
         ...(fields.includes("studioPrompts")
           ? {
               studioPrompts: {
@@ -458,34 +553,13 @@ export function WeeklyBriefDetailPage() {
         </Link>
       </div>
 
-      <UINotice
-        status={
-          briefQuery.isLoading()
-            ? "Loading brief..."
-            : !brief() && !briefQuery.isError()
-              ? "Weekly brief not found."
-              : null
-        }
-        error={
-          briefQuery.isError()
-            ? `Unable to load brief: ${briefQuery.error()?.message}`
-            : null
-        }
-      />
+      <UINotice status={load.status()} error={load.error()} />
 
       <Show when={brief()}>
         {(b) => (
           <UICard>
             {/* Badges */}
-            <div
-              class={css({
-                display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
-                gap: "2",
-                mb: "2",
-              })}
-            >
+            <div class={badgesClass}>
               <UIBadge tone="gold">Week {b().weekOf}</UIBadge>
               <UIBadge tone="cream">{b().visibility}</UIBadge>
               <UIBadge tone="violet">
@@ -528,26 +602,13 @@ export function WeeklyBriefDetailPage() {
                 {(ts) => (
                   <>
                     {" · published: "}
-                    <time datetime={new Date(ts()).toISOString()}>
-                      {new Date(ts()).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </time>
+                    <DateTime value={ts()} />
                   </>
                 )}
               </Show>
             </p>
 
-            <div
-              class={css({
-                mt: "3",
-                display: "flex",
-                gap: "2",
-                flexWrap: "wrap",
-              })}
-            >
+            <div class={actionRowClass}>
               <UIButton
                 variant="outline"
                 onClick={() => void handleCreateRecap()}
@@ -599,6 +660,8 @@ export function WeeklyBriefDetailPage() {
                 aria-modal="false"
                 aria-label="Confirm weekly brief publication"
                 ref={(element) => {
+                  // A ref runs before the dialog is in the document; focus its
+                  // first button once it is attached.
                   queueMicrotask(() =>
                     element.querySelector("button")?.focus(),
                   );
@@ -608,15 +671,13 @@ export function WeeklyBriefDetailPage() {
                   event.stopPropagation();
                   closePublishConfirm();
                 }}
-                class={cx(violetAccentContainerClass, css({ gap: "3" }))}
+                class={publishDialogClass}
               >
-                <p class={css({ color: "zodiac.cream/72" })}>
+                <p class={panelCopyClass}>
                   Publishing makes this weekly brief public in the app and
                   records its publication time.
                 </p>
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
+                <div class={badgeRowClass}>
                   <UIButton
                     variant="solid"
                     aria-busy={publishingBrief()}
@@ -637,23 +698,10 @@ export function WeeklyBriefDetailPage() {
             </Show>
 
             <Show when={editMode()}>
-              <div
-                id="weekly-brief-edit-panel"
-                class={cx(violetAccentContainerClass, css({ gap: "2" }))}
-              >
-                <div
-                  class={css({
-                    alignItems: "center",
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "2",
-                    justifyContent: "space-between",
-                  })}
-                >
+              <div id="weekly-brief-edit-panel" class={editPanelClass}>
+                <div class={panelHeaderClass}>
                   <h2 class={sectionLabel}>Edit generated brief</h2>
-                  <div
-                    class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                  >
+                  <div class={badgeRowClass}>
                     <For each={editedFields()}>
                       {(field) => (
                         <UIBadge tone="violet">changed: {field}</UIBadge>
@@ -661,7 +709,7 @@ export function WeeklyBriefDetailPage() {
                     </For>
                   </div>
                 </div>
-                <p class={css({ color: "zodiac.cream/68" })}>
+                <p class={editNoteClass}>
                   Saved changes preserve the generated and edited values as eval
                   provenance.
                 </p>
@@ -675,7 +723,7 @@ export function WeeklyBriefDetailPage() {
                   id="weekly-brief-body"
                   value={bodyMd()}
                   onInput={(event) => setBodyMd(event.currentTarget.value)}
-                  class={css({ minH: "96" })}
+                  class={bodyFieldClass}
                 />
                 <label class={fieldLabelClass} for="weekly-brief-todo">
                   Action items (one per line)
@@ -713,9 +761,7 @@ export function WeeklyBriefDetailPage() {
                     setNinetyMinuteMd(event.currentTarget.value)
                   }
                 />
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
+                <div class={badgeRowClass}>
                   <UIButton
                     variant="outline"
                     aria-busy={savingEdit()}
@@ -738,7 +784,7 @@ export function WeeklyBriefDetailPage() {
             </Show>
 
             <UINotice
-              class={css({ mt: "2" })}
+              class={noticeSpacingClass}
               status={notice()}
               error={noticeError()}
             />
@@ -748,28 +794,12 @@ export function WeeklyBriefDetailPage() {
                 <>
                   <hr class={goldDivider} />
                   <h2 class={sectionLabel}>Campaign Context</h2>
-                  <div
-                    class={css({
-                      borderColor: "zodiac.gold/18",
-                      borderRadius: "l2",
-                      borderWidth: "1px",
-                      p: "3",
-                    })}
-                  >
-                    <div
-                      class={css({
-                        display: "flex",
-                        gap: "2",
-                        flexWrap: "wrap",
-                        mb: "2",
-                      })}
-                    >
+                  <div class={entityCellClass}>
+                    <div class={badgesClass}>
                       <UIBadge tone="gold">{row().title}</UIBadge>
                       <UIBadge tone="cream">{row().status}</UIBadge>
                     </div>
-                    <p class={css({ color: "zodiac.cream/72" })}>
-                      {row().question}
-                    </p>
+                    <p class={panelCopyClass}>{row().question}</p>
                   </div>
                 </>
               )}
@@ -777,7 +807,7 @@ export function WeeklyBriefDetailPage() {
 
             <hr class={goldDivider} />
             <h2 class={sectionLabel}>Studio Prompts</h2>
-            <div class={css({ display: "grid", gap: "3" })}>
+            <div class={stackClass}>
               <StudioPromptBox
                 label="10-minute"
                 content={
@@ -804,7 +834,7 @@ export function WeeklyBriefDetailPage() {
             <Show when={(b().recommendedActions ?? []).length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Recommended Actions</h2>
-              <ul role="list" class={css({ display: "grid", gap: "2" })}>
+              <UIList class={listClass}>
                 <For each={b().recommendedActions ?? []}>
                   {(action) => (
                     <li>
@@ -812,7 +842,7 @@ export function WeeklyBriefDetailPage() {
                     </li>
                   )}
                 </For>
-              </ul>
+              </UIList>
             </Show>
 
             <Show when={b().loopReport}>
@@ -822,22 +852,7 @@ export function WeeklyBriefDetailPage() {
                   <h2 class={sectionLabel}>Loop Report</h2>
 
                   <h3 class={loopSubheadingClass}>Correspondence movement</h3>
-                  <dl
-                    class={css({
-                      borderBottomWidth: "1px",
-                      borderBottomStyle: "solid",
-                      borderBottomColor: "zodiac.cream/10",
-                      borderTopWidth: "1px",
-                      borderTopStyle: "solid",
-                      borderTopColor: "zodiac.cream/10",
-                      display: "grid",
-                      gridTemplateColumns: {
-                        base: "repeat(2, minmax(0, 1fr))",
-                        md: "repeat(4, minmax(0, 1fr))",
-                      },
-                      m: "0",
-                    })}
-                  >
+                  <dl class={statGridClass}>
                     <For
                       each={[
                         {
@@ -859,19 +874,9 @@ export function WeeklyBriefDetailPage() {
                       ]}
                     >
                       {(stat) => (
-                        <div class={css({ p: { base: "3", md: "4" } })}>
+                        <div class={statCellClass}>
                           <dt class={loopEyebrowClass}>{stat.label}</dt>
-                          <dd
-                            class={css({
-                              color: "zodiac.gold",
-                              fontFamily: "mono",
-                              fontSize: "xl",
-                              m: "0",
-                              mt: "1",
-                            })}
-                          >
-                            {stat.value}
-                          </dd>
+                          <dd class={statValueClass}>{stat.value}</dd>
                         </div>
                       )}
                     </For>
@@ -888,40 +893,31 @@ export function WeeklyBriefDetailPage() {
                     when={loopReport().correspondences.topMovers.length > 0}
                   >
                     <h4 class={loopSubheadingClass}>Top movers</h4>
-                    <div
-                      class={css({
-                        borderTopWidth: "1px",
-                        borderTopStyle: "solid",
-                        borderTopColor: "zodiac.gold/16",
-                      })}
-                    >
+                    <UIList class={loopListClass}>
                       <For each={loopReport().correspondences.topMovers}>
                         {(mover) => (
-                          <Link
-                            to="/correspondences/$correspondenceId"
-                            params={{
-                              correspondenceId: String(mover.correspondenceId),
-                            }}
-                            class={loopLinkClass}
-                          >
-                            <span
-                              class={css({
-                                alignItems: "center",
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "2",
-                                justifyContent: "space-between",
-                              })}
+                          <li>
+                            <Link
+                              to="/correspondences/$correspondenceId"
+                              params={{
+                                correspondenceId: String(
+                                  mover.correspondenceId,
+                                ),
+                              }}
+                              class={loopLinkClass}
                             >
-                              <span>{mover.statement}</span>
-                              <span class={loopEyebrowClass}>
-                                {mover.status} · +{mover.evidenceDelta} evidence
+                              <span class={loopRowClass}>
+                                <span>{mover.statement}</span>
+                                <span class={loopEyebrowClass}>
+                                  {mover.status} · +{mover.evidenceDelta}{" "}
+                                  evidence
+                                </span>
                               </span>
-                            </span>
-                          </Link>
+                            </Link>
+                          </li>
                         )}
                       </For>
-                    </div>
+                    </UIList>
                   </Show>
 
                   <h3 class={loopSubheadingClass}>Review queue</h3>
@@ -955,58 +951,39 @@ export function WeeklyBriefDetailPage() {
                   <Show
                     when={loopReport().experimentDebt.length > 0}
                     fallback={
-                      <p class={css({ color: "zodiac.cream/68" })}>
+                      <p class={editNoteClass}>
                         No recipes are waiting on composition or listening.
                       </p>
                     }
                   >
-                    <div
-                      class={css({
-                        borderTopWidth: "1px",
-                        borderTopStyle: "solid",
-                        borderTopColor: "zodiac.gold/16",
-                      })}
-                    >
+                    <UIList class={loopListClass}>
                       <For each={loopReport().experimentDebt}>
                         {(debt) => (
-                          <Link
-                            to="/recipes/$recipeId"
-                            params={{ recipeId: String(debt.recipeId) }}
-                            class={loopLinkClass}
-                          >
-                            <span
-                              class={css({
-                                alignItems: "center",
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "2",
-                                justifyContent: "space-between",
-                              })}
+                          <li>
+                            <Link
+                              to="/recipes/$recipeId"
+                              params={{ recipeId: String(debt.recipeId) }}
+                              class={loopLinkClass}
                             >
-                              <span>{debt.title}</span>
-                              <span class={loopEyebrowClass}>
-                                {debt.state === "in_use_no_composition"
-                                  ? "Needs composition"
-                                  : "Needs listening"}
-                                {` · ${debt.ageDays}d`}
+                              <span class={loopRowClass}>
+                                <span>{debt.title}</span>
+                                <span class={loopEyebrowClass}>
+                                  {debt.state === "in_use_no_composition"
+                                    ? "Needs composition"
+                                    : "Needs listening"}
+                                  {` · ${debt.ageDays}d`}
+                                </span>
                               </span>
-                            </span>
-                          </Link>
+                            </Link>
+                          </li>
                         )}
                       </For>
-                    </div>
+                    </UIList>
                   </Show>
 
                   <Show when={loopReport().proposedFeeds.length > 0}>
                     <h3 class={loopSubheadingClass}>Proposed feeds</h3>
-                    <div
-                      class={css({
-                        borderTopWidth: "1px",
-                        borderTopStyle: "solid",
-                        borderTopColor: "zodiac.gold/16",
-                        display: "grid",
-                      })}
-                    >
+                    <UIList class={loopListClass}>
                       <For each={loopReport().proposedFeeds}>
                         {(feed) => {
                           const enabled = () =>
@@ -1016,46 +993,21 @@ export function WeeklyBriefDetailPage() {
                                 state.id === feed.feedId && state.enabled,
                             );
                           return (
-                            <div
-                              class={css({
-                                alignItems: { base: "start", md: "center" },
-                                borderBottomWidth: "1px",
-                                borderBottomStyle: "solid",
-                                borderBottomColor: "zodiac.gold/16",
-                                display: "flex",
-                                flexDirection: { base: "column", md: "row" },
-                                gap: "3",
-                                justifyContent: "space-between",
-                                p: "3",
-                              })}
-                            >
+                            <li class={feedRowClass}>
                               <div>
                                 <a
                                   href={feed.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  class={cx(
-                                    css({
-                                      color: "zodiac.cream",
-                                      textDecorationColor: "zodiac.gold/45",
-                                      textUnderlineOffset: "3px",
-                                    }),
-                                    focusRingClass,
-                                  )}
+                                  class={feedLinkClass}
                                 >
                                   {feed.name}
-                                  <span class={css({ srOnly: true })}>
+                                  <span class={srOnlyClass}>
                                     {" "}
                                     (opens in a new tab)
                                   </span>
                                 </a>
-                                <p
-                                  class={css({
-                                    color: "zodiac.cream/68",
-                                    m: "0",
-                                    mt: "1",
-                                  })}
-                                >
+                                <p class={feedRationaleClass}>
                                   {feed.rationale}
                                 </p>
                               </div>
@@ -1084,11 +1036,11 @@ export function WeeklyBriefDetailPage() {
                                     ? "Enabling..."
                                     : "Enable"}
                               </UIButton>
-                            </div>
+                            </li>
                           );
                         }}
                       </For>
-                    </div>
+                    </UIList>
                   </Show>
                 </>
               )}
@@ -1102,16 +1054,9 @@ export function WeeklyBriefDetailPage() {
             <Show when={(b().todo ?? []).length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Action Items</h2>
-              <ul
-                class={css({
-                  color: "zodiac.cream/70",
-                  fontFamily: "display",
-                  listStyleType: "disc",
-                  pl: "5",
-                })}
-              >
+              <ul class={todoListClass}>
                 <For each={b().todo}>
-                  {(item) => <li class={css({ py: "1" })}>{item}</li>}
+                  {(item) => <li class={todoItemClass}>{item}</li>}
                 </For>
               </ul>
             </Show>
@@ -1119,83 +1064,53 @@ export function WeeklyBriefDetailPage() {
             <Show when={activeTheses().length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Active Theses</h2>
-              <div class={css({ display: "flex", gap: "2", flexWrap: "wrap" })}>
+              <UIList class={badgeRowClass}>
                 <For each={activeTheses()}>
                   {(thesis) => (
-                    <Link
-                      to="/theses/$thesisId"
-                      params={{ thesisId: String(thesis._id) }}
-                      class={cx(
-                        css({
-                          alignItems: "center",
-                          display: "inline-flex",
-                          minHeight: "6",
-                          textDecoration: "none",
-                          _coarsePointer: { minHeight: "11" },
-                        }),
-                        focusRingClass,
-                      )}
-                    >
-                      <UIBadge tone="gold">{thesis.title}</UIBadge>
-                    </Link>
+                    <li>
+                      <Link
+                        to="/theses/$thesisId"
+                        params={{ thesisId: String(thesis._id) }}
+                        class={thesisChipLinkClass}
+                      >
+                        <UIBadge tone="gold">{thesis.title}</UIBadge>
+                      </Link>
+                    </li>
                   )}
                 </For>
-              </div>
+              </UIList>
             </Show>
 
             <Show when={referencedFailures().length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Referenced Reversals</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <UIList class={listClass}>
                 <For each={referencedFailures()}>
                   {(failure) => (
-                    <Link
-                      to="/failures"
-                      hash={failure.key}
-                      class={cx(
-                        css({
-                          borderColor: "zodiac.gold/18",
-                          borderRadius: "l2",
-                          borderWidth: "1px",
-                          color: "zodiac.cream/76",
-                          display: "block",
-                          p: "3",
-                          textDecoration: "none",
-                        }),
-                        focusRingClass,
-                      )}
-                    >
-                      <div
-                        class={css({
-                          display: "flex",
-                          gap: "2",
-                          flexWrap: "wrap",
-                          mb: "1",
-                        })}
+                    <li>
+                      <Link
+                        to="/failures"
+                        hash={failure.key}
+                        class={linkCardClass}
                       >
-                        <UIBadge tone="cream">{failure.reason}</UIBadge>
-                        <UIBadge tone="violet">
-                          {failure.recommendedNextAction}
-                        </UIBadge>
-                      </div>
-                      <div>{failure.title}</div>
-                    </Link>
+                        <div class={failureBadgesClass}>
+                          <UIBadge tone="cream">{failure.reason}</UIBadge>
+                          <UIBadge tone="violet">
+                            {failure.recommendedNextAction}
+                          </UIBadge>
+                        </div>
+                        <div>{failure.title}</div>
+                      </Link>
+                    </li>
                   )}
                 </For>
-              </div>
+              </UIList>
             </Show>
 
             {/* Footer meta */}
             <hr class={goldDivider} />
             <div class={metaLine}>
-              Created:{" "}
-              <time datetime={new Date(b().createdAt).toISOString()}>
-                {new Date(b().createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </time>
+              Created: <DateTime value={b().createdAt} />
               {" | "}Visibility: {b().visibility}
               <Show when={b().notionPageId}>
                 {(id) => (

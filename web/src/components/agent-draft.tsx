@@ -9,13 +9,17 @@ import type {
 } from "../../../convex/shared/draftPayloads";
 import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
   eyebrowClass,
   fieldLabelClass,
-  focusRingClass,
   helperClass,
   inlineActionLink,
+  jsonBlockClass,
+  metaLabelClass,
+  srOnlyClass,
   UIBadge,
   UIInput,
+  UIList,
   UITextarea,
 } from "./ui";
 
@@ -79,19 +83,6 @@ const monoValueClass = css({
   fontFamily: "mono",
   fontSize: "xs",
   lineHeight: "1.5",
-  overflowWrap: "anywhere",
-});
-
-/** Visually hidden but exposed to assistive tech — keeps the heading outline intact. */
-const srOnlyClass = css({
-  border: "0",
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: "1px",
-  overflow: "hidden",
-  position: "absolute",
-  whiteSpace: "nowrap",
-  width: "1px",
 });
 
 const bodyValueClass = css({
@@ -128,7 +119,7 @@ function HypothesisPreview(props: { payload: HypothesisDraftPayload }) {
       </Show>
       <Show when={(props.payload.concepts ?? []).length > 0}>
         <PayloadField label="Concepts">
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             <For each={props.payload.concepts ?? []}>
               {(concept) => <UIBadge tone="cream">{concept}</UIBadge>}
             </For>
@@ -137,7 +128,7 @@ function HypothesisPreview(props: { payload: HypothesisDraftPayload }) {
       </Show>
       <Show when={props.payload.sourceIds.length > 0}>
         <PayloadField label="Source IDs">
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             <For each={props.payload.sourceIds}>
               {(id) => <UIBadge tone="cream">{id}</UIBadge>}
             </For>
@@ -146,7 +137,7 @@ function HypothesisPreview(props: { payload: HypothesisDraftPayload }) {
       </Show>
       <Show when={props.payload.extractionIds.length > 0}>
         <PayloadField label="Extraction IDs">
-          <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+          <div class={badgeRowClass}>
             <For each={props.payload.extractionIds}>
               {(id) => <UIBadge tone="cream">{id}</UIBadge>}
             </For>
@@ -216,19 +207,7 @@ function RecipePreview(props: { payload: RecipeDraftPayload }) {
               role="group"
               aria-label="Recipe protocol JSON"
               tabIndex={0}
-              class={cx(
-                "zodiac-scroll",
-                css({
-                  color: "zodiac.cream/72",
-                  fontFamily: "mono",
-                  fontSize: "xs",
-                  lineHeight: "1.5",
-                  maxH: "18rem",
-                  overflow: "auto",
-                  overflowWrap: "anywhere",
-                  whiteSpace: "pre-wrap",
-                }),
-              )}
+              class={cx("zodiac-scroll", jsonBlockClass)}
             >
               {JSON.stringify(protocol(), null, 2)}
             </pre>
@@ -276,54 +255,101 @@ const reviewSectionClass = css({
   pt: "5",
 });
 
-/** Mono uppercase section legends and metadata (scores, stance, status). */
-const reviewMetaClass = css({
-  color: "zodiac.cream/66",
+/** The `<summary>` face shared by every disclosure in the review story. */
+const disclosureSummaryClass = css({
+  color: "zodiac.cream/72",
+  cursor: "pointer",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.18em",
+  letterSpacing: "0.14em",
+  minHeight: "7",
+  py: "2",
   textTransform: "uppercase",
+  _coarsePointer: {
+    minHeight: "11",
+    py: "3",
+  },
 });
 
-/** The `<summary>` face shared by every disclosure in the review story. */
-const disclosureSummaryClass = cx(
-  focusRingClass,
-  css({
-    color: "zodiac.cream/72",
-    cursor: "pointer",
-    fontFamily: "mono",
-    fontSize: "xs",
-    letterSpacing: "0.14em",
-    minHeight: "7",
-    py: "2",
-    textTransform: "uppercase",
-    _coarsePointer: {
-      minHeight: "11",
-      py: "3",
-    },
-  }),
-);
+/**
+ * A link whose label is a source title: `inlineActionLink`'s gold mono face in
+ * sentence case, since an uppercased title would misquote the source.
+ */
+const sourceLinkClass = css({
+  alignItems: "center",
+  color: "zodiac.gold",
+  display: "inline-flex",
+  fontFamily: "mono",
+  fontSize: "xs",
+  gap: "1.5",
+  minH: "6",
+  textDecoration: "none",
+  _hover: { textDecoration: "underline" },
+  _coarsePointer: { minH: "11" },
+});
 
-/** A link whose label is a source title: gold mono, sentence case, 24px+. */
-const sourceLinkClass = cx(
-  focusRingClass,
-  css({
-    alignItems: "center",
-    color: "zodiac.gold",
-    display: "inline-flex",
-    fontFamily: "mono",
-    fontSize: "xs",
-    gap: "1.5",
-    minH: "6",
-    overflowWrap: "anywhere",
-    textDecoration: "none",
-    _hover: { textDecoration: "underline" },
-    _coarsePointer: { minH: "11" },
-  }),
-);
+const evidenceListClass = css({ display: "grid", gap: "3" });
+const priorWorkListClass = css({ display: "grid", gap: "2" });
 
-/** Repeated rows rendered as a list (evidence, prior work). */
-const stackListClass = css({ display: "grid", gap: "3" });
+const evidenceItemClass = css({
+  borderLeftWidth: "3px",
+  borderRadius: "l2",
+  display: "grid",
+  gap: "2",
+  p: "3",
+});
+
+/** Contradicting evidence is lifted in violet so it cannot be skimmed past. */
+const evidenceToneClass = {
+  contradicts: css({ bg: "zodiac.violet/14", borderColor: "zodiac.violet/56" }),
+  other: css({ bg: "zodiac.cream/3.5", borderColor: "zodiac.cream/12" }),
+};
+
+const stanceGlyphClass = {
+  contradicts: css({ color: "zodiac.error" }),
+  supports: css({ color: "zodiac.success" }),
+  other: css({ color: "zodiac.cream/66" }),
+};
+
+const priorHypothesisClass = css({
+  borderColor: "zodiac.cream/12",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "2",
+  p: "3",
+});
+
+const failureHitClass = css({
+  bg: "zodiac.violet/10",
+  borderColor: "zodiac.violet/32",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "2",
+  p: "3",
+});
+
+const conceptPanelClass = css({
+  bg: "zodiac.glow-inner/34",
+  borderColor: "zodiac.violet/20",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "2",
+  p: "3",
+});
+
+/** The violet panel that holds the edit-mode fields. */
+const editPanelClass = css({
+  bg: "zodiac.violet/8",
+  borderColor: "zodiac.violet/32",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "3",
+  p: "3",
+});
 
 const reviewHeadingClass = css({
   color: "zodiac.cream",
@@ -341,6 +367,9 @@ const reviewBodyClass = css({
   maxW: "72ch",
 });
 
+/** A disclosure's revealed paragraph, set off from its `<summary>`. */
+const disclosureBodyClass = cx(reviewBodyClass, css({ mt: "3" }));
+
 function ReviewSection(props: {
   index: number;
   label: string;
@@ -349,7 +378,7 @@ function ReviewSection(props: {
   const headingId = createUniqueId();
   return (
     <section class={reviewSectionClass} aria-labelledby={headingId}>
-      <h2 class={reviewMetaClass} id={headingId}>
+      <h2 class={metaLabelClass} id={headingId}>
         {String(props.index).padStart(2, "0")} · {props.label}
       </h2>
       {props.children}
@@ -361,19 +390,9 @@ function ConceptPanel(props: {
   concept: NonNullable<DraftReviewContext["correspondence"]>["conceptA"];
 }) {
   return (
-    <div
-      class={css({
-        bg: "zodiac.glow-inner/34",
-        borderColor: "zodiac.violet/20",
-        borderRadius: "l2",
-        borderWidth: "1px",
-        display: "grid",
-        gap: "2",
-        p: "3",
-      })}
-    >
+    <div class={conceptPanelClass}>
       <h4 class={reviewHeadingClass}>{props.concept.displayName}</h4>
-      <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+      <div class={badgeRowClass}>
         <For each={props.concept.domains}>
           {(domain) => <UIBadge tone="violet">{domain}</UIBadge>}
         </For>
@@ -478,7 +497,7 @@ export function DraftReviewStory(props: {
                   correspondence().row.noveltyScore !== undefined
                 }
               >
-                <p class={reviewMetaClass}>
+                <p class={metaLabelClass}>
                   {correspondence().row.similarityScore !== undefined
                     ? `Similarity ${Math.round((correspondence().row.similarityScore ?? 0) * 100)}%`
                     : ""}
@@ -508,7 +527,7 @@ export function DraftReviewStory(props: {
                 <summary class={disclosureSummaryClass}>
                   Correspondence rationale
                 </summary>
-                <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
+                <p class={disclosureBodyClass}>
                   {correspondence().row.rationaleMd}
                 </p>
               </details>
@@ -522,7 +541,7 @@ export function DraftReviewStory(props: {
           when={(props.context.correspondence?.evidence.length ?? 0) > 0}
           fallback={<p class={reviewBodyClass}>No evidence is attached.</p>}
         >
-          <ul role="list" class={stackListClass}>
+          <UIList class={evidenceListClass}>
             <For each={props.context.correspondence?.evidence ?? []}>
               {(evidence) => {
                 // Persisted review context can contain the legacy neutral value
@@ -532,42 +551,30 @@ export function DraftReviewStory(props: {
                 const contradicts = stance === "contradicts";
                 return (
                   <li
-                    class={css({
-                      bg: contradicts ? "zodiac.violet/14" : "zodiac.cream/3.5",
-                      borderColor: contradicts
-                        ? "zodiac.violet/56"
-                        : "zodiac.cream/12",
-                      borderLeftWidth: "3px",
-                      borderRadius: "l2",
-                      display: "grid",
-                      gap: "2",
-                      p: "3",
-                    })}
+                    class={cx(
+                      evidenceItemClass,
+                      contradicts
+                        ? evidenceToneClass.contradicts
+                        : evidenceToneClass.other,
+                    )}
                   >
-                    <div
-                      class={css({
-                        alignItems: "center",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                      })}
-                    >
+                    <div class={badgeRowClass}>
                       <span
                         aria-hidden="true"
-                        class={css({
-                          color: contradicts
-                            ? "zodiac.error"
+                        class={
+                          contradicts
+                            ? stanceGlyphClass.contradicts
                             : supports
-                              ? "zodiac.success"
-                              : "zodiac.cream/66",
-                        })}
+                              ? stanceGlyphClass.supports
+                              : stanceGlyphClass.other
+                        }
                       >
                         {contradicts ? "⊘" : supports ? "✓" : "—"}
                       </span>
                       <UIBadge tone={contradicts ? "violet" : "cream"}>
                         {stance}
                       </UIBadge>
-                      <span class={reviewMetaClass}>
+                      <span class={metaLabelClass}>
                         {humanize(evidence.claim.evidenceLevel)}
                         {evidence.claim.truthConfidence
                           ? ` · ${humanize(evidence.claim.truthConfidence)} confidence`
@@ -578,7 +585,7 @@ export function DraftReviewStory(props: {
                     <Show
                       when={evidence.sourceUrl}
                       fallback={
-                        <span class={reviewMetaClass}>
+                        <span class={metaLabelClass}>
                           {evidence.sourceTitle}
                         </span>
                       }
@@ -599,7 +606,7 @@ export function DraftReviewStory(props: {
                 );
               }}
             </For>
-          </ul>
+          </UIList>
         </Show>
       </ReviewSection>
 
@@ -632,17 +639,7 @@ export function DraftReviewStory(props: {
                   </>
                 }
               >
-                <div
-                  class={css({
-                    bg: "zodiac.violet/8",
-                    borderColor: "zodiac.violet/32",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    display: "grid",
-                    gap: "3",
-                    p: "3",
-                  })}
-                >
+                <div class={editPanelClass}>
                   <h3 class={srOnlyClass}>{draftPayload().title}</h3>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
@@ -689,9 +686,7 @@ export function DraftReviewStory(props: {
                 <summary class={disclosureSummaryClass}>
                   Draft rationale
                 </summary>
-                <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
-                  {draftPayload().rationale}
-                </p>
+                <p class={disclosureBodyClass}>{draftPayload().rationale}</p>
               </details>
             </div>
           )}
@@ -720,17 +715,7 @@ export function DraftReviewStory(props: {
                   </>
                 }
               >
-                <div
-                  class={css({
-                    bg: "zodiac.violet/8",
-                    borderColor: "zodiac.violet/32",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    display: "grid",
-                    gap: "3",
-                    p: "3",
-                  })}
-                >
+                <div class={editPanelClass}>
                   <h3 class={srOnlyClass}>{draftPayload().title}</h3>
                   <UIBadge tone="violet">Edit mode</UIBadge>
                   <EditableTextField
@@ -819,9 +804,7 @@ export function DraftReviewStory(props: {
         </div>
         <details>
           <summary class={disclosureSummaryClass}>Agent run summary</summary>
-          <p class={cx(reviewBodyClass, css({ mt: "3" }))}>
-            {props.context.runTrace.summary}
-          </p>
+          <p class={disclosureBodyClass}>{props.context.runTrace.summary}</p>
         </details>
       </ReviewSection>
 
@@ -842,21 +825,12 @@ export function DraftReviewStory(props: {
           >
             <div class={css({ display: "grid", gap: "2" })}>
               <p class={eyebrowClass}>Prior hypotheses</p>
-              <ul role="list" class={css({ display: "grid", gap: "2" })}>
+              <UIList class={priorWorkListClass}>
                 <For each={props.context.related.priorHypotheses}>
                   {(hypothesis) => (
-                    <li
-                      class={css({
-                        borderColor: "zodiac.cream/12",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        display: "grid",
-                        gap: "2",
-                        p: "3",
-                      })}
-                    >
+                    <li class={priorHypothesisClass}>
                       <p class={reviewBodyClass}>{hypothesis.title}</p>
-                      <span class={reviewMetaClass}>
+                      <span class={metaLabelClass}>
                         {hypothesis.status}
                         {hypothesis.resolution
                           ? ` · ${hypothesis.resolution}`
@@ -865,32 +839,22 @@ export function DraftReviewStory(props: {
                     </li>
                   )}
                 </For>
-              </ul>
+              </UIList>
             </div>
             <div class={css({ display: "grid", gap: "2" })}>
               <p class={eyebrowClass}>Failure archive hits</p>
-              <ul role="list" class={css({ display: "grid", gap: "2" })}>
+              <UIList class={priorWorkListClass}>
                 <For each={props.context.related.failures}>
                   {(failure) => (
-                    <li
-                      class={css({
-                        bg: "zodiac.violet/10",
-                        borderColor: "zodiac.violet/32",
-                        borderRadius: "l2",
-                        borderWidth: "1px",
-                        display: "grid",
-                        gap: "2",
-                        p: "3",
-                      })}
-                    >
+                    <li class={failureHitClass}>
                       <p class={reviewBodyClass}>{failure.title}</p>
-                      <span class={reviewMetaClass}>
+                      <span class={metaLabelClass}>
                         {humanize(failure.reason)}
                       </span>
                     </li>
                   )}
                 </For>
-              </ul>
+              </UIList>
             </div>
           </div>
         </Show>
@@ -950,7 +914,7 @@ export function DecisionState(props: { draft: PersistedReviewDraft }) {
           p: "3",
         })}
       >
-        <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+        <div class={badgeRowClass}>
           <UIBadge tone={statusTone(props.draft.status)}>
             {props.draft.status}
           </UIBadge>

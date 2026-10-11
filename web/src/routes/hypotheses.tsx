@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/solid-router";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
-import { css } from "../../styled-system/css";
+import { css, cx } from "../../styled-system/css";
 import {
+  badgeRowClass,
   fieldLabelClass,
+  focusRingStyle,
+  helperClass,
   pageClass,
   pageTitleClass,
   sectionTitleClass,
@@ -11,6 +14,7 @@ import {
   UIButton,
   UICard,
   UIInput,
+  UIList,
   UINotice,
   UISelect,
   UITextarea,
@@ -26,6 +30,41 @@ import {
   describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+
+const sourceOptionClass = css({
+  alignItems: "center",
+  borderColor: "zodiac.gold/20",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  cursor: "pointer",
+  display: "flex",
+  gap: "2",
+  p: "2",
+  _coarsePointer: { minH: "11" },
+});
+
+// Checkboxes are outside the global `a, button, summary, [tabindex]` ring.
+const checkboxClass = css({
+  accentColor: "zodiac.gold",
+  flexShrink: 0,
+  ...focusRingStyle,
+});
+
+const sourceOptionTextClass = css({ fontSize: "sm" });
+
+const listClass = css({ display: "grid", gap: "3" });
+
+const rowBadgesClass = cx(badgeRowClass, css({ marginBottom: "2" }));
+
+const rowTitleClass = css({ fontSize: "xl", marginBottom: "1" });
+
+const rowQuestionClass = css({
+  color: "zodiac.cream/70",
+  marginBottom: "1",
+  maxW: "72ch",
+});
+
+const rowWhyClass = cx(helperClass, css({ marginTop: "2" }));
 
 function truncate(text: string, maxLength: number) {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength - 1)}…`;
@@ -207,15 +246,7 @@ export function HypothesesPage() {
           </For>
         </UISelect>
 
-        <fieldset
-          class={css({
-            border: "none",
-            margin: "0",
-            marginTop: "3",
-            minWidth: "0",
-            padding: "0",
-          })}
-        >
+        <fieldset class={css({ marginTop: "3", minWidth: "0" })}>
           <legend class={fieldLabelClass}>Source Citations</legend>
           <div
             class={css({
@@ -229,34 +260,14 @@ export function HypothesesPage() {
           >
             <For each={recentSourceRows()}>
               {(source) => (
-                <label
-                  class={css({
-                    alignItems: "center",
-                    borderColor: "zodiac.gold/20",
-                    borderRadius: "l2",
-                    borderWidth: "1px",
-                    cursor: "pointer",
-                    display: "flex",
-                    gap: "2",
-                    p: "2",
-                    _coarsePointer: { minH: "11" },
-                  })}
-                >
+                <label class={sourceOptionClass}>
                   <input
                     type="checkbox"
-                    class={css({
-                      accentColor: "zodiac.gold",
-                      flexShrink: 0,
-                      _focusVisible: {
-                        outline: "2px solid",
-                        outlineColor: "zodiac.gold",
-                        outlineOffset: "2px",
-                      },
-                    })}
+                    class={checkboxClass}
                     checked={selectedSources().includes(source._id)}
                     onChange={() => toggleSource(source._id)}
                   />
-                  <span class={css({ fontSize: "sm" })}>
+                  <span class={sourceOptionTextClass}>
                     {source.title ?? "Untitled source"}
                   </span>
                 </label>
@@ -300,21 +311,11 @@ export function HypothesesPage() {
         />
         <Show when={!hypotheses.isLoading()}>
           <Show when={hypothesisRows().length > 0}>
-            <ul
-              role="list"
-              class={css({ display: "grid", gap: "3", listStyle: "none" })}
-            >
+            <UIList class={listClass}>
               <For each={hypothesisRows()}>
                 {(item) => (
                   <li data-testid="entity-row" class={entityCardLinkClass}>
-                    <div
-                      class={css({
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                        marginBottom: "2",
-                      })}
-                    >
+                    <div class={rowBadgesClass}>
                       <UIBadge tone="gold">{item.status}</UIBadge>
                       <UIBadge tone="cream">
                         {item.sourceIds.length} citations
@@ -323,7 +324,7 @@ export function HypothesesPage() {
                         <UIBadge tone="gold">linked thesis</UIBadge>
                       </Show>
                     </div>
-                    <h3 class={css({ fontSize: "xl", marginBottom: "1" })}>
+                    <h3 class={rowTitleClass}>
                       <Link
                         to="/hypotheses/$hypothesisId"
                         params={{ hypothesisId: String(item._id) }}
@@ -332,34 +333,11 @@ export function HypothesesPage() {
                         {item.title}
                       </Link>
                     </h3>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/70",
-                        marginBottom: "1",
-                        maxW: "72ch",
-                      })}
-                    >
-                      {item.question}
-                    </p>
-                    <p
-                      class={css({
-                        color: "zodiac.cream/66",
-                        fontSize: "sm",
-                        maxW: "72ch",
-                      })}
-                    >
-                      {item.hypothesis}
-                    </p>
+                    <p class={rowQuestionClass}>{item.question}</p>
+                    <p class={helperClass}>{item.hypothesis}</p>
                     <Show when={item.whyThisMatters}>
                       {(value) => (
-                        <p
-                          class={css({
-                            color: "zodiac.cream/66",
-                            fontSize: "sm",
-                            marginTop: "2",
-                            maxW: "72ch",
-                          })}
-                        >
+                        <p class={rowWhyClass}>
                           Why this matters: {truncate(value(), 140)}
                         </p>
                       )}
@@ -367,7 +345,7 @@ export function HypothesesPage() {
                   </li>
                 )}
               </For>
-            </ul>
+            </UIList>
           </Show>
         </Show>
       </UICard>

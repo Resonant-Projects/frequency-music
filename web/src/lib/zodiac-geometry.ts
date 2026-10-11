@@ -99,9 +99,10 @@ function createSectorFillGeometry(sector: SectorDef): THREE.BufferGeometry {
   return geo;
 }
 
-// Resting / lit opacity for each part of a sector group. A sector is lit while
-// it is selected or previewed; the change is an opacity mutation on the
-// existing materials, never a rebuild.
+// Resting / lit opacity for each part of a sector group, and the only place
+// sector opacity is defined. A sector is lit while it is selected or
+// previewed; the change is an opacity mutation on the existing materials,
+// never a rebuild.
 const SECTOR_PART_OPACITY = {
   fill: { rest: 0.03, lit: 0.1 },
   inner: { rest: 0.3, lit: 0.75 },
@@ -111,15 +112,13 @@ const SECTOR_PART_OPACITY = {
 
 type SectorPart = keyof typeof SECTOR_PART_OPACITY;
 
-export function buildSectorGroup(
-  sector: SectorDef,
-  active = false,
-): THREE.Group {
+/** A sector's fill, arcs and spoke, built at rest. */
+export function buildSectorGroup(sector: SectorDef): THREE.Group {
   const g = new THREE.Group();
 
   // Fill mesh (userData.sectorId enables O(1) raycast hit identification)
   const fillGeo = createSectorFillGeometry(sector);
-  const fillMat = makeSectorFillMat(sector.color, active);
+  const fillMat = makeSectorFillMat(sector.color);
   const fillMesh = new THREE.Mesh(fillGeo, fillMat);
   fillMesh.userData.sectorId = sector.id;
   fillMesh.userData.sectorPart = "fill" satisfies SectorPart;
@@ -158,18 +157,20 @@ export function buildSectorGroup(
   spoke.userData.sectorPart = "spoke" satisfies SectorPart;
   g.add(spoke);
 
-  setSectorGroupActive(g, active);
+  setSectorGroupActive(g, false);
   return g;
 }
 
 /** Light or rest a sector group by mutating its material opacities in place. */
 export function setSectorGroupActive(group: THREE.Group, active: boolean) {
+  const state = active ? "lit" : "rest";
   for (const child of group.children) {
     const part = child.userData.sectorPart as SectorPart | undefined;
     if (!part) continue;
-    if (!(child instanceof THREE.Mesh || child instanceof THREE.Line)) continue;
-    const opacity = SECTOR_PART_OPACITY[part][active ? "lit" : "rest"];
-    (child.material as THREE.Material).opacity = opacity;
+    // Every tagged part is the fill mesh or an arc/spoke line.
+    const material = (child as THREE.Mesh | THREE.Line)
+      .material as THREE.Material;
+    material.opacity = SECTOR_PART_OPACITY[part][state];
   }
 }
 

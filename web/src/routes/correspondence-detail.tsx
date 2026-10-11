@@ -5,6 +5,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import { css } from "../../styled-system/css";
 import {
   backLink,
+  badgeRowClass,
   collapsedNoticeClass,
   detailTitleClass,
   fieldLabelClass,
@@ -18,12 +19,14 @@ import {
   UICard,
   UINotice,
   UISelect,
+  UIList,
   UITextarea,
 } from "../components/ui";
 import {
   createMutation,
   createQueryWithStatus,
   describeError,
+  describeLoad,
 } from "../integrations/convex";
 
 type CorrespondenceStatus =
@@ -31,6 +34,31 @@ type CorrespondenceStatus =
   | "evidenced"
   | "contradicted"
   | "retired";
+
+const reviewActionsClass = css({ display: "flex", gap: "2", mt: "3" });
+
+const reviewPanelClass = css({
+  bg: "zodiac.violet/7",
+  borderColor: "zodiac.violet/30",
+  borderRadius: "l2",
+  borderWidth: "1px",
+  display: "grid",
+  gap: "2",
+  mt: "3",
+  p: "3",
+});
+
+const evidenceListClass = css({ display: "grid", gap: "2" });
+
+const evidenceRowClass = css({
+  borderBottomWidth: "1px",
+  borderBottomColor: "zodiac.gold/16",
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "2",
+  justifyContent: "space-between",
+  py: "2",
+});
 
 export function CorrespondenceDetailPage() {
   const params = useParams({ from: "/correspondences/$correspondenceId" });
@@ -74,6 +102,7 @@ export function CorrespondenceDetailPage() {
     setNotice(null);
     setNoticeError(null);
     setReviewOpen(true);
+    // The reason field mounts with the panel this tick; focus it once it exists.
     queueMicrotask(() => reasonField?.focus());
   }
 
@@ -108,16 +137,7 @@ export function CorrespondenceDetailPage() {
     }
   }
 
-  const loadError = () =>
-    correspondence.error()
-      ? `Unable to load correspondence: ${correspondence.error()?.message}`
-      : null;
-  const loadStatus = () => {
-    if (correspondence.error() || correspondence.data()) return null;
-    return correspondence.isLoading()
-      ? "Loading correspondence…"
-      : "Correspondence not found.";
-  };
+  const load = describeLoad(correspondence, "correspondence");
 
   return (
     <section class={pageClass}>
@@ -128,12 +148,12 @@ export function CorrespondenceDetailPage() {
       </div>
       {/* Wrapper for an always-mounted notice that currently carries no text. */}
       <UICard class={correspondence.data() ? collapsedNoticeClass : undefined}>
-        <UINotice status={loadStatus()} error={loadError()} />
+        <UINotice status={load.status()} error={load.error()} />
       </UICard>
       <Show when={correspondence.data()}>
         {(row) => (
           <UICard>
-            <div class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}>
+            <div class={badgeRowClass}>
               <UIBadge tone="violet">Correspondence</UIBadge>
               <UIBadge tone="cream">{row().status}</UIBadge>
               <UIBadge tone="violet">{row().evidence.length} evidence</UIBadge>
@@ -141,7 +161,7 @@ export function CorrespondenceDetailPage() {
             <h1 class={detailTitleClass}>{row().statement}</h1>
             <p class={metaLine}>pair: {row().pairKey}</p>
 
-            <div class={css({ display: "flex", gap: "2", mt: "3" })}>
+            <div class={reviewActionsClass}>
               <UIButton
                 ref={(element) => {
                   reviewTrigger = element;
@@ -162,16 +182,7 @@ export function CorrespondenceDetailPage() {
                 role="dialog"
                 aria-modal="false"
                 aria-label="Review correspondence lifecycle"
-                class={css({
-                  bg: "zodiac.violet/7",
-                  borderColor: "zodiac.violet/30",
-                  borderRadius: "l2",
-                  borderWidth: "1px",
-                  display: "grid",
-                  gap: "2",
-                  mt: "3",
-                  p: "3",
-                })}
+                class={reviewPanelClass}
               >
                 <p class={css({ color: "zodiac.cream/70" })}>
                   Confirm evidence, record contradiction, retire this
@@ -213,9 +224,7 @@ export function CorrespondenceDetailPage() {
                   }
                   placeholder="Record why this lifecycle decision is warranted."
                 />
-                <div
-                  class={css({ display: "flex", flexWrap: "wrap", gap: "2" })}
-                >
+                <div class={badgeRowClass}>
                   <UIButton
                     variant="solid"
                     aria-busy={saving()}
@@ -264,31 +273,18 @@ export function CorrespondenceDetailPage() {
             <Show when={row().evidence.length > 0}>
               <hr class={goldDivider} />
               <h2 class={sectionLabel}>Evidence</h2>
-              <div class={css({ display: "grid", gap: "2" })}>
+              <UIList class={evidenceListClass}>
                 <For each={row().evidence}>
                   {(citation) => (
-                    <div
-                      class={css({
-                        borderBottomWidth: "1px",
-                        borderBottomStyle: "solid",
-                        borderBottomColor: "zodiac.gold/16",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "2",
-                        justifyContent: "space-between",
-                        py: "2",
-                      })}
-                    >
-                      <span class={css({ overflowWrap: "anywhere" })}>
-                        {citation.note ?? String(citation.claimId)}
-                      </span>
+                    <li class={evidenceRowClass}>
+                      <span>{citation.note ?? String(citation.claimId)}</span>
                       <span class={metaLine}>
                         {citation.stance} · {citation.addedBy}
                       </span>
-                    </div>
+                    </li>
                   )}
                 </For>
-              </div>
+              </UIList>
             </Show>
           </UICard>
         )}
