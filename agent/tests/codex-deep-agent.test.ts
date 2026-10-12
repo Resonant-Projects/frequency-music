@@ -1,5 +1,3 @@
-beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
-afterEach(() => vi.unstubAllEnvs());
 import {
   afterEach,
   beforeEach,
@@ -22,6 +20,9 @@ import {
   getConfiguredModelProvider,
 } from "../src/models/index";
 import type { ResearchPipelineDraft } from "../src/state/researchPipelineState";
+
+beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
+afterEach(() => vi.unstubAllEnvs());
 
 const fallbackDraft: ResearchPipelineDraft = {
   kind: "hypothesis_draft",

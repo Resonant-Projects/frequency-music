@@ -1,5 +1,3 @@
-beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
-afterEach(() => vi.unstubAllEnvs());
 import {
   afterEach,
   beforeEach,
@@ -16,6 +14,9 @@ import type {
   RunCodexTaskInput,
   RunCodexTaskResult,
 } from "../src/subagents/codexWorker";
+
+beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
+afterEach(() => vi.unstubAllEnvs());
 
 // Stands in for the OpenRouter/deep-agent model so tests exercising the
 // OpenRouter fallback path never make a live model call; mirrors the DI
