@@ -3,6 +3,7 @@ import { makeFunctionReference } from "convex/server";
 import { describe, expect, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
+import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import {
   EMBEDDING_DIMENSIONS,
@@ -349,7 +350,7 @@ describe("concept classification persistence", () => {
       relevanceRationale: "classifier proposed unknown domain: invented-domain",
       classifierModel: "test-model",
     });
-    expect(afterUnknown.concept?.classifiedAt).toBeUndefined();
+    expect(afterUnknown.concept?.classifiedAt).toEqual(expect.any(Number));
 
     const stillUnreviewed = await asSystem.mutation(
       api.conceptClassifier.writeClassifications,
@@ -368,8 +369,8 @@ describe("concept classification persistence", () => {
     );
     expect(stillUnreviewed).toMatchObject({
       assigned: 0,
-      unreviewed: 1,
-      skipped: 0,
+      unreviewed: 0,
+      skipped: 1,
     });
     await t.run(async (ctx) => {
       if (!afterUnknown.provisional) throw new Error("Missing provisional row");
@@ -390,7 +391,7 @@ describe("concept classification persistence", () => {
           },
         ],
         model: "test-model",
-        force: false,
+        force: true,
       },
     );
     expect(assigned).toMatchObject({ assigned: 1, unreviewed: 0, skipped: 0 });
@@ -477,6 +478,140 @@ describe("concept classification persistence", () => {
 });
 
 describe("concept creation classification scheduling", () => {
+  test("completed domain-review responses stop spending and unblock newer concepts", async () => {
+    const t = convexTest(schema, {
+      ...modules,
+      "./conceptClassifierInternal.ts": () =>
+        import("./fixtures/conceptClassifierInternalReview"),
+    });
+    const { legacyIds, waitingId } = await t.run(async (ctx) => {
+      const insert = (name: string, classifierModel?: string) =>
+        ctx.db.insert("concepts", {
+          name,
+          displayName: name,
+          aliases: [],
+          domain: "general",
+          missionRelevance: "unreviewed" as const,
+          classifierModel,
+          mentionCount: 0,
+          hypothesisCount: 0,
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+      const ids = [];
+      for (let index = 0; index < 20; index++) {
+        ids.push(await insert(`legacy-review-${index}`, "old-model"));
+      }
+      return { legacyIds: ids, waitingId: await insert("waiting") };
+    });
+    // Legacy results without a timestamp get one automatic attempt.
+    expect(
+      await t.query(internal.conceptClassifier.listStaleUnreviewed, {
+        cutoff: 1000,
+        limit: 20,
+      }),
+    ).toEqual(legacyIds);
+    expect(
+      await t.action(internal.conceptClassifier.classifyConceptBatch, {
+        conceptIds: legacyIds,
+        model: "test-model",
+      }),
+    ).toMatchObject({ unreviewed: 20, assigned: 0, failed: 0, llmCalls: 1 });
+    const concepts = await t.run((ctx) => ctx.db.query("concepts").collect());
+    for (const concept of concepts.filter((row) => row._id !== waitingId)) {
+      expect(concept.classifiedAt).toEqual(expect.any(Number));
+      expect(concept.missionRelevance).toBe("unreviewed");
+    }
+    expect(
+      await t.query(internal.conceptClassifier.listStaleUnreviewed, {
+        cutoff: 1000,
+        limit: 20,
+      }),
+    ).toEqual([waitingId]);
+    expect(
+      await t.action(internal.conceptClassifier.classifyConceptBatch, {
+        conceptIds: legacyIds,
+        model: "test-model",
+      }),
+    ).toMatchObject({ skipped: 20, llmCalls: 0 });
+    expect(
+      await t.action(internal.conceptClassifier.sweepUnreviewedConcepts, {}),
+    ).toEqual({ scheduled: 1 });
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]).toMatchObject({
+      name: "conceptClassifier:classifyConceptBatch",
+      args: [{ conceptIds: [waitingId] }],
+    });
+  });
+
+  test("applies the age cutoff before the sweep limit", async () => {
+    const t = convexTest(schema, modules);
+    const oldId = await t.run(async (ctx) => {
+      const insert = (name: string, createdAt: number) =>
+        ctx.db.insert("concepts", {
+          name,
+          displayName: name,
+          aliases: [],
+          domain: "general",
+          missionRelevance: "unreviewed" as const,
+          mentionCount: 0,
+          hypothesisCount: 0,
+          createdAt,
+          updatedAt: createdAt,
+        });
+      for (let index = 0; index < 20; index++) {
+        await insert(`recent-${index}`, 2000);
+      }
+      return await insert("old", 1000);
+    });
+    expect(
+      await t.query(internal.conceptClassifier.listStaleUnreviewed, {
+        cutoff: 1000,
+        limit: 20,
+      }),
+    ).toEqual([oldId]);
+  });
+
+  test("explicit retry candidates include parked concepts and exclude assigned concepts", async () => {
+    const t = convexTest(schema, modules);
+    const asSystem = t.withIdentity({ subject: "system" });
+    const reviewIds = await t.run(async (ctx) => {
+      const ids: Id<"concepts">[] = [];
+      for (const relevance of [
+        "on",
+        "unreviewed",
+        "off",
+        "unreviewed",
+      ] as const) {
+        const id = await ctx.db.insert("concepts", {
+          name: `retry-${relevance}-${ids.length}`,
+          displayName: relevance,
+          aliases: [],
+          domain: "general",
+          missionRelevance: relevance,
+          classifiedAt: 1000,
+          mentionCount: 0,
+          hypothesisCount: 0,
+          createdAt: 1000,
+          updatedAt: 1000,
+        });
+        ids.push(id);
+      }
+      return [ids[1], ids[3]];
+    });
+    expect(
+      await asSystem.query(api.conceptClassifier.listClassificationCandidates, {
+        cursor: null,
+        batchSize: 20,
+        force: true,
+        unreviewedOnly: true,
+      }),
+    ).toMatchObject({ conceptIds: reviewIds, isDone: true });
+  });
+
   test("new concepts start unreviewed and schedule asynchronous classification", async () => {
     const t = convexTest(schema, modules);
     const extractionId = await t.run(async (ctx) => {

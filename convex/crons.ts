@@ -63,7 +63,8 @@ crons.interval(
   {},
 );
 
-// Retry unreviewed concepts older than an hour in case creation scheduling failed.
+// Recover unreviewed concepts older than an hour without a completed response.
+// Completed responses needing domain triage wait for an explicit retry.
 crons.interval(
   "classify-stale-concepts",
   { hours: 1 },

@@ -27,8 +27,9 @@ function stringArg(name: string): string | undefined {
 }
 
 const apply = process.argv.includes("--apply");
-const force = process.argv.includes("--force");
-const all = process.argv.includes("--all") || apply;
+const retryUnreviewed = process.argv.includes("--retry-unreviewed");
+const force = process.argv.includes("--force") || retryUnreviewed;
+const all = process.argv.includes("--all") || (apply && !retryUnreviewed);
 const limit = numericArg("limit") ?? (all ? Number.POSITIVE_INFINITY : 30);
 const batchSize = Math.min(numericArg("batch-size") ?? 15, 20);
 const model = stringArg("model") ?? MODELS.sonnet;
@@ -57,7 +58,13 @@ type CandidatePage = {
 while (!isDone && selected < limit) {
   const page: CandidatePage = await client.query(
     api.conceptClassifier.listClassificationCandidates,
-    { cursor, batchSize, force, devBypassSecret },
+    {
+      cursor,
+      batchSize,
+      force,
+      unreviewedOnly: retryUnreviewed,
+      devBypassSecret,
+    },
   );
   const remaining = limit - selected;
   const conceptIds = page.conceptIds.slice(0, remaining);
@@ -120,7 +127,7 @@ console.log(
 );
 if (apply) {
   console.log(
-    "convergence=pending (review provisional domains, promote approved rows, rerun --apply, then dry-run --all)",
+    "convergence=pending (review provisional domains, then retry with --retry-unreviewed --limit=20 --apply; see docs/concept-classification.md)",
   );
 } else {
   console.log(`converged=${selected === 0 && isDone ? "yes" : "no"}`);

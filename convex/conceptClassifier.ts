@@ -195,6 +195,7 @@ async function persistClassifications(
       await ctx.db.patch("concepts", classification.conceptId, {
         missionRelevance: "unreviewed",
         relevanceRationale: `classifier proposed unknown domain: ${unknownDomains.join(", ")}`,
+        classifiedAt: now,
         classifierModel: args.model,
         ...relevanceEmbeddingFields("unreviewed", concept),
         updatedAt: now,
@@ -203,12 +204,14 @@ async function persistClassifications(
       continue;
     }
     if (domains.length === 0) {
+      const now = Date.now();
       await ctx.db.patch("concepts", classification.conceptId, {
         missionRelevance: "unreviewed",
         relevanceRationale: "classifier returned no usable domain",
+        classifiedAt: now,
         classifierModel: args.model,
         ...relevanceEmbeddingFields("unreviewed", concept),
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
       unreviewed++;
       continue;
@@ -273,6 +276,7 @@ export const listClassificationCandidates = query({
     cursor: v.union(v.string(), v.null()),
     batchSize: v.number(),
     force: v.boolean(),
+    unreviewedOnly: v.optional(v.boolean()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.object({
@@ -283,9 +287,13 @@ export const listClassificationCandidates = query({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const batchSize = Math.min(Math.max(args.batchSize, 1), 20);
-    const page = await ctx.db
-      .query("concepts")
-      .paginate({ cursor: args.cursor, numItems: batchSize });
+    const candidates = ctx.db.query("concepts");
+    const page = await (args.unreviewedOnly
+      ? candidates.withIndex("by_missionRelevance", (q) =>
+          q.eq("missionRelevance", "unreviewed"),
+        )
+      : candidates
+    ).paginate({ cursor: args.cursor, numItems: batchSize });
     return {
       conceptIds: page.page
         .filter((concept) => args.force || concept.classifiedAt === undefined)
@@ -495,13 +503,14 @@ export const listStaleUnreviewed = internalQuery({
   handler: async (ctx, args) => {
     const concepts = await ctx.db
       .query("concepts")
-      .withIndex("by_missionRelevance", (q) =>
-        q.eq("missionRelevance", "unreviewed"),
+      .withIndex("by_missionRelevance_classifiedAt_createdAt", (q) =>
+        q
+          .eq("missionRelevance", "unreviewed")
+          .eq("classifiedAt", undefined)
+          .lte("createdAt", args.cutoff),
       )
       .take(Math.min(Math.max(args.limit, 1), 20));
-    return concepts
-      .filter((concept) => concept.createdAt <= args.cutoff)
-      .map((concept) => concept._id);
+    return concepts.map((concept) => concept._id);
   },
 });
 
