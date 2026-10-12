@@ -7,7 +7,7 @@ import {
   test,
   vi,
 } from "vite-plus/test";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { MODELS } from "./llm";
 import schema from "./schema";
@@ -299,6 +299,155 @@ describe("operator extraction", () => {
       opus: "anthropic/claude-opus-5.5",
       default: MODELS.default,
     });
+  });
+});
+
+describe("concept linking", () => {
+  // Fake timers keep scheduled jobs pending so the queue can be inspected.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const jobs = (t: ReturnType<typeof convexTest>) =>
+    t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+  const graph = (t: ReturnType<typeof convexTest>) =>
+    t.run(async (ctx) => ({
+      edges: await ctx.db.query("edges").collect(),
+      mentions: Object.fromEntries(
+        (await ctx.db.query("concepts").collect()).map((concept) => [
+          concept.name,
+          concept.mentionCount,
+        ]),
+      ),
+    }));
+
+  test("a stored operator Extraction schedules its concept links", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await store(t, sourceId, inputHash);
+    const [stored] = await t.query(api.extractions.getBySourceId, {
+      sourceId,
+    });
+    const link = (await jobs(t)).find((job) =>
+      /^graph(\.js)?:linkExtraction$/.test(job.name),
+    );
+    expect(link?.args).toEqual([{ extractionId: stored?._id }]);
+  });
+
+  test("linking again adds no edges, mentions, or classifier jobs", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await store(t, sourceId, inputHash, {
+      extraction: { ...extraction, topics: ["Tuning", " tuning ", "  "] },
+    });
+    const [stored] = await t.query(api.extractions.getBySourceId, {
+      sourceId,
+    });
+    const extractionId = stored!._id;
+    expect(
+      await t.mutation(internal.graph.linkExtraction, { extractionId }),
+    ).toEqual({ linked: 1, concepts: ["Tuning"] });
+    // The workflows' action step relinks after the scheduled link: a no-op.
+    expect(
+      await t.action(internal.graph.linkExtractionConcepts, { extractionId }),
+    ).toEqual({ linked: 0, concepts: [] });
+    // Only the call that created the Concept queued its classification.
+    const classify = (await jobs(t)).filter((job) =>
+      /^conceptClassifier(\.js)?:classifyConceptBatch$/.test(job.name),
+    );
+    expect(classify).toHaveLength(1);
+    const { edges, mentions } = await graph(t);
+    expect(edges).toHaveLength(1);
+    expect(edges[0]).toMatchObject({
+      fromType: "source",
+      fromId: sourceId,
+      toType: "concept",
+      toId: "tuning",
+      relationship: "mentions",
+    });
+    expect(mentions).toEqual({ tuning: 1 });
+  });
+
+  test("only the operator service identity starts the backfill", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.mutation(api.extractions.startConceptBackfill, {}),
+    ).rejects.toThrow();
+    await expect(
+      t
+        .withIdentity({ subject: "user_123", name: "Someone" })
+        .mutation(api.extractions.startConceptBackfill, {}),
+    ).rejects.toThrow("requires the operator bypass secret");
+    expect(await jobs(t)).toEqual([]);
+    await t.mutation(api.extractions.startConceptBackfill, {
+      devBypassSecret: BYPASS,
+    });
+    const scheduled = await jobs(t);
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]?.name).toMatch(
+      /^graph(\.js)?:buildGraphFromExtractions$/,
+    );
+    expect(scheduled[0]?.args).toEqual([{}]);
+  });
+
+  test("the backfill pages through every Extraction and is safe to rerun", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await store(t, sourceId, inputHash);
+    const otherText =
+      `${article}Meantone tempers fifths to purify thirds. `.repeat(2);
+    const other = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        canonicalUrl: "https://example.org/meantone",
+        dedupeKey: "url:example.org/meantone",
+        title: "Meantone",
+        rawText: otherText,
+        status: "text_ready",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 2,
+        updatedAt: 2,
+      }),
+    );
+    await store(t, other, await extractionInputHash(otherText), {
+      extraction: { ...extraction, topics: ["tuning", "meantone"] },
+    });
+
+    const first = await t.mutation(internal.graph.buildGraphFromExtractions, {
+      batchSize: 1,
+    });
+    expect(first).toMatchObject({ processed: 1, isDone: false });
+    const next = (await jobs(t)).find((job) =>
+      /^graph(\.js)?:buildGraphFromExtractions$/.test(job.name),
+    );
+    expect(next?.args[0]).toMatchObject({ batchSize: 1 });
+    const rest = await t.mutation(
+      internal.graph.buildGraphFromExtractions,
+      next!.args[0],
+    );
+    expect(rest).toEqual({ processed: 1, conceptsLinked: 2, isDone: true });
+
+    const linked = await graph(t);
+    expect(linked.edges).toHaveLength(4);
+    expect(linked.mentions).toEqual({
+      tuning: 2,
+      "pythagorean comma": 1,
+      meantone: 1,
+    });
+
+    // An out-of-range page size is clamped, never passed to paginate.
+    expect(
+      await t.mutation(internal.graph.buildGraphFromExtractions, {
+        batchSize: 0,
+      }),
+    ).toEqual({ processed: 1, conceptsLinked: 0, isDone: false });
+
+    // A full rerun over already-linked Extractions changes nothing.
+    expect(
+      await t.mutation(internal.graph.buildGraphFromExtractions, {}),
+    ).toEqual({ processed: 2, conceptsLinked: 0, isDone: true });
+    expect(await graph(t)).toEqual(linked);
   });
 });
 

@@ -27,6 +27,7 @@
     "convex:extract": "vpx convex run workflows:startBatchExtraction '{\"limit\": 3}'",
     "convex:deploy": "vp run typecheck:scripts && vpx tsx scripts/convex-deploy.ts",
     "convex:deploy:dry-run": "vp run typecheck:scripts && vpx tsx scripts/convex-deploy.ts --dry-run",
+    "graph:backfill": "vpx tsx scripts/graph-backfill.ts",
     "env:check": "varlock load",
     "env:check:all": "varlock load --show-all"
   },
