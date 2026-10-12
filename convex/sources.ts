@@ -1471,6 +1471,44 @@ async function dedupeStanding(
   };
 }
 
+async function archiveDedupeCollision(
+  ctx: MutationCtx,
+  source: Doc<"sources">,
+  winnerId: Id<"sources">,
+  winnerUpdatedAt: number,
+  now: number,
+  dedupeKey?: string,
+) {
+  const attemptId =
+    source.activeExtractionAttemptId ?? source.lastExtractionAttemptId;
+  await ctx.db.patch(source._id, {
+    status: "archived",
+    blockedReason: "duplicate",
+    blockedDetails: `dedupe-migration: duplicate of ${winnerId}`,
+    activeExtractionAttemptId: undefined,
+    lastExtractionAttemptId: attemptId,
+    ...(dedupeKey === undefined ? {} : { dedupeKey }),
+    updatedAt: advanceSourceVersion(source.updatedAt, now),
+  });
+  await ctx.scheduler.runAfter(
+    0,
+    internal.operationFailures.settleArchivedSource,
+    {
+      sourceId: source._id,
+      attemptId,
+      dedupeKeys: [
+        ...new Set([
+          source.dedupeKey,
+          computeCanonicalDedupeKey(source) ?? source.dedupeKey,
+        ]),
+      ],
+      capturedAt: now,
+      winnerId,
+      winnerUpdatedAt,
+    },
+  );
+}
+
 /**
  * Migration: recompute canonical dedupeKeys (see docs/plans/2026-07-03-01-arch-dedupe-contract.md).
  * Batched via pagination cursor. apply:false reports without writing.
@@ -1560,22 +1598,24 @@ export const recomputeDedupeKeys = mutation({
         )
       ) {
         // The holder is further along (or as far along and older): archive this row.
-        await ctx.db.patch("sources", source._id, {
-          status: "archived",
-          blockedReason: "duplicate",
-          blockedDetails: `dedupe-migration: duplicate of ${holder._id}`,
-          updatedAt: advanceSourceVersion(source.updatedAt, now),
-        });
+        await archiveDedupeCollision(
+          ctx,
+          source,
+          holder._id,
+          holder.updatedAt,
+          now,
+        );
         collisionsArchived++;
       } else if (holder) {
         // This row should own the canonical key. Archive the holder first.
-        await ctx.db.patch("sources", holder._id, {
-          status: "archived",
-          blockedReason: "duplicate",
-          blockedDetails: `dedupe-migration: duplicate of ${source._id}`,
-          dedupeKey: generateArchivedDedupeKey(holder.dedupeKey, holder._id),
-          updatedAt: advanceSourceVersion(holder.updatedAt, now),
-        });
+        await archiveDedupeCollision(
+          ctx,
+          holder,
+          source._id,
+          advanceSourceVersion(source.updatedAt, now),
+          now,
+          generateArchivedDedupeKey(holder.dedupeKey, holder._id),
+        );
         await ctx.db.patch("sources", source._id, {
           dedupeKey: canonical,
           updatedAt: advanceSourceVersion(source.updatedAt, now),

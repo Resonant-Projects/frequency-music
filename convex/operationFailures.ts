@@ -148,7 +148,15 @@ export async function reopenExtractionCompletionRecovery(
 /** Canonical intake settles prior failures in bounded transactions, including open investigations. */
 export async function settleCaptureFailures(
   ctx: MutationCtx,
-  args: { dedupeKey: string; capturedAt: number },
+  args: {
+    dedupeKey: string;
+    capturedAt: number;
+    archiveFence?: {
+      sourceId: Id<"sources">;
+      winnerId: Id<"sources">;
+      winnerUpdatedAt: number;
+    };
+  },
 ) {
   let changed = false;
   for (const status of [
@@ -184,12 +192,63 @@ export async function settleCaptureFailures(
 }
 
 export const settleCaptured = internalMutation({
-  args: { dedupeKey: v.string(), capturedAt: v.number() },
+  args: {
+    dedupeKey: v.string(),
+    capturedAt: v.number(),
+    archiveFence: v.optional(
+      v.object({
+        sourceId: v.id("sources"),
+        winnerId: v.id("sources"),
+        winnerUpdatedAt: v.number(),
+      }),
+    ),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     // Intake may have been reset while this bounded continuation was queued.
-    if (await captureCompleteForKey(ctx, args.dedupeKey))
+    const archived = args.archiveFence
+      ? (await ctx.db.get(args.archiveFence.sourceId))?.status === "archived" &&
+        (await ctx.db.get(args.archiveFence.winnerId))?.updatedAt ===
+          args.archiveFence.winnerUpdatedAt
+      : false;
+    if (archived || (await captureCompleteForKey(ctx, args.dedupeKey)))
       await settleCaptureFailures(ctx, args);
+    return null;
+  },
+});
+
+/** Dedupe archive may move the canonical key to a live row without captured body. */
+export const settleArchivedSource = internalMutation({
+  args: {
+    sourceId: v.id("sources"),
+    attemptId: v.optional(v.id("extractionAttempts")),
+    dedupeKeys: v.array(v.string()),
+    capturedAt: v.number(),
+    winnerId: v.id("sources"),
+    winnerUpdatedAt: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    if (args.dedupeKeys.length > 2)
+      throw new Error("Archive settlement accepts at most two keys");
+    const source = await ctx.db.get(args.sourceId);
+    if (source?.status !== "archived") return null;
+    await settleExtractionFailures(ctx, args.attemptId);
+    const winnerUnchanged =
+      (await ctx.db.get(args.winnerId))?.updatedAt === args.winnerUpdatedAt;
+    for (const dedupeKey of new Set(args.dedupeKeys)) {
+      if (!winnerUnchanged && !(await captureCompleteForKey(ctx, dedupeKey)))
+        continue;
+      await settleCaptureFailures(ctx, {
+        dedupeKey,
+        capturedAt: args.capturedAt,
+        archiveFence: {
+          sourceId: args.sourceId,
+          winnerId: args.winnerId,
+          winnerUpdatedAt: args.winnerUpdatedAt,
+        },
+      });
+    }
     return null;
   },
 });
