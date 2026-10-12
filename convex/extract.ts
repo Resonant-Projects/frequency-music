@@ -14,6 +14,7 @@ import {
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
+import { OPERATOR_EXTRACTION_MODELS } from "./shared/operatorExtraction";
 
 export { MODELS };
 
@@ -327,7 +328,7 @@ export const extractSource = action({
 
 // Models an operator session may record for an Extraction it wrote itself
 // (scripts/operator-extraction.ts). Catalog-checked through MODELS.
-export const OPERATOR_EXTRACTION_MODELS: readonly string[] = [MODELS.opus];
+export { OPERATOR_EXTRACTION_MODELS };
 
 const operatorExtractionValidator = v.object({
   summary: v.string(),

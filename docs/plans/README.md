@@ -84,13 +84,18 @@ Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** un
 | W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Implementation plan prepared September 30, including live OpenClaw prerequisite checks. Text docket can proceed now; spoken cards depend on the house voice. |
 | W3–W4 | Render ladder and listen page; hypothesis tournament | Specced, not yet planned |
 
-## 1d. Source backlog and operator extraction (2026-10-03)
+## 1d. Source backlog and operator extraction (completed 2026-10-11)
 
-Capture and extraction backlog remediation (PRs #95–#108). It is paused until
-Tuesday 2026-10-06, with about 1,800 Sources still `text_ready`. Resume from the
-[handoff](./2026-10-03-source-backlog-operator-extraction-handoff.md): current
-counts, the per-round `scripts/operator-extraction.ts` procedure and subagent
-prompt, and open decisions.
+The October 11 operator campaign stored and verified 2,197 Sources and 1,209
+active Claims using `openai/gpt-6.1-sol`, with zero skips or failures. Thirteen
+unusable captures were parked as `review_needed`. A fresh export and live
+backlog query found zero extractable Sources at 22:58:36 UTC; this is a dated
+completion snapshot, not a claim about later intake. Only this campaign's
+continuation was disabled.
+
+See the [completion record and model-selection procedure](./2026-10-11-source-backlog-operator-extraction-completion.md).
+The [October 3 handoff](./2026-10-03-source-backlog-operator-extraction-handoff.md)
+retains the earlier capture history and unresolved capture issues.
 
 ## 2. Operator/live acceptance items
 
