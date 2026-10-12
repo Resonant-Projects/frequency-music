@@ -289,7 +289,7 @@ const operatorOutcomeValidator = v.union(
 
 type OperatorSourceCheck =
   | { outcome: { skipped: true; reason: string } }
-  | { content: string; outcome?: undefined };
+  | { content: string; source: Doc<"sources">; outcome?: undefined };
 
 /**
  * The operator's export is still current: the Source is text_ready and its
@@ -315,7 +315,7 @@ async function currentOperatorText(
       },
     };
   }
-  return { content };
+  return { content, source };
 }
 
 async function setSourceStatus(
@@ -335,12 +335,12 @@ async function setSourceStatus(
 /** A covering Extraction settles the Source: extracted if its own, else archived as a duplicate. */
 async function settleFoundExtraction(
   ctx: MutationCtx,
-  sourceId: Id<"sources">,
+  source: Doc<"sources">,
   found: { extraction: Doc<"extractions">; sameSource: boolean },
 ) {
   await setSourceStatus(
     ctx,
-    sourceId,
+    source._id,
     found.sameSource ? "extracted" : "archived",
     found.sameSource
       ? undefined
@@ -350,7 +350,20 @@ async function settleFoundExtraction(
         },
   );
   // Covering output retires ownership, but preserves unfinished snapshots as history.
-  await ctx.db.patch(sourceId, { activeExtractionAttemptId: undefined });
+  await settleExtractionOwnership(ctx, source);
+}
+
+async function settleExtractionOwnership(
+  ctx: MutationCtx,
+  source: Doc<"sources">,
+) {
+  if (source.activeExtractionAttemptId) {
+    await resolveOperationFailure(
+      ctx,
+      `extraction:${source.activeExtractionAttemptId}`,
+    );
+  }
+  await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
 }
 
 /** Capture admission and input in the same transaction as Source disposition. */
@@ -391,7 +404,7 @@ export const beginExtraction = internalMutation({
     if (!args.force) {
       const found = await extractionForInput(ctx.db, inputHash, source._id);
       if (found) {
-        await settleFoundExtraction(ctx, source._id, found);
+        await settleFoundExtraction(ctx, source, found);
         return {
           skipped: true as const,
           reason: found.sameSource
@@ -630,7 +643,7 @@ export const commitExtraction = internalMutation({
     if (found) {
       extractionId = found.extraction._id;
       current = found.sameSource;
-      await settleFoundExtraction(ctx, attempt.sourceId, found);
+      await settleFoundExtraction(ctx, source, found);
     } else {
       ({ extractionId } = await insertExtraction(ctx, {
         ...result,
@@ -768,7 +781,7 @@ export const storeOperatorExtraction = internalMutation({
       args.sourceId,
     );
     if (found) {
-      await settleFoundExtraction(ctx, args.sourceId, found);
+      await settleFoundExtraction(ctx, checked.source, found);
       return {
         skipped: true as const,
         reason: found.sameSource ? "already extracted" : "duplicate extraction",
@@ -779,7 +792,7 @@ export const storeOperatorExtraction = internalMutation({
       promptVersion: EXTRACTION_PROMPT_VERSION,
       confidence: 0.8,
     });
-    await ctx.db.patch(args.sourceId, { activeExtractionAttemptId: undefined });
+    await settleExtractionOwnership(ctx, checked.source);
     await setSourceStatus(ctx, args.sourceId, "extracted");
     return {
       success: true as const,

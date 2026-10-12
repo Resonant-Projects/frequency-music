@@ -232,7 +232,7 @@ export const fullPipelineWorkflow = workflowManager.define({
         await ctx.runAction(
           api.extract.extractSource,
           { sourceId: source._id, model: args.model, devBypassSecret },
-          { retry: true },
+          { retry: false },
         );
       } catch (e) {
         console.error("Extraction failed", e);

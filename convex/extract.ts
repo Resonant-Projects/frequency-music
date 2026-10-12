@@ -121,7 +121,7 @@ async function executeAttempt(
   ctx: ActionCtx,
   attemptId: Id<"extractionAttempts">,
 ): Promise<ExtractionOutcome> {
-  const attempt = await ctx.runQuery(internal.extractInternal.getAttempt, {
+  let attempt = await ctx.runQuery(internal.extractInternal.getAttempt, {
     attemptId,
   });
   if (!attempt) throw new Error("Extraction attempt not found");
@@ -134,10 +134,17 @@ async function executeAttempt(
         lease: generationLease,
       }))
     ) {
-      return {
-        skipped: true,
-        reason: "extraction generation already in progress",
-      };
+      // A producer may have retained its result after our initial read.
+      const latest = await ctx.runQuery(internal.extractInternal.getAttempt, {
+        attemptId,
+      });
+      if (!latest?.result) {
+        return {
+          skipped: true,
+          reason: "extraction generation already in progress",
+        };
+      }
+      attempt = latest;
     }
     if (!attempt.result) {
       const { json } = await generateJson({
