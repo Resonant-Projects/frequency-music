@@ -1,5 +1,6 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { z } from "zod";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { modules } from "../harness/modules";
@@ -9,6 +10,7 @@ const body =
   "A recovered source explains how resonance depends on frequency, damping and boundary conditions. Its measurements describe the physical system and do not establish a musical listening effect. ".repeat(
     3,
   );
+afterEach(() => vi.unstubAllEnvs());
 const seed = (t: ReturnType<typeof convexTest>, extra = {}) =>
   t.run((ctx) =>
     ctx.db.insert("sources", {
@@ -35,7 +37,23 @@ describe("source recovery from the Action Queue", () => {
   test.each(["captured", "unavailable", "attempted", "rate_limited"] as const)(
     "access updates discard stale automatic %s outcomes and allow fresh attempts",
     async (outcome) => {
+      vi.stubEnv("AGENT_TOOL_SECRET", "synthetic-recovery-test-secret");
       const t = convexTest(schema, modules);
+      const callTool = async (name: string, args = {}) => {
+        const response = await t.fetch(`/agent-tools/${name}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            secret: "synthetic-recovery-test-secret",
+            ...args,
+          }),
+        });
+        expect(response.status).toBe(200);
+        return response.json();
+      };
+      const pageShape = z.object({
+        rows: z.array(z.object({ updatedAt: z.number() })),
+      });
       const id = await seed(t, { status: "ingested" });
       const agentRunId = await t.run((ctx) =>
         ctx.db.insert("agentRuns", {
@@ -46,10 +64,7 @@ describe("source recovery from the Action Queue", () => {
           updatedAt: 1,
         }),
       );
-      const oldPage = await t.query(
-        internal.transcriptCapture.listTranscriptBacklog,
-        {},
-      );
+      const oldPage = pageShape.parse(await callTool("listTranscriptBacklog"));
       const clock = vi.spyOn(Date, "now").mockReturnValue(2);
       try {
         await t
@@ -65,7 +80,7 @@ describe("source recovery from the Action Queue", () => {
       const before = await t.query(api.sources.get, { id });
       for (const expectedUpdatedAt of [oldPage.rows[0]!.updatedAt, undefined]) {
         expect(
-          await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+          await callTool("recordTranscriptCapture", {
             sourceId: id,
             expectedUpdatedAt,
             agentRunId,
@@ -77,12 +92,11 @@ describe("source recovery from the Action Queue", () => {
         ).toEqual({ updated: false });
         expect(await t.query(api.sources.get, { id })).toEqual(before);
       }
-      const freshPage = await t.query(
-        internal.transcriptCapture.listTranscriptBacklog,
-        {},
+      const freshPage = pageShape.parse(
+        await callTool("listTranscriptBacklog"),
       );
       expect(
-        await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+        await callTool("recordTranscriptCapture", {
           sourceId: id,
           expectedUpdatedAt: freshPage.rows[0]!.updatedAt,
           agentRunId,
