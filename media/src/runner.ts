@@ -115,11 +115,7 @@ export async function runOnce(
       Awaited<ReturnType<JobHandler>>
     >(retainedDir, "result");
     if (retainedResult) {
-      await tool("completeMediaJob", {
-        jobId: job.jobId,
-        leaseToken: job.leaseToken,
-        result: retainedResult,
-      });
+      await acknowledgeCompletion(tool, job, retainedResult);
       await removeCompletedCheckpoints(retainedDir);
       return "done";
     }
@@ -171,11 +167,7 @@ export async function runOnce(
       clearTimeout(deadline);
     }
     await writeCheckpoint(retainedDir, "result", result, config.workDir);
-    await tool("completeMediaJob", {
-      jobId: job.jobId,
-      leaseToken: job.leaseToken,
-      result,
-    });
+    await acknowledgeCompletion(tool, job, result);
     await removeCompletedCheckpoints(retainedDir);
     log(`completed ${job.kind} job ${job.jobId}`);
     return "done";
@@ -197,6 +189,25 @@ export async function runOnce(
   } finally {
     clearInterval(renew);
     if (workDir) await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+async function acknowledgeCompletion(
+  tool: Tool,
+  job: ClaimedMediaJob,
+  result: Awaited<ReturnType<JobHandler>>,
+) {
+  const args = { jobId: job.jobId, leaseToken: job.leaseToken, result };
+  try {
+    await tool("completeMediaJob", args);
+  } catch (error) {
+    // Completion is idempotent for this lease, including after it expires.
+    // Retry only the acknowledgment, never synthesis or upload.
+    try {
+      await tool("completeMediaJob", args);
+    } catch {
+      throw error;
+    }
   }
 }
 

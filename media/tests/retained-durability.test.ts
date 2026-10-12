@@ -77,7 +77,6 @@ describe("retained media storage failures", () => {
       fault.unreadable = dirname(root);
       fault.syncedDirectories = [];
       let attempts = 0;
-      let completions = 0;
       const tool = vi.fn(async (name: string) => {
         if (name === "claimNextMediaJob")
           return {
@@ -87,7 +86,7 @@ describe("retained media storage failures", () => {
             attempts,
             leaseToken: `lease-${attempts}`,
           };
-        if (name === "completeMediaJob" && completions++ === 0)
+        if (name === "completeMediaJob" && attempts === 0)
           throw new Error("Completion transport failed");
         if (name === "failMediaJob") attempts++;
         return null;

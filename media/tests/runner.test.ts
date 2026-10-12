@@ -26,7 +26,6 @@ afterEach(() => {
 describe("runOnce", () => {
   test("a failed completion write reuses the persisted result on the next lease", async () => {
     let attempt = 0;
-    let completeCalls = 0;
     const tool = vi.fn(async (name: string) => {
       if (name === "claimNextMediaJob")
         return {
@@ -36,7 +35,7 @@ describe("runOnce", () => {
           leaseToken: `lease-${attempt}`,
           attempts: attempt,
         };
-      if (name === "completeMediaJob" && completeCalls++ === 0)
+      if (name === "completeMediaJob" && attempt === 0)
         throw new Error("connection lost");
       if (name === "failMediaJob") attempt++;
       return null;
