@@ -155,7 +155,9 @@ export function SourceRecovery(props: {
     if (busy()) return;
     setError(null);
     if (mode() === "text") {
-      const reason = unextractableTextReason(text());
+      const reason = unextractableTextReason(text(), {
+        allowExcerpt: kind() === "excerpt",
+      });
       if (reason) {
         setError(
           `${reason} Paste substantive source text, not a title, teaser or access check.`,
@@ -398,6 +400,26 @@ export function SourceRecovery(props: {
               error={error()}
               status={saving() ? "Saving recovery information…" : null}
             />
+            <Show
+              when={error() && props.source.updatedAt !== expectedUpdatedAt()}
+            >
+              <p class={helperClass}>
+                The source changed while this form was open. Review the current
+                source details above before retrying with your retained input.
+              </p>
+              <UIButton
+                class={recoveryButtonClass}
+                type="button"
+                disabled={busy()}
+                onClick={(event) => {
+                  const form = event.currentTarget.form;
+                  setExpectedUpdatedAt(props.source.updatedAt);
+                  form?.requestSubmit();
+                }}
+              >
+                Review current version and retry
+              </UIButton>
+            </Show>
             <div class={badgeRowClass}>
               <UIButton
                 class={recoveryButtonClass}

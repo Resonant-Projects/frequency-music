@@ -101,6 +101,7 @@ async function main() {
       if (!transcript) throw new Error("Empty transcript");
       await client.mutation(api.sources.updateText, {
         id: source._id,
+        expectedUpdatedAt: source.updatedAt,
         transcript,
         devBypassSecret,
       });
@@ -110,6 +111,7 @@ async function main() {
       console.log(`   ❌ ${String(error)}`);
       await client.mutation(api.sources.updateStatus, {
         id: source._id,
+        expectedUpdatedAt: source.updatedAt,
         status: "review_needed",
         blockedReason: "no_text",
         blockedDetails: `Transcript fetch failed: ${String(error)}`,

@@ -7,7 +7,7 @@ import {
   TRANSCRIPT_MAX_CHARS,
   TRANSCRIPT_MIN_CHARS,
 } from "./shared/agentContract";
-import { extractYouTubeVideoId } from "./sourceUtils";
+import { resolveYouTubeVideoId } from "./sourceUtils";
 
 // YouTube Sources reach "ingested" without text; the transcript-capture graph
 // downloads their audio with yt-dlp and transcribes it with Groq Whisper.
@@ -27,10 +27,7 @@ function awaitsTranscript(source: Doc<"sources">): boolean {
 }
 
 function videoIdOf(source: Doc<"sources">): string | null {
-  return (
-    source.youtubeVideoId ??
-    (source.canonicalUrl ? extractYouTubeVideoId(source.canonicalUrl) : null)
-  );
+  return resolveYouTubeVideoId(source);
 }
 
 /**
@@ -193,7 +190,7 @@ export const enqueueIfNeeded = internalMutation({
       .withIndex("by_status_type_updatedAt", (q) =>
         q.eq("status", "ingested").eq("type", "youtube"),
       )) {
-      if (awaitsTranscript(source)) {
+      if (awaitsTranscript(source) && videoIdOf(source)) {
         awaiting = true;
         break;
       }

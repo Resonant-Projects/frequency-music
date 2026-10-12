@@ -245,6 +245,7 @@ export const fetchTranscriptForSource = action({
       // Update source with transcript
       await ctx.runMutation(api.sources.updateText, {
         id: args.sourceId,
+        expectedUpdatedAt: source.updatedAt,
         transcript,
         devBypassSecret: args.devBypassSecret,
       });
@@ -260,6 +261,7 @@ export const fetchTranscriptForSource = action({
       // Update source with error
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
+        expectedUpdatedAt: source.updatedAt,
         status: "review_needed",
         blockedReason: "no_text",
         blockedDetails: `Transcript fetch failed: ${message}`,
@@ -425,6 +427,7 @@ export const fetchArticleForSource = action({
 
       await ctx.runMutation(api.sources.updateText, {
         id: args.sourceId,
+        expectedUpdatedAt: source.updatedAt,
         rawText: text,
         devBypassSecret: args.devBypassSecret,
       });
@@ -438,6 +441,7 @@ export const fetchArticleForSource = action({
       const message = error instanceof Error ? error.message : "Unknown error";
       await ctx.runMutation(api.sources.updateStatus, {
         id: args.sourceId,
+        expectedUpdatedAt: source.updatedAt,
         status: "review_needed",
         blockedReason: "no_text",
         blockedDetails: `Article fetch failed: ${message}`,

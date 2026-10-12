@@ -1,8 +1,9 @@
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { modules } from "../harness/modules";
+import { extractionInputHash } from "./shared/extractionPrompt";
 
 const body =
   "A recovered source explains how resonance depends on frequency, damping and boundary conditions. Its measurements describe the physical system and do not establish a musical listening effect. ".repeat(
@@ -31,6 +32,215 @@ const seed = (t: ReturnType<typeof convexTest>, extra = {}) =>
   );
 
 describe("source recovery from the Action Queue", () => {
+  test("in-flight article and transcript actions cannot undo a recovery save or Archive", async () => {
+    for (const type of ["url", "youtube"] as const) {
+      for (const recovery of ["text", "archive"]) {
+        const t = convexTest(schema, modules),
+          id = await seed(t, { type }),
+          reader = t.withIdentity({ subject: "reader" });
+        const entered = Promise.withResolvers<void>(),
+          release = Promise.withResolvers<void>();
+        const fetchMock = vi
+          .spyOn(globalThis, "fetch")
+          .mockImplementation(async () => {
+            entered.resolve();
+            await release.promise;
+            return new Response(
+              type === "youtube" ? JSON.stringify({ content: body }) : body,
+            );
+          });
+        try {
+          const job = reader.action(
+            type === "youtube"
+              ? api.fabric.fetchTranscriptForSource
+              : api.fabric.fetchArticleForSource,
+            { sourceId: id },
+          );
+          await entered.promise;
+          if (recovery === "text")
+            await reader.mutation(api.sources.provideRecoveryText, {
+              id,
+              expectedUpdatedAt: 2,
+              text: body,
+              kind: type === "youtube" ? "transcript" : "article",
+            });
+          else
+            await reader.mutation(api.sources.archiveRecoverySource, {
+              id,
+              expectedUpdatedAt: 2,
+            });
+          const before = await t.query(api.sources.get, { id });
+          release.resolve();
+          await expect(job).rejects.toThrow(/discard/);
+          expect(await t.query(api.sources.get, { id })).toEqual(before);
+        } finally {
+          release.resolve();
+          fetchMock.mockRestore();
+        }
+      }
+    }
+  });
+  test("explicit excerpts retain bot/minimum checks and remain extractable despite truncation markers", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t),
+      reader = t.withIdentity({ subject: "reader" });
+    const excerpt =
+      "A recovered source explains how resonance depends on frequency damping and boundary conditions. Its measurements describe the physical system and do not establish a musical listening effect. The investigators compared multiple measurements and reported their uncertainty ...";
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: excerpt,
+        kind: "article",
+      }),
+    ).rejects.toThrow(/feed excerpt/);
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: "Just a moment... Checking your browser.",
+        kind: "excerpt",
+      }),
+    ).rejects.toThrow(/bot wall/);
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: "A title only...",
+        kind: "excerpt",
+      }),
+    ).rejects.toThrow(/words/);
+    await reader.mutation(api.sources.provideRecoveryText, {
+      id,
+      expectedUpdatedAt: 2,
+      text: excerpt,
+      kind: "excerpt",
+    });
+    const s = await t.query(api.sources.get, { id });
+    expect(s?.rawText).toContain(excerpt);
+    expect(s?.rawText).toContain("Excerpt only");
+    expect(
+      await t.mutation(internal.extractInternal.parkOperatorUnextractable, {
+        sourceId: id,
+        inputHash: await extractionInputHash(s!.rawText!),
+      }),
+    ).toEqual({ parked: false, reason: "text is extractable" });
+  });
+  test("repeated access updates and subsequent text preserve the original failure evidence", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t, { type: "url" }),
+      reader = t.withIdentity({ subject: "reader" });
+    for (const note of ["Signed in.", "Publisher access now works."]) {
+      const s = await t.query(api.sources.get, { id });
+      await reader.mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: s!.updatedAt,
+        note,
+      });
+      expect(
+        (await t.query(api.sources.get, { id }))?.metadata.sourceRecovery
+          .previousBlock,
+      ).toBe("This video is unavailable");
+    }
+    const s = await t.query(api.sources.get, { id });
+    await reader.mutation(api.sources.provideRecoveryText, {
+      id,
+      expectedUpdatedAt: s!.updatedAt,
+      text: body,
+      kind: "article",
+    });
+    expect(
+      (await t.query(api.sources.get, { id }))?.metadata.sourceRecovery
+        .previousBlock,
+    ).toBe("This video is unavailable");
+  });
+  test("legacy capture writes reject stale snapshots and cannot replace recovered text or revive archives", async () => {
+    const t = convexTest(schema, modules),
+      reader = t.withIdentity({ subject: "reader" });
+    for (const recovery of ["text", "archive"]) {
+      const id = await seed(t, { dedupeKey: `legacy-${recovery}` });
+      if (recovery === "text")
+        await reader.mutation(api.sources.provideRecoveryText, {
+          id,
+          expectedUpdatedAt: 2,
+          text: body,
+          kind: "transcript",
+        });
+      else
+        await reader.mutation(api.sources.archiveRecoverySource, {
+          id,
+          expectedUpdatedAt: 2,
+        });
+      const before = await t.query(api.sources.get, { id });
+      if (recovery === "archive") {
+        await expect(
+          reader.mutation(api.sources.updateStatus, {
+            id,
+            status: "text_ready",
+          }),
+        ).rejects.toThrow(/discard/);
+      }
+      for (const expectedUpdatedAt of [undefined, 2]) {
+        await expect(
+          reader.mutation(api.sources.updateText, {
+            id,
+            transcript: "Stale worker text",
+            expectedUpdatedAt,
+          }),
+        ).rejects.toThrow(/discard/);
+        await expect(
+          reader.mutation(api.sources.updateStatus, {
+            id,
+            status: "review_needed",
+            blockedReason: "no_text",
+            expectedUpdatedAt,
+          }),
+        ).rejects.toThrow(/discard/);
+      }
+      expect(await t.query(api.sources.get, { id })).toEqual(before);
+    }
+  });
+  test("YouTube access updates without a usable video ID stay parked and cannot create empty runs", async () => {
+    const t = convexTest(schema, modules),
+      reader = t.withIdentity({ subject: "reader" });
+    const id = await seed(t, {
+      canonicalUrl: undefined,
+      youtubeVideoId: "invalid",
+    });
+    expect(
+      await reader.mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: 2,
+        note: "I can open it in my browser.",
+      }),
+    ).toEqual({ transcriptQueued: false });
+    expect((await t.query(api.sources.get, { id }))?.status).toBe(
+      "review_needed",
+    );
+    await seed(t, {
+      dedupeKey: "malformed-ingested",
+      status: "ingested",
+      canonicalUrl: undefined,
+    });
+    await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
+    expect(await t.run((ctx) => ctx.db.query("agentRuns").collect())).toEqual(
+      [],
+    );
+    const valid = await seed(t, {
+      dedupeKey: "invalid-id-valid-url",
+      youtubeVideoId: "invalid",
+      status: "ingested",
+    });
+    const page = await t.query(
+      internal.transcriptCapture.listTranscriptBacklog,
+      {},
+    );
+    expect(page.rows).toContainEqual({
+      id: valid,
+      videoId: "AAAAAAAAAAA",
+      title: "Blocked video",
+    });
+  });
   test("late automatic captures cannot overwrite supplied text or revive archived sources", async () => {
     const t = convexTest(schema, modules),
       reader = t.withIdentity({ subject: "reader" });

@@ -23,6 +23,7 @@ import {
   extractYouTubeVideoId,
   generateArchivedDedupeKey,
   generateDedupeKey,
+  resolveYouTubeVideoId,
 } from "./sourceUtils";
 import {
   extractionContent,
@@ -288,6 +289,7 @@ export const updateStatus = mutation({
     status: sourceStatusValidator,
     blockedReason: v.optional(sourceBlockedReasonValidator),
     blockedDetails: v.optional(v.string()),
+    expectedUpdatedAt: v.optional(v.number()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -301,6 +303,22 @@ export const updateStatus = mutation({
       });
     }
 
+    assertCaptureVersion(source, args.expectedUpdatedAt);
+    if (
+      (source.status === "archived" &&
+        args.status !== "archived" &&
+        (args.blockedReason === "no_text" ||
+          args.expectedUpdatedAt === undefined)) ||
+      (args.blockedReason === "no_text" &&
+        source.metadata?.sourceRecovery?.providedAt &&
+        args.expectedUpdatedAt === undefined)
+    ) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message:
+          "Source was archived or recovered; discard this capture result.",
+      });
+    }
     await ctx.db.patch("sources", args.id, {
       status: args.status,
       blockedReason: args.blockedReason,
@@ -319,6 +337,7 @@ export const updateText = mutation({
     id: v.id("sources"),
     rawText: v.optional(v.string()),
     transcript: v.optional(v.string()),
+    expectedUpdatedAt: v.optional(v.number()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -332,6 +351,18 @@ export const updateText = mutation({
       });
     }
 
+    assertCaptureVersion(source, args.expectedUpdatedAt);
+    if (
+      source.status === "archived" ||
+      (source.metadata?.sourceRecovery?.providedAt &&
+        args.expectedUpdatedAt === undefined)
+    ) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message:
+          "Source was archived or recovered; discard this capture result.",
+      });
+    }
     const text = args.rawText || args.transcript || "";
 
     // Compute hash
@@ -353,6 +384,21 @@ export const updateText = mutation({
     return null;
   },
 });
+
+function assertCaptureVersion(
+  source: Doc<"sources">,
+  expectedUpdatedAt?: number,
+) {
+  if (
+    expectedUpdatedAt !== undefined &&
+    source.updatedAt !== expectedUpdatedAt
+  ) {
+    throw new ConvexError({
+      code: "CONFLICT",
+      message: "Source changed during capture; discard this stale result.",
+    });
+  }
+}
 
 async function sourceForRecovery(
   ctx: MutationCtx,
@@ -435,7 +481,9 @@ export const provideRecoveryText = mutation({
       args.expectedUpdatedAt,
     );
     const text = args.text.trim();
-    const reason = unextractableTextReason(text);
+    const reason = unextractableTextReason(text, {
+      allowExcerpt: args.kind === "excerpt",
+    });
     if (reason || text.length > RECOVERY_TEXT_MAX_CHARS)
       throw new ConvexError({
         code: "INVALID_TEXT",
@@ -464,7 +512,7 @@ export const provideRecoveryText = mutation({
           : args.kind === "transcript"
             ? "Supplied transcript. Visual content, diagrams and scores are not covered by the transcript."
             : "Supplied article text. Coverage is limited to the text below.";
-    const capturedText = `Capture supplied during source recovery. ${coverage}\n${provenanceUrl ? `Evidence URL: ${provenanceUrl}\n` : ""}${note ? `Coverage note: ${note}\n` : ""}\n${text}`;
+    const capturedText = `Capture supplied during source recovery. ${coverage}\n${provenanceUrl ? `Evidence URL: ${provenanceUrl}\n` : ""}${note ? `Coverage note: ${note}\n` : ""}\n${text}${args.kind === "excerpt" ? "\n\n[End of supplied excerpt. Full text was not supplied.]" : ""}`;
     const hash = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(capturedText),
@@ -490,8 +538,8 @@ export const provideRecoveryText = mutation({
           providedAt: now,
           providedBy: identity.subject,
           previousBlock:
-            source.blockedDetails ??
-            source.metadata?.sourceRecovery?.previousBlock,
+            source.metadata?.sourceRecovery?.previousBlock ??
+            source.blockedDetails,
         },
       },
     });
@@ -523,7 +571,10 @@ export const requestSourceRecovery = mutation({
       });
     const now = Date.now();
     const transcriptQueued =
-      source.type === "youtube" && !source.rawText && !source.transcript;
+      source.type === "youtube" &&
+      !source.rawText &&
+      !source.transcript &&
+      Boolean(resolveYouTubeVideoId(source));
     await ctx.db.patch("sources", source._id, {
       status: transcriptQueued ? "ingested" : "review_needed",
       blockedReason: transcriptQueued ? undefined : "no_text",
@@ -547,8 +598,8 @@ export const requestSourceRecovery = mutation({
           accessNote: note,
           requestedBy: identity.subject,
           previousBlock:
-            source.blockedDetails ??
-            source.metadata?.sourceRecovery?.previousBlock,
+            source.metadata?.sourceRecovery?.previousBlock ??
+            source.blockedDetails,
         },
       },
     });
