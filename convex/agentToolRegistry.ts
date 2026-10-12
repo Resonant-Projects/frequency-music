@@ -103,6 +103,7 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       internal.transcriptCapture.recordTranscriptCapture,
       omitUndefined({
         sourceId: args.sourceId as Id<"sources">,
+        expectedUpdatedAt: args.expectedUpdatedAt as number | undefined,
         agentRunId: args.agentRunId as Id<"agentRuns">,
         outcome: args.outcome as
           | "captured"

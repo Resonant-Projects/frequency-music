@@ -22,6 +22,11 @@ import {
   describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import {
+  needsSourceText,
+  SourceRecovery,
+  type RecoverySource,
+} from "../components/source-recovery";
 
 function statusTone(status: string): "gold" | "violet" | "cream" {
   if (status === "text_ready") return "violet";
@@ -51,6 +56,7 @@ const rowClass = css({
   borderRadius: "l2",
   borderWidth: "1px",
   p: "4",
+  "& button": { minBlockSize: "11" },
 });
 const rowBadgesClass = cx(badgeRowClass, css({ mb: "2" }));
 const rowTitleClass = css({ fontSize: "xl", marginBottom: "1" });
@@ -93,7 +99,7 @@ export function DisplayPage() {
     document.title = "Display Queue — Frequency Music";
   });
 
-  type InboxRow = {
+  type InboxRow = RecoverySource & {
     _id: Id<"sources">;
     status: string;
     type: string;
@@ -127,17 +133,27 @@ export function DisplayPage() {
 
   const runExtraction = createAction(api.extract.extractSource);
   const updateStatus = createMutation(api.sources.updateStatus);
+  const archiveRecovery = createMutation(api.sources.archiveRecoverySource);
   const setVisibility = createMutation(api.sources.setVisibility);
 
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
   // Which row currently has a mutation in flight — its actions stay disabled
   // so a second click cannot submit the same source twice.
-  const [pendingRowIds, setPendingRowIds] = createSignal<
-    ReadonlySet<Id<"sources">>
-  >(new Set());
+  const [pendingRowIds, setPendingRowIds] = createSignal<ReadonlySet<string>>(
+    new Set(),
+  );
   const isRowPending = (sourceId: Id<"sources">) =>
     pendingRowIds().has(sourceId);
+
+  function setRowPending(sourceId: string, pending: boolean) {
+    setPendingRowIds((prev) => {
+      const next = new Set(prev);
+      if (pending) next.add(sourceId);
+      else next.delete(sourceId);
+      return next;
+    });
+  }
 
   async function withRowPending(
     sourceId: Id<"sources">,
@@ -248,8 +264,9 @@ export function DisplayPage() {
       <UICard>
         <h1 class={pageTitleClass}>Display & Triage</h1>
         <p class={helperClass}>
-          This queue prioritizes blocked and oldest private sources so weekly
-          review stays aligned with ingest throughput.
+          Recover missing text, resolve access, and review private sources.
+          Blocked sources appear first; this page shows up to 24 sources from
+          the larger backlog.
         </p>
         <UINotice
           class={css({ marginTop: "3" })}
@@ -383,12 +400,31 @@ export function DisplayPage() {
                         </Show>
                       </div>
 
-                      <h3 class={rowTitleClass}>
+                      <h3
+                        id={`source-title-${row()._id}`}
+                        tabIndex={-1}
+                        class={rowTitleClass}
+                      >
                         {row().title ?? "Untitled source"}
                       </h3>
                       <p class={helperSpacedClass}>
-                        Next action: <strong>{row().nextAction}</strong>
+                        Next action:{" "}
+                        <strong>
+                          {needsSourceText(row())
+                            ? "Provide source text or update access"
+                            : row().nextAction}
+                        </strong>
                       </p>
+
+                      <SourceRecovery
+                        source={row()}
+                        pending={isRowPending(row()._id)}
+                        onPending={(pending) => setRowPending(id, pending)}
+                        onNotice={(message) => {
+                          setNoticeError(null);
+                          setNotice(message);
+                        }}
+                      />
 
                       <Show when={row().extractionPreview}>
                         {(preview) => (
@@ -433,37 +469,67 @@ export function DisplayPage() {
                         {/* aria-busy, not disabled, while a row action is in
                         flight: disabling the pressed button would blur it.
                         withRowPending ignores repeat presses. */}
-                        <UIButton
-                          variant="outline"
-                          disabled={row().status !== "text_ready"}
-                          aria-busy={isRowPending(row()._id)}
-                          aria-label={`Run extraction for ${row().title ?? "Untitled source"}`}
-                          onClick={(event) =>
-                            runRowExtraction(row()._id, event.currentTarget)
-                          }
-                        >
-                          Run Extraction
-                        </UIButton>
-                        <UIButton
-                          variant="outline"
-                          aria-busy={isRowPending(row()._id)}
-                          aria-label={`Mark ${row().title ?? "Untitled source"} as triaged`}
-                          onClick={(event) =>
-                            markTriaged(row()._id, event.currentTarget)
-                          }
-                        >
-                          Mark Triaged
-                        </UIButton>
-                        <UIButton
-                          variant="ghost"
-                          aria-busy={isRowPending(row()._id)}
-                          aria-label={`Promote ${row().title ?? "Untitled source"} to followers`}
-                          onClick={(event) =>
-                            promoteFollowers(row()._id, event.currentTarget)
-                          }
-                        >
-                          Promote Followers
-                        </UIButton>
+                        <Show when={!needsSourceText(row())}>
+                          <UIButton
+                            variant="outline"
+                            disabled={row().status !== "text_ready"}
+                            aria-busy={isRowPending(row()._id)}
+                            aria-label={`Run extraction for ${row().title ?? "Untitled source"}`}
+                            onClick={(event) =>
+                              runRowExtraction(row()._id, event.currentTarget)
+                            }
+                          >
+                            Run Extraction
+                          </UIButton>
+                        </Show>
+                        <Show when={!needsSourceText(row())}>
+                          <UIButton
+                            variant="outline"
+                            aria-busy={isRowPending(row()._id)}
+                            aria-label={`Mark ${row().title ?? "Untitled source"} as triaged`}
+                            onClick={(event) =>
+                              markTriaged(row()._id, event.currentTarget)
+                            }
+                          >
+                            Mark Triaged
+                          </UIButton>
+                          <UIButton
+                            variant="ghost"
+                            aria-busy={isRowPending(row()._id)}
+                            aria-label={`Promote ${row().title ?? "Untitled source"} to followers`}
+                            onClick={(event) =>
+                              promoteFollowers(row()._id, event.currentTarget)
+                            }
+                          >
+                            Promote Followers
+                          </UIButton>
+                        </Show>
+                        <Show when={needsSourceText(row())}>
+                          <UIButton
+                            variant="ghost"
+                            class={css({ minBlockSize: "11" })}
+                            aria-busy={isRowPending(row()._id)}
+                            aria-label={`Archive ${row().title ?? "Untitled source"}`}
+                            onClick={(event) =>
+                              runRowRemoval(
+                                row()._id,
+                                event.currentTarget,
+                                () =>
+                                  archiveRecovery({
+                                    id: row()._id,
+                                    expectedUpdatedAt: row().updatedAt,
+                                  }),
+                                "Source archived privately. Its text and failure evidence have been retained.",
+                                "Archive failed",
+                              )
+                            }
+                          >
+                            Archive
+                          </UIButton>
+                          <span class={helperClass}>
+                            Remove from the queue and retain the private source.
+                          </span>
+                        </Show>
                       </div>
                     </div>
                   )}

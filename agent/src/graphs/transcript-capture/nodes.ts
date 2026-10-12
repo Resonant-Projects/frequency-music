@@ -3,6 +3,7 @@ import type {
   TranscriptCaptureTally,
   TranscriptCaptureUpdate,
 } from "../../state/transcriptCaptureState.js";
+import type { TranscriptBacklogRow } from "../../../../convex/shared/agentContract.js";
 import { callConvex } from "../../tools/convexTools.js";
 import {
   createYouTubeTranscriber,
@@ -20,7 +21,7 @@ export const MAX_TRANSCRIPTS_PER_RUN = 20;
 export const YOUTUBE_PACE_MS = 20_000;
 const MAX_BACKLOG_PAGES = 20;
 
-type BacklogRow = { id: string; videoId: string; title?: string };
+type BacklogRow = TranscriptBacklogRow;
 
 function asBacklogPage(value: unknown): {
   rows: BacklogRow[];
@@ -36,6 +37,10 @@ function asBacklogPage(value: unknown): {
               {
                 id: row.id,
                 videoId: row.videoId,
+                ...(typeof row.updatedAt === "number" &&
+                Number.isFinite(row.updatedAt)
+                  ? { updatedAt: row.updatedAt }
+                  : {}),
                 ...(typeof row.title === "string" ? { title: row.title } : {}),
               },
             ]
@@ -103,6 +108,9 @@ export function createCaptureTranscriptsNode(
         const result = (await callTool("recordTranscriptCapture", {
           sourceId: row.id,
           agentRunId: state.agentRunId,
+          ...(row.updatedAt !== undefined
+            ? { expectedUpdatedAt: row.updatedAt }
+            : {}),
           ...args,
         })) as { updated?: unknown } | null;
         return result?.updated === true;
