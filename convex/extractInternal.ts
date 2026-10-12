@@ -15,6 +15,7 @@ import {
   recordOperationFailure,
   resolveOperationFailure,
   reopenExtractionCompletionRecovery,
+  settleExtractionFailures,
 } from "./operationFailures";
 import {
   claimValidator,
@@ -371,13 +372,15 @@ async function settleExtractionOwnership(
   ctx: MutationCtx,
   source: Doc<"sources">,
 ) {
-  if (source.activeExtractionAttemptId) {
-    await resolveOperationFailure(
-      ctx,
-      `extraction:${source.activeExtractionAttemptId}`,
-    );
-  }
-  await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
+  await settleExtractionFailures(
+    ctx,
+    source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+  );
+  await ctx.db.patch(source._id, {
+    activeExtractionAttemptId: undefined,
+    lastExtractionAttemptId:
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+  });
 }
 
 /** Capture admission and input in the same transaction as Source disposition. */
@@ -459,6 +462,8 @@ export const beginExtraction = internalMutation({
     });
     const attemptId = await ctx.db.insert("extractionAttempts", {
       sourceId: source._id,
+      displacedAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       inputHash,
       prompt,
       origin,
@@ -476,6 +481,7 @@ export const beginExtraction = internalMutation({
     await ctx.db.patch(source._id, {
       status: "extracting",
       activeExtractionAttemptId: attemptId,
+      lastExtractionAttemptId: attemptId,
       blockedReason: undefined,
       blockedDetails: undefined,
       updatedAt: advanceSourceVersion(source.updatedAt, now),
@@ -509,7 +515,13 @@ export const retainExtractionResult = internalMutation({
         error: undefined,
         updatedAt: Date.now(),
       });
-      await reopenExtractionCompletionRecovery(ctx, attemptId);
+      if (attempt.recoverySettled)
+        await ctx.scheduler.runAfter(
+          0,
+          internal.extractInternal.completeExtraction,
+          { attemptId },
+        );
+      else await reopenExtractionCompletionRecovery(ctx, attemptId);
     }
     return null;
   },
@@ -641,6 +653,7 @@ export const commitExtraction = internalMutation({
       throw new Error("Source was deleted; retained extraction needs review");
     const content = source.rawText || source.transcript || "";
     let current =
+      !attempt.recoverySettled &&
       source.activeExtractionAttemptId === attemptId &&
       (source.status === "extracting" ||
         source.status === "text_ready" ||
@@ -685,7 +698,11 @@ export const commitExtraction = internalMutation({
     ) {
       // Metadata may change without a replacement admission. Release only
       // this completed owner; archives and newer owners retain their disposition.
-      await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
+      await ctx.db.patch(source._id, {
+        activeExtractionAttemptId: undefined,
+        lastExtractionAttemptId:
+          source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+      });
       await setSourceStatus(ctx, source, "text_ready");
     }
     await ctx.db.patch(attemptId, {
@@ -695,6 +712,7 @@ export const commitExtraction = internalMutation({
       updatedAt: Date.now(),
     });
     await resolveOperationFailure(ctx, `extraction:${attemptId}`);
+    if (current || found) await settleExtractionFailures(ctx, attemptId);
     return outcome(extractionId, current, found?.extraction);
   },
 });
@@ -721,13 +739,24 @@ export const failExtraction = internalMutation({
       error: truncateText(error, 1000),
       updatedAt: Date.now(),
     });
+    const source = await ctx.db.get(attempt.sourceId);
+    if (attempt.recoverySettled || source?.status === "archived") {
+      await settleExtractionFailures(ctx, attemptId);
+      // Reconciliation retries completion only, even after operational settlement.
+      if (attempt.recoverySettled && attempt.result && !attempt.extractionId)
+        await ctx.scheduler.runAfter(
+          0,
+          internal.extractInternal.completeExtraction,
+          { attemptId },
+        );
+      return null;
+    }
     await recordOperationFailure(ctx, {
       operationId: `extraction:${attemptId}`,
       causeKey: `extraction:${attempt.model}:${failureCause(error)}`,
       target: { kind: "extraction", attemptId },
       message: error,
     });
-    const source = await ctx.db.get(attempt.sourceId);
     if (
       source?.activeExtractionAttemptId === attemptId &&
       (source.status === "extracting" ||
@@ -749,6 +778,8 @@ export const failExtraction = internalMutation({
       } else {
         await ctx.db.patch(source._id, {
           activeExtractionAttemptId: undefined,
+          lastExtractionAttemptId:
+            source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
         });
         await setSourceStatus(ctx, source, "text_ready");
       }
@@ -866,7 +897,11 @@ export const releaseObsoleteRecovery = internalMutation({
       (await extractionSnapshotMatchesSource(attempt, source))
     )
       return null;
-    await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
+    await ctx.db.patch(source._id, {
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    });
     if (
       source.status === "extracting" ||
       (source.status === "review_needed" && source.blockedReason === "ai_error")
@@ -969,6 +1004,9 @@ export const reconcileAttempts = internalMutation({
           if (source?.activeExtractionAttemptId === row._id) {
             await ctx.db.patch(source._id, {
               activeExtractionAttemptId: undefined,
+              lastExtractionAttemptId:
+                source.activeExtractionAttemptId ??
+                source.lastExtractionAttemptId,
             });
             if (source.status === "extracting")
               await setSourceStatus(ctx, source, "text_ready");

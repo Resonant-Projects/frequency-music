@@ -410,6 +410,7 @@ export default defineSchema({
   // ==========================================================================
   sources: defineTable({
     activeExtractionAttemptId: v.optional(v.id("extractionAttempts")),
+    lastExtractionAttemptId: v.optional(v.id("extractionAttempts")),
     // Type discriminator
     type: v.union(
       v.literal("notion"),
@@ -494,6 +495,8 @@ export default defineSchema({
   // ==========================================================================
   extractionAttempts: defineTable({
     sourceId: v.id("sources"),
+    displacedAttemptId: v.optional(v.id("extractionAttempts")),
+    recoverySettled: v.optional(v.boolean()),
     origin: v.union(v.literal("worker"), v.literal("operator")),
     inputHash: v.string(),
     prompt: v.string(),

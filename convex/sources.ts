@@ -12,7 +12,10 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { currentExtractions } from "./extractions";
-import { settleCaptureFailures } from "./operationFailures";
+import {
+  settleCaptureFailures,
+  settleExtractionFailures,
+} from "./operationFailures";
 import {
   looksLikeBotChallenge,
   SCOUTED_CONTENT_PROVIDERS,
@@ -403,10 +406,22 @@ export const updateStatus = mutation({
     await ctx.db.patch("sources", args.id, {
       status: args.status,
       activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
       updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    if (args.status === "archived") {
+      await settleExtractionFailures(
+        ctx,
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+      );
+      await settleCaptureFailures(ctx, {
+        dedupeKey: source.dedupeKey,
+        capturedAt: Date.now(),
+      });
+    }
     return null;
   },
 });
@@ -532,6 +547,9 @@ export const archiveRecoverySource = mutation({
     const now = advanceSourceVersion(source.updatedAt);
     await ctx.db.patch("sources", source._id, {
       status: "archived",
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       updatedAt: now,
       metadata: {
         ...source.metadata,
@@ -543,6 +561,10 @@ export const archiveRecoverySource = mutation({
         },
       },
     });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
     await settleCaptureFailures(ctx, {
       dedupeKey: source.dedupeKey,
       capturedAt: now,
@@ -1374,8 +1396,15 @@ export const archive = mutation({
     await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
     await settleCaptureFailures(ctx, {
       dedupeKey: source.dedupeKey,
       capturedAt: Date.now(),

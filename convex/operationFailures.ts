@@ -82,6 +82,42 @@ export async function resolveOperationFailure(
     });
 }
 
+/** Settle a displaced ownership chain one snapshot per transaction. */
+export async function settleExtractionFailures(
+  ctx: MutationCtx,
+  attemptId: Id<"extractionAttempts"> | undefined,
+) {
+  if (!attemptId) return;
+  const attempt = await ctx.db.get(attemptId);
+  if (!attempt || attempt.recoverySettled) return;
+  await resolveOperationFailure(ctx, `extraction:${attemptId}`);
+  // Fence a late failure report even when no failure existed at settlement.
+  await ctx.db.patch(attemptId, { recoverySettled: true });
+  if (attempt.result && !attempt.extractionId)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.extractInternal.completeExtraction,
+      { attemptId },
+    );
+  if (attempt.displacedAttemptId)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.operationFailures.settleExtractionChain,
+      {
+        attemptId: attempt.displacedAttemptId,
+      },
+    );
+}
+
+export const settleExtractionChain = internalMutation({
+  args: { attemptId: v.id("extractionAttempts") },
+  returns: v.null(),
+  handler: async (ctx, { attemptId }) => {
+    await settleExtractionFailures(ctx, attemptId);
+    return null;
+  },
+});
+
 /** A newly retained result changes recovery from generation to bounded completion replay. */
 export async function reopenExtractionCompletionRecovery(
   ctx: MutationCtx,

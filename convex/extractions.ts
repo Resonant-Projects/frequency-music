@@ -191,13 +191,21 @@ export const normalizeLegacyHistory = internalMutation({
       )
       .take(1);
     for (const row of rows) {
-      const current =
-        (await newestCurrentExtraction(ctx.db, row.sourceId))?._id === row._id;
+      const survivor = await newestCurrentExtraction(ctx.db, row.sourceId);
+      const current = survivor?._id === row._id;
       if (!current) {
         // Keep this legacy row eligible until every obsolete Claim is retired.
         if (!(await retireClaimsBatch(ctx, row._id))) continue;
       }
       await ctx.db.patch(row._id, { historical: !current });
+      if (survivor)
+        await ctx.scheduler.runAfter(
+          0,
+          internal.graph.reconcileExtractionConcepts,
+          {
+            extractionId: survivor._id,
+          },
+        );
     }
     if (rows.length)
       await ctx.scheduler.runAfter(
