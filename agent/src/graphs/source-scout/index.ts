@@ -1,6 +1,7 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 import { SourceScoutAnnotation } from "../../state/sourceScoutState.js";
 import {
+  recoverCaptureNode,
   fetchTargetsNode,
   ingestSourcesNode,
   judgeResultsNode,
@@ -15,6 +16,8 @@ import {
 } from "./nodes.js";
 
 export const graph = new StateGraph(SourceScoutAnnotation)
+  .addNode("recover_capture", recoverCaptureNode)
+  .addEdge("recover_capture", END)
   .addNode("fetch_targets", fetchTargetsNode)
   .addNode("plan_queries", planQueriesNode)
   .addNode("search_loop", searchLoopNode)
@@ -24,6 +27,7 @@ export const graph = new StateGraph(SourceScoutAnnotation)
   .addNode("summarize", summarizeNode)
   .addNode("recapture_sources", recaptureSourcesNode)
   .addConditionalEdges(START, routeAtStart, {
+    recover_capture: "recover_capture",
     fetch_targets: "fetch_targets",
     recapture_sources: "recapture_sources",
   })

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { concatWithGaps } from "../audio/concat";
 import { LOUDNESS_TARGETS, normalize } from "../audio/loudness";
 import { downloadTo } from "../download";
-import { uploadMasterAndDelivery } from "./narrate";
+import { uploadMasterAndDelivery } from "../audio/artifacts";
 import type { JobContext } from "./types";
 
 export const EPISODE_LEAD_IN_SECS = 1;

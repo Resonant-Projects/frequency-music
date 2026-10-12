@@ -1,4 +1,5 @@
 import { convexTest } from "convex-test";
+import type { FunctionReturnType } from "convex/server";
 import {
   afterEach,
   beforeEach,
@@ -89,6 +90,214 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test.each([MODELS.sol, MODELS.sonnet])(
+    "selected operator model %s survives snapshot export and historical import",
+    async (model) => {
+      const { t, sourceId, inputHash } = await setup();
+      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+        sourceId,
+        inputHash,
+        model,
+        devBypassSecret: BYPASS,
+      });
+      expect(snapshot).not.toBeNull();
+      const exported = await t.query(api.sources.operatorExtractionSnapshots, {
+        model,
+        limit: 20,
+        cursor: null,
+        devBypassSecret: BYPASS,
+      });
+      expect(exported.page).toHaveLength(1);
+      expect(exported.page[0]).toMatchObject({
+        sourceId,
+        snapshotId: snapshot!.snapshotId,
+        inputHash,
+      });
+      await t
+        .withIdentity({ subject: "operator" })
+        .mutation(api.sources.updateText, {
+          id: sourceId,
+          rawText: article.repeat(3),
+        });
+      await expect(
+        store(t, sourceId, inputHash, {
+          model,
+          snapshotId: snapshot!.snapshotId,
+        }),
+      ).resolves.toMatchObject({ success: true, model, current: false });
+      const stored = await t.run((ctx) => ctx.db.query("extractions").first());
+      expect(stored).toMatchObject({
+        model,
+        historical: true,
+        snapshotId: snapshot!.snapshotId,
+        inputHash,
+      });
+      expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+        "text_ready",
+      );
+    },
+  );
+
+  test("snapshot imports reject worker provenance even without a generation lease", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const { attemptId } = await t.mutation(
+      internal.extractInternal.beginExtraction,
+      {
+        sourceId,
+        model: MODELS.opus,
+      },
+    );
+    await expect(
+      store(t, sourceId, inputHash, { snapshotId: attemptId }),
+    ).rejects.toThrow("Operator snapshot does not match result provenance");
+    const attempt = await t.run((ctx) => ctx.db.get(attemptId!));
+    expect(attempt?.origin).toBe("worker");
+    expect(attempt?.result).toBeUndefined();
+    expect(
+      await t.run((ctx) => ctx.db.query("extractions").first()),
+    ).toBeNull();
+  });
+  test("snapshot recovery pages past 200 abandoned reservations to the live owner", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+      sourceId,
+      inputHash,
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    await t.run(async (ctx) => {
+      const {
+        _id: _ignoredId,
+        _creationTime: _ignoredTime,
+        ...row
+      } = (await ctx.db.get(snapshot!.snapshotId))!;
+      for (let i = 0; i < 200; i++)
+        await ctx.db.insert("extractionAttempts", { ...row, updatedAt: 1 });
+    });
+    const first = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+      limit: 200,
+    });
+    expect(first.page).toEqual([]);
+    expect(first.isDone).toBe(false);
+    let page = first;
+    const recovered = [];
+    let pages = 1;
+    while (!page.isDone && pages < 30) {
+      page = await t.query(api.sources.operatorExtractionSnapshots, {
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+        limit: 200,
+        cursor: page.continueCursor,
+      });
+      recovered.push(...page.page.map((row) => row.snapshotId));
+      pages++;
+    }
+    expect(recovered).toEqual([snapshot!.snapshotId]);
+    expect(page.isDone).toBe(true);
+    expect(pages).toBe(26);
+  });
+  test("large transcript snapshots remain recoverable within transaction read limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const transcript = article
+      .repeat(Math.ceil(400_000 / article.length))
+      .slice(0, 400_000);
+    const inputHash = await extractionInputHash(transcript);
+    const expected = [];
+    for (let i = 0; i < 40; i++) {
+      const sourceId = await t.run((ctx) =>
+        ctx.db.insert("sources", {
+          type: "youtube",
+          title: `Long transcript ${i}`,
+          transcript,
+          dedupeKey: `large:${i}`,
+          status: "text_ready",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+        sourceId,
+        inputHash,
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+      });
+      expected.push(snapshot!.snapshotId);
+    }
+    const recovered = [];
+    let cursor: string | null = null;
+    let done = false;
+    let pages = 0;
+    while (!done && pages < 10) {
+      const page: FunctionReturnType<
+        typeof api.sources.operatorExtractionSnapshots
+      > = await t.query(api.sources.operatorExtractionSnapshots, {
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+        limit: 200,
+        cursor,
+      });
+      expect(page.page.length).toBeLessThanOrEqual(8);
+      recovered.push(...page.page.map((row) => row.snapshotId));
+      cursor = page.continueCursor;
+      done = page.isDone;
+      pages++;
+    }
+    expect(done).toBe(true);
+    expect(pages).toBe(5);
+    expect(new Set(recovered)).toEqual(new Set(expected));
+  });
+  test("an interrupted export can recover its original snapshot and import late output as history", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+      sourceId,
+      inputHash,
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    expect(snapshot).not.toBeNull();
+    const resumed = await t.query(api.sources.operatorExtractionSnapshots, {
+      model: MODELS.opus,
+      devBypassSecret: BYPASS,
+    });
+    expect(resumed.page).toHaveLength(1);
+    expect(resumed.page[0]).toMatchObject({
+      snapshotId: snapshot!.snapshotId,
+      prompt: snapshot!.prompt,
+      system: snapshot!.system,
+      inputHash,
+    });
+    await t.run((ctx) =>
+      ctx.db.patch(sourceId, {
+        rawText: "Different current content",
+        status: "archived",
+      }),
+    );
+    expect(
+      (
+        await t.query(api.sources.operatorExtractionSnapshots, {
+          model: MODELS.opus,
+          devBypassSecret: BYPASS,
+        })
+      ).page,
+    ).toEqual([]);
+    const stored = await t.action(api.extract.storeOperatorExtraction, {
+      sourceId,
+      inputHash,
+      snapshotId: snapshot!.snapshotId,
+      model: MODELS.opus,
+      extraction,
+      devBypassSecret: BYPASS,
+    });
+    expect(stored).toMatchObject({ success: true, current: false });
+    expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+      "archived",
+    );
+  });
+
   test("stores textbook foundations as reference evidence without asserting peer review", async () => {
     const { t, sourceId, inputHash } = await setup();
     await store(t, sourceId, inputHash, {
@@ -105,7 +314,7 @@ describe("operator extraction", () => {
     expect(stored[0]?.claims[0]?.evidenceLevel).toBe("reference");
   });
 
-  test.each([MODELS.default, MODELS.sonnet])(
+  test.each([MODELS.sol, MODELS.sonnet])(
     "records the selected catalog model %s on the stored Extraction",
     async (model) => {
       const { t, sourceId, inputHash } = await setup();
@@ -297,7 +506,8 @@ describe("operator extraction", () => {
     const t = convexTest(schema, modules);
     expect(await t.action(api.extract.listModels, {})).toMatchObject({
       opus: "anthropic/claude-opus-5.5",
-      default: MODELS.default,
+      default: "anthropic/claude-sonnet-5.5",
+      sol: "openai/gpt-6.1-sol",
     });
   });
 });
@@ -336,6 +546,70 @@ describe("concept linking", () => {
     expect(link?.args).toEqual([{ extractionId: stored?._id }]);
   });
 
+  test.each(["historical", "archived"] as const)(
+    "scheduled links and backfill cannot promote a late %s snapshot",
+    async (disposition) => {
+      const { t, sourceId, inputHash } = await setup();
+      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+        sourceId,
+        inputHash,
+        model: MODELS.opus,
+        devBypassSecret: BYPASS,
+      });
+      const reader = t.withIdentity({ subject: "operator" });
+      if (disposition === "historical") {
+        await reader.mutation(api.sources.updateText, {
+          id: sourceId,
+          rawText: article.repeat(3),
+        });
+      } else {
+        await reader.mutation(api.sources.updateStatus, {
+          id: sourceId,
+          status: "archived",
+        });
+      }
+      await expect(
+        store(t, sourceId, inputHash, { snapshotId: snapshot!.snapshotId }),
+      ).resolves.toMatchObject({ success: true, current: false });
+      const stored = (await t.run((ctx) =>
+        ctx.db.query("extractions").first(),
+      ))!;
+      expect(stored.historical).toBe(true);
+      expect(
+        (await jobs(t)).find((job) =>
+          /^graph(\.js)?:linkExtraction$/.test(job.name),
+        )?.args,
+      ).toEqual([{ extractionId: stored._id }]);
+      expect(
+        await t.mutation(internal.graph.linkExtraction, {
+          extractionId: stored._id,
+        }),
+      ).toEqual({ linked: 0, concepts: [] });
+      // The archive fence must hold independently of the history marker.
+      if (disposition === "archived")
+        await t.run((ctx) => ctx.db.patch(stored._id, { historical: false }));
+      expect(
+        await t.mutation(internal.graph.linkExtractionConceptsAtomic, {
+          extractionId: stored._id,
+        }),
+      ).toEqual({ linked: 0, concepts: [] });
+      expect(
+        await t.action(internal.graph.linkExtractionConcepts, {
+          extractionId: stored._id,
+        }),
+      ).toEqual({ linked: 0, concepts: [] });
+      expect(
+        await t.mutation(internal.graph.buildGraphFromExtractions, {}),
+      ).toEqual({ processed: 1, conceptsLinked: 0, isDone: true });
+      expect(await graph(t)).toEqual({ edges: [], mentions: {} });
+      expect(
+        (await jobs(t)).filter((job) =>
+          /^conceptClassifier(\.js)?:classifyConceptBatch$/.test(job.name),
+        ),
+      ).toEqual([]);
+    },
+  );
+
   test("linking again adds no edges, mentions, or classifier jobs", async () => {
     const { t, sourceId, inputHash } = await setup();
     await store(t, sourceId, inputHash, {
@@ -368,6 +642,64 @@ describe("concept linking", () => {
     });
     expect(mentions).toEqual({ tuning: 1 });
   });
+
+  test("scheduled linking resumes topics without duplicate counts or classification", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await store(t, sourceId, inputHash);
+    const [stored] = await t.query(api.extractions.getBySourceId, { sourceId });
+    const first = await t.mutation(internal.graph.linkExtraction, {
+      extractionId: stored!._id,
+    });
+    expect(first.linked).toBe(1);
+    const continuation = (await jobs(t)).at(-1)!;
+    expect(continuation.name).toMatch(/^graph(\.js)?:linkExtraction$/);
+    expect(continuation.args[0]).toMatchObject({
+      extractionId: stored!._id,
+      topicOffset: 1,
+    });
+    expect(
+      await t.mutation(internal.graph.linkExtraction, continuation.args[0]),
+    ).toMatchObject({ linked: 1 });
+    const before = await graph(t);
+    await t.mutation(internal.graph.linkExtraction, continuation.args[0]);
+    expect(await graph(t)).toEqual(before);
+  });
+
+  test.each(["scheduled", "backfill"] as const)(
+    "%s topic continuation restarts when a supported edit shifts remaining topics",
+    async (mode) => {
+      const { t, sourceId, inputHash } = await setup();
+      await store(t, sourceId, inputHash, {
+        extraction: { ...extraction, topics: ["a", "b"] },
+      });
+      const [stored] = await t.query(api.extractions.getBySourceId, {
+        sourceId,
+      });
+      if (mode === "scheduled")
+        await t.mutation(internal.graph.linkExtraction, {
+          extractionId: stored!._id,
+        });
+      else await t.mutation(internal.graph.buildGraphFromExtractions, {});
+      const continuation = (await jobs(t)).at(-1)!;
+      await t.mutation(api.extractions.editExtraction, {
+        id: stored!._id,
+        topics: ["b"],
+        devBypassSecret: BYPASS,
+      });
+      if (mode === "scheduled")
+        await t.mutation(internal.graph.linkExtraction, continuation.args[0]);
+      else
+        await t.mutation(
+          internal.graph.buildGraphFromExtractions,
+          continuation.args[0],
+        );
+      expect((await graph(t)).mentions).toEqual({ a: 1, b: 1 });
+      const classify = (await jobs(t)).filter((job) =>
+        /^conceptClassifier(\.js)?:classifyConceptBatch$/.test(job.name),
+      );
+      expect(classify).toHaveLength(2);
+    },
+  );
 
   test("only the operator service identity starts the backfill", async () => {
     const t = convexTest(schema, modules);
@@ -414,20 +746,26 @@ describe("concept linking", () => {
       extraction: { ...extraction, topics: ["tuning", "meantone"] },
     });
 
-    const first = await t.mutation(internal.graph.buildGraphFromExtractions, {
-      batchSize: 1,
-    });
-    expect(first).toMatchObject({ processed: 1, isDone: false });
-    const next = (await jobs(t)).find((job) =>
-      /^graph(\.js)?:buildGraphFromExtractions$/.test(job.name),
-    );
-    expect(next?.args[0]).toMatchObject({ batchSize: 1 });
-    const rest = await t.mutation(
-      internal.graph.buildGraphFromExtractions,
-      next!.args[0],
-    );
-    expect(rest).toEqual({ processed: 1, conceptsLinked: 2, isDone: true });
-
+    const drain = async (batchSize?: number) => {
+      let args: Record<string, unknown> = { batchSize };
+      let processed = 0;
+      let conceptsLinked = 0;
+      for (let tick = 0; tick < 10; tick++) {
+        const result = await t.mutation(
+          internal.graph.buildGraphFromExtractions,
+          args,
+        );
+        processed += result.processed;
+        conceptsLinked += result.conceptsLinked;
+        if (result.isDone) return { processed, conceptsLinked };
+        const next = (await jobs(t)).at(-1)!;
+        expect(next.name).toMatch(/^graph(\.js)?:buildGraphFromExtractions$/);
+        expect(next.args[0]).toMatchObject({ batchSize: 1 });
+        args = next.args[0];
+      }
+      throw new Error("Backfill did not drain");
+    };
+    expect(await drain(1)).toEqual({ processed: 2, conceptsLinked: 4 });
     const linked = await graph(t);
     expect(linked.edges).toHaveLength(4);
     expect(linked.mentions).toEqual({
@@ -435,19 +773,249 @@ describe("concept linking", () => {
       "pythagorean comma": 1,
       meantone: 1,
     });
-
-    // An out-of-range page size is clamped, never passed to paginate.
-    expect(
-      await t.mutation(internal.graph.buildGraphFromExtractions, {
-        batchSize: 0,
-      }),
-    ).toEqual({ processed: 1, conceptsLinked: 0, isDone: false });
-
-    // A full rerun over already-linked Extractions changes nothing.
-    expect(
-      await t.mutation(internal.graph.buildGraphFromExtractions, {}),
-    ).toEqual({ processed: 2, conceptsLinked: 0, isDone: true });
+    // Invalid old batch sizes cannot enlarge transactions; reruns remain no-ops.
+    expect(await drain(0)).toEqual({ processed: 2, conceptsLinked: 0 });
+    expect(await drain()).toEqual({ processed: 2, conceptsLinked: 0 });
     expect(await graph(t)).toEqual(linked);
+  });
+
+  test("unmarked legacy history never creates obsolete concept evidence", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    const ids = await t.run(async (ctx) => {
+      const rows = [];
+      for (const [createdAt, topic] of [
+        [1, "obsolete geometry"],
+        [2, "current tuning"],
+      ] as const)
+        rows.push(
+          await ctx.db.insert("extractions", {
+            ...extraction,
+            sourceId,
+            inputHash,
+            compositionParameters: [],
+            topics: [topic],
+            model: "legacy",
+            promptVersion: "old",
+            confidence: 0.8,
+            createdBy: "system",
+            createdAt,
+          }),
+        );
+      return rows;
+    });
+    expect(
+      (await t.query(api.extractions.getBySourceId, { sourceId })).map(
+        (row) => row._id,
+      ),
+    ).toEqual([ids[1]]);
+    await t.mutation(internal.graph.buildGraphFromExtractions, {
+      batchSize: 1,
+    });
+    const next = (await jobs(t)).find((job) =>
+      /^graph(\.js)?:buildGraphFromExtractions$/.test(job.name),
+    );
+    await t.mutation(internal.graph.buildGraphFromExtractions, next!.args[0]);
+    expect((await graph(t)).mentions).toEqual({ "current tuning": 1 });
+    expect(
+      await t.action(internal.graph.linkExtractionConcepts, {
+        extractionId: ids[0]!,
+      }),
+    ).toEqual({ linked: 0, concepts: [] });
+  });
+
+  test("replay of 2500 existing topic edges stays within index-range limits", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const topics = Array.from({ length: 2500 }, (_, index) => `topic ${index}`);
+    const extractionId = await t.run(async (ctx) => {
+      const sourceId = await ctx.db.insert("sources", {
+        type: "url",
+        rawText: article,
+        status: "extracted",
+        dedupeKey: "many-existing-topics",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+      return await ctx.db.insert("extractions", {
+        ...extraction,
+        sourceId,
+        inputHash: "many-existing-topics",
+        compositionParameters: [],
+        topics,
+        historical: false,
+        model: "legacy",
+        promptVersion: "old",
+        confidence: 0.8,
+        createdBy: "system",
+        createdAt: 1,
+      });
+    });
+    const sourceId = (await t.run((ctx) => ctx.db.get(extractionId)))!.sourceId;
+    for (let offset = 0; offset < topics.length; offset += 100)
+      await t.run(async (ctx) => {
+        for (const name of topics.slice(offset, offset + 100)) {
+          await ctx.db.insert("concepts", {
+            name,
+            displayName: name,
+            aliases: [],
+            domain: "science",
+            hypothesisCount: 0,
+            mentionCount: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          });
+          await ctx.db.insert("edges", {
+            fromType: "source",
+            fromId: sourceId,
+            toType: "concept",
+            toId: name,
+            relationship: "mentions",
+            autoGenerated: true,
+            createdAt: 1,
+            createdBy: "system",
+          });
+        }
+      });
+    expect(
+      await t.mutation(internal.graph.linkExtractionConceptsAtomic, {
+        extractionId,
+      }),
+    ).toEqual({ linked: 0, concepts: [] });
+    expect(await jobs(t)).toEqual([]);
+    expect((await graph(t)).edges).toHaveLength(topics.length);
+    expect(Object.values((await graph(t)).mentions)).toEqual(
+      topics.map(() => 1),
+    );
+  }, 60000);
+
+  test("backfill resumes unlinked topics before advancing to the next Extraction", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const topics = Array.from(
+      { length: 2500 },
+      (_, index) => `unlinked topic ${index}`,
+    );
+    for (const [index, rowTopics] of [topics, ["later topic"]].entries()) {
+      await t.run(async (ctx) => {
+        const sourceId = await ctx.db.insert("sources", {
+          type: "url",
+          rawText: article,
+          status: "extracted",
+          dedupeKey: `unlinked:${index}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: index,
+          updatedAt: index,
+        });
+        await ctx.db.insert("extractions", {
+          ...extraction,
+          sourceId,
+          topics: rowTopics,
+          historical: false,
+          inputHash: `unlinked:${index}`,
+          compositionParameters: [],
+          model: "legacy",
+          promptVersion: "old",
+          confidence: 0.8,
+          createdBy: "system",
+          createdAt: index,
+        });
+      });
+    }
+    for (let offset = 0; offset < topics.length; offset += 100)
+      await t.run(async (ctx) => {
+        for (const name of topics.slice(offset, offset + 100))
+          await ctx.db.insert("concepts", {
+            name,
+            displayName: name,
+            aliases: [],
+            domain: "science",
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1,
+            updatedAt: 1,
+          });
+      });
+    let args = {};
+    let linked = 0;
+    let processed = 0;
+    let done = false;
+    for (let tick = 0; tick < 2502; tick++) {
+      const result = await t.mutation(
+        internal.graph.buildGraphFromExtractions,
+        args,
+      );
+      linked += result.conceptsLinked;
+      processed += result.processed;
+      if (result.isDone) {
+        done = true;
+        break;
+      }
+      const next = (await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").order("desc").first(),
+      ))!;
+      expect(next.name).toMatch(/^graph(\.js)?:buildGraphFromExtractions$/);
+      args = next.args[0];
+    }
+    expect(done).toBe(true);
+    expect(processed).toBe(2);
+    expect(linked).toBe(2501);
+    const linkedGraph = await graph(t);
+    expect(linkedGraph.edges).toHaveLength(2501);
+    expect(Object.values(linkedGraph.mentions)).toEqual(
+      Array.from({ length: 2501 }, () => 1),
+    );
+  }, 60000);
+
+  test("large backfill rows drain through separate transactions", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    for (let index = 0; index < 10; index++)
+      await t.run(async (ctx) => {
+        const sourceId = await ctx.db.insert("sources", {
+          type: "url",
+          rawText: "x".repeat(900_000),
+          status: "extracted",
+          dedupeKey: `large-backfill:${index}`,
+          visibility: "private",
+          createdBy: "system",
+          createdAt: index,
+          updatedAt: index,
+        });
+        await ctx.db.insert("extractions", {
+          ...extraction,
+          sourceId,
+          summary: "x".repeat(900_000),
+          inputHash: `large-backfill:${index}`,
+          compositionParameters: [],
+          topics: [`backfill topic ${index}`],
+          model: "legacy",
+          promptVersion: "old",
+          confidence: 0.8,
+          createdBy: "system",
+          createdAt: index,
+        });
+      });
+    let args: { cursor?: string | null; batchSize?: number } = {
+      batchSize: 50,
+    };
+    let processed = 0;
+    let linked = 0;
+    for (let page = 0; page < 10; page++) {
+      const result = await t.mutation(
+        internal.graph.buildGraphFromExtractions,
+        args,
+      );
+      expect(result.processed).toBe(1);
+      processed += result.processed;
+      linked += result.conceptsLinked;
+      if (result.isDone) break;
+      const next = (await jobs(t)).at(-1)!;
+      expect(next.name).toMatch(/^graph(\.js)?:buildGraphFromExtractions$/);
+      args = next.args[0];
+    }
+    expect(processed).toBe(10);
+    expect(linked).toBe(10);
+    expect((await graph(t)).edges).toHaveLength(10);
   });
 });
 

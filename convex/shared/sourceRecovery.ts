@@ -9,6 +9,11 @@ export const RECOVERY_KINDS = [
 ] as const;
 export type RecoveryKind = (typeof RECOVERY_KINDS)[number];
 
+/** Source timestamps also fence capture snapshots; no writer may reuse a version. */
+export function advanceSourceVersion(previous: number, now = Date.now()) {
+  return Math.max(now, previous + 1);
+}
+
 export function publicSourceUrl(value?: string): string | undefined {
   if (!value) return undefined;
   try {

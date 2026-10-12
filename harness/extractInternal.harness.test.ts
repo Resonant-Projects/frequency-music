@@ -1,10 +1,23 @@
-import { describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { modules } from "./modules";
 
 describe("extractInternal.storeExtraction", () => {
+  // Inspect queued work without starting embeddings/classification after teardown.
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
   test("inserts an extraction with normalized composition parameters", async () => {
     const t = convexTest(schema, modules);
 

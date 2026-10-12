@@ -17,6 +17,14 @@ export function anthropicModelId(model: string): string {
     .replace(/^(claude-(?:sonnet|haiku|opus)-\d+)\.(\d+)/, "$1-$2");
 }
 
+// Only the current catalog uses direct adaptive-thinking inference. Persisted
+// attempts with older registered IDs retain their original OpenRouter route.
+export function isDirectAnthropicModel(model: string): boolean {
+  return Object.values(ANTHROPIC_MODELS).some(
+    (supported) => anthropicModelId(supported) === anthropicModelId(model),
+  );
+}
+
 // Opus is reserved for hypothesis/recipe design and research review drafts.
 // Every other Anthropic call still explicitly requests at least medium effort.
 export function anthropicReasoningEffort(model: string): ReasoningEffort {

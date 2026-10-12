@@ -13,12 +13,17 @@ export const generateAudioUploadUrl = internalMutation({
   returns: v.object({
     artifactId: v.id("audioArtifacts"),
     uploadUrl: v.string(),
+    storageAttached: v.optional(v.boolean()),
   }),
   // Explicit return type breaks the api.d.ts <-> internal.* inference cycle.
   handler: async (
     ctx,
     args,
-  ): Promise<{ artifactId: Id<"audioArtifacts">; uploadUrl: string }> => {
+  ): Promise<{
+    artifactId: Id<"audioArtifacts">;
+    uploadUrl: string;
+    storageAttached?: boolean;
+  }> => {
     const job = requireLease(
       await ctx.db.get(args.jobId),
       args.leaseToken,
@@ -56,10 +61,23 @@ export const generateAudioUploadUrl = internalMutation({
         message: `A ${job.kind} job cannot mint an artifact with access ${fields.access}`,
       });
     }
-    const artifactId = await ctx.runMutation(
-      internal.audioArtifacts.createPending,
-      { fields },
-    );
+    const previous = await ctx.db
+      .query("audioArtifacts")
+      .withIndex("by_job_content_role_status", (q) =>
+        q
+          .eq("refs.mediaJobId", args.jobId)
+          .eq("contentHash", fields.contentHash)
+          .eq("role", fields.role)
+          .eq("status", "pending"),
+      )
+      .first();
+    if (previous?.storageId)
+      return { artifactId: previous._id, uploadUrl: "", storageAttached: true };
+    const artifactId =
+      previous?._id ??
+      (await ctx.runMutation(internal.audioArtifacts.createPending, {
+        fields,
+      }));
     const uploadUrl = await ctx.storage.generateUploadUrl();
     return { artifactId, uploadUrl };
   },

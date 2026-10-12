@@ -8,6 +8,7 @@ import {
   sourceStatusValidator,
   visibilityValidator,
 } from "./schema";
+import { advanceSourceVersion } from "./shared/sourceRecovery";
 import { feedReturnValidator } from "./validators";
 
 // Intentionally public — read-only data, personal research tool.
@@ -117,7 +118,7 @@ export const setSourceStatus = mutation({
       status: args.status,
       blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
 
     return null;
@@ -164,6 +165,12 @@ export const promoteVisibility = mutation({
     switch (input.entityType) {
       case "sources":
         {
+          const source = await ctx.db.get("sources", input.id);
+          if (!source)
+            throw new ConvexError({
+              code: "NOT_FOUND",
+              message: "Source not found",
+            });
           const statusPatch =
             input.visibility === "followers"
               ? { status: "promoted_followers" as const }
@@ -174,7 +181,7 @@ export const promoteVisibility = mutation({
           await ctx.db.patch("sources", input.id, {
             visibility: input.visibility,
             ...statusPatch,
-            updatedAt: now,
+            updatedAt: advanceSourceVersion(source.updatedAt, now),
           });
         }
         break;

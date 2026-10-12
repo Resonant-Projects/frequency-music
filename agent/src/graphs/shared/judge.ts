@@ -9,6 +9,7 @@ import {
 } from "./audit.js";
 
 type JudgeConfig = {
+  signal?: AbortSignal;
   configurable: { agentRunId?: string; traceUrl?: string };
 };
 
@@ -19,11 +20,17 @@ export type StructuredJudge<Verdict> = {
 export function createStructuredJudge<Schema extends z.ZodType>(
   schema: Schema,
   model: string = ANTHROPIC_MODELS.haiku,
+  options: {
+    maxTokens?: number;
+    maxRetries?: number;
+    requireDirectAnthropic?: boolean;
+  } = {},
 ): StructuredJudge<z.infer<Schema>> {
   // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
   // forced tool_choice and refuses to disable reasoning, which is what the
   // default tool-calling method sends.
   return getResearchModel({
+    ...options,
     requiresToolBinding: true,
     model,
     temperature: 0,

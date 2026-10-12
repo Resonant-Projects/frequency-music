@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import { currentExtractions } from "./extractions";
 import type { Id } from "./_generated/dataModel";
 import type { DatabaseReader } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
@@ -20,13 +21,7 @@ export async function loadExtractionsForHypothesisSourceIds(
   sourceIds: Id<"sources">[],
 ) {
   const extractionLists = await Promise.all(
-    sourceIds.map((sourceId) =>
-      db
-        .query("extractions")
-        .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", sourceId))
-        .order("desc")
-        .collect(),
-    ),
+    sourceIds.map((sourceId) => currentExtractions(db, sourceId).take(1)),
   );
 
   return extractionLists.flat().toSorted((a, b) => b.createdAt - a.createdAt);

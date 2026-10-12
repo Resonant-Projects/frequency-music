@@ -27,6 +27,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "braces@3.0.3": "patches/braces@3.0.3.patch",
+  },
   "overrides": {
     "esbuild": "0.28.2",
     "hono": "4.13.13",

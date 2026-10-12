@@ -110,6 +110,7 @@ if (HEARTBEAT_INTERVAL_MS >= STALE_RUN_MS) {
 }
 
 export const KNOWN_GRAPH_NAMES = [
+  "failure-investigation",
   "research-pipeline",
   "weekly-brief",
   "correspondence-miner",
@@ -139,6 +140,7 @@ export function normalizeTraceUrl(value: unknown): string | undefined {
 // Which side owns the terminal Convex status write for each graph.
 export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
   {
+    "failure-investigation": "runner",
     "research-pipeline": "graph",
     "weekly-brief": "runner",
     "correspondence-miner": "graph",

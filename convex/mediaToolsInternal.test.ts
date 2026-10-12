@@ -45,6 +45,109 @@ async function leasedAndOtherJob(t: ReturnType<typeof convexTest>) {
 }
 
 describe("mediaToolsInternal", () => {
+  test.each([false, true])(
+    "failed upload artifacts with attached storage=%s do not block a fresh publication",
+    async (attached) => {
+      const t = convexTest({ schema, modules, transactionLimits: true });
+      const { jobId, leaseToken } = await leasedAndOtherJob(t);
+      const args = { jobId, leaseToken, artifact };
+      const original = await t.mutation(
+        internal.mediaToolsInternal.generateAudioUploadUrl,
+        args,
+      );
+      if (attached) {
+        const storageId = await t.run((ctx) =>
+          ctx.storage.store(new Blob(["old audio"])),
+        );
+        await t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+          jobId,
+          leaseToken,
+          artifactId: original.artifactId,
+          storageId,
+        });
+      }
+      await t.mutation(internal.audioArtifacts.markFailed, {
+        artifactId: original.artifactId,
+        error: "Upload rejected",
+      });
+      const row = await t.run((ctx) => ctx.db.get(original.artifactId));
+      if (!row) throw new Error("Expected failed artifact");
+      const { _id, _creationTime, ...fields } = row;
+      for (let i = 0; i < 20; i++)
+        await t.run((ctx) =>
+          ctx.db.insert("audioArtifacts", {
+            ...fields,
+            scriptMd: "x".repeat(900_000),
+          }),
+        );
+      const next = await t.mutation(
+        internal.mediaToolsInternal.generateAudioUploadUrl,
+        args,
+      );
+      expect(next.artifactId).not.toBe(original.artifactId);
+      expect(next.storageAttached).not.toBe(true);
+      expect(next.uploadUrl.length).toBeGreaterThan(0);
+      const storageId = await t.run((ctx) =>
+        ctx.storage.store(new Blob(["retained audio"])),
+      );
+      await t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+        jobId,
+        leaseToken,
+        artifactId: next.artifactId,
+        storageId,
+      });
+      await t.mutation(internal.audioArtifacts.markReady, {
+        artifactId: next.artifactId,
+        durationSecs: 1,
+        loudnessLufs: -16,
+        truePeakDbtp: -1,
+        mimeType: "audio/mpeg",
+      });
+      expect((await t.run((ctx) => ctx.db.get(next.artifactId)))?.status).toBe(
+        "ready",
+      );
+      expect(
+        (await t.run((ctx) => ctx.db.get(original.artifactId)))?.status,
+      ).toBe("failed");
+    },
+  );
+  test("admission reuses an attached artifact after an ambiguous upload response", async () => {
+    const t = convexTest(schema, modules);
+    const { jobId, leaseToken } = await leasedAndOtherJob(t);
+    const args = { jobId, leaseToken, artifact };
+    const first = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      args,
+    );
+    const pending = await t.mutation(
+      internal.mediaToolsInternal.generateAudioUploadUrl,
+      args,
+    );
+    expect(pending.artifactId).toBe(first.artifactId);
+    const storageId = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["audio"])),
+    );
+    await t.mutation(internal.mediaToolsInternal.attachAudioStorage, {
+      jobId,
+      leaseToken,
+      artifactId: first.artifactId,
+      storageId,
+    });
+    expect(
+      await t.mutation(
+        internal.mediaToolsInternal.generateAudioUploadUrl,
+        args,
+      ),
+    ).toEqual({
+      artifactId: first.artifactId,
+      uploadUrl: "",
+      storageAttached: true,
+    });
+    expect(
+      await t.run((ctx) => ctx.db.query("audioArtifacts").collect()),
+    ).toHaveLength(1);
+  });
+
   test("a probe lease cannot mint a feed episode or a non-probe kind", async () => {
     const t = convexTest(schema, modules);
     const { jobId, leaseToken } = await leasedAndOtherJob(t);

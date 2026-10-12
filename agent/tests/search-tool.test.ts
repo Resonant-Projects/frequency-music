@@ -763,6 +763,7 @@ describe("Firecrawl web_search", () => {
       sources: ["web"],
     });
     expect(callTool).toHaveBeenCalledWith("appendAgentRunEvent", {
+      deliveryId: expect.any(String),
       runId: "run-scout",
       kind: "tool_call",
       message: "Searched federated providers for source-scout candidates",

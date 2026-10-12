@@ -7,6 +7,7 @@ import { LEASE_MS } from "../../convex/shared/mediaJobs";
 import type { callTool } from "./convex";
 import type { JobHandler, ToolClient } from "./jobs/types";
 import { log, redactError } from "./log";
+import { retainedKey, readCheckpoint, writeCheckpoint } from "./retained";
 import { liveTools } from "./upload";
 
 export type RunnerConfig = {
@@ -39,19 +40,44 @@ export async function runOnce(
   const job = await tool<ClaimedMediaJob | null>("claimNextMediaJob", {
     workerId: config.workerId,
     kinds: config.kinds,
+    rendererVersion: config.rendererVersion,
   });
   if (!job) return "idle";
   log(`claimed ${job.kind} job ${job.jobId} (attempt ${job.attempts + 1})`);
   // Scratch-dir creation sits inside the failure path: if it throws, the job
   // is failed promptly instead of waiting out its lease.
   let workDir: string | undefined;
+  const abort = new AbortController();
+  let leaseExpiresAt = job.leaseExpiresAt;
+  let renewalFailures = 0;
+  let renewalInFlight = false;
   const renew = setInterval(() => {
-    tool("renewMediaJobLease", {
+    if (Date.now() >= leaseExpiresAt) {
+      abort.abort(new Error("Media lease expired"));
+      return;
+    }
+    if (renewalInFlight) return;
+    renewalInFlight = true;
+    tool<{ leaseExpiresAt: number }>("renewMediaJobLease", {
       jobId: job.jobId,
       leaseToken: job.leaseToken,
-    }).catch((error) =>
-      log(`lease renewal failed for ${job.jobId}: ${redactError(error)}`),
-    );
+    })
+      .then((result) => {
+        leaseExpiresAt = result.leaseExpiresAt;
+        renewalFailures = 0;
+      })
+      .catch((error) => {
+        renewalFailures++;
+        if (
+          renewalFailures >= 2 ||
+          Date.now() + RENEW_EVERY_MS >= leaseExpiresAt
+        )
+          abort.abort(new Error("Media lease renewal failed"));
+        log(`lease renewal failed for ${job.jobId}: ${redactError(error)}`);
+      })
+      .finally(() => {
+        renewalInFlight = false;
+      });
   }, RENEW_EVERY_MS);
   try {
     const handler = handlers[job.kind];
@@ -63,10 +89,40 @@ export async function runOnce(
         `renderer version mismatch: job requested ${job.input.rendererVersion}, worker is ${config.rendererVersion}`,
       );
     }
+    const retainedDir = join(
+      config.workDir,
+      "retained",
+      retainedKey({
+        jobId: job.jobId,
+        rendererVersion: job.input.rendererVersion,
+      }),
+    );
+    if (
+      job.attempts > 0 &&
+      job.freshStartAllowed !== true &&
+      !(await readCheckpoint(retainedDir, "started"))
+    ) {
+      throw new Error(
+        "Retained job checkpoint missing; automatic recovery cannot safely repeat paid work",
+      );
+    }
+    await writeCheckpoint(
+      retainedDir,
+      "started",
+      { jobId: job.jobId },
+      config.workDir,
+    );
+    const retainedResult = await readCheckpoint<
+      Awaited<ReturnType<JobHandler>>
+    >(retainedDir, "result");
+    if (retainedResult) {
+      await acknowledgeCompletion(tool, job, retainedResult);
+      await removeCompletedCheckpoints(retainedDir);
+      return "done";
+    }
     workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
     const deadlineMs = config.deadlineMs ?? JOB_DEADLINE_MS;
     const deadlineGraceMs = config.deadlineGraceMs ?? DEADLINE_GRACE_MS;
-    const abort = new AbortController();
     let deadline: NodeJS.Timeout | undefined;
     const expired = new Promise<never>((_, reject) => {
       deadline = setTimeout(() => {
@@ -87,6 +143,8 @@ export async function runOnce(
       running = handler({
         job,
         workDir,
+        retainedDir,
+        retainedRoot: config.workDir,
         tools: tools ?? liveTools(abort.signal),
         rendererVersion: config.rendererVersion,
         signal: abort.signal,
@@ -109,11 +167,9 @@ export async function runOnce(
     } finally {
       clearTimeout(deadline);
     }
-    await tool("completeMediaJob", {
-      jobId: job.jobId,
-      leaseToken: job.leaseToken,
-      result,
-    });
+    await writeCheckpoint(retainedDir, "result", result, config.workDir);
+    await acknowledgeCompletion(tool, job, result);
+    await removeCompletedCheckpoints(retainedDir);
     log(`completed ${job.kind} job ${job.jobId}`);
     return "done";
   } catch (error) {
@@ -134,5 +190,32 @@ export async function runOnce(
   } finally {
     clearInterval(renew);
     if (workDir) await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+async function acknowledgeCompletion(
+  tool: Tool,
+  job: ClaimedMediaJob,
+  result: Awaited<ReturnType<JobHandler>>,
+) {
+  const args = { jobId: job.jobId, leaseToken: job.leaseToken, result };
+  try {
+    await tool("completeMediaJob", args);
+  } catch (error) {
+    // Completion is idempotent for this lease, including after it expires.
+    // Retry only the acknowledgment, never synthesis or upload.
+    try {
+      await tool("completeMediaJob", args);
+    } catch {
+      throw error;
+    }
+  }
+}
+
+async function removeCompletedCheckpoints(dir: string) {
+  try {
+    await rm(dir, { recursive: true, force: true });
+  } catch (error) {
+    log(`could not remove completed media checkpoints: ${redactError(error)}`);
   }
 }

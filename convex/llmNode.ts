@@ -20,7 +20,7 @@ import { tracedGenerate } from "./tracing";
 import {
   anthropicModelId,
   anthropicReasoningEffort,
-  isAnthropicModel,
+  isDirectAnthropicModel,
 } from "./shared/llmPolicy";
 
 export type GenerateOpts = {
@@ -37,7 +37,7 @@ export type GenerateOpts = {
 // Anthropic goes directly to its API so calls consume Anthropic credits.
 // Explicit Groq and other provider overrides retain their existing routes.
 function getModel(modelId: string): LanguageModel {
-  if (isAnthropicModel(modelId)) {
+  if (isDirectAnthropicModel(modelId)) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
     return createAnthropic({ apiKey })(anthropicModelId(modelId));
@@ -62,7 +62,7 @@ function getModel(modelId: string): LanguageModel {
 }
 
 function providerOptions(modelId: string) {
-  return isAnthropicModel(modelId)
+  return isDirectAnthropicModel(modelId)
     ? {
         anthropic: {
           thinking: { type: "adaptive" as const },

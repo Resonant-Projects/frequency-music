@@ -1,3 +1,4 @@
+import { uploadMasterAndDelivery } from "../audio/artifacts";
 // shootout: the same passage through every configured candidate voice, each
 // take a private blind member, plus one feed episode that plays them back in
 // a seeded order behind a non-candidate announcer voice. Unconfigured voices
@@ -24,8 +25,8 @@ import { isConfigured, providerFor } from "../tts";
 import {
   PARAGRAPH_GAP_MS,
   renderParagraph,
+  synthesizeRetained,
   type Synth,
-  uploadMasterAndDelivery,
 } from "./narrate";
 import type { ArtifactResult, JobContext } from "./types";
 
@@ -145,9 +146,10 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
   const synthFor = (voice: VoiceEntry): Synth =>
     synthOverride ?? providerFor(voice);
 
-  // A take that fails (provider error, policy breach) fails the job naming
-  // its voice, so the operator knows which one to look at.
+  // Finish independent takes before reporting failure. Retained chunks let
+  // a retry complete the missing voices without repeating successful synthesis.
   const takeFiles = new Map<string, string>();
+  const failures: Error[] = [];
   for (const voice of configured) {
     try {
       takeFiles.set(
@@ -162,9 +164,17 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`take ${voice.id}: ${message}`, { cause: error });
+      failures.push(
+        new Error(`take ${voice.id}: ${message}`, { cause: error }),
+      );
+      if (ctx.signal.aborted) throw error;
     }
   }
+
+  if (failures.length)
+    throw new Error(failures.map((error) => error.message).join("; "), {
+      cause: failures[0],
+    });
 
   const order = shuffleWithSeed(
     configured.map((voice) => voice.id),
@@ -182,7 +192,7 @@ export async function shootoutHandler(ctx: JobContext, synthOverride?: Synth) {
   // its final loudness becomes unpredictable.
   const speak = async (text: string, tag: string): Promise<string> => {
     const raw = join(ctx.workDir, `${tag}-raw.wav`);
-    await introSynth.synthesize(text, introVoice, raw, ctx.signal);
+    await synthesizeRetained(ctx, introSynth, introVoice, text, raw);
     const out = join(ctx.workDir, `${tag}.wav`);
     await normalize(
       raw,

@@ -63,13 +63,20 @@ with a typed result. It never writes research data directly.
 Deploy Convex first, then the image, promptly. `RENDERER_VERSION`
 (`src/config.ts`) must equal `RENDERER_VERSION_FOR_JOBS`
 (`convex/shared/mediaJobs.ts`; a test pins them). Jobs are stamped with the
-Convex value at enqueue time and the runner refuses a job whose version is
-not its own (`renderer version mismatch`, `src/runner.ts`), so an old worker
-never renders a 0.2.0 job wrong. A refusal is a failed attempt, though: the
-job is requeued and, after `MAX_ATTEMPTS` (3) refusals, parked for an
-operator re-enqueue. Stop the old container (or have the new image up)
-before enqueueing new jobs, and expect the new worker to refuse any leftover
-jobs stamped with the previous version the same way.
+Convex value at enqueue time. Renderer-aware claims select compatible jobs
+before loading their inputs, and the runner still refuses a mismatched job
+before synthesis starts. Confirmed renderer-only mismatches preserve the
+ordinary attempt budget so a matching worker can recover during a rollout.
+
+The media sweep parks queued standard-renderer snapshots that differ from
+`RENDERER_VERSION_FOR_JOBS` after a ten-minute grace period. It scans one
+job per transaction and records an Operational Failure without changing the
+snapshot or discarding retained audio. Claimed jobs and `essay-*` operator
+jobs stay with their existing owners. Parked narration continues to block
+replacement admission until an operator inspects the original job and
+retained output; the sweep never changes renderer versions or repeats paid
+work automatically. Deploy the matching image promptly so compatible queued
+jobs can drain during the grace period.
 
 ## Container image
 

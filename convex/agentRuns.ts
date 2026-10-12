@@ -198,10 +198,12 @@ async function appendRunEvent(
     kind: AgentRunEventKind;
     message: string;
     payload?: unknown;
+    deliveryId?: string;
   },
   now = Date.now(),
 ) {
   return await ctx.db.insert("agentRunEvents", {
+    ...(args.deliveryId ? { deliveryId: args.deliveryId } : {}),
     runId: args.runId,
     kind: args.kind,
     message: args.message,
@@ -336,7 +338,7 @@ export const claimNextPending = internalMutation({
     if (args.graphName && !isKnownGraphName(args.graphName)) {
       throw new Error(`Unknown graphName: ${args.graphName}`);
     }
-    const candidate = args.graphName
+    let candidate = args.graphName
       ? await ctx.db
           .query("agentRuns")
           .withIndex("by_status_graphName_updatedAt", (q) =>
@@ -356,6 +358,25 @@ export const claimNextPending = internalMutation({
           )
           .order("asc")
           .first();
+    if (
+      !args.graphName &&
+      candidate?.graphName === "failure-investigation" &&
+      now - candidate.createdAt < 5 * 60_000
+    ) {
+      const foreground = await ctx.db
+        .query("agentRuns")
+        .withIndex("by_status_updatedAt", (q) => q.eq("status", "queued"))
+        .filter((q) =>
+          q.or(
+            ...KNOWN_GRAPH_NAMES.filter(
+              (n) => n !== "failure-investigation",
+            ).map((n) => q.eq(q.field("graphName"), n)),
+          ),
+        )
+        .order("asc")
+        .first();
+      if (foreground) candidate = foreground;
+    }
     if (!candidate || candidate.status !== "queued") return null;
     if (!isKnownGraphName(candidate.graphName)) {
       throw new Error(`Unknown graphName: ${candidate.graphName}`);
@@ -485,14 +506,32 @@ export const createRunning = internalMutation({
 export const appendEvent = internalMutation({
   args: {
     runId: v.id("agentRuns"),
+    deliveryId: v.optional(v.string()),
     kind: agentRunEventKindValidator,
     message: v.string(),
     payload: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    if (args.deliveryId) {
+      const previous = await ctx.db
+        .query("agentRunEvents")
+        .withIndex("by_delivery", (q) => q.eq("deliveryId", args.deliveryId))
+        .unique();
+      if (previous) {
+        if (previous.runId !== args.runId)
+          throw new Error("Audit delivery belongs to another run");
+        return {
+          eventId: previous._id,
+          runId: previous.runId,
+          createdAt: previous.createdAt,
+        };
+      }
+    }
     const now = Date.now();
     const eventId = await appendRunEvent(ctx, args, now);
-    await ctx.db.patch(args.runId, { updatedAt: now });
+    const run = await ctx.db.get(args.runId);
+    if (run?.status === "running")
+      await ctx.db.patch(args.runId, { updatedAt: now });
     return { eventId, runId: args.runId, createdAt: now };
   },
 });

@@ -30,7 +30,8 @@ export function isCodexEnabled(): boolean {
 export function getConfiguredModelProvider(
   options: ResearchModelOptions = {},
 ): ModelProvider {
-  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
+  if (options.requireDirectAnthropic || process.env.ANTHROPIC_API_KEY)
+    return "anthropic";
   if (isCodexEnabled() && !options.requiresToolBinding) {
     return "codex-sdk";
   }
@@ -40,7 +41,7 @@ export function getConfiguredModelProvider(
 export function getResearchModel(
   options: ResearchModelOptions = {},
 ): BaseChatModel {
-  if (process.env.ANTHROPIC_API_KEY)
+  if (options.requireDirectAnthropic || process.env.ANTHROPIC_API_KEY)
     return createOpenRouterAnthropicModel(options);
   // Tool-binding calls always resolve directly to OpenRouter/Anthropic.
   if (options.requiresToolBinding) {

@@ -10,12 +10,14 @@ describe("compareModelCatalogs", () => {
         quality: "openai/gpt-5.6-terra",
         missingGroq: "groq/moonshotai/retired-model",
         sonnet: "anthropic/claude-sonnet-5.5",
+        legacyHaiku: "anthropic/claude-haiku-4.5",
         missingAnthropic: "anthropic/retired-model",
         missingOpenRouter: "google/retired-model",
       },
       {
         data: [
           { id: "openai/gpt-5.6-terra" },
+          { id: "anthropic/claude-haiku-4.5" },
           { id: "anthropic/claude-sonnet-4-6" },
         ],
       },
@@ -57,9 +59,15 @@ describe("compareModelCatalogs", () => {
         status: "OK",
       },
       {
+        name: "legacyHaiku",
+        modelId: "anthropic/claude-haiku-4.5",
+        provider: "OpenRouter",
+        status: "OK",
+      },
+      {
         name: "missingAnthropic",
         modelId: "anthropic/retired-model",
-        provider: "Anthropic",
+        provider: "OpenRouter",
         status: "MISSING",
       },
       {

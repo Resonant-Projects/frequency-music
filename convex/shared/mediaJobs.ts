@@ -219,4 +219,5 @@ export type ClaimedMediaJob = {
   leaseToken: string;
   leaseExpiresAt: number;
   attempts: number;
+  freshStartAllowed?: boolean;
 };

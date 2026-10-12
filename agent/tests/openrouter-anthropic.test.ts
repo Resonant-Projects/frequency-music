@@ -172,6 +172,20 @@ describe("direct Anthropic credit routing", () => {
     },
   );
 
+  test("investigation limits survive direct Anthropic construction", () => {
+    const chat = createOpenRouterAnthropicModel({
+      model: "anthropic/claude-haiku-5.5",
+      maxTokens: 4096,
+      maxRetries: 0,
+    });
+    expect(chat.invocationParams({})).toMatchObject({
+      max_tokens: 4096,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "medium" },
+    });
+    expect(chat.caller.maxRetries).toBe(0);
+  });
+
   test("native structured output sends medium effort to the direct API", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () =>
       Response.json({
@@ -206,5 +220,41 @@ describe("direct Anthropic credit routing", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("required direct investigator routing", () => {
+  test.each(["true", "false"])(
+    "does not use a legacy provider when Codex enabled=%s",
+    (enabled) => {
+      vi.stubEnv("ANTHROPIC_API_KEY", undefined);
+      vi.stubEnv("OPENROUTER_API_KEY", "test-only-legacy");
+      vi.stubEnv("CODEX_ENABLED", enabled);
+      expect(() =>
+        getResearchModel({
+          requireDirectAnthropic: true,
+          requiresToolBinding: true,
+        }),
+      ).toThrow("ANTHROPIC_API_KEY not configured");
+    },
+  );
+  test("keeps the direct Haiku endpoint, reasoning, and bounded output", () => {
+    vi.stubEnv("OPENROUTER_API_KEY", "test-only-legacy");
+    vi.stubEnv("ANTHROPIC_API_URL", "https://openrouter.ai/api");
+    const model = getResearchModel({
+      requireDirectAnthropic: true,
+      requiresToolBinding: true,
+      model: "anthropic/claude-haiku-5.5",
+      maxTokens: 4096,
+      maxRetries: 0,
+    }) as ReturnType<typeof createOpenRouterAnthropicModel>;
+    expect(model.apiUrl).toBe("https://api.anthropic.com");
+    expect(model.invocationParams({})).toMatchObject({
+      model: "claude-haiku-5-5",
+      max_tokens: 4096,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "medium" },
+    });
+    expect(model.caller.maxRetries).toBe(0);
   });
 });

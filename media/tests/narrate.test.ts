@@ -12,6 +12,7 @@ import {
   test,
   vi,
 } from "vite-plus/test";
+import { runFfmpeg } from "../src/audio/ffmpeg";
 import { probeStreams } from "../src/audio/encode";
 import type { Measurement } from "../src/audio/loudness";
 import { synthTone } from "../src/audio/synth";
@@ -19,7 +20,11 @@ import {
   assembleEpisodeHandler,
   EPISODE_LEAD_IN_SECS,
 } from "../src/jobs/assembleEpisode";
-import { narrateHandler } from "../src/jobs/narrate";
+import { narrateHandler, synthesizeRetained } from "../src/jobs/narrate";
+import { voiceById } from "../../convex/shared/voices";
+import { SynthesisRejectedError, fetchAudioWithRetry } from "../src/tts/types";
+import { providerFor } from "../src/tts";
+import { BREEZE_READY_TIMEOUT_MS } from "../src/tts/breeze";
 import type { NewArtifact, ToolClient } from "../src/jobs/types";
 import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../src/upload";
 
@@ -147,6 +152,219 @@ const toneSynth = vi.fn(
 );
 
 describe("narrate job", () => {
+  test.each([429, 409, 503])(
+    "cancellation during %i rejection backoff preserves a safe retained retry",
+    async (status) => {
+      vi.useFakeTimers();
+      let waiting = false;
+      let ready = false;
+      const fetchMock = vi.fn(async () =>
+        ready
+          ? new Response(new Uint8Array(2), { status: 200 })
+          : new Response("rejected", { status }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      try {
+        const controller = new AbortController();
+        const ctx = {
+          job: narrateJob,
+          workDir: workDir("rejection-"),
+          retainedDir: workDir("rejection-retained-"),
+          tools: fakeTools().tools,
+          rendererVersion: "0.2.0",
+          signal: controller.signal,
+        };
+        const voice = voiceById(narrateJob.input.voiceId);
+        const synth = {
+          synthesize: async (
+            _text: string,
+            _voice: unknown,
+            output: string,
+            signal?: AbortSignal,
+          ) => {
+            const bytes = await fetchAudioWithRetry(
+              "https://tts.test/speech",
+              { method: "POST", signal },
+              {
+                retryableRejections: [status],
+                backoffMs: () => {
+                  waiting = true;
+                  return 10_000;
+                },
+              },
+            );
+            const { writeFile } = await import("node:fs/promises");
+            await writeFile(output, new Uint8Array(bytes));
+          },
+        };
+        const first = synthesizeRetained(
+          ctx,
+          synth,
+          voice,
+          "test",
+          join(ctx.workDir, "first.wav"),
+        ).catch((error: unknown) => error);
+        await vi.waitUntil(() => waiting);
+        controller.abort(new Error("lease lost"));
+        expect(await first).toBeInstanceOf(SynthesisRejectedError);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        ready = true;
+        await synthesizeRetained(
+          { ...ctx, signal: new AbortController().signal },
+          synth,
+          voice,
+          "test",
+          join(ctx.workDir, "retry.wav"),
+        );
+        await synthesizeRetained(
+          { ...ctx, signal: new AbortController().signal },
+          synth,
+          voice,
+          "test",
+          join(ctx.workDir, "cached.wav"),
+        );
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+      }
+    },
+  );
+  test.each(["timeout", "abort"])(
+    "Breeze readiness %s before POST permits a safe later synthesis",
+    async (kind) => {
+      vi.useFakeTimers();
+      vi.stubEnv("BREEZE_TTS_BASE_URL", "http://breeze.test");
+      let ready = false;
+      const calls: string[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string) => {
+          calls.push(url);
+          return url.endsWith("/health")
+            ? new Response("", { status: ready ? 200 : 503 })
+            : new Response(new Uint8Array(2), { status: 200 });
+        }),
+      );
+      try {
+        const controller = new AbortController();
+        const ctx = {
+          job: narrateJob,
+          workDir: workDir("breeze-ready-"),
+          retainedDir: workDir("breeze-ready-retained-"),
+          tools: fakeTools().tools,
+          rendererVersion: "0.2.0",
+          signal: controller.signal,
+        };
+        const voice = voiceById("breeze-2");
+        const synth = providerFor(voice);
+        const first = synthesizeRetained(
+          ctx,
+          synth,
+          voice,
+          "test",
+          join(ctx.workDir, "first.wav"),
+        ).catch((error: unknown) => error);
+        await vi.waitUntil(() => calls.length > 0);
+        if (kind === "abort") controller.abort(new Error("lease lost"));
+        else
+          await vi.advanceTimersByTimeAsync(BREEZE_READY_TIMEOUT_MS + 10_000);
+        expect(await first).toBeInstanceOf(SynthesisRejectedError);
+        expect(calls.some((url) => url.endsWith("/speech"))).toBe(false);
+        ready = true;
+        await synthesizeRetained(
+          { ...ctx, signal: new AbortController().signal },
+          synth,
+          voice,
+          "test",
+          join(ctx.workDir, "retry.wav"),
+        );
+        expect(calls.filter((url) => url.endsWith("/speech"))).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
+      }
+    },
+  );
+  test.each(["abort", "network"])(
+    "%s during synthesis preserves unfinished intent and refuses another paid call",
+    async (kind) => {
+      const controller = new AbortController();
+      const ctx = {
+        job: narrateJob,
+        workDir: workDir("unfinished-"),
+        retainedDir: workDir("unfinished-retained-"),
+        tools: fakeTools().tools,
+        rendererVersion: "0.2.0",
+        signal: controller.signal,
+      };
+      const voice = voiceById(narrateJob.input.voiceId);
+      const synthesize = vi.fn(async () => {
+        if (kind === "abort") controller.abort(new Error("lease lost"));
+        throw new Error(
+          kind === "abort" ? "lease lost" : "ambiguous transport failure",
+        );
+      });
+      await expect(
+        synthesizeRetained(
+          ctx,
+          { synthesize },
+          voice,
+          "test",
+          join(ctx.workDir, "chunk.wav"),
+        ),
+      ).rejects.toThrow();
+      await expect(
+        synthesizeRetained(
+          { ...ctx, signal: new AbortController().signal },
+          { synthesize },
+          voice,
+          "test",
+          join(ctx.workDir, "retry.wav"),
+        ),
+      ).rejects.toThrow("unfinished chunk");
+      expect(synthesize).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  test("a confirmed synthesis rejection permits a later call", async () => {
+    const ctx = {
+      job: narrateJob,
+      workDir: workDir("rejected-"),
+      retainedDir: workDir("rejected-retained-"),
+      tools: fakeTools().tools,
+      rendererVersion: "0.2.0",
+      signal: new AbortController().signal,
+    };
+    const voice = voiceById(narrateJob.input.voiceId);
+    const synthesize = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new SynthesisRejectedError("Provider rejected request"),
+      )
+      .mockImplementationOnce(async (_text, _voice, output) => {
+        const { writeFile } = await import("node:fs/promises");
+        await writeFile(output, "acknowledged audio");
+      });
+    await expect(
+      synthesizeRetained(
+        ctx,
+        { synthesize },
+        voice,
+        "test",
+        join(ctx.workDir, "chunk.wav"),
+      ),
+    ).rejects.toThrow("Provider rejected");
+    await synthesizeRetained(
+      ctx,
+      { synthesize },
+      voice,
+      "test",
+      join(ctx.workDir, "retry.wav"),
+    );
+    expect(synthesize).toHaveBeenCalledTimes(2);
+  });
   test("renders paragraphs, joins with gaps, computes chapter starts, uploads master then delivery", async () => {
     const { tools, minted, uploaded } = fakeTools();
     const signal = new AbortController().signal;
@@ -210,6 +428,74 @@ describe("narrate job", () => {
     for (const upload of uploaded) expect(upload.signal).toBe(signal);
     for (const call of toneSynth.mock.calls) expect(call[3]).toBe(signal);
     expect(tools.attachAudioStorage).toHaveBeenCalledTimes(2);
+  });
+
+  test("oversize WAV uses lossless FLAC at 48 kHz with identical decoded PCM", async () => {
+    statOverride.sizeFor = (path) =>
+      path.endsWith("master.wav") ? MAX_UPLOAD_BYTES + 1 : undefined;
+    const { tools, minted, uploaded } = fakeTools();
+    const dir = workDir("narr-flac-");
+    await narrateHandler(
+      {
+        job: narrateJob,
+        workDir: dir,
+        tools,
+        rendererVersion: "0.2.0",
+        signal: new AbortController().signal,
+      },
+      { synthesize: toneSynth },
+    );
+    expect(minted[0]?.encoding).toEqual({
+      codec: "flac",
+      sampleRate: 48000,
+      channels: 1,
+    });
+    expect(uploaded[0]?.mimeType).toBe("audio/flac");
+    expect(await probeStreams(join(dir, "master.flac"))).toMatchObject({
+      sampleRate: 48000,
+      channels: 1,
+    });
+    for (const format of ["wav", "flac"])
+      await runFfmpeg([
+        "-i",
+        join(dir, `master.${format}`),
+        "-f",
+        "s16le",
+        join(dir, `${format}.pcm`),
+      ]);
+    expect(await readFile(join(dir, "flac.pcm"))).toEqual(
+      await readFile(join(dir, "wav.pcm")),
+    );
+  });
+
+  test("oversize FLAC prevents upload and retains synthesized chunks for retry", async () => {
+    const { tools, minted } = fakeTools();
+    const retainedDir = workDir("narr-retained-");
+    const ctx = {
+      job: narrateJob,
+      workDir: workDir("narr-oversize-"),
+      retainedDir,
+      tools,
+      rendererVersion: "0.2.0",
+      signal: new AbortController().signal,
+    };
+    statOverride.sizeFor = (path) =>
+      path.endsWith("master.wav") || path.endsWith("master.flac")
+        ? MAX_UPLOAD_BYTES + 1
+        : undefined;
+    toneSynth.mockClear();
+    await expect(
+      narrateHandler(ctx, { synthesize: toneSynth }),
+    ).rejects.toThrow(/upload cap/);
+    const calls = toneSynth.mock.calls.length;
+    expect(calls).toBeGreaterThan(0);
+    expect(minted).toHaveLength(0);
+    statOverride.sizeFor = undefined;
+    await narrateHandler(
+      { ...ctx, workDir: workDir("narr-retry-") },
+      { synthesize: toneSynth },
+    );
+    expect(toneSynth).toHaveBeenCalledTimes(calls);
   });
 
   test("a delivery that breaks the true-peak ceiling is rejected before any upload is minted for it", async () => {

@@ -61,6 +61,11 @@ function replaceArray<T>(_left: T[], right: T[]): T[] {
 
 export const SourceScoutAnnotation = Annotation.Root({
   agentRunId: Annotation<string | undefined>,
+  recovery: Annotation<boolean | undefined>,
+  captureFailureCount: Annotation<number>({
+    value: (_left, right) => right,
+    default: () => 0,
+  }),
   // "recapture" retries page capture for Scout URL-only Sources instead of
   // discovering new ones.
   mode: Annotation<"recapture" | undefined>,

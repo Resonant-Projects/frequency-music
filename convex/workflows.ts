@@ -64,24 +64,12 @@ export const extractSourceWorkflow = workflowManager.define({
       return;
     }
 
-    // Run extraction with retry
+    // Operational recovery owns generation retries for this snapshot
     await ctx.runAction(
       api.extract.extractSource,
       { sourceId: args.sourceId, model: args.model, devBypassSecret },
-      { retry: true },
+      { retry: false },
     );
-
-    // Get extraction and link concepts
-    const extractions = await ctx.runQuery(api.extractions.getBySourceId, {
-      sourceId: args.sourceId,
-    });
-
-    const extraction = extractions[0];
-    if (extraction) {
-      await ctx.runAction(internal.graph.linkExtractionConcepts, {
-        extractionId: extraction._id,
-      });
-    }
 
     console.log(`Completed extraction workflow for ${args.sourceId}`);
   },
@@ -113,19 +101,9 @@ export const batchExtractionWorkflow = workflowManager.define({
         await ctx.runAction(
           api.extract.extractSource,
           { sourceId: source._id, model: args.model, devBypassSecret },
-          { retry: true },
+          { retry: false },
         );
 
-        const extractions = await ctx.runQuery(api.extractions.getBySourceId, {
-          sourceId: source._id,
-        });
-
-        const extraction = extractions[0];
-        if (extraction) {
-          await ctx.runAction(internal.graph.linkExtractionConcepts, {
-            extractionId: extraction._id,
-          });
-        }
         outcomes.push(true);
       } catch (e) {
         outcomes.push(false);
@@ -254,7 +232,7 @@ export const fullPipelineWorkflow = workflowManager.define({
         await ctx.runAction(
           api.extract.extractSource,
           { sourceId: source._id, model: args.model, devBypassSecret },
-          { retry: true },
+          { retry: false },
         );
       } catch (e) {
         console.error("Extraction failed", e);

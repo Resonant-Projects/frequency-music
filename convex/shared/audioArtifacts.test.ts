@@ -35,7 +35,7 @@ describe("audio artifact contracts", () => {
         sampleRate: 48000,
         channels: 2,
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       audioEncodingZ.safeParse({ codec: "wav", sampleRate: 0, channels: 2 })
         .success,

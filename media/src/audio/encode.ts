@@ -115,3 +115,27 @@ export async function probeStreams(
     tags: parsed.format?.tags ?? {},
   };
 }
+
+/** Losslessly compress the 48 kHz PCM master without resampling it. */
+export async function encodeFlac(
+  input: string,
+  output: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await runFfmpeg(
+    [
+      "-i",
+      input,
+      "-map_metadata",
+      "-1",
+      "-fflags",
+      "+bitexact",
+      "-c:a",
+      "flac",
+      "-compression_level",
+      "8",
+      output,
+    ],
+    { signal },
+  );
+}

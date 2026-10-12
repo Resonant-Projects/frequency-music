@@ -1,11 +1,15 @@
 // Reclaims expired leases, abandoned pending artifacts, and storage blobs no
 // artifact references (a worker that crashed between upload and attach).
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, type MutationCtx } from "./_generated/server";
+import { readSetting, writeSetting } from "./settings";
+import { LEASE_MS } from "./shared/mediaJobs";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
-const SCAN_LIMIT = 200;
+// Full artifacts, their jobs and expired leases share one transaction.
+const PENDING_SCAN_LIMIT = 2;
+const SCAN_LIMIT = 8;
 // settings row holding the last _storage blob examined as
 // "<_creationTime>:<_id>". The next sweep resumes inclusively at that
 // creation time (skipping only that blob), so blobs sharing the boundary
@@ -77,16 +81,74 @@ export const sweep = internalMutation({
       internal.mediaJobs.sweepStale,
       { now },
     );
+    await ctx.scheduler.runAfter(0, internal.mediaJobs.parkIncompatibleQueued, {
+      cutoff: now - LEASE_MS,
+    });
 
     let artifactsDeleted = 0;
     let blobsDeleted = 0;
-    const stalePending = await ctx.db
+    const pendingCursorKey = "mediaSweeper.pendingCursor";
+    const pendingCursor = await readSetting(ctx, pendingCursorKey);
+    let pendingScan: { cursor: string; cutoff: number } | undefined;
+    try {
+      const parsed = pendingCursor ? JSON.parse(pendingCursor) : undefined;
+      if (
+        typeof parsed?.cursor === "string" &&
+        typeof parsed?.cutoff === "number" &&
+        Number.isFinite(parsed.cutoff)
+      )
+        pendingScan = parsed;
+    } catch {
+      /* Restart a malformed cursor record with a fresh query. */
+    }
+    const pendingCutoff = pendingScan?.cutoff ?? cutoff;
+    const pendingQuery = ctx.db
       .query("audioArtifacts")
       .withIndex("by_status_createdAt", (q) =>
-        q.eq("status", "pending").lt("createdAt", cutoff),
-      )
-      .take(SCAN_LIMIT);
-    for (const row of stalePending) {
+        q.eq("status", "pending").lt("createdAt", pendingCutoff),
+      );
+    let stalePending;
+    try {
+      stalePending = await pendingQuery.paginate({
+        cursor: pendingScan?.cursor ?? null,
+        numItems: PENDING_SCAN_LIMIT,
+        maximumBytesRead: 1_000_000,
+      });
+    } catch (error) {
+      const invalidCursor =
+        error instanceof SyntaxError ||
+        (error instanceof Error &&
+          (error.message.includes("InvalidCursor") ||
+            error.message.includes("is not valid JSON"))) ||
+        (error instanceof ConvexError &&
+          typeof error.data === "object" &&
+          error.data !== null &&
+          "paginationError" in error.data &&
+          error.data.paginationError === "InvalidCursor");
+      if (!pendingScan || !invalidCursor) throw error;
+      // Convex permits one paginate call per function. Persist a reset now;
+      // the next sweep starts at the beginning while this sweep still recovers leases/blobs.
+      stalePending = { page: [], isDone: true, continueCursor: "" };
+    }
+    const cursorValue = stalePending.isDone
+      ? ""
+      : JSON.stringify({
+          cursor: stalePending.continueCursor,
+          cutoff: pendingCutoff,
+        });
+    await writeSetting(ctx, pendingCursorKey, cursorValue, now);
+    for (const row of stalePending.page) {
+      if (row.refs.mediaJobId) {
+        const job = await ctx.db.get(row.refs.mediaJobId);
+        if (job?.status === "queued" || job?.status === "claimed") continue;
+        const failure = await ctx.db
+          .query("operationFailures")
+          .withIndex("by_operation", (q) =>
+            q.eq("operationId", `media:${row.refs.mediaJobId}`),
+          )
+          .unique();
+        if (failure && failure.status !== "resolved") continue;
+      }
       // storage.delete throws on a missing blob, and the sweep is one
       // mutation: an unguarded delete would roll back lease recovery too.
       if (row.storageId && (await ctx.db.system.get(row.storageId))) {
@@ -112,7 +174,10 @@ export const sweep = internalMutation({
       .order("asc")
       // Inclusive resume returns the last examined blob once more, so fetch
       // one extra row to keep the window at scanLimit new blobs.
-      .take((args.scanLimit ?? SCAN_LIMIT) + (cursor.blobId ? 1 : 0));
+      .take(
+        Math.min(Math.max(args.scanLimit ?? SCAN_LIMIT, 1), SCAN_LIMIT) +
+          (cursor.blobId ? 1 : 0),
+      );
     // Inclusive resume, tie-safe within the boundary timestamp: every blob at
     // the cursor's creation time is skipped until the cursor blob itself has
     // been seen (it is skipped too); later timestamps are always examined. If

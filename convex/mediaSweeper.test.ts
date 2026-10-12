@@ -27,6 +27,155 @@ const base = {
 };
 
 describe("mediaSweeper", () => {
+  test("large pending jobs, leases and owned blobs fit together and cursors reach later orphans", async () => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const now = Date.now();
+    const pending: Id<"audioArtifacts">[] = [];
+    const owned: Id<"_storage">[] = [];
+    for (let i = 0; i < 20; i++) {
+      const jobId = await t.run((ctx) =>
+        ctx.db.insert("mediaJobs", {
+          kind: "narrate",
+          input: {
+            kind: "narrate",
+            script: { paragraphs: ["x".repeat(900_000)], chapters: [] },
+            voiceId: "local",
+            promptVersion: "v1",
+            target: "spoken",
+            title: "Large",
+            access: "private",
+            refs: {},
+            assembleOnDone: false,
+            rendererVersion: "test",
+          },
+          dedupeKey: `large-${i}`,
+          status: i % 2 ? "claimed" : "queued",
+          leaseExpiresAt: i % 2 ? 0 : undefined,
+          priority: 0,
+          attempts: 1,
+          createdAt: 1,
+        }),
+      );
+      pending.push(
+        await t.run((ctx) =>
+          ctx.db.insert("audioArtifacts", {
+            ...base,
+            scriptMd: "x".repeat(900_000),
+            refs: { mediaJobId: jobId },
+            status: "pending",
+            createdAt: now - 2 * DAY,
+            updatedAt: now - 2 * DAY,
+          }),
+        ),
+      );
+      const storageId = await t.run((ctx) =>
+        ctx.storage.store(new Blob([`owned-${i}`])),
+      );
+      owned.push(storageId);
+      await t.run((ctx) =>
+        ctx.db.insert("audioArtifacts", {
+          ...base,
+          scriptMd: "x".repeat(900_000),
+          status: "ready",
+          storageId,
+          createdAt: now - 2 * DAY,
+          updatedAt: now - 2 * DAY,
+        }),
+      );
+    }
+    const orphanArtifact = await t.run((ctx) =>
+      ctx.db.insert("audioArtifacts", {
+        ...base,
+        status: "pending",
+        createdAt: now - 2 * DAY,
+        updatedAt: now - 2 * DAY,
+      }),
+    );
+    const orphanBlob = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["orphan"])),
+    );
+    let requeued = 0;
+    for (let tick = 0; tick < 21; tick++)
+      requeued += (
+        await t.mutation(internal.mediaSweeper.sweep, {
+          now: Date.now() + 1,
+          blobAgeMs: 0,
+        })
+      ).requeued;
+    expect(requeued).toBe(10);
+    expect(await t.run((ctx) => ctx.db.get(orphanArtifact))).toBeNull();
+    expect(await t.run((ctx) => ctx.db.system.get(orphanBlob))).toBeNull();
+    for (const id of pending)
+      expect(await t.run((ctx) => ctx.db.get(id))).not.toBeNull();
+    for (const id of owned)
+      expect(await t.run((ctx) => ctx.db.system.get(id))).not.toBeNull();
+  });
+  test("a valid setting with an invalid cursor resets without rolling back the sweep", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const artifactId = await t.run(async (ctx) => {
+      await ctx.db.insert("settings", {
+        key: "mediaSweeper.pendingCursor",
+        value: JSON.stringify({ cursor: "garbage", cutoff: now }),
+        updatedAt: now,
+      });
+      return ctx.db.insert("audioArtifacts", {
+        ...base,
+        status: "pending",
+        createdAt: now - 2 * DAY,
+        updatedAt: now,
+      });
+    });
+    expect(
+      (await t.mutation(internal.mediaSweeper.sweep, { now })).artifactsDeleted,
+    ).toBe(0);
+    const setting = await t.run((ctx) =>
+      ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "mediaSweeper.pendingCursor"))
+        .unique(),
+    );
+    expect(setting?.value).toBe("");
+    expect(
+      (await t.mutation(internal.mediaSweeper.sweep, { now })).artifactsDeleted,
+    ).toBe(1);
+    expect(await t.run((ctx) => ctx.db.get(artifactId))).toBeNull();
+  });
+  test("a pending scan keeps its original cutoff until its cursor is exhausted", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+    const fresh = await t.run(async (ctx) => {
+      for (let i = 0; i < 400; i++)
+        await ctx.db.insert("audioArtifacts", {
+          ...base,
+          status: "pending",
+          createdAt: now - 2 * DAY,
+          updatedAt: now - 2 * DAY,
+        });
+      return ctx.db.insert("audioArtifacts", {
+        ...base,
+        status: "pending",
+        createdAt: now - DAY + 100,
+        updatedAt: now - DAY + 100,
+      });
+    });
+    await t.mutation(internal.mediaSweeper.sweep, { now });
+    const saved = await t.run((ctx) =>
+      ctx.db
+        .query("settings")
+        .withIndex("by_key", (q) => q.eq("key", "mediaSweeper.pendingCursor"))
+        .unique(),
+    );
+    expect(JSON.parse(saved!.value).cutoff).toBe(now - DAY);
+    await t.mutation(internal.mediaSweeper.sweep, { now: now + DAY });
+    expect(await t.run((ctx) => ctx.db.get(fresh))).not.toBeNull();
+    for (let tick = 2; tick < 200; tick++)
+      await t.mutation(internal.mediaSweeper.sweep, { now: now + DAY });
+    expect(await t.run((ctx) => ctx.db.get(fresh))).not.toBeNull();
+    await t.mutation(internal.mediaSweeper.sweep, { now: now + DAY });
+    expect(await t.run((ctx) => ctx.db.get(fresh))).toBeNull();
+  });
+
   test("deletes stale pending artifacts with their blobs and unreferenced blobs, keeps fresh and referenced ones", async () => {
     const t = convexTest(schema, modules);
     const now = Date.now();

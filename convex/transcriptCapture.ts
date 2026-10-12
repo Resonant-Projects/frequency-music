@@ -1,3 +1,4 @@
+import { internal } from "./_generated/api";
 import { literals } from "convex-helpers/validators";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -7,6 +8,7 @@ import {
   TRANSCRIPT_MAX_CHARS,
   TRANSCRIPT_MIN_CHARS,
 } from "./shared/agentContract";
+import { advanceSourceVersion } from "./shared/sourceRecovery";
 import { resolveYouTubeVideoId } from "./sourceUtils";
 
 // YouTube Sources reach "ingested" without text; the transcript-capture graph
@@ -55,7 +57,11 @@ export const listTranscriptBacklog = internalQuery({
         q.eq("status", "ingested").eq("type", "youtube"),
       )
       .order("asc")
-      .paginate({ cursor: args.cursor ?? null, numItems: BACKLOG_PAGE_SIZE });
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: BACKLOG_PAGE_SIZE,
+        maximumBytesRead: 4_000_000,
+      });
     const rows = page.page.flatMap((source) => {
       const videoId = videoIdOf(source);
       if (!awaitsTranscript(source) || !videoId) return [];
@@ -144,7 +150,7 @@ export const recordTranscriptCapture = internalMutation({
             capturedAt: now,
           },
         },
-        updatedAt: now,
+        updatedAt: advanceSourceVersion(source.updatedAt, now),
       });
       return { updated: true };
     }
@@ -180,7 +186,7 @@ export const recordTranscriptCapture = internalMutation({
           }
         : {}),
       metadata: { ...metadata, transcriptCapture: attempt },
-      updatedAt: now,
+      updatedAt: advanceSourceVersion(source.updatedAt, now),
     });
     return { updated: true };
   },
@@ -191,23 +197,9 @@ export const recordTranscriptCapture = internalMutation({
  * transcripts and no run is already queued or running.
  */
 export const enqueueIfNeeded = internalMutation({
-  args: {},
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
   returns: v.null(),
-  handler: async (ctx) => {
-    // Stops at the first Source awaiting a transcript; ingested YouTube Sources
-    // that already hold text are rare, so this reads little.
-    let awaiting = false;
-    for await (const source of ctx.db
-      .query("sources")
-      .withIndex("by_status_type_updatedAt", (q) =>
-        q.eq("status", "ingested").eq("type", "youtube"),
-      )) {
-      if (awaitsTranscript(source) && videoIdOf(source)) {
-        awaiting = true;
-        break;
-      }
-    }
-    if (!awaiting) return null;
+  handler: async (ctx, args): Promise<null> => {
     for (const status of ["queued", "running"] as const) {
       const active = await ctx.db
         .query("agentRuns")
@@ -217,7 +209,34 @@ export const enqueueIfNeeded = internalMutation({
         .first();
       if (active) return null;
     }
-    await insertQueuedRun(ctx, { graphName: "transcript-capture", input: {} });
+    const cursor = args.cursor ?? null;
+    const page = await ctx.db
+      .query("sources")
+      .withIndex("by_status_type_updatedAt", (q) =>
+        q.eq("status", "ingested").eq("type", "youtube"),
+      )
+      .order("asc")
+      .paginate({
+        cursor,
+        numItems: BACKLOG_PAGE_SIZE,
+        maximumBytesRead: 4_000_000,
+      });
+    if (
+      page.page.some((source) => awaitsTranscript(source) && videoIdOf(source))
+    ) {
+      // Start the bounded worker scan at this page, past earlier malformed
+      // rows, so its own page cap cannot strand the eligible Source.
+      await insertQueuedRun(ctx, {
+        graphName: "transcript-capture",
+        input: { backlogCursor: cursor },
+      });
+    } else if (!page.isDone) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.transcriptCapture.enqueueIfNeeded,
+        { cursor: page.continueCursor },
+      );
+    }
     return null;
   },
 });

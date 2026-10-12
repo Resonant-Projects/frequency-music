@@ -13,6 +13,10 @@ import {
 
 /** A row of sources.operatorExtractionPage. */
 export type ExportRow = {
+  snapshotId?: string;
+  prompt?: string;
+  system?: string;
+  promptVersion?: string;
   sourceId: string;
   title?: string;
   canonicalUrl?: string;
@@ -23,6 +27,9 @@ export type ExportRow = {
 };
 
 export type ChunkItem = {
+  system?: string;
+  promptVersion?: string;
+  snapshotId?: string;
   sourceId: string;
   title: string;
   url: string;
@@ -47,17 +54,18 @@ export type Unextractable = {
 };
 
 export type ResultItem = {
+  snapshotId?: string;
   sourceId: string;
   inputHash: string;
   extraction: unknown;
 };
 
 const INSTRUCTIONS =
-  "For each item, follow `system` and the item's `prompt` exactly as a model " +
+  "For each item, follow its `system` when present (otherwise the chunk `system`) and the item's `prompt` exactly as a model " +
   "would. Write a results file shaped as " +
   '{"model": <this chunk\'s model>, "results": [{"sourceId", "inputHash", ' +
   '"extraction": <the JSON object the prompt asks for>}]}, copying sourceId ' +
-  "and inputHash from the item. Use only the evidence levels and low|medium|high " +
+  "and inputHash from the item. Also copy snapshotId when present. Use only the evidence levels and low|medium|high " +
   "bands the prompt lists; omit an item rather than guess.";
 
 /**
@@ -86,11 +94,20 @@ export function buildChunks(
       url: row.canonicalUrl || "",
       type: row.type,
       inputHash: row.inputHash,
-      prompt: renderExtractionPrompt({
-        title: row.title,
-        canonicalUrl: row.canonicalUrl,
-        content: row.content,
-      }),
+      ...(row.snapshotId
+        ? {
+            snapshotId: row.snapshotId,
+            system: row.system,
+            promptVersion: row.promptVersion,
+          }
+        : {}),
+      prompt:
+        row.prompt ??
+        renderExtractionPrompt({
+          title: row.title,
+          canonicalUrl: row.canonicalUrl,
+          content: row.content,
+        }),
     });
   }
   const size = Math.max(1, Math.floor(options.chunkSize));
@@ -240,7 +257,8 @@ export function parseResults(
   if (!Array.isArray(results)) {
     throw new Error("Results file needs a results array");
   }
-  const seen = new Set<string>();
+  const seenSources = new Map<string, boolean>();
+  const seenSnapshots = new Set<string>();
   return {
     model,
     results: results.map((entry, index) => {
@@ -257,13 +275,31 @@ export function parseResults(
           `results[${index}] needs sourceId, a 64-hex inputHash and an extraction object`,
         );
       }
-      if (seen.has(item.sourceId)) {
+      if (
+        item.snapshotId !== undefined &&
+        (typeof item.snapshotId !== "string" || !item.snapshotId)
+      ) {
+        throw new Error(`results[${index}] needs a non-empty snapshotId`);
+      }
+      if (
+        seenSources.has(item.sourceId) &&
+        (!item.snapshotId || !seenSources.get(item.sourceId))
+      ) {
         throw new Error(`results[${index}] repeats source ${item.sourceId}`);
       }
-      seen.add(item.sourceId);
+      if (item.snapshotId && seenSnapshots.has(item.snapshotId)) {
+        throw new Error(
+          `results[${index}] repeats snapshot ${item.snapshotId}`,
+        );
+      }
+      seenSources.set(item.sourceId, !!item.snapshotId);
+      if (item.snapshotId) seenSnapshots.add(item.snapshotId);
       return {
         sourceId: item.sourceId,
         inputHash: item.inputHash,
+        ...(typeof item.snapshotId === "string"
+          ? { snapshotId: item.snapshotId }
+          : {}),
         extraction: item.extraction,
       };
     }),

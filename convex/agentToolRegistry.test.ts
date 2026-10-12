@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test, vi } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { renderAgentToolDocs } from "../scripts/lib/agentToolDocs";
 import * as agentTools from "./agentTools";
@@ -26,6 +26,38 @@ const frozenArgs = (value: Record<string, unknown>) =>
 const runId = field(id("agentRuns"));
 
 const FROZEN_ARGS: Record<string, string> = {
+  reportCaptureFailure: frozenArgs({
+    agentRunId: runId,
+    input: field(
+      object({
+        url: field(string),
+        title: field(string, true),
+        publishedAt: field(number, true),
+        query: field(string),
+        rationale: field(string),
+        rawText: field(string, true),
+        contentProvider: field(
+          union(literal("crawl4ai"), literal("firecrawl"), literal("openalex")),
+          true,
+        ),
+      }),
+    ),
+    stage: field(union(literal("capture"), literal("intake"))),
+    diagnostic: field(string, true),
+  }),
+  getFailureInvestigation: frozenArgs({ agentRunId: runId }),
+  submitFailureDiagnosis: frozenArgs({
+    agentRunId: runId,
+    result: field(
+      object({ diagnosis: field(string), recover: field({ type: "boolean" }) }),
+    ),
+  }),
+  getCaptureRecovery: frozenArgs({ agentRunId: runId }),
+  finishCaptureRecovery: frozenArgs({
+    agentRunId: runId,
+    failureId: field(id("operationFailures")),
+    success: field({ type: "boolean" }),
+  }),
   listRecentExtractions: frozenArgs({ limit: field(number, true) }),
   getExtraction: frozenArgs({ id: field(id("extractions")) }),
   listRecentHypotheses: frozenArgs({ limit: field(number, true) }),
@@ -147,6 +179,7 @@ const FROZEN_ARGS: Record<string, string> = {
     traceUrl: field(string, true),
   }),
   appendAgentRunEvent: frozenArgs({
+    deliveryId: field(string, true),
     runId,
     kind: field(
       union(
@@ -192,6 +225,7 @@ const FROZEN_ARGS: Record<string, string> = {
   claimNextMediaJob: frozenArgs({
     workerId: field(string),
     kinds: field(array(string)),
+    rendererVersion: field(string, true),
   }),
   renewMediaJobLease: frozenArgs({
     jobId: field(id("mediaJobs")),
@@ -221,6 +255,21 @@ const FROZEN_ARGS: Record<string, string> = {
 };
 
 describe("agent tool registry", () => {
+  test("audit delivery identity reaches the backing mutation", async () => {
+    const runMutation = vi.fn(async () => null);
+    await agentToolByName.appendAgentRunEvent.run({ runMutation } as never, {
+      runId: "run",
+      kind: "status",
+      message: "done",
+      deliveryId: "stable",
+    });
+    expect(runMutation).toHaveBeenCalledWith(expect.anything(), {
+      runId: "run",
+      kind: "status",
+      message: "done",
+      deliveryId: "stable",
+    });
+  });
   test("registry covers the manifest one-to-one", () => {
     expect(AGENT_TOOL_REGISTRY.map((tool) => tool.name)).toEqual(
       AGENT_TOOL_MANIFEST.map((tool) => tool.name),

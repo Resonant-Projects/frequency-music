@@ -3,6 +3,7 @@
 // extracted from the same instructions and the same text either way.
 
 import { RESEARCH_SOURCE_GUIDANCE } from "./researchTopics";
+import { truncateText } from "./truncateText";
 
 export const EXTRACTION_PROMPT_VERSION = "extract_v3";
 /** Source text beyond this many characters is not shown to the model. */
@@ -77,8 +78,7 @@ Only include claims that are substantive and relevant to music, frequency, acous
  * a lone high surrogate (Convex rejects strings with unpaired surrogates).
  */
 export function extractionContent(text: string): string {
-  const cut = text.slice(0, EXTRACTION_CONTENT_MAX_CHARS);
-  return /[\uD800-\uDBFF]$/.test(cut) ? cut.slice(0, -1) : cut;
+  return truncateText(text, EXTRACTION_CONTENT_MAX_CHARS);
 }
 
 /** The user prompt for one Source, with its text cut to the model limit. */
@@ -101,12 +101,49 @@ export function renderExtractionPrompt(source: {
 }
 
 /** SHA-256 of the Source text and prompt version: the Extraction's inputHash. */
-export async function extractionInputHash(content: string): Promise<string> {
+export async function extractionInputHash(
+  content: string,
+  promptVersion = EXTRACTION_PROMPT_VERSION,
+): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(`${content}${EXTRACTION_PROMPT_VERSION}`),
+    new TextEncoder().encode(`${content}${promptVersion}`),
   );
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+/** Admission for new generation. Retained output does not need this gate. */
+export async function extractionSnapshotMatchesSource(
+  attempt: {
+    _id: string;
+    title?: string;
+    canonicalUrl?: string;
+    inputHash: string;
+    promptVersion: string;
+  },
+  source: {
+    activeExtractionAttemptId?: string;
+    title?: string;
+    canonicalUrl?: string;
+    status: string;
+    blockedReason?: string;
+    rawText?: string;
+    transcript?: string;
+  },
+): Promise<boolean> {
+  return (
+    source.activeExtractionAttemptId === attempt._id &&
+    source.title === attempt.title &&
+    source.canonicalUrl === attempt.canonicalUrl &&
+    (source.status === "extracting" ||
+      source.status === "text_ready" ||
+      (source.status === "review_needed" &&
+        source.blockedReason === "ai_error")) &&
+    (await extractionInputHash(
+      source.rawText || source.transcript || "",
+      attempt.promptVersion,
+    )) === attempt.inputHash
+  );
 }

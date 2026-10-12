@@ -227,6 +227,10 @@ export function AgentRunDetailPage() {
   const run = createQueryWithStatus(api.agentRuns.getPublic, () => ({
     runId: runId(),
   }));
+  const failures = createQueryWithStatus(
+    api.operationFailures.listForRun,
+    () => ({ agentRunId: runId() }),
+  );
   const events = createQueryWithStatus(api.agentRuns.listEventsPublic, () => ({
     runId: runId(),
     limit: 120,
@@ -452,6 +456,91 @@ export function AgentRunDetailPage() {
                   </For>
                 </UIList>
               </Show>
+            </UICard>
+
+            <UICard>
+              <h2 class={sectionTitleClass}>Failures and recovery</h2>
+              <UINotice
+                status={
+                  failures.isLoading()
+                    ? "Loading recovery records…"
+                    : !failures.error() && !failures.data()?.length
+                      ? "No operational failures recorded for this run."
+                      : ""
+                }
+                error={
+                  failures.error()
+                    ? "Recovery records could not be loaded."
+                    : ""
+                }
+              />
+              <For each={failures.data() ?? []}>
+                {(failure) => (
+                  <article
+                    class={css({
+                      borderColor: "zodiac.cream/12",
+                      borderInlineStartWidth: "1px",
+                      display: "grid",
+                      gap: "2",
+                      paddingInlineStart: "4",
+                      position: "relative",
+                      _before: {
+                        bg: "zodiac.gold",
+                        borderRadius: "full",
+                        content: '""',
+                        height: "2",
+                        insetInlineStart: "-1",
+                        position: "absolute",
+                        insetBlockStart: "2",
+                        width: "2",
+                      },
+                    })}
+                  >
+                    <p>
+                      <UIBadge
+                        tone={
+                          failure.status === "resolved"
+                            ? "gold"
+                            : failure.status === "needsReview"
+                              ? "violet"
+                              : "cream"
+                        }
+                      >
+                        {failure.status === "needsReview"
+                          ? "Needs review"
+                          : failure.status}
+                      </UIBadge>{" "}
+                      · {failure.attempts} recovery attempts
+                    </p>
+                    <p>{failure.message}</p>
+                    <Show when={failure.diagnosis}>
+                      <p>{failure.diagnosis}</p>
+                    </Show>
+                    <Show when={failure.status === "resolved"}>
+                      <p>Recovery completed successfully.</p>
+                    </Show>
+                    <Show when={failure.status === "needsReview"}>
+                      <p>
+                        Automatic recovery has stopped for this operation.
+                        Independent work can continue.
+                      </p>
+                    </Show>
+                    <Show
+                      when={
+                        failure.investigationRunId &&
+                        failure.investigationRunId !== runId()
+                      }
+                    >
+                      <Link
+                        to="/agent-runs/$runId"
+                        params={{ runId: failure.investigationRunId! }}
+                      >
+                        View investigation
+                      </Link>
+                    </Show>
+                  </article>
+                )}
+              </For>
             </UICard>
 
             <UICard>

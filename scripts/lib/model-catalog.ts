@@ -1,7 +1,7 @@
 import { isGroqModel } from "../../convex/llm.ts";
 import {
   anthropicModelId,
-  isAnthropicModel,
+  isDirectAnthropicModel,
 } from "../../convex/shared/llmPolicy.ts";
 
 export type ModelProvider = "Anthropic" | "Groq" | "OpenRouter";
@@ -57,7 +57,7 @@ export function compareModelCatalogs(
 
   return Object.entries(models).map(([name, modelId]) => {
     const isGroq = isGroqModel(modelId);
-    const isAnthropic = isAnthropicModel(modelId);
+    const isAnthropic = isDirectAnthropicModel(modelId);
     const provider = isAnthropic ? "Anthropic" : isGroq ? "Groq" : "OpenRouter";
     const providerModelId = isAnthropic
       ? anthropicModelId(modelId)

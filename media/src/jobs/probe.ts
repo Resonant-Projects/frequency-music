@@ -2,56 +2,11 @@
 // MP3 delivery → upload both → measurements. Also the production health check.
 import { join } from "node:path";
 import { fnv1a64Hex, stableStringify } from "../../../convex/shared/stableHash";
+import { uploadArtifact } from "../audio/artifacts";
 import { encodeMp3 } from "../audio/encode";
-import {
-  assertWithinPolicy,
-  LOUDNESS_TARGETS,
-  measure,
-  normalize,
-} from "../audio/loudness";
+import { LOUDNESS_TARGETS, normalize } from "../audio/loudness";
 import { synthTone } from "../audio/synth";
-import type {
-  ArtifactResult,
-  JobContext,
-  JobHandler,
-  NewArtifact,
-} from "./types";
-
-async function uploadArtifact(
-  ctx: JobContext,
-  path: string,
-  artifact: NewArtifact,
-  mimeType: string,
-): Promise<ArtifactResult> {
-  // Policy first: only a file that passed creates server state (pending row,
-  // blob), so a failed attempt leaves nothing for the sweeper.
-  const measured = await measure(path, ctx.signal);
-  assertWithinPolicy(measured, LOUDNESS_TARGETS.spoken);
-  const { artifactId, uploadUrl } = await ctx.tools.generateAudioUploadUrl({
-    jobId: ctx.job.jobId,
-    leaseToken: ctx.job.leaseToken,
-    artifact,
-  });
-  const { storageId } = await ctx.tools.uploadBytes(
-    uploadUrl,
-    path,
-    mimeType,
-    ctx.signal,
-  );
-  await ctx.tools.attachAudioStorage({
-    jobId: ctx.job.jobId,
-    leaseToken: ctx.job.leaseToken,
-    artifactId,
-    storageId,
-  });
-  return {
-    artifactId: artifactId as ArtifactResult["artifactId"],
-    durationSecs: measured.durationSecs,
-    loudnessLufs: measured.integratedLufs,
-    truePeakDbtp: measured.truePeakDbtp,
-    mimeType,
-  };
-}
+import type { JobHandler, NewArtifact } from "./types";
 
 export const probeHandler: JobHandler = async (ctx) => {
   if (ctx.job.input.kind !== "probe") {
@@ -102,6 +57,7 @@ export const probeHandler: JobHandler = async (ctx) => {
     master,
     masterArtifact,
     "audio/wav",
+    LOUDNESS_TARGETS.spoken,
   );
   const deliveryArtifact: NewArtifact = {
     ...masterArtifact,
@@ -121,6 +77,7 @@ export const probeHandler: JobHandler = async (ctx) => {
     delivery,
     deliveryArtifact,
     "audio/mpeg",
+    LOUDNESS_TARGETS.spoken,
   );
   return { kind: "probe", artifacts: [masterResult, deliveryResult] };
 };

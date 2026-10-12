@@ -2,6 +2,23 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
+crons.interval(
+  "normalize-legacy-extraction-history",
+  { minutes: 5 },
+  internal.extractions.normalizeLegacyHistory,
+);
+crons.interval(
+  "reconcile-extraction-attempts",
+  { minutes: 5 },
+  internal.extractInternal.reconcileAttempts,
+);
+
+crons.interval(
+  "reconcile-operation-recovery",
+  { minutes: 5 },
+  internal.operationFailures.reconcile,
+  {},
+);
 
 // Poll all enabled RSS feeds every 6 hours
 crons.interval(

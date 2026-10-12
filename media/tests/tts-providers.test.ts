@@ -12,7 +12,7 @@ import {
 import { voiceById } from "../../convex/shared/voices";
 import { isConfigured, providerFor } from "../src/tts";
 import { waitForBreezeReady } from "../src/tts/breeze";
-import { fetchAudioWithRetry } from "../src/tts/types";
+import { fetchAudioWithRetry, SynthesisRejectedError } from "../src/tts/types";
 
 // The shape every provider hands to fetch; typing it here keeps the
 // assertions cast-free. Hosted providers send a JSON string; Breeze sends a
@@ -172,7 +172,7 @@ describe("tts providers", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  test("cartesia failures retry twice then name the status only, and a non-WAV 200 is refused without its body", async () => {
+  test("cartesia quota rejection stops immediately with status only, and a non-WAV 200 is refused without its body", async () => {
     vi.stubEnv("CARTESIA_API_KEY", "cart-key");
     const voice = voiceById("cartesia-sonic-quentin");
     const failing = vi.fn(() =>
@@ -191,7 +191,7 @@ describe("tts providers", () => {
     );
     await expect(attempt).rejects.toThrow("TTS request failed with status 402");
     await expect(attempt).rejects.not.toThrow(/cart-key|quota_exceeded/);
-    expect(failing).toHaveBeenCalledTimes(3);
+    expect(failing).toHaveBeenCalledTimes(1);
 
     vi.stubGlobal(
       "fetch",
@@ -409,7 +409,7 @@ describe("tts providers", () => {
     expect(await first).toBe("ok");
   });
 
-  test("a hosted attempt that hangs past the per-attempt timeout is retried, then succeeds", async () => {
+  test("a hosted timeout leaves the outcome unknown and refuses another synthesis request", async () => {
     const bytes = new Uint8Array([7, 7]);
     const signals: AbortSignal[] = [];
     const fetchMock = vi.fn((_url: string, init: CapturedInit) => {
@@ -425,22 +425,22 @@ describe("tts providers", () => {
       return Promise.resolve(new Response(bytes, { status: 200 }));
     });
     vi.stubGlobal("fetch", fetchMock);
-    const result = await fetchAudioWithRetry(
-      "https://tts.test/speech",
-      { method: "POST" },
-      { attempts: 2, timeoutMs: 20, backoffMs: () => 0 },
-    );
-    expect([...new Uint8Array(result)]).toEqual([...bytes]);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await expect(
+      fetchAudioWithRetry(
+        "https://tts.test/speech",
+        { method: "POST" },
+        { attempts: 2, timeoutMs: 20, backoffMs: () => 0 },
+      ),
+    ).rejects.toThrow("ambiguous transport failure");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(signals[0]?.aborted).toBe(true);
-    expect(signals[1]?.aborted).toBe(false);
   });
 
   test("a job abort during the backoff ends the wait at once", async () => {
     vi.useFakeTimers();
     vi.stubEnv("INWORLD_API_KEY", "k");
     const fetchMock = vi.fn(() =>
-      Promise.resolve(new Response("busy", { status: 500 })),
+      Promise.resolve(new Response("busy", { status: 429 })),
     );
     vi.stubGlobal("fetch", fetchMock);
     const controller = new AbortController();
@@ -462,7 +462,10 @@ describe("tts providers", () => {
     await vi.advanceTimersByTimeAsync(0);
     const outcome = await attempt;
     expect(outcome).toBeInstanceOf(Error);
-    expect((outcome as Error).message).toBe("deadline");
+    expect(outcome).toBeInstanceOf(SynthesisRejectedError);
+    expect((outcome as Error).message).toBe(
+      "TTS retry cancelled after provider rejection",
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -526,10 +529,58 @@ describe("tts providers", () => {
     }
   });
 
-  test("provider failures retry twice then throw with status only", async () => {
+  test("only unambiguous provider rejections permit another synthesis call", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("private", { status: 429 }))),
+    );
+    await expect(
+      fetchAudioWithRetry("https://tts.test", {}, { attempts: 1 }),
+    ).rejects.toBeInstanceOf(SynthesisRejectedError);
+    const ambiguous = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("network"))
+      .mockResolvedValueOnce(new Response("private", { status: 400 }));
+    vi.stubGlobal("fetch", ambiguous);
+    const outcome = await fetchAudioWithRetry(
+      "https://tts.test",
+      {},
+      { attempts: 2, backoffMs: () => 0 },
+    ).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(Error);
+    expect(outcome).not.toBeInstanceOf(SynthesisRejectedError);
+    expect(ambiguous).toHaveBeenCalledTimes(1);
+  });
+
+  test("cancellation before the first request preserves proof that synthesis never started", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    controller.abort(new Error("deadline"));
+    await expect(
+      fetchAudioWithRetry("https://tts.test", { signal: controller.signal }),
+    ).rejects.toBeInstanceOf(SynthesisRejectedError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  test("server errors leave synthesis completion ambiguous", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response("private", { status: 500 }))),
+    );
+    const outcome = await fetchAudioWithRetry(
+      "https://tts.test",
+      {},
+      { attempts: 1 },
+    ).catch((error: unknown) => error);
+    expect(outcome).toBeInstanceOf(Error);
+    expect(outcome).not.toBeInstanceOf(SynthesisRejectedError);
+  });
+
+  test("rate-limit rejections retry twice then throw with status only", async () => {
     vi.stubEnv("INWORLD_API_KEY", "k");
     const fetchMock = vi.fn(() =>
-      Promise.resolve(new Response("secret body k", { status: 500 })),
+      Promise.resolve(new Response("secret body k", { status: 429 })),
     );
     vi.stubGlobal("fetch", fetchMock);
     await expect(
@@ -538,7 +589,7 @@ describe("tts providers", () => {
         voiceById("inworld-max"),
         join(dir, "in.wav"),
       ),
-    ).rejects.toThrow(/500/);
+    ).rejects.toThrow(/429/);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     await expect(
       providerFor(voiceById("inworld-max")).synthesize(
@@ -549,7 +600,7 @@ describe("tts providers", () => {
     ).rejects.not.toThrow(/secret body/);
   });
 
-  test("network errors retry the same way and surface without the url or headers", async () => {
+  test("network errors stop without retry and surface without the url or headers", async () => {
     vi.stubEnv("GEMINI_API_KEY", "gem-key");
     const fetchMock = vi.fn(() =>
       Promise.reject(new TypeError("fetch failed")),
@@ -564,6 +615,6 @@ describe("tts providers", () => {
     await expect(attempt).rejects.not.toThrow(
       /gem-key|status \d|generateContent/,
     );
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

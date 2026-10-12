@@ -321,6 +321,21 @@ describe("YouTube transcriber", () => {
 });
 
 describe("transcript-capture graph", () => {
+  test("starts capture at the eligible page found by the enqueue probe", async () => {
+    const callTool = vi.fn(async () => ({ rows: [], isDone: true }));
+    await createCaptureTranscriptsNode(
+      callTool,
+      {
+        configured: true,
+        transcribe: async () => ({ kind: "unavailable", detail: "unused" }),
+      },
+      async () => undefined,
+    )({ agentRunId: "run-t", backlogCursor: "eligible-page" });
+    expect(callTool).toHaveBeenCalledWith("listTranscriptBacklog", {
+      cursor: "eligible-page",
+    });
+  });
+
   test("threads the backlog snapshot version into every outcome write", async () => {
     for (const kind of [
       "captured",

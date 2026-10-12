@@ -40,6 +40,7 @@ const transcript =
   );
 
 afterEach(() => {
+  vi.clearAllTimers();
   vi.useRealTimers();
 });
 
@@ -201,7 +202,58 @@ describe("recording transcript capture", () => {
 });
 
 describe("transcript capture cron", () => {
+  test("large malformed backlog pages still reach and queue a valid video", async () => {
+    vi.useFakeTimers();
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    for (let index = 0; index < 20; index++)
+      await insertVideo(t, `bad-${index}`, {
+        canonicalUrl: "https://example.org/not-a-video",
+        metadata: { detail: "x".repeat(900_000) },
+        updatedAt: index,
+      });
+    const id = await insertVideo(t, "HHHHHHHHHHH", { updatedAt: 21 });
+    await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
+    let cursor: string | null = null;
+    const rows = [];
+    for (let page = 0; page < 21; page++) {
+      const result: {
+        rows: Array<{ id: Id<"sources"> }>;
+        continueCursor: string;
+        isDone: boolean;
+      } = await t.query(internal.transcriptCapture.listTranscriptBacklog, {
+        cursor,
+      });
+      rows.push(...result.rows);
+      if (result.isDone) break;
+      cursor = result.continueCursor;
+    }
+    expect(rows.map((row) => row.id)).toEqual([id]);
+    let args = {};
+    for (let tick = 0; tick < 21; tick++) {
+      await t.mutation(internal.transcriptCapture.enqueueIfNeeded, args);
+      const run = await t.run((ctx) => ctx.db.query("agentRuns").first());
+      if (run) {
+        expect(run.input).toEqual({
+          backlogCursor: (args as { cursor?: string }).cursor ?? null,
+        });
+        const result = await t.query(
+          internal.transcriptCapture.listTranscriptBacklog,
+          { cursor: run.input.backlogCursor },
+        );
+        expect(result.rows.map((row) => row.id)).toContain(id);
+        return;
+      }
+      const next = await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").order("desc").first(),
+      );
+      expect(next?.name).toMatch(/^transcriptCapture(\.js)?:enqueueIfNeeded$/);
+      args = next!.args[0];
+    }
+    throw new Error("Malformed Sources stranded the valid video");
+  });
+
   test("queues one run only when transcripts await and none is active", async () => {
+    vi.useFakeTimers();
     const t = convexTest(schema, modules);
     const runs = () =>
       t.run((ctx) =>
@@ -223,6 +275,17 @@ describe("transcript capture cron", () => {
     await insertVideo(t, "HHHHHHHHHHH");
     await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
     await t.mutation(internal.transcriptCapture.enqueueIfNeeded, {});
+    const continuation = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").order("desc").first(),
+    );
+    await t.mutation(
+      internal.transcriptCapture.enqueueIfNeeded,
+      continuation!.args[0],
+    );
+    await t.mutation(
+      internal.transcriptCapture.enqueueIfNeeded,
+      continuation!.args[0],
+    );
     expect((await runs()).map((run) => run.status)).toEqual(["queued"]);
   });
 });

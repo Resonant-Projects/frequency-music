@@ -1,3 +1,7 @@
+import { mkdtempSync, rmSync, readdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+let scratch: string;
 import {
   afterEach,
   beforeEach,
@@ -7,16 +11,137 @@ import {
   vi,
 } from "vite-plus/test";
 import { runOnce } from "../src/runner";
+import { LEASE_MS } from "../../convex/shared/mediaJobs";
 
 // The runner logs claim/failure lines; keep test output quiet.
 beforeEach(() => {
+  scratch = mkdtempSync(join(tmpdir(), "media-runner-test-"));
   vi.spyOn(console, "log").mockImplementation(() => {});
 });
 afterEach(() => {
+  rmSync(scratch, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
 
 describe("runOnce", () => {
+  test("a failed completion write reuses the persisted result on the next lease", async () => {
+    let attempt = 0;
+    const tool = vi.fn(async (name: string) => {
+      if (name === "claimNextMediaJob")
+        return {
+          jobId: "retained-job",
+          kind: "probe",
+          input: { kind: "probe", rendererVersion: "0.1.0" },
+          leaseToken: `lease-${attempt}`,
+          attempts: attempt,
+        };
+      if (name === "completeMediaJob" && attempt === 0)
+        throw new Error("connection lost");
+      if (name === "failMediaJob") attempt++;
+      return null;
+    });
+    const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
+    const config = {
+      workerId: "w",
+      kinds: ["probe"],
+      workDir: scratch,
+      rendererVersion: "0.1.0",
+    };
+    expect(
+      await runOnce(config, tool as never, { probe: handler as never }),
+    ).toBe("failed");
+    expect(
+      await runOnce(config, tool as never, { probe: handler as never }),
+    ).toBe("done");
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(readdirSync(join(scratch, "retained"))).toEqual([]);
+  });
+
+  test.each([false, true])(
+    "a transient renewal failure survives, consecutive failures abort=%s",
+    async (repeatFailure) => {
+      vi.useFakeTimers();
+      let calls = 0;
+      const tool = vi.fn(async (name: string) => {
+        if (name === "claimNextMediaJob")
+          return { ...claimedJob({}), leaseExpiresAt: Date.now() + LEASE_MS };
+        if (name === "renewMediaJobLease") {
+          if (++calls === 1 || repeatFailure)
+            throw new Error("transient network error");
+          return { leaseExpiresAt: Date.now() + LEASE_MS };
+        }
+        return null;
+      });
+      let resolve!: (value: { kind: "probe"; artifacts: [] }) => void;
+      let signal!: AbortSignal;
+      let started!: () => void;
+      const ready = new Promise<void>((done) => {
+        started = done;
+      });
+      const running = runOnce(
+        {
+          workerId: "w",
+          kinds: ["probe"],
+          workDir: scratch,
+          rendererVersion: "0.1.0",
+        },
+        tool as never,
+        {
+          probe: (ctx) => {
+            signal = ctx.signal;
+            started();
+            return new Promise((done, reject) => {
+              resolve = done;
+              signal.addEventListener("abort", () => reject(signal.reason));
+            });
+          },
+        },
+      );
+      try {
+        await ready;
+        await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+        expect(signal.aborted).toBe(false);
+        await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+        expect(signal.aborted).toBe(repeatFailure);
+        if (!repeatFailure) resolve({ kind: "probe", artifacts: [] });
+        expect(await running).toBe(repeatFailure ? "failed" : "done");
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  test.each([true, false])(
+    "a server-confirmed pre-render failure can start without a paid-work checkpoint, allowed=%s",
+    async (freshStartAllowed) => {
+      const tool = vi.fn(async (name: string) =>
+        name === "claimNextMediaJob"
+          ? {
+              jobId: "rollout",
+              kind: "probe",
+              input: { kind: "probe", rendererVersion: "new" },
+              leaseToken: "lease",
+              attempts: 1,
+              freshStartAllowed,
+            }
+          : null,
+      );
+      const handler = vi.fn(async () => ({ kind: "probe", artifacts: [] }));
+      const outcome = await runOnce(
+        {
+          workerId: "new",
+          kinds: ["probe"],
+          workDir: scratch,
+          rendererVersion: "new",
+        },
+        tool as never,
+        { probe: handler as never },
+      );
+      expect(outcome).toBe(freshStartAllowed ? "done" : "failed");
+      expect(handler).toHaveBeenCalledTimes(freshStartAllowed ? 1 : 0);
+    },
+  );
+
   test("idle when nothing is claimed", async () => {
     const calls: string[] = [];
     const tool = vi.fn(async (name: string) => {
@@ -27,7 +152,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -62,7 +187,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -94,7 +219,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
       },
       tool as never,
@@ -118,7 +243,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
         deadlineMs: 50,
       },
@@ -152,7 +277,7 @@ describe("runOnce", () => {
       {
         workerId: "w",
         kinds: ["probe"],
-        workDir: "/tmp",
+        workDir: scratch,
         rendererVersion: "0.1.0",
         deadlineMs: 20,
         deadlineGraceMs: 20,

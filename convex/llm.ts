@@ -6,7 +6,7 @@ export { TASK_MODELS } from "./shared/llmPolicy";
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
 // The node-side generation half lives in llmNode.ts.
 
-export const DEFAULT_MODEL = ANTHROPIC_MODELS.sonnet;
+export const DEFAULT_MODEL = TASK_MODELS.extract_v3;
 
 /**
  * Per-model OpenRouter reasoning effort. Only models listed here get a
@@ -25,11 +25,13 @@ export const MODELS = {
   // YouTube transcript capture (agent transcript-capture graph): Groq Whisper.
   transcription: TRANSCRIPTION_MODEL,
 
-  // === Direct Anthropic (monthly API credits) ===
+  // Current Anthropic task defaults use direct API credits.
   default: DEFAULT_MODEL,
   quality: ANTHROPIC_MODELS.opus,
   sonnet: ANTHROPIC_MODELS.sonnet,
   haiku: ANTHROPIC_MODELS.haiku,
+  // Retain the previous extraction default as a registered manual override.
+  sol: "openai/gpt-6.1-sol",
   // Extractions written by the Claude Code operator session
   // (scripts/operator-extraction.ts, extract.storeOperatorExtraction).
   opus: ANTHROPIC_MODELS.opus,

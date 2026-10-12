@@ -14,6 +14,7 @@ import {
   resolveDomainsForSector,
 } from "./domainMappings";
 import { entityTypeValidator } from "./schema";
+import { currentExtractions } from "./extractions";
 import { conceptReturnValidator, edgeReturnValidator } from "./validators";
 
 const CONCEPT_DETAIL_LINK_LIMIT = 20;
@@ -481,15 +482,13 @@ export const createEdge = internalMutation({
     // Check if edge already exists
     const existing = await ctx.db
       .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", args.fromType).eq("fromId", args.fromId),
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("toType"), args.toType),
-          q.eq(q.field("toId"), args.toId),
-          q.eq(q.field("relationship"), relationship),
-        ),
+      .withIndex("by_identity", (q) =>
+        q
+          .eq("fromType", args.fromType)
+          .eq("fromId", args.fromId)
+          .eq("toType", args.toType)
+          .eq("toId", args.toId)
+          .eq("relationship", relationship),
       )
       .first();
 
@@ -538,17 +537,42 @@ export const deleteEdge = internalMutation({
  * so a retry, a re-extraction, or the backfill never inflates mentionCount.
  * Classification is scheduled only for Concepts this call created; the
  * classify-stale-concepts cron retries any that stay unreviewed.
+ * Historical snapshots and archived Sources do not contribute current evidence.
  * Returns the topics that gained a new source→concept link.
  */
 async function linkExtractionTopics(
   ctx: MutationCtx,
   extraction: Doc<"extractions">,
-): Promise<string[]> {
+  topicOffset = 0,
+  topicLimit = Number.POSITIVE_INFINITY,
+): Promise<{ concepts: string[]; nextTopicOffset?: number }> {
+  const source = await ctx.db.get(extraction.sourceId);
+  if (extraction.historical || !source || source.status === "archived")
+    return { concepts: [] };
+  if (
+    extraction.historical === undefined &&
+    (await currentExtractions(ctx.db, source._id).first())?._id !==
+      extraction._id
+  )
+    return { concepts: [] };
   const linked: string[] = [];
   const created: Id<"concepts">[] = [];
-  for (const topic of extraction.topics) {
+  const end = Math.min(extraction.topics.length, topicOffset + topicLimit);
+  for (const topic of extraction.topics.slice(topicOffset, end)) {
     const name = topic.toLowerCase().trim();
     if (!name) continue;
+    const existing = await ctx.db
+      .query("edges")
+      .withIndex("by_identity", (q) =>
+        q
+          .eq("fromType", "source")
+          .eq("fromId", extraction.sourceId)
+          .eq("toType", "concept")
+          .eq("toId", name)
+          .eq("relationship", "mentions"),
+      )
+      .first();
+    if (existing) continue;
     const known = await ctx.db
       .query("concepts")
       .withIndex("by_name", (q) => q.eq("name", name))
@@ -562,20 +586,6 @@ async function linkExtractionTopics(
       });
       created.push(conceptId);
     }
-    const existing = await ctx.db
-      .query("edges")
-      .withIndex("by_from", (q) =>
-        q.eq("fromType", "source").eq("fromId", extraction.sourceId),
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("toType"), "concept"),
-          q.eq(q.field("toId"), name),
-          q.eq(q.field("relationship"), "mentions"),
-        ),
-      )
-      .first();
-    if (existing) continue;
     await ctx.runMutation(internal.graph.createEdge, {
       fromType: "source",
       fromId: extraction.sourceId,
@@ -588,12 +598,92 @@ async function linkExtractionTopics(
     linked.push(topic);
   }
   await scheduleConceptClassification(ctx, created);
-  return linked;
+  return {
+    concepts: linked,
+    nextTopicOffset: end < extraction.topics.length ? end : undefined,
+  };
+}
+
+async function topicListHash(topics: string[]): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(JSON.stringify(topics)),
+  );
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 const linkResultValidator = v.object({
   linked: v.number(),
   concepts: v.array(v.string()),
+});
+
+/** Withdraw obsolete automatic mentions with one edge/Concept per transaction. */
+export const reconcileExtractionConcepts = internalMutation({
+  args: {
+    extractionId: v.id("extractions"),
+    cursor: v.optional(v.string()),
+    topicsHash: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    const extraction = await ctx.db.get(args.extractionId);
+    if (!extraction || extraction.historical === true) return null;
+    const source = await ctx.db.get(extraction.sourceId);
+    if (
+      !source ||
+      source.status === "archived" ||
+      (await currentExtractions(ctx.db, source._id).first())?._id !==
+        extraction._id
+    )
+      return null;
+    const topicsHash = await topicListHash(extraction.topics);
+    const topics = new Set(
+      extraction.topics
+        .map((topic) => topic.toLowerCase().trim())
+        .filter(Boolean),
+    );
+    const page = await ctx.db
+      .query("edges")
+      .withIndex("by_source_concept_projection", (q) =>
+        q
+          .eq("fromType", "source")
+          .eq("fromId", extraction.sourceId)
+          .eq("toType", "concept")
+          .eq("relationship", "mentions")
+          .eq("autoGenerated", true),
+      )
+      .paginate({
+        cursor: args.topicsHash === topicsHash ? (args.cursor ?? null) : null,
+        numItems: 1,
+        maximumBytesRead: 1_000_000,
+      });
+    for (const edge of page.page) {
+      if (topics.has(edge.toId)) continue;
+      const concept = await ctx.db
+        .query("concepts")
+        .withIndex("by_name", (q) => q.eq("name", edge.toId))
+        .first();
+      await ctx.db.delete(edge._id);
+      if (concept)
+        await ctx.db.patch(concept._id, {
+          mentionCount: Math.max(0, concept.mentionCount - 1),
+          updatedAt: Date.now(),
+        });
+    }
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.graph.reconcileExtractionConcepts,
+        {
+          extractionId: extraction._id,
+          cursor: page.continueCursor,
+          topicsHash,
+        },
+      );
+    return null;
+  },
 });
 
 /**
@@ -602,25 +692,57 @@ const linkResultValidator = v.object({
  * once and is retried on transient errors, which a scheduled action is not.
  */
 export const linkExtraction = internalMutation({
-  args: { extractionId: v.id("extractions") },
+  args: {
+    extractionId: v.id("extractions"),
+    topicOffset: v.optional(v.number()),
+    topicsHash: v.optional(v.string()),
+  },
   returns: linkResultValidator,
   handler: async (ctx, args) => {
     const extraction = await ctx.db.get("extractions", args.extractionId);
-    if (!extraction) throw new Error("Extraction not found");
-    const concepts = await linkExtractionTopics(ctx, extraction);
+    if (!extraction) return { linked: 0, concepts: [] };
+    const topicsHash = await topicListHash(extraction.topics);
+    // Edits may shift or replace remaining topics between transactions.
+    // Restart idempotently whenever the cursor's topic list has changed.
+    const offset = args.topicsHash === topicsHash ? (args.topicOffset ?? 0) : 0;
+    // Full documents may approach 1 MiB. One topic leaves room for its
+    // Source, legacy reading, Concept and edge in this transaction.
+    const { concepts, nextTopicOffset } = await linkExtractionTopics(
+      ctx,
+      extraction,
+      offset,
+      1,
+    );
+    if (nextTopicOffset !== undefined)
+      await ctx.scheduler.runAfter(0, internal.graph.linkExtraction, {
+        extractionId: extraction._id,
+        topicOffset: nextTopicOffset,
+        topicsHash,
+      });
     return { linked: concepts.length, concepts };
   },
 });
 
-/**
- * Action form of linkExtraction, kept because the durable extraction
- * workflows call it as a step; a no-op after the scheduled link has run.
- */
-export const linkExtractionConcepts = internalAction({
+/** Snapshot completion requires every link in its own atomic transaction. */
+export const linkExtractionConceptsAtomic = internalMutation({
   args: { extractionId: v.id("extractions") },
   returns: linkResultValidator,
-  handler: async (ctx, args): Promise<{ linked: number; concepts: string[] }> =>
-    await ctx.runMutation(internal.graph.linkExtraction, args),
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ linked: number; concepts: string[] }> => {
+    const extraction = await ctx.db.get("extractions", args.extractionId);
+    if (!extraction) throw new Error("Extraction not found");
+    const { concepts } = await linkExtractionTopics(ctx, extraction);
+    return { linked: concepts.length, concepts };
+  },
+});
+
+export const linkExtractionConcepts = internalAction({
+  args: { extractionId: v.id("extractions") },
+  returns: v.object({ linked: v.number(), concepts: v.array(v.string()) }),
+  handler: (ctx, args): Promise<{ linked: number; concepts: string[] }> =>
+    ctx.runMutation(internal.graph.linkExtractionConceptsAtomic, args),
 });
 
 /**
@@ -701,6 +823,10 @@ export const buildGraphFromExtractions = internalMutation({
   args: {
     cursor: v.optional(v.union(v.string(), v.null())),
     batchSize: v.optional(v.number()),
+    pendingExtractionId: v.optional(v.id("extractions")),
+    topicOffset: v.optional(v.number()),
+    topicsHash: v.optional(v.string()),
+    endOfTable: v.optional(v.boolean()),
   },
   returns: v.object({
     processed: v.number(),
@@ -708,37 +834,51 @@ export const buildGraphFromExtractions = internalMutation({
     isDone: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    // Bounded so a continuation page stays inside one transaction's limits.
-    const batchSize = Math.min(
-      Math.max(Math.floor(args.batchSize ?? 10), 1),
-      50,
-    );
-    const page = await ctx.db
-      .query("extractions")
-      .paginate({ cursor: args.cursor ?? null, numItems: batchSize });
-
-    let conceptsLinked = 0;
-    for (const extraction of page.page) {
-      conceptsLinked += (await linkExtractionTopics(ctx, extraction)).length;
+    let extraction: Doc<"extractions"> | null;
+    let cursor = args.cursor ?? null;
+    let endOfTable = args.endOfTable ?? false;
+    if (args.pendingExtractionId) {
+      extraction = await ctx.db.get("extractions", args.pendingExtractionId);
+    } else {
+      // A row and its Source can each approach 1 MiB. Topic linking is also
+      // bounded, and the next Extraction is not visited until this one finishes.
+      const page = await ctx.db.query("extractions").paginate({
+        cursor,
+        numItems: 1,
+      });
+      extraction = page.page[0] ?? null;
+      cursor = page.continueCursor;
+      endOfTable = page.isDone;
     }
-
-    console.log("graph backfill page", {
-      processed: page.page.length,
-      conceptsLinked,
-      isDone: page.isDone,
-    });
-    if (!page.isDone) {
+    const topicsHash = extraction
+      ? await topicListHash(extraction.topics)
+      : undefined;
+    const offset = args.topicsHash === topicsHash ? (args.topicOffset ?? 0) : 0;
+    const { concepts, nextTopicOffset } = extraction
+      ? await linkExtractionTopics(ctx, extraction, offset, 1)
+      : { concepts: [], nextTopicOffset: undefined };
+    const isDone = endOfTable && nextTopicOffset === undefined;
+    if (!isDone)
       await ctx.scheduler.runAfter(
         0,
         internal.graph.buildGraphFromExtractions,
-        { cursor: page.continueCursor, batchSize },
+        {
+          cursor,
+          batchSize: 1,
+          ...(nextTopicOffset === undefined
+            ? {}
+            : {
+                pendingExtractionId: extraction!._id,
+                topicOffset: nextTopicOffset,
+                topicsHash,
+                endOfTable,
+              }),
+        },
       );
-    }
-
     return {
-      processed: page.page.length,
-      conceptsLinked,
-      isDone: page.isDone,
+      processed: extraction && nextTopicOffset === undefined ? 1 : 0,
+      conceptsLinked: concepts.length,
+      isDone,
     };
   },
 });

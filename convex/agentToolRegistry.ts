@@ -26,6 +26,22 @@ function omitUndefined<T extends Record<string, unknown>>(value: T): T {
 }
 
 const runs: Record<AgentToolName, AgentToolDef["run"]> = {
+  reportCaptureFailure: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("operationFailures:reportCaptureFailure"),
+      args,
+    ),
+  getFailureInvestigation: (ctx, args) =>
+    ctx.runQuery(queryRef("operationFailures:getInvestigation"), args),
+  submitFailureDiagnosis: (ctx, args) =>
+    ctx.runMutation(mutationRef("operationFailures:submitDiagnosis"), args),
+  getCaptureRecovery: (ctx, args) =>
+    ctx.runQuery(queryRef("operationFailures:getCaptureRecovery"), args),
+  finishCaptureRecovery: (ctx, args) =>
+    ctx.runMutation(
+      mutationRef("operationFailures:finishCaptureRecovery"),
+      args,
+    ),
   listRecentExtractions: (ctx, args) =>
     ctx.runQuery(queryRef("extractions:listRecent"), {
       limit: (args.limit as number) ?? 20,
@@ -211,6 +227,7 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runMutation(
       mutationRef("agentRuns:appendEvent"),
       omitUndefined({
+        deliveryId: args.deliveryId,
         runId: args.runId,
         kind: args.kind,
         message: args.message,
@@ -261,10 +278,14 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
   getAgentRun: (ctx, args) =>
     ctx.runQuery(queryRef("agentRuns:getForWorker"), { runId: args.runId }),
   claimNextMediaJob: (ctx, args) =>
-    ctx.runMutation(internal.mediaJobs.claimNext, {
-      workerId: args.workerId as string,
-      kinds: args.kinds as string[],
-    }),
+    ctx.runMutation(
+      internal.mediaJobs.claimNext,
+      omitUndefined({
+        workerId: args.workerId as string,
+        kinds: args.kinds as string[],
+        rendererVersion: args.rendererVersion as string | undefined,
+      }),
+    ),
   renewMediaJobLease: (ctx, args) =>
     ctx.runMutation(internal.mediaJobs.renewLease, {
       jobId: args.jobId as Id<"mediaJobs">,

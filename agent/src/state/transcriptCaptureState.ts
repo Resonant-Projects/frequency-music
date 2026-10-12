@@ -13,6 +13,7 @@ export type TranscriptCaptureTally = {
 export const TranscriptCaptureAnnotation = Annotation.Root({
   agentRunId: Annotation<string | undefined>,
   traceUrl: Annotation<string | undefined>,
+  backlogCursor: Annotation<string | null | undefined>,
   tally: Annotation<TranscriptCaptureTally | undefined>,
   auditEvents: Annotation<AgentAuditEvent[]>({
     value: (left, right) => left.concat(right),

@@ -92,6 +92,45 @@ describe("installed AI SDK provider compatibility", () => {
     },
   );
 
+  test("a retained Haiku 4.5 attempt preserves its original provider parameters", async () => {
+    const fetch = mockCompletion("Recovered extraction.");
+    await generateLlmText({
+      task: "extract_v3",
+      model: "anthropic/claude-haiku-4.5",
+      system: "Retained system prompt.",
+      prompt: "Retained source snapshot.",
+    });
+    const [url, init] = fetch.mock.calls[0]!;
+    expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
+    const body = JSON.parse(init!.body as string);
+    expect(body).toMatchObject({
+      model: "anthropic/claude-haiku-4.5",
+      max_tokens: TOKEN_BUDGETS.extract_v3,
+    });
+    expect(body).not.toHaveProperty("thinking");
+    expect(body).not.toHaveProperty("output_config");
+  });
+
+  test.each(["extract_v2", "extract_v3"] as const)(
+    "%s defaults to direct Sonnet despite an OpenRouter credential",
+    async (task) => {
+      const fetch = mockAnthropic("An extraction.");
+      await generateLlmText({
+        task,
+        system: "Extract.",
+        prompt: "Source.",
+      });
+      const [url, init] = fetch.mock.calls[0]!;
+      expect(url).toBe("https://api.anthropic.com/v1/messages");
+      expect(JSON.parse(init!.body as string)).toMatchObject({
+        model: "claude-sonnet-5-5",
+        thinking: { type: "adaptive" },
+        output_config: { effort: "medium" },
+        max_tokens: TOKEN_BUDGETS[task],
+      });
+    },
+  );
+
   test("task defaults select Opus for hypothesis design", async () => {
     const fetch = mockAnthropic("A musical hypothesis.");
     await generateLlmText({
@@ -167,6 +206,7 @@ describe("installed AI SDK provider compatibility", () => {
     const fetch = mockAnthropic('{"claim":"Interval ratios matter."}');
     const result = await generateLlmObject({
       task: "extract_v2",
+      model: MODELS.sonnet,
       system: "Return one claim.",
       prompt: "Source text.",
       schema: z.object({ claim: z.string() }),

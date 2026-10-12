@@ -754,6 +754,9 @@ describe("source-scout recapture mode", () => {
       ],
     ]);
     expect(update.recaptureAttempted).toBe(2);
+    expect(
+      callTool.mock.calls.some(([name]) => name === "reportCaptureFailure"),
+    ).toBe(false);
     expect(update.sourceWrites).toEqual([
       expect.objectContaining({ id: "source-a", enriched: true }),
     ]);
@@ -785,7 +788,7 @@ describe("source-scout recapture mode", () => {
       agentRunId: "run-recapture",
     } as unknown as SourceScoutState);
     expect(update.summary).toBe(
-      "source-scout completed: recapture captured 1 of 2 URL-only sources: Plate modes",
+      "source-scout completed: recapture captured 1 of 2 URL-only sources; 0 failed attempts: Plate modes",
     );
   });
 });

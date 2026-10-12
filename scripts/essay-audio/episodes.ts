@@ -10,6 +10,8 @@
 // and render write only out/essay-audio/. publish stops the idle media worker
 // for the length of the batch, renders nothing, and restarts it.
 import "varlock/auto-load";
+import type { Id } from "../../convex/_generated/dataModel";
+import { redactError } from "../../convex/shared/redactError";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -31,7 +33,7 @@ import {
 } from "convex/server";
 import { api, internal } from "../../convex/_generated/api";
 import { runFfmpeg } from "../../media/src/audio/ffmpeg";
-import { encodeMp3 } from "../../media/src/audio/encode";
+import { uploadMasterAndDelivery } from "../../media/src/audio/artifacts";
 import { concatWithGaps } from "../../media/src/audio/concat";
 import {
   assertWithinPolicy,
@@ -50,7 +52,6 @@ import type { JobContext, NewArtifact } from "../../media/src/jobs/types";
 import { runOnce } from "../../media/src/runner";
 import { chunkForLimit } from "../../media/src/tts/chunk";
 import { type VoiceKey, synthesize, voiceFor } from "./voices";
-import { assertUnderUploadCap, MAX_UPLOAD_BYTES } from "../../media/src/upload";
 import { wordErrorRate } from "./wer";
 import { assertNewSources, reservedSources } from "./history";
 import {
@@ -721,7 +722,29 @@ async function publish(batch: string): Promise<void> {
       ...resumable,
       ...pending.filter((entry) => !queuedTitles.has(entry.episodeTitle)),
     ];
-    for (const entry of ordered) await publishOne(client, batch, entry);
+    const failed: string[] = [];
+    for (const entry of ordered) {
+      try {
+        await publishOne(client, batch, entry);
+      } catch (error) {
+        failed.push(entry.slug);
+        console.error(
+          `${entry.slug}: publication failed: ${redactError(error)}`,
+        );
+        // Queue exclusivity is a prerequisite for claiming the next essay safely.
+        const live = (await scanTable(client, "mediaJobs")).filter(
+          (job) => job.status === "queued" || job.status === "claimed",
+        );
+        if (live.length)
+          throw new Error(
+            `Cannot continue publication while ${live.length} media job(s) remain live`,
+          );
+      }
+    }
+    if (failed.length)
+      throw new Error(
+        `Publication finished with failed essays: ${failed.join(", ")}`,
+      );
   } finally {
     if (stopped) {
       execFileSync(
@@ -770,100 +793,15 @@ async function publishOne(
   const workDir = join(batchDir(batch), "publisher");
   await mkdir(workDir, { recursive: true });
 
-  const upload = async (
+  const upload = (
     ctx: JobContext,
     input: string,
     kind: "narration" | "episode",
     base: Omit<NewArtifact, "role" | "encoding" | "contentHash">,
-  ) => {
-    const duration = (await measure(input, ctx.signal)).durationSecs;
-    // Long 48 kHz masters would pass the 95 MB upload cap; keep 24 kHz then.
-    const rate = duration * 48000 * 2 + 44 > MAX_UPLOAD_BYTES ? 24000 : 48000;
-    const master = join(ctx.workDir, "master.wav");
-    await runFfmpeg(
-      [
-        "-i",
-        input,
-        "-map_metadata",
-        "-1",
-        "-fflags",
-        "+bitexact",
-        "-ar",
-        String(rate),
-        "-ac",
-        "1",
-        "-c:a",
-        "pcm_s16le",
-        master,
-      ],
-      { signal: ctx.signal },
-    );
-    const delivery = join(ctx.workDir, "delivery.mp3");
-    await encodeMp3(
-      master,
-      delivery,
-      { bitrateKbps: 128, channels: 2 },
-      ctx.signal,
-    );
-    const one = async (
-      path: string,
-      role: "masterNormalized" | "delivery",
-      masterArtifactId?: string,
-    ) => {
-      const metrics = await measure(path, ctx.signal);
-      assertWithinPolicy(metrics, -16);
-      assertUnderUploadCap(role, (await stat(path)).size);
-      const artifact: NewArtifact = {
-        ...base,
-        kind,
-        role,
-        access: role === "delivery" ? base.access : "private",
-        encoding:
-          role === "delivery"
-            ? { codec: "mp3", bitrateKbps: 128, sampleRate: 48000, channels: 2 }
-            : { codec: "wav", sampleRate: rate, channels: 1 },
-        contentHash: createHash("sha256")
-          .update(await readFile(path))
-          .digest("hex"),
-        ...(masterArtifactId
-          ? {
-              masterArtifactId:
-                masterArtifactId as NewArtifact["masterArtifactId"],
-            }
-          : {}),
-      };
-      const ticket = await ctx.tools.generateAudioUploadUrl({
-        jobId: ctx.job.jobId,
-        leaseToken: ctx.job.leaseToken,
-        artifact,
-      });
-      const mimeType = role === "delivery" ? "audio/mpeg" : "audio/wav";
-      const stored = await ctx.tools.uploadBytes(
-        ticket.uploadUrl,
-        path,
-        mimeType,
-        ctx.signal,
-      );
-      await ctx.tools.attachAudioStorage({
-        jobId: ctx.job.jobId,
-        leaseToken: ctx.job.leaseToken,
-        artifactId: ticket.artifactId,
-        storageId: stored.storageId,
-      });
-      return {
-        artifactId: ticket.artifactId as NonNullable<
-          NewArtifact["masterArtifactId"]
-        >,
-        durationSecs: metrics.durationSecs,
-        loudnessLufs: metrics.integratedLufs,
-        truePeakDbtp: metrics.truePeakDbtp,
-        mimeType,
-      };
-    };
-    const master1 = await one(master, "masterNormalized");
-    const delivery1 = await one(delivery, "delivery", master1.artifactId);
-    return [master1, delivery1];
-  };
+  ) =>
+    uploadMasterAndDelivery(ctx, input, { ...base, kind }, {}, -16, {
+      hashMode: "bytes",
+    });
 
   const voiceMeta = { catalogId: rendered.voice, promptVersion };
   const narrate = async (ctx: JobContext) => {
@@ -935,6 +873,7 @@ async function publishOne(
   };
 
   const outcome = await adminMutation(client, internal.mediaJobs.enqueue, {
+    resumeOperatorPublication: true,
     input: {
       kind: "narrate",
       script,
@@ -952,7 +891,7 @@ async function publishOne(
   let steps: ("narrate" | "assembleEpisode")[] = ["narrate", "assembleEpisode"];
   if (!outcome.created) {
     // An earlier run narrated this essay but its assembly did not finish:
-    // resume with the assembly alone, re-enqueueing it if the production
+    // resume with the assembly alone, requeueing its original job if the production
     // worker parked it (it refuses operator renderer versions).
     const jobs = await scanTable(client, "mediaJobs");
     type JobInput = { kind?: string; title?: string; rendererVersion?: string };
@@ -983,12 +922,15 @@ async function publishOne(
       );
     } else if (assembly.status === "parked" || assembly.status === "failed") {
       const again = await adminMutation(client, internal.mediaJobs.enqueue, {
+        resumeOperatorPublication: true,
         input: assembly.input as FunctionArgs<
           typeof internal.mediaJobs.enqueue
         >["input"],
       });
-      if (!again.created) {
-        throw new Error(`${entry.slug}: could not re-enqueue its assembly`);
+      if (again.jobId !== assembly._id) {
+        throw new Error(
+          `${entry.slug}: could not resume its original assembly`,
+        );
       }
     } else if (assembly.status !== "queued") {
       throw new Error(
@@ -1034,8 +976,22 @@ async function publishOne(
       narrate,
       assembleEpisode: assemble,
     });
-    if (result !== "done")
+    if (result !== "done") {
+      try {
+        await adminMutation(
+          client,
+          internal.mediaJobs.deferOperatorPublication,
+          {
+            jobId: live[0]!._id as Id<"mediaJobs">,
+            rendererVersion: RENDERER,
+            title: entry.episodeTitle,
+          },
+        );
+      } catch (error) {
+        console.error(`${entry.slug}: publication deferral failed`, error);
+      }
       throw new Error(`${entry.slug}: publication ${result}`);
+    }
   }
   const episodes = await adminQuery(client, internal.podcast.listFeedEpisodes, {
     limit: 100,

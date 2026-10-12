@@ -75,7 +75,10 @@ vpx tsx scripts/essay-audio/episodes.ts publish --batch 20261010-elevenlabs-01
   queue is idle. It then stops the production media worker on ai-5090-02,
   publishes each rendered essay through the leased narrate and assemble
   lifecycle, and restarts the worker. It renders nothing and changes no
-  research data.
+  research data. If publication parks an essay job, rerunning `publish` requeues
+  its exact narration or assembly snapshot under the original job ID, preserving
+  retained output and attached uploads. Keep the batch's `publisher/retained`
+  directory while a job is parked; successful completion removes its checkpoints.
 
 The private feed lists the newest 100 episodes (`FEED_LIMIT` in
 `convex/podcast.ts`). Publish in batches you will listen to.

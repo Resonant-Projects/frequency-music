@@ -5,7 +5,7 @@
  * on export and import when a Codex operator writes the results; Opus is the
  * default for existing Claude Code sessions.
  *
- * 1. Export a chunk (read-only unless --park-unextractable; the export query
+ * 1. Export a chunk (pins durable snapshots before external generation; the export query
  *    is operator-only, so it also needs the bypass secret):
  *      vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]
  *    Writes <dir>/chunk-NNN.json. Each holds the system prompt, the
@@ -16,7 +16,7 @@
  * 3. Import the results:
  *      vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run]
  *    Each Extraction goes through extract.storeOperatorExtraction, which
- *    refuses a Source whose text changed since export, applies the same text
+ *    retains late snapshot results as history, applies the same text
  *    gate and duplicate checks as extractSource, and records the model.
  *
  * Operator-gated: contacts the deployed Convex backend as the operator service
@@ -84,6 +84,23 @@ async function exportChunks(args: string[]) {
   const devBypassSecret = getDevBypassSecret();
   // Pages of 20, newest first, until --limit Sources are collected.
   const rows: ExportRow[] = [];
+  let snapshotCursor: string | null = null;
+  while (rows.length < limit) {
+    const result: {
+      page: ExportRow[];
+      continueCursor: string;
+      isDone: boolean;
+    } = await client.query(api.sources.operatorExtractionSnapshots, {
+      model,
+      limit: Math.min(limit - rows.length, 200),
+      cursor: snapshotCursor,
+      devBypassSecret,
+    });
+    rows.push(...result.page);
+    if (result.isDone) break;
+    snapshotCursor = result.continueCursor;
+  }
+  const seen = new Set(rows.map((row) => row.sourceId));
   let cursor: string | null = null;
   while (rows.length < limit) {
     const result: {
@@ -94,7 +111,13 @@ async function exportChunks(args: string[]) {
       cursor,
       devBypassSecret,
     });
-    rows.push(...result.page);
+    rows.push(
+      ...result.page.filter((row) => {
+        if (seen.has(row.sourceId)) return false;
+        seen.add(row.sourceId);
+        return true;
+      }),
+    );
     if (result.isDone) break;
     cursor = result.continueCursor;
   }
@@ -102,6 +125,35 @@ async function exportChunks(args: string[]) {
     model,
     chunkSize,
   });
+  for (const chunk of chunks) {
+    const retained: typeof chunk.items = [];
+    for (const item of chunk.items) {
+      if (item.snapshotId) {
+        retained.push(item);
+        continue;
+      }
+      const snapshot = await client.action(
+        api.extract.beginOperatorExtraction,
+        {
+          sourceId: item.sourceId as Id<"sources">,
+          inputHash: item.inputHash,
+          model,
+          devBypassSecret,
+        },
+      );
+      if (!snapshot) continue;
+      chunk.system = snapshot.system;
+      chunk.promptVersion = snapshot.promptVersion;
+      retained.push({
+        ...item,
+        snapshotId: snapshot.snapshotId,
+        system: snapshot.system,
+        promptVersion: snapshot.promptVersion,
+        prompt: snapshot.prompt,
+      });
+    }
+    chunk.items = retained;
+  }
   mkdirSync(out, { recursive: true });
   chunks.forEach((chunk, index) => {
     const file = join(out, `chunk-${String(index + 1).padStart(3, "0")}.json`);
@@ -165,6 +217,7 @@ async function importResults(args: string[]) {
         sourceId: result.sourceId as Id<"sources">,
         model,
         inputHash: result.inputHash,
+        snapshotId: result.snapshotId as Id<"extractionAttempts"> | undefined,
         // Checked by extractionProblems above and by Convex's validator.
         extraction: result.extraction as never,
         devBypassSecret,

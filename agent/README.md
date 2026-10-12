@@ -149,3 +149,25 @@ Run the repo Convex test suite from the repository root when Convex schema/funct
 ```bash
 bun test convex/*.test.ts
 ```
+
+### Patched braces dependency
+
+The production install applies `patches/braces@3.0.3.patch` through Bun's
+`patchedDependencies`. Upstream `braces` has no published fix for
+[CVE-2026-93687](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). The local
+patch bounds parser nesting and the compile, expand, and stringify AST walkers
+at 64 levels. Deep input fails with a controlled `SyntaxError` before recursive
+stack exhaustion. Normal glob alternatives, ranges, and escaped literals retain
+their existing behavior.
+
+The patched package identifies itself as downstream version
+`3.0.4-frequency.1`; this is a Frequency patch release, not an upstream release.
+The upstream source stays pinned at `braces@3.0.3`, and the lockfile pins the
+patch hash. Regression tests reproduce the upstream crash using a 9,999-character
+pattern and cover direct AST inputs. Remove the patch when an upstream release
+provides equivalent bounds. Image scans continue to reject High and Critical
+findings without ignore rules or VEX exceptions.
+
+The pinned bgutil token sidecar source also applies exact security overrides
+for `proxy-addr@2.0.8` and `source-map-js@1.2.2` before its locked production
+install. These overrides belong to the sidecar, not the agent package.

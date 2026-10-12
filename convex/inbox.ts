@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { currentExtractions } from "./extractions";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { readStat } from "./dashboard";
@@ -118,13 +119,10 @@ export const list = query({
 
     return await Promise.all(
       selected.map(async (source) => {
-        const latestExtraction = await ctx.db
-          .query("extractions")
-          .withIndex("by_sourceId_createdAt", (q) =>
-            q.eq("sourceId", source._id),
-          )
-          .order("desc")
-          .first();
+        const latestExtraction = await currentExtractions(
+          ctx.db,
+          source._id,
+        ).first();
 
         return {
           ...source,

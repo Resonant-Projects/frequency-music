@@ -41,5 +41,8 @@
     "hono": "4.13.13",
     "postcss": "8.5.29",
     "ws": "^8.21.0"
+  },
+  "patchedDependencies": {
+    "braces@3.0.3": "patches/braces@3.0.3.patch"
   }
 }

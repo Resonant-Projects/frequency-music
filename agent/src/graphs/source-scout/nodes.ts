@@ -1,3 +1,5 @@
+import { captureSourceAttempt } from "./captureAttempt.js";
+import type { CaptureInput } from "../../../../convex/shared/operationRecovery";
 import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { z } from "zod";
 import type {
@@ -408,32 +410,38 @@ export function createIngestSourcesNode(
     );
     // Duplicate intake stores text only for a scout URL-only Source whose
     // earlier capture failed, so every other known URL skips the crawl.
-    const pages = await Promise.all(
-      intakeUrls.map((url, index) =>
-        known.has(url) && !known.get(url)
-          ? null
-          : crawl(url, { title: candidates[index]?.searchHit.result.title }),
-      ),
+    // Crawls run concurrently; intake and failure reporting stay in order.
+    const crawls = intakeUrls.map((url, index) =>
+      known.has(url) && !known.get(url)
+        ? undefined
+        : crawl(url, { title: candidates[index]?.searchHit.result.title }),
     );
+    void Promise.allSettled(crawls);
+    let captureFailureCount = 0;
     for (const [index, judgment] of candidates.entries()) {
       const rationale = rationaleFor(judgment);
       const publishedAt = parsedPublishedAt(
         judgment.searchHit.result.publishedAt,
       );
-      const page = pages[index] ?? null;
       const url = intakeUrls[index] ?? judgment.searchHit.result.url;
-      const result = (await callTool("ingestScoutedSource", {
-        url,
-        title: judgment.searchHit.result.title,
-        ...(publishedAt === undefined ? {} : { publishedAt }),
-        ...(page ? { rawText: page.text, contentProvider: page.provider } : {}),
-        query: judgment.searchHit.query.query,
-        rationale,
-        agentRunId: state.agentRunId,
-      })) as { id?: unknown; created?: unknown; enriched?: unknown };
-      if (typeof result.id !== "string") {
-        throw new Error("ingestScoutedSource returned no source id");
-      }
+      const result = await captureSourceAttempt(
+        {
+          agentRunId: state.agentRunId,
+          input: {
+            url,
+            title: judgment.searchHit.result.title,
+            ...(publishedAt === undefined ? {} : { publishedAt }),
+            query: judgment.searchHit.query.query,
+            rationale,
+          },
+          skipCapture: !crawls[index],
+        },
+        callTool,
+        () => crawls[index] ?? Promise.resolve(null),
+      );
+      auditEvents.push(...result.auditEvents);
+      if (result.failed) captureFailureCount++;
+      if (!result.id) continue;
       const enriched = result.enriched === true;
       const write = {
         id: result.id,
@@ -462,13 +470,16 @@ export function createIngestSourcesNode(
         )),
       );
     }
-    return { sourceWrites, auditEvents };
+    return { sourceWrites, auditEvents, captureFailureCount };
   };
 }
 
 export const ingestSourcesNode = createIngestSourcesNode();
 
-export function routeAtStart(state: Pick<SourceScoutState, "mode">) {
+export function routeAtStart(
+  state: Pick<SourceScoutState, "mode" | "recovery">,
+) {
+  if (state.recovery) return "recover_capture";
   return state.mode === "recapture" ? "recapture_sources" : "fetch_targets";
 }
 
@@ -571,91 +582,52 @@ export function createRecaptureSourcesNode(
     );
     const sourceWrites: ScoutWriteResult[] = [];
     const auditEvents: AgentAuditEvent[] = [];
+    let captureFailureCount = 0;
     for (const [index, row] of backlog.entries()) {
-      const page = pages[index];
-      if (!page) {
-        // Intake records the failed attempt, moving the Source behind
-        // untried ones for the next recapture run.
-        try {
-          await callTool("ingestScoutedSource", {
+      const result = await captureSourceAttempt(
+        {
+          agentRunId: state.agentRunId,
+          input: {
             url: row.url,
-            ...(row.title ? { title: row.title } : {}),
+            title: row.title,
             query: row.query,
             rationale: row.rationale,
-            agentRunId: state.agentRunId,
-          });
-        } catch (error) {
-          auditEvents.push(
-            ...(await appendRemoteAuditEvent(
-              callTool,
-              state.agentRunId,
-              "error",
-              "Source scout recapture could not record a failed attempt",
-              { id: row.id, url: row.url, error: redactError(error) },
-            )),
-          );
-        }
-        auditEvents.push(
-          ...(await appendRemoteAuditEvent(
-            callTool,
-            state.agentRunId,
-            "decision",
-            "Source scout recapture found no usable text",
-            { id: row.id, url: row.url },
-          )),
-        );
-        continue;
-      }
-      let result: { id?: unknown; created?: unknown; enriched?: unknown };
-      try {
-        result = (await callTool("ingestScoutedSource", {
-          url: row.url,
-          ...(row.title ? { title: row.title } : {}),
-          rawText: page.text,
-          contentProvider: page.provider,
-          query: row.query,
-          rationale: row.rationale,
-          agentRunId: state.agentRunId,
-        })) as { id?: unknown; created?: unknown; enriched?: unknown };
-      } catch (error) {
-        // One refused write must not lose the rest of the run's captures.
-        auditEvents.push(
-          ...(await appendRemoteAuditEvent(
-            callTool,
-            state.agentRunId,
-            "error",
-            "Source scout recapture could not store captured text",
-            { id: row.id, url: row.url, error: redactError(error) },
-          )),
-        );
-        continue;
-      }
-      const enriched = result.enriched === true;
+          },
+          page: pages[index] ?? null,
+          reportFailure: false,
+        },
+        callTool,
+        crawl,
+      );
+      auditEvents.push(...result.auditEvents);
+      if (result.failed) captureFailureCount++;
+      if (!result.id || result.failed) continue;
       const write = {
-        id: typeof result.id === "string" ? result.id : row.id,
+        id: result.id,
         url: row.url,
         title: row.title ?? row.url,
         targetGap: "recapture",
         rationale: row.rationale,
-        created: result.created === true,
-        ...(enriched ? { enriched } : {}),
+        created: result.created,
+        ...(result.enriched ? { enriched: true } : {}),
       };
       sourceWrites.push(write);
       auditEvents.push(
         ...(await appendRemoteAuditEvent(
           callTool,
           state.agentRunId,
-          enriched ? "tool_call" : "decision",
-          enriched
+          result.enriched ? "tool_call" : "decision",
+          result.enriched
             ? "Source scout captured text for URL-only source"
             : "Source scout recapture left the source unchanged",
-          { ...write, provider: page.provider },
+          write,
         )),
       );
     }
     return {
       sourceWrites,
       auditEvents,
+      captureFailureCount,
       recaptureAttempted: backlog.length,
       recaptureBacklogIncomplete: backlogIncomplete,
     };
@@ -704,46 +676,58 @@ export function createProposeFeedsNode(callTool: ToolCaller = callConvex) {
     for (const judgment of candidates) {
       const url = judgment.searchHit.result.url;
       const rationale = rationaleFor(judgment);
-      const result = (await callTool("proposeFeed", {
-        name: judgment.searchHit.result.title,
-        url,
-        type: feedType(url),
-        rationale,
-        sampleItems: [
-          {
-            title: judgment.searchHit.result.title,
-            url: judgment.searchHit.result.url,
-            snippet: judgment.searchHit.result.snippet,
-            ...(judgment.searchHit.result.publishedAt
-              ? { publishedAt: judgment.searchHit.result.publishedAt }
-              : {}),
-          },
-        ],
-        agentRunId: state.agentRunId,
-      })) as { id?: unknown; created?: unknown };
-      if (typeof result.id !== "string") {
-        throw new Error("proposeFeed returned no feed id");
+      try {
+        const result = (await callTool("proposeFeed", {
+          name: judgment.searchHit.result.title,
+          url,
+          type: feedType(url),
+          rationale,
+          sampleItems: [
+            {
+              title: judgment.searchHit.result.title,
+              url: judgment.searchHit.result.url,
+              snippet: judgment.searchHit.result.snippet,
+              ...(judgment.searchHit.result.publishedAt
+                ? { publishedAt: judgment.searchHit.result.publishedAt }
+                : {}),
+            },
+          ],
+          agentRunId: state.agentRunId,
+        })) as { id?: unknown; created?: unknown };
+        if (typeof result.id !== "string") {
+          throw new Error("proposeFeed returned no feed id");
+        }
+        const write = {
+          id: result.id,
+          url,
+          title: judgment.searchHit.result.title,
+          targetGap: judgment.verdict.targetGap,
+          rationale,
+          created: result.created === true,
+        };
+        feedWrites.push(write);
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            write.created ? "tool_call" : "decision",
+            write.created
+              ? "Source scout proposed disabled feed"
+              : "Source scout skipped duplicate feed",
+            write,
+          )),
+        );
+      } catch (error) {
+        auditEvents.push(
+          ...(await appendRemoteAuditEvent(
+            callTool,
+            state.agentRunId,
+            "error",
+            "Source scout feed proposal failed",
+            { url, error: redactError(error) },
+          )),
+        );
       }
-      const write = {
-        id: result.id,
-        url,
-        title: judgment.searchHit.result.title,
-        targetGap: judgment.verdict.targetGap,
-        rationale,
-        created: result.created === true,
-      };
-      feedWrites.push(write);
-      auditEvents.push(
-        ...(await appendRemoteAuditEvent(
-          callTool,
-          state.agentRunId,
-          write.created ? "tool_call" : "decision",
-          write.created
-            ? "Source scout proposed disabled feed"
-            : "Source scout skipped duplicate feed",
-          write,
-        )),
-      );
     }
     return { feedWrites, auditEvents };
   };
@@ -756,7 +740,7 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     if (state.mode === "recapture") {
       const captured = state.sourceWrites.filter((write) => write.enriched);
       // finalizeRunCompleted identifies the graph by this prefix.
-      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources${state.recaptureBacklogIncomplete ? " (backlog scan stopped at its page budget)" : ""}${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
+      const summary = `source-scout completed: recapture captured ${captured.length} of ${state.recaptureAttempted} URL-only sources; ${state.captureFailureCount ?? 0} failed attempts${state.recaptureBacklogIncomplete ? " (backlog scan stopped at its page budget)" : ""}${captured.length ? `: ${captured.map((write) => write.title).join(" | ")}` : ""}`;
       const auditEvents = await finalizeRunCompleted(
         callTool,
         state.agentRunId,
@@ -798,7 +782,7 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
           ? `source-scout completed: query planning failed for ${gapCount} research gaps; no searches run (planner error)`
           : allJudgesFailed
             ? `source-scout completed: zero judgments; ${state.judgeErrorCount} judge errors discarded`
-            : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors${plannerFailed ? "; used foundational queries after planner error" : ""}${rationales ? `. Rationale: ${rationales}` : ""}`;
+            : `source-scout completed: ${sourcesCreated} sources ingested, ${sourcesEnriched ? `${sourcesEnriched} URL-only sources captured, ` : ""}${feedsCreated} feeds proposed, ${duplicates} duplicates skipped, ${state.judgeErrorCount} judge errors, ${state.captureFailureCount ?? 0} failed captures${plannerFailed ? "; used foundational queries after planner error" : ""}${rationales ? `. Rationale: ${rationales}` : ""}`;
     const auditEvents = await finalizeRunCompleted(
       callTool,
       state.agentRunId,
@@ -810,3 +794,35 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
 }
 
 export const summarizeNode = createSummarizeNode();
+
+export async function recoverCaptureNode(
+  state: SourceScoutState,
+): Promise<SourceScoutUpdate> {
+  if (!state.agentRunId) throw new Error("Source Scout provenance required");
+  const recovery = (await callConvex("getCaptureRecovery", {
+    agentRunId: state.agentRunId,
+  })) as { failureId: string; input: CaptureInput } | null;
+  if (!recovery) {
+    const summary =
+      "source-scout completed: no eligible capture recovery remains";
+    await finalizeRunCompleted(callConvex, state.agentRunId, summary);
+    return { summary };
+  }
+  const result = await captureSourceAttempt({
+    agentRunId: state.agentRunId,
+    input: recovery.input,
+    reportFailure: false,
+  });
+  await callConvex("finishCaptureRecovery", {
+    agentRunId: state.agentRunId,
+    failureId: recovery.failureId,
+    success: !result.failed,
+  });
+  const summary = `source-scout completed: recovery ${result.failed ? "failed" : "completed"}`;
+  await finalizeRunCompleted(callConvex, state.agentRunId, summary);
+  return {
+    summary,
+    auditEvents: result.auditEvents,
+    captureFailureCount: result.failed ? 1 : 0,
+  };
+}

@@ -34,6 +34,260 @@ const seed = (t: ReturnType<typeof convexTest>, extra = {}) =>
   );
 
 describe("source recovery from the Action Queue", () => {
+  test.each(["text", "archive", "access"] as const)(
+    "external intake preserves operator-owned %s and its provenance",
+    async (recovery) => {
+      const t = convexTest(schema, modules);
+      const id = await seed(t, {
+        type: "url",
+        canonicalUrl: "https://example.org/protected",
+        dedupeKey: "url:example.org/protected",
+      });
+      const reader = t.withIdentity({ subject: "reader" });
+      if (recovery === "text") {
+        await reader.mutation(api.sources.provideRecoveryText, {
+          id,
+          expectedUpdatedAt: 2,
+          kind: "article",
+          text: body,
+        });
+      } else if (recovery === "archive") {
+        await reader.mutation(api.sources.archiveRecoverySource, {
+          id,
+          expectedUpdatedAt: 2,
+        });
+      }
+      if (recovery === "access") {
+        await reader.mutation(api.sources.requestSourceRecovery, {
+          id,
+          expectedUpdatedAt: 2,
+          note: "Access changed; retry the new capture snapshot.",
+        });
+      }
+      const protectedSource = await t.query(api.sources.get, { id });
+      for (const stale of [
+        { rawText: `${body}Old automatic article.` },
+        { transcript: `${body}Old automatic transcript.` },
+        { title: "Old title", metadata: { feedName: "Old metadata" } },
+      ]) {
+        expect(
+          await t.mutation(internal.sources.upsertExternal, {
+            type: "url",
+            dedupeKey: "url:example.org/protected",
+            ...stale,
+          }),
+        ).toEqual({ id, created: false, contentChanged: false });
+        expect(await t.query(api.sources.get, { id })).toEqual(protectedSource);
+      }
+    },
+  );
+
+  test.each([
+    ["article", "resolved"],
+    ["transcript", "needsReview"],
+  ] as const)(
+    "human %s recovery settles capture only when its completion contract is satisfied",
+    async (kind, expectedStatus) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(50_000);
+      try {
+        const t = convexTest({ schema, modules, transactionLimits: true });
+        const url = "https://example.org/human-recovery";
+        const id = await seed(t, {
+          type: "url",
+          canonicalUrl: url,
+          dedupeKey: "url:example.org/human-recovery",
+        });
+        const scoutRunId = await t.run((ctx) =>
+          ctx.db.insert("agentRuns", {
+            graphName: "source-scout",
+            status: "running",
+            input: {},
+            createdAt: 1,
+            updatedAt: 1,
+          }),
+        );
+        const failureId = await t.mutation(
+          internal.operationFailures.reportCaptureFailure,
+          {
+            agentRunId: scoutRunId,
+            input: {
+              url,
+              query: "resonance",
+              rationale: "Missing article text",
+            },
+            stage: "capture",
+            diagnostic: "HTTP 403: capture needs operator access",
+          },
+        );
+        await t.run((ctx) =>
+          ctx.db.patch(failureId, { attempts: 2, nextAttemptAt: 0 }),
+        );
+        await t.mutation(internal.operationFailures.claimRecovery, {
+          failureId,
+        });
+        const failure = (await t.run((ctx) => ctx.db.get(failureId)))!;
+        const investigationId = failure.investigationRunId!;
+        await t.run((ctx) =>
+          ctx.db.patch(investigationId, { status: "running" }),
+        );
+        await t.mutation(internal.operationFailures.submitDiagnosis, {
+          agentRunId: investigationId,
+          result: {
+            diagnosis: "Human article access is required",
+            recover: false,
+          },
+        });
+        expect((await t.run((ctx) => ctx.db.get(failureId)))!.status).toBe(
+          "needsReview",
+        );
+        await t
+          .withIdentity({ subject: "reader" })
+          .mutation(api.sources.provideRecoveryText, {
+            id,
+            expectedUpdatedAt: 2,
+            kind,
+            text: body,
+          });
+        expect((await t.run((ctx) => ctx.db.get(failureId)))!.status).toBe(
+          expectedStatus,
+        );
+        expect((await t.query(api.sources.get, { id }))!.status).toBe(
+          "text_ready",
+        );
+      } finally {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  test("external intake still updates a Source that has no operator recovery ownership", async () => {
+    const t = convexTest(schema, modules);
+    const id = await seed(t, {
+      type: "url",
+      canonicalUrl: "https://example.org/ordinary-intake",
+      dedupeKey: "url:example.org/ordinary-intake",
+    });
+    expect(
+      await t.mutation(internal.sources.upsertExternal, {
+        type: "url",
+        dedupeKey: "url:example.org/ordinary-intake",
+        rawText: body,
+        metadata: { feedName: "New automatic capture" },
+      }),
+    ).toEqual({ id, created: false, contentChanged: true });
+    expect(await t.query(api.sources.get, { id })).toMatchObject({
+      rawText: body,
+      status: "text_ready",
+      metadata: { feedName: "New automatic capture" },
+    });
+  });
+  test.each(["text", "status", "extraction", "promotion", "admin"] as const)(
+    "same-millisecond %s writes cannot revive an invalidated capture version",
+    async (write) => {
+      const t = convexTest(schema, modules);
+      const id = await seed(t);
+      const reader = t.withIdentity({ subject: "reader" });
+      const clock = vi.spyOn(Date, "now").mockReturnValue(2);
+      try {
+        await reader.mutation(api.sources.provideRecoveryText, {
+          id,
+          expectedUpdatedAt: 2,
+          kind: "article",
+          text: body,
+        });
+        const recovered = (await t.query(api.sources.get, { id }))!;
+        expect(recovered.updatedAt).toBe(3);
+        if (write === "text") {
+          await reader.mutation(api.sources.updateText, {
+            id,
+            expectedUpdatedAt: recovered.updatedAt,
+            rawText: `${body}Fresh versioned capture.`,
+          });
+        } else if (write === "status") {
+          await reader.mutation(api.sources.updateStatus, {
+            id,
+            expectedUpdatedAt: recovered.updatedAt,
+            status: "review_needed",
+          });
+        } else if (write === "extraction") {
+          await t.mutation(internal.extractInternal.beginExtraction, {
+            sourceId: id,
+            model: "test",
+          });
+        } else if (write === "promotion") {
+          await reader.mutation(api.admin.promoteVisibility, {
+            input: { entityType: "sources", id, visibility: "private" },
+          });
+        } else {
+          await reader.mutation(api.admin.setSourceStatus, {
+            id,
+            status: "review_needed",
+          });
+        }
+        const fresh = await t.query(api.sources.get, { id });
+        await expect(
+          reader.mutation(api.sources.updateText, {
+            id,
+            expectedUpdatedAt: 2,
+            rawText: `${body}Old capture that must be discarded.`,
+          }),
+        ).rejects.toThrow("Source changed during capture");
+        expect(await t.query(api.sources.get, { id })).toEqual(fresh);
+        expect(fresh?.updatedAt).toBeGreaterThan(recovered.updatedAt);
+      } finally {
+        clock.mockRestore();
+      }
+    },
+  );
+  test("a fresh transcript attempt cannot revive the version preceding an access update", async () => {
+    const t = convexTest(schema, modules);
+    const id = await seed(t, { status: "ingested" });
+    const runId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "transcript-capture",
+        status: "running",
+        input: {},
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const clock = vi.spyOn(Date, "now").mockReturnValue(2);
+    try {
+      await t
+        .withIdentity({ subject: "reader" })
+        .mutation(api.sources.requestSourceRecovery, {
+          id,
+          expectedUpdatedAt: 2,
+          note: "Access changed.",
+        });
+      expect(
+        await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+          sourceId: id,
+          expectedUpdatedAt: 3,
+          agentRunId: runId,
+          outcome: "attempted",
+          detail: "Fresh temporary failure",
+        }),
+      ).toEqual({ updated: true });
+      const fresh = await t.query(api.sources.get, { id });
+      expect(
+        await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+          sourceId: id,
+          expectedUpdatedAt: 2,
+          agentRunId: runId,
+          outcome: "captured",
+          transcript: body,
+          model: "whisper-large-v3-turbo",
+        }),
+      ).toEqual({ updated: false });
+      expect(await t.query(api.sources.get, { id })).toEqual(fresh);
+      expect(fresh?.updatedAt).toBe(4);
+    } finally {
+      clock.mockRestore();
+    }
+  });
   test.each(["captured", "unavailable", "attempted", "rate_limited"] as const)(
     "access updates discard stale automatic %s outcomes and allow fresh attempts",
     async (outcome) => {
@@ -302,6 +556,40 @@ describe("source recovery from the Action Queue", () => {
       expect(await t.query(api.sources.get, { id })).toEqual(before);
     }
   });
+  test.each(["text", "status"] as const)(
+    "legacy %s cannot overwrite an access update without its new version",
+    async (write) => {
+      const t = convexTest(schema, modules);
+      const reader = t.withIdentity({ subject: "reader" });
+      const id = await seed(t);
+      await reader.mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: 2,
+        note: "The video is now available publicly.",
+      });
+      const before = await t.query(api.sources.get, { id });
+      const capture = (expectedUpdatedAt?: number) =>
+        write === "text"
+          ? reader.mutation(api.sources.updateText, {
+              id,
+              transcript: body,
+              expectedUpdatedAt,
+            })
+          : reader.mutation(api.sources.updateStatus, {
+              id,
+              status: "review_needed",
+              blockedReason: "no_text",
+              expectedUpdatedAt,
+            });
+      await expect(capture()).rejects.toThrow(/discard/);
+      expect(await t.query(api.sources.get, { id })).toEqual(before);
+      await capture(before!.updatedAt);
+      expect(
+        (await t.query(api.sources.get, { id }))!.updatedAt,
+      ).toBeGreaterThan(before!.updatedAt);
+    },
+  );
+
   test("YouTube access updates without a usable video ID stay parked and cannot create empty runs", async () => {
     const t = convexTest(schema, modules),
       reader = t.withIdentity({ subject: "reader" });

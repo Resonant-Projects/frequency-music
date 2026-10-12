@@ -19,7 +19,11 @@ export type ToolClient = {
     jobId: string;
     leaseToken: string;
     artifact: NewArtifact;
-  }) => Promise<{ artifactId: string; uploadUrl: string }>;
+  }) => Promise<{
+    artifactId: string;
+    uploadUrl: string;
+    storageAttached?: boolean;
+  }>;
   attachAudioStorage: (args: {
     jobId: string;
     leaseToken: string;
@@ -37,6 +41,9 @@ export type ToolClient = {
 export type JobContext = {
   job: ClaimedMediaJob;
   workDir: string;
+  retainedDir?: string;
+  // Provisioned durable boundary. If omitted, retainedDir must already exist.
+  retainedRoot?: string;
   tools: ToolClient;
   rendererVersion: string;
   // Fires when the runner's job deadline passes; handlers forward it to every

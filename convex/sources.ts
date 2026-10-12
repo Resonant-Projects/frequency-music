@@ -11,6 +11,11 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { currentExtractions } from "./extractions";
+import {
+  settleCaptureFailures,
+  settleExtractionFailures,
+} from "./operationFailures";
 import {
   looksLikeBotChallenge,
   SCOUTED_CONTENT_PROVIDERS,
@@ -31,6 +36,7 @@ import {
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
 import {
+  advanceSourceVersion,
   publicSourceUrl,
   RECOVERY_KINDS,
   RECOVERY_NOTE_MAX_CHARS,
@@ -65,6 +71,18 @@ export const listByStatus = query({
 // even when every one holds a long transcript.
 const OPERATOR_EXPORT_PAGE_SIZE = 20;
 
+async function requireOperatorIdentity(
+  ctx: Parameters<typeof requireAuth>[0],
+  args: Parameters<typeof requireAuth>[1],
+) {
+  const identity = await requireAuth(ctx, args);
+  if (!identity.isBypass)
+    throw new ConvexError({
+      code: "FORBIDDEN",
+      message: "Operator extraction requires the operator bypass secret",
+    });
+}
+
 /**
  * One page of text_ready Sources for operator extraction
  * (scripts/operator-extraction.ts export), newest first. The inputHash and
@@ -93,13 +111,7 @@ export const operatorExtractionPage = query({
     isDone: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
-    if (!identity.isBypass) {
-      throw new ConvexError({
-        code: "FORBIDDEN",
-        message: "Operator extraction requires the operator bypass secret",
-      });
-    }
+    await requireOperatorIdentity(ctx, args);
     const result = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "text_ready"))
@@ -131,6 +143,77 @@ export const operatorExtractionPage = query({
       page,
       continueCursor: result.continueCursor,
       isDone: result.isDone,
+    };
+  },
+});
+
+/** Recover export files lost after an operator snapshot was reserved. */
+export const operatorExtractionSnapshots = query({
+  args: {
+    model: v.string(),
+    cursor: v.optional(v.union(v.string(), v.null())),
+    limit: v.optional(v.number()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        sourceId: v.id("sources"),
+        snapshotId: v.id("extractionAttempts"),
+        title: v.optional(v.string()),
+        canonicalUrl: v.optional(v.string()),
+        type: v.string(),
+        inputHash: v.string(),
+        content: v.string(),
+        prompt: v.string(),
+        system: v.string(),
+        promptVersion: v.string(),
+      }),
+    ),
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    await requireOperatorIdentity(ctx, args);
+    const result = await ctx.db
+      .query("extractionAttempts")
+      .withIndex("by_origin_model_status_updated", (q) =>
+        q
+          .eq("origin", "operator")
+          .eq("model", args.model)
+          .eq("status", "pending"),
+      )
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: Math.min(Math.max(args.limit ?? 8, 1), 8),
+        maximumBytesRead: 4_000_000,
+      });
+    const live = [];
+    for (const snapshot of result.page) {
+      const source = await ctx.db.get(snapshot.sourceId);
+      if (
+        !source ||
+        source.status === "archived" ||
+        source.activeExtractionAttemptId !== snapshot._id
+      )
+        continue;
+      live.push(snapshot);
+    }
+    return {
+      continueCursor: result.continueCursor,
+      isDone: result.isDone,
+      page: live.map((snapshot) => ({
+        sourceId: snapshot.sourceId,
+        snapshotId: snapshot._id,
+        title: snapshot.title,
+        canonicalUrl: snapshot.canonicalUrl,
+        type: "snapshot",
+        inputHash: snapshot.inputHash,
+        content: "",
+        prompt: snapshot.prompt,
+        system: snapshot.systemPrompt,
+        promptVersion: snapshot.promptVersion,
+      })),
     };
   },
 });
@@ -310,7 +393,8 @@ export const updateStatus = mutation({
         (args.blockedReason === "no_text" ||
           args.expectedUpdatedAt === undefined)) ||
       (args.blockedReason === "no_text" &&
-        source.metadata?.sourceRecovery?.providedAt &&
+        (source.metadata?.sourceRecovery?.providedAt !== undefined ||
+          source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
         args.expectedUpdatedAt === undefined)
     ) {
       throw new ConvexError({
@@ -321,10 +405,23 @@ export const updateStatus = mutation({
     }
     await ctx.db.patch("sources", args.id, {
       status: args.status,
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
+    if (args.status === "archived") {
+      await settleCaptureFailures(ctx, {
+        dedupeKey: source.dedupeKey,
+        capturedAt: Date.now(),
+      });
+    }
     return null;
   },
 });
@@ -354,7 +451,8 @@ export const updateText = mutation({
     assertCaptureVersion(source, args.expectedUpdatedAt);
     if (
       source.status === "archived" ||
-      (source.metadata?.sourceRecovery?.providedAt &&
+      ((source.metadata?.sourceRecovery?.providedAt !== undefined ||
+        source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
         args.expectedUpdatedAt === undefined)
     ) {
       throw new ConvexError({
@@ -382,7 +480,7 @@ export const updateText = mutation({
       ...(source.blockedReason === "no_text" && text.trim()
         ? { blockedReason: undefined, blockedDetails: undefined }
         : {}),
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -446,9 +544,12 @@ export const archiveRecoverySource = mutation({
       args.id,
       args.expectedUpdatedAt,
     );
-    const now = Math.max(Date.now(), source.updatedAt + 1);
+    const now = advanceSourceVersion(source.updatedAt);
     await ctx.db.patch("sources", source._id, {
       status: "archived",
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
       updatedAt: now,
       metadata: {
         ...source.metadata,
@@ -459,6 +560,14 @@ export const archiveRecoverySource = mutation({
           archiveReason: "Unavailable source dismissed from the Action Queue.",
         },
       },
+    });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
+    await settleCaptureFailures(ctx, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: now,
     });
     return null;
   },
@@ -520,7 +629,7 @@ export const provideRecoveryText = mutation({
       "SHA-256",
       new TextEncoder().encode(capturedText),
     );
-    const now = Math.max(Date.now(), source.updatedAt + 1);
+    const now = advanceSourceVersion(source.updatedAt);
     await ctx.db.patch("sources", source._id, {
       rawText: args.kind === "transcript" ? undefined : capturedText,
       transcript: args.kind === "transcript" ? capturedText : undefined,
@@ -545,6 +654,12 @@ export const provideRecoveryText = mutation({
             source.blockedDetails,
         },
       },
+    });
+    // Reuse the canonical completion check and bounded settlement. A
+    // transcript-only recovery does not satisfy Scout's raw-text contract.
+    await ctx.runMutation(internal.operationFailures.settleCaptured, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: now,
     });
     return null;
   },
@@ -573,7 +688,7 @@ export const requestSourceRecovery = mutation({
         message: `Describe what access changed, in at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
       });
     // Even a same-millisecond access update must invalidate an old snapshot.
-    const now = Math.max(Date.now(), source.updatedAt + 1);
+    const now = advanceSourceVersion(source.updatedAt);
     const transcriptQueued =
       source.type === "youtube" &&
       !source.rawText &&
@@ -667,6 +782,16 @@ async function upsertExternalSource(
     .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
     .first();
 
+  // Unversioned intake cannot undo a human recovery or an archive, including
+  // by replacing metadata that carries the recovery's ownership/provenance.
+  if (
+    existing &&
+    (existing.status === "archived" ||
+      existing.metadata?.sourceRecovery?.providedAt !== undefined ||
+      existing.metadata?.sourceRecovery?.accessChangedAt !== undefined)
+  )
+    return { id: existing._id, created: false, contentChanged: false };
+
   const text = args.rawText || args.transcript;
   const rawTextSha256 = text ? await sha256Hex(text) : undefined;
 
@@ -699,7 +824,7 @@ async function upsertExternalSource(
         ? "archived"
         : existing.status,
     blockedReason: contentChanged ? undefined : existing.blockedReason,
-    updatedAt: now,
+    updatedAt: advanceSourceVersion(existing.updatedAt, now),
   });
 
   return { id: existing._id, created: false, contentChanged };
@@ -780,10 +905,7 @@ export const resetScoutCapture = mutation({
         message: "Only an unextracted Source Scout capture can be reset",
       });
     }
-    const extraction = await ctx.db
-      .query("extractions")
-      .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", args.id))
-      .first();
+    const extraction = await currentExtractions(ctx.db, args.id).first();
     if (extraction) {
       throw new ConvexError({
         code: "INVALID_STATE",
@@ -802,7 +924,7 @@ export const resetScoutCapture = mutation({
       blockedReason: "no_text",
       blockedDetails: args.reason,
       metadata: { ...metadata, scoutedBy: scoutProvenance },
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -965,6 +1087,15 @@ export const createScoutedSource = internalMutation({
       .first();
     if (existing) {
       if (!awaitsScoutCapture(existing)) {
+        if (
+          existing.rawText &&
+          existing.rawText.trim().length >= SCOUTED_TEXT_MIN_CHARS &&
+          !looksLikeBotChallenge(existing.rawText)
+        )
+          await settleCaptureFailures(ctx, {
+            dedupeKey,
+            capturedAt: Date.now(),
+          });
         return { id: existing._id, created: false };
       }
       if (!rawText) {
@@ -981,12 +1112,13 @@ export const createScoutedSource = internalMutation({
                 lastCaptureAttemptRunId: args.agentRunId,
               },
             },
-            updatedAt: Date.now(),
+            updatedAt: advanceSourceVersion(existing.updatedAt),
           });
         }
         return { id: existing._id, created: false };
       }
       const metadata = existing.metadata as { scoutedBy: object };
+      const capturedAt = Date.now();
       await ctx.db.patch("sources", existing._id, {
         rawText,
         rawTextSha256: await sha256Hex(rawText),
@@ -1002,8 +1134,9 @@ export const createScoutedSource = internalMutation({
             capturedByAgentRunId: args.agentRunId,
           },
         },
-        updatedAt: Date.now(),
+        updatedAt: advanceSourceVersion(existing.updatedAt, capturedAt),
       });
+      await settleCaptureFailures(ctx, { dedupeKey, capturedAt });
       return { id: existing._id, created: false, enriched: true };
     }
 
@@ -1024,6 +1157,8 @@ export const createScoutedSource = internalMutation({
         },
       },
     });
+    if (rawText)
+      await settleCaptureFailures(ctx, { dedupeKey, capturedAt: Date.now() });
     return { id: result.id, created: result.created };
   },
 });
@@ -1060,7 +1195,7 @@ export const setVisibility = mutation({
           : args.visibility === "public"
             ? "promoted_public"
             : source.status,
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -1261,7 +1396,18 @@ export const archive = mutation({
     await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
-      updatedAt: Date.now(),
+      activeExtractionAttemptId: undefined,
+      lastExtractionAttemptId:
+        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+      updatedAt: advanceSourceVersion(source.updatedAt),
+    });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
+    await settleCaptureFailures(ctx, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: Date.now(),
     });
     return null;
   },
@@ -1315,10 +1461,7 @@ async function dedupeStanding(
   ctx: MutationCtx,
   source: Doc<"sources">,
 ): Promise<DedupeStanding> {
-  const extraction = await ctx.db
-    .query("extractions")
-    .withIndex("by_sourceId_createdAt", (q) => q.eq("sourceId", source._id))
-    .first();
+  const extraction = await currentExtractions(ctx.db, source._id).first();
   return {
     status: source.status,
     blockedReason: source.blockedReason,
@@ -1326,6 +1469,44 @@ async function dedupeStanding(
     hasExtraction: extraction !== null,
     hasText: Boolean(source.rawText || source.transcript),
   };
+}
+
+async function archiveDedupeCollision(
+  ctx: MutationCtx,
+  source: Doc<"sources">,
+  winnerId: Id<"sources">,
+  winnerUpdatedAt: number,
+  now: number,
+  dedupeKey?: string,
+) {
+  const attemptId =
+    source.activeExtractionAttemptId ?? source.lastExtractionAttemptId;
+  await ctx.db.patch(source._id, {
+    status: "archived",
+    blockedReason: "duplicate",
+    blockedDetails: `dedupe-migration: duplicate of ${winnerId}`,
+    activeExtractionAttemptId: undefined,
+    lastExtractionAttemptId: attemptId,
+    ...(dedupeKey === undefined ? {} : { dedupeKey }),
+    updatedAt: advanceSourceVersion(source.updatedAt, now),
+  });
+  await ctx.scheduler.runAfter(
+    0,
+    internal.operationFailures.settleArchivedSource,
+    {
+      sourceId: source._id,
+      attemptId,
+      dedupeKeys: [
+        ...new Set([
+          source.dedupeKey,
+          computeCanonicalDedupeKey(source) ?? source.dedupeKey,
+        ]),
+      ],
+      capturedAt: now,
+      winnerId,
+      winnerUpdatedAt,
+    },
+  );
 }
 
 /**
@@ -1406,7 +1587,7 @@ export const recomputeDedupeKeys = mutation({
       if (collidesWith === null) {
         await ctx.db.patch("sources", source._id, {
           dedupeKey: canonical,
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(source.updatedAt, now),
         });
         changed++;
       } else if (
@@ -1417,25 +1598,27 @@ export const recomputeDedupeKeys = mutation({
         )
       ) {
         // The holder is further along (or as far along and older): archive this row.
-        await ctx.db.patch("sources", source._id, {
-          status: "archived",
-          blockedReason: "duplicate",
-          blockedDetails: `dedupe-migration: duplicate of ${holder._id}`,
-          updatedAt: now,
-        });
+        await archiveDedupeCollision(
+          ctx,
+          source,
+          holder._id,
+          holder.updatedAt,
+          now,
+        );
         collisionsArchived++;
       } else if (holder) {
         // This row should own the canonical key. Archive the holder first.
-        await ctx.db.patch("sources", holder._id, {
-          status: "archived",
-          blockedReason: "duplicate",
-          blockedDetails: `dedupe-migration: duplicate of ${source._id}`,
-          dedupeKey: generateArchivedDedupeKey(holder.dedupeKey, holder._id),
-          updatedAt: now,
-        });
+        await archiveDedupeCollision(
+          ctx,
+          holder,
+          source._id,
+          advanceSourceVersion(source.updatedAt, now),
+          now,
+          generateArchivedDedupeKey(holder.dedupeKey, holder._id),
+        );
         await ctx.db.patch("sources", source._id, {
           dedupeKey: canonical,
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(source.updatedAt, now),
         });
         changed++;
         collisionsArchived++;
@@ -1472,9 +1655,25 @@ export const bulkArchive = mutation({
       if (source) {
         await ctx.db.patch("sources", id, {
           status: "archived",
+          activeExtractionAttemptId: undefined,
+          lastExtractionAttemptId:
+            source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
           blockedDetails: args.reason || "Archived: off-topic or irrelevant",
-          updatedAt: Date.now(),
+          updatedAt: advanceSourceVersion(source.updatedAt),
         });
+        const attemptId =
+          source.activeExtractionAttemptId ?? source.lastExtractionAttemptId;
+        if (attemptId)
+          await ctx.scheduler.runAfter(
+            0,
+            internal.operationFailures.settleExtractionChain,
+            { attemptId },
+          );
+        await ctx.scheduler.runAfter(
+          0,
+          internal.operationFailures.settleCaptured,
+          { dedupeKey: source.dedupeKey, capturedAt: Date.now() },
+        );
         archived++;
       }
     }

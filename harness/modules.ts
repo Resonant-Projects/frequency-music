@@ -4,6 +4,8 @@
 // required so convex-test can derive the module root; it is never registered.
 export const modules: Record<string, () => Promise<unknown>> = {
   "./_generated/api.d.ts": () => import("../convex/_generated/api"),
+  "./operationFailures.ts": () => import("../convex/operationFailures"),
+  "./recoveryWorkflows.ts": () => import("../convex/recoveryWorkflows"),
   "./admin.ts": () => import("../convex/admin"),
   "./agentDraftPromotion.ts": () => import("../convex/agentDraftPromotion"),
   "./agentDrafts.ts": () => import("../convex/agentDrafts"),

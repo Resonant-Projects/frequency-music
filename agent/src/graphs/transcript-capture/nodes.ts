@@ -67,6 +67,7 @@ export function createCaptureTranscriptsNode(
 ) {
   return async (state: {
     agentRunId?: string;
+    backlogCursor?: string | null;
   }): Promise<TranscriptCaptureUpdate> => {
     if (!state.agentRunId)
       throw new Error("transcript-capture requires agentRunId provenance");
@@ -81,7 +82,7 @@ export function createCaptureTranscriptsNode(
     if (!transcriber.configured) return { tally };
 
     const backlog: BacklogRow[] = [];
-    let cursor: string | null = null;
+    let cursor: string | null = state.backlogCursor ?? null;
     for (let page = 0; page < MAX_BACKLOG_PAGES; page++) {
       const result = asBacklogPage(
         await callTool("listTranscriptBacklog", { cursor }),

@@ -12,8 +12,10 @@ services:
     # docs/proxmox-agent-deployment.md); Codex refreshes tokens in place.
     volumes:
       - codex-home:/data/codex-home
+      - agent-outbox:/data/outbox
     environment:
       - CODEX_HOME=/data/codex-home
+      - AGENT_OUTBOX_DIR=/data/outbox
     # Outbound only (Convex site URL, OpenRouter, OpenAI/ChatGPT, LangSmith).
 
   # Opt-in LangGraph Studio dev server: `docker compose --profile dev up langgraph-dev`.
@@ -43,5 +45,6 @@ services:
       - agent-pg:/var/lib/postgresql/data
 
 volumes:
+  agent-outbox:
   codex-home:
   agent-pg:
