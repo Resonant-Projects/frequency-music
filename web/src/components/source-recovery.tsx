@@ -38,12 +38,20 @@ export type RecoverySource = {
       lastAttemptDetail?: string;
       attempts?: number;
     };
-    sourceRecovery?: { accessChangedAt?: number; accessNote?: string };
+    sourceRecovery?: {
+      accessChangedAt?: number;
+      accessNote?: string;
+      provenanceUrl?: string;
+    };
   };
 };
 
 export function needsSourceText(source: RecoverySource) {
-  return source.blockedReason === "no_text" || source.status === "ingested";
+  return (
+    source.status === "ingested" ||
+    (["review_needed", "extracted"].includes(source.status) &&
+      source.blockedReason === "no_text")
+  );
 }
 
 function recoveryReason(source: RecoverySource) {
@@ -138,6 +146,12 @@ export function SourceRecovery(props: {
   const busy = () => saving() || props.pending;
   const fieldId = (suffix: string) => `recovery-${props.source._id}-${suffix}`;
   const sourceUrl = () => publicSourceUrl(props.source.canonicalUrl);
+  const evidenceUrl = () => {
+    const evidence = publicSourceUrl(
+      props.source.metadata?.sourceRecovery?.provenanceUrl,
+    );
+    return evidence !== sourceUrl() ? evidence : undefined;
+  };
   const retryAt = () => {
     // The operator queue-clearing workflow appends "Retry <UTC ISO date>"
     // to blockedDetails when scheduling weekly access-blocker retries.
@@ -252,6 +266,19 @@ export function SourceRecovery(props: {
             aria-label={`Open original source for ${props.source.title ?? "Untitled source"}`}
           >
             Open original source
+          </a>
+        )}
+      </Show>
+      <Show when={evidenceUrl()}>
+        {(href) => (
+          <a
+            class={linkClass}
+            href={href()}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open supplied evidence for ${props.source.title ?? "Untitled source"}`}
+          >
+            Open supplied evidence
           </a>
         )}
       </Show>

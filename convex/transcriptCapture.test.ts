@@ -57,8 +57,18 @@ describe("transcript capture backlog", () => {
       {},
     );
     expect(first.rows).toEqual([
-      { id: older, videoId: "AAAAAAAAAAA", title: "Video AAAAAAAAAAA" },
-      { id: newer, videoId: "BBBBBBBBBBB", title: "Video BBBBBBBBBBB" },
+      {
+        id: older,
+        videoId: "AAAAAAAAAAA",
+        title: "Video AAAAAAAAAAA",
+        updatedAt: 1_000,
+      },
+      {
+        id: newer,
+        videoId: "BBBBBBBBBBB",
+        title: "Video BBBBBBBBBBB",
+        updatedAt: 1_000,
+      },
     ]);
 
     vi.setSystemTime(5_000);

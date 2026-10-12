@@ -32,6 +32,91 @@ const seed = (t: ReturnType<typeof convexTest>, extra = {}) =>
   );
 
 describe("source recovery from the Action Queue", () => {
+  test.each(["captured", "unavailable", "attempted", "rate_limited"] as const)(
+    "access updates discard stale automatic %s outcomes and allow fresh attempts",
+    async (outcome) => {
+      const t = convexTest(schema, modules);
+      const id = await seed(t, { status: "ingested" });
+      const agentRunId = await t.run((ctx) =>
+        ctx.db.insert("agentRuns", {
+          graphName: "transcript-capture",
+          status: "running",
+          input: {},
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+      const oldPage = await t.query(
+        internal.transcriptCapture.listTranscriptBacklog,
+        {},
+      );
+      const clock = vi.spyOn(Date, "now").mockReturnValue(2);
+      try {
+        await t
+          .withIdentity({ subject: "reader" })
+          .mutation(api.sources.requestSourceRecovery, {
+            id,
+            expectedUpdatedAt: 2,
+            note: "Video now plays publicly.",
+          });
+      } finally {
+        clock.mockRestore();
+      }
+      const before = await t.query(api.sources.get, { id });
+      for (const expectedUpdatedAt of [oldPage.rows[0]!.updatedAt, undefined]) {
+        expect(
+          await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+            sourceId: id,
+            expectedUpdatedAt,
+            agentRunId,
+            outcome,
+            transcript: body,
+            model: "whisper-large-v3-turbo",
+            detail: "Old access outcome",
+          }),
+        ).toEqual({ updated: false });
+        expect(await t.query(api.sources.get, { id })).toEqual(before);
+      }
+      const freshPage = await t.query(
+        internal.transcriptCapture.listTranscriptBacklog,
+        {},
+      );
+      expect(
+        await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+          sourceId: id,
+          expectedUpdatedAt: freshPage.rows[0]!.updatedAt,
+          agentRunId,
+          outcome: "attempted",
+          detail: "Fresh access outcome",
+        }),
+      ).toEqual({ updated: true });
+      expect(
+        (await t.query(api.sources.get, { id }))?.metadata.transcriptCapture,
+      ).toMatchObject({
+        attempts: 1,
+        lastAttemptDetail: "Fresh access outcome",
+      });
+    },
+  );
+  test("successful legacy text writes clear obsolete no-text blocks and advance the inbox", async () => {
+    const t = convexTest(schema, modules);
+    const id = await seed(t);
+    await t
+      .withIdentity({ subject: "reader" })
+      .mutation(api.sources.updateText, {
+        id,
+        expectedUpdatedAt: 2,
+        transcript: body,
+      });
+    const source = await t.query(api.sources.get, { id });
+    expect(source?.status).toBe("text_ready");
+    expect(source?.blockedReason).toBeUndefined();
+    expect(source?.blockedDetails).toBeUndefined();
+    expect(
+      (await t.query(api.inbox.list, {})).find((row) => row._id === id)
+        ?.nextAction,
+    ).toBe("Run extraction");
+  });
   test("in-flight article and transcript actions cannot undo a recovery save or Archive", async () => {
     for (const type of ["url", "youtube"] as const) {
       for (const recovery of ["text", "archive"]) {
@@ -239,6 +324,7 @@ describe("source recovery from the Action Queue", () => {
       id: valid,
       videoId: "AAAAAAAAAAA",
       title: "Blocked video",
+      updatedAt: 2,
     });
   });
   test("late automatic captures cannot overwrite supplied text or revive archived sources", async () => {

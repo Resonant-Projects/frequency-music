@@ -16,6 +16,13 @@ export const SCOUTED_TEXT_MAX_CHARS = 30_000;
 // characters; longer transcripts are kept whole for later use.
 export const TRANSCRIPT_MIN_CHARS = 100;
 export const TRANSCRIPT_MAX_CHARS = 400_000;
+export type TranscriptBacklogRow = {
+  id: string;
+  videoId: string;
+  title?: string;
+  // Optional only for compatibility with a backend preceding version fencing.
+  updatedAt?: number;
+};
 // Groq Whisper model for YouTube transcripts; registered in convex/llm.ts
 // MODELS so scripts/check-model-catalog.ts verifies it against Groq's catalog.
 export const TRANSCRIPTION_MODEL = "groq/whisper-large-v3-turbo";

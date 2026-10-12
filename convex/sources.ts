@@ -379,6 +379,9 @@ export const updateText = mutation({
       transcript: args.transcript,
       rawTextSha256,
       status: "text_ready",
+      ...(source.blockedReason === "no_text" && text.trim()
+        ? { blockedReason: undefined, blockedDetails: undefined }
+        : {}),
       updatedAt: Date.now(),
     });
     return null;
@@ -569,7 +572,8 @@ export const requestSourceRecovery = mutation({
         code: "INVALID_NOTE",
         message: `Describe what access changed, in at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
       });
-    const now = Date.now();
+    // Even a same-millisecond access update must invalidate an old snapshot.
+    const now = Math.max(Date.now(), source.updatedAt + 1);
     const transcriptQueued =
       source.type === "youtube" &&
       !source.rawText &&

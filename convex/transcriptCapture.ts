@@ -41,6 +41,7 @@ export const listTranscriptBacklog = internalQuery({
       v.object({
         id: v.id("sources"),
         videoId: v.string(),
+        updatedAt: v.number(),
         title: v.optional(v.string()),
       }),
     ),
@@ -62,6 +63,7 @@ export const listTranscriptBacklog = internalQuery({
         {
           id: source._id,
           videoId,
+          updatedAt: source.updatedAt,
           ...(source.title ? { title: source.title } : {}),
         },
       ];
@@ -82,6 +84,7 @@ export const listTranscriptBacklog = internalQuery({
 export const recordTranscriptCapture = internalMutation({
   args: {
     sourceId: v.id("sources"),
+    expectedUpdatedAt: v.optional(v.number()),
     agentRunId: v.id("agentRuns"),
     outcome: literals("captured", "unavailable", "attempted", "rate_limited"),
     transcript: v.optional(v.string()),
@@ -97,6 +100,15 @@ export const recordTranscriptCapture = internalMutation({
     }
     const source = await ctx.db.get("sources", args.sourceId);
     if (!source || !awaitsTranscript(source)) return { updated: false };
+    if (
+      (args.expectedUpdatedAt !== undefined &&
+        args.expectedUpdatedAt !== source.updatedAt) ||
+      (args.expectedUpdatedAt === undefined &&
+        source.metadata?.sourceRecovery?.accessChangedAt !== undefined)
+    ) {
+      // Access updates invalidate outcomes from old snapshots and old workers.
+      return { updated: false };
+    }
     const now = Date.now();
     const metadata = (source.metadata ?? {}) as Record<string, unknown>;
     const previous = (metadata.transcriptCapture ?? {}) as Record<
