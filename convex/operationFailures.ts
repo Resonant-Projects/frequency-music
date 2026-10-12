@@ -174,6 +174,7 @@ async function captureCompleteForKey(ctx: Pick<QueryCtx, "db">, key: string) {
     .query("sources")
     .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", key))
     .first();
+  if (source?.status === "archived") return true;
   const text = source?.rawText?.trim();
   return (
     !!text &&
@@ -374,6 +375,13 @@ export async function finishRecovery(
     !["retrying", "recovering"].includes(failure.status)
   )
     return;
+  if (
+    failure.target.kind === "capture" &&
+    (await captureAlreadyComplete(ctx, failure.target.input.url))
+  ) {
+    await resolveOperationFailure(ctx, failure.operationId);
+    return;
+  }
   const status = success
     ? "resolved"
     : failure.attempts >= MAX_RECOVERY_ATTEMPTS
@@ -409,6 +417,10 @@ export const dispatch = internalMutation({
     )
       return false;
     if (failure.target.kind === "capture") {
+      if (await captureAlreadyComplete(ctx, failure.target.input.url)) {
+        await resolveOperationFailure(ctx, failure.operationId);
+        return true;
+      }
       const { runId } = await insertQueuedRun(ctx, {
         graphName: "source-scout",
         input: { recoveryFailureId: failureId },
@@ -461,13 +473,23 @@ async function assignedFailures(
     run.status !== "running"
   )
     throw new Error("Active investigation required");
-  return ctx.db
+  const rows = await ctx.db
     .query("operationFailures")
     .withIndex("by_investigation", (q) =>
       q.eq("investigationRunId", agentRunId),
     )
     .filter((q) => q.eq(q.field("status"), "investigating"))
     .take(MAX_GROUP_FAILURES);
+  const active: Doc<"operationFailures">[] = [];
+  for (const row of rows) {
+    if (
+      row.target.kind === "capture" &&
+      (await captureAlreadyComplete(ctx, row.target.input.url))
+    )
+      continue;
+    active.push(row);
+  }
+  return active;
 }
 
 export const getInvestigation = internalQuery({
@@ -621,6 +643,13 @@ export const reconcile = internalMutation({
         )
         .take(1);
       for (const row of rows) {
+        if (
+          row.target.kind === "capture" &&
+          (await captureAlreadyComplete(ctx, row.target.input.url))
+        ) {
+          await resolveOperationFailure(ctx, row.operationId);
+          continue;
+        }
         if (status === "recorded") {
           await ctx.scheduler.runAfter(0, internal.recoveryWorkflows.start, {
             failureId: row._id,

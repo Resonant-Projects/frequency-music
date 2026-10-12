@@ -543,6 +543,10 @@ export const archiveRecoverySource = mutation({
         },
       },
     });
+    await settleCaptureFailures(ctx, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: now,
+    });
     return null;
   },
 });
@@ -1371,6 +1375,10 @@ export const archive = mutation({
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
       updatedAt: advanceSourceVersion(source.updatedAt),
+    });
+    await settleCaptureFailures(ctx, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: Date.now(),
     });
     return null;
   },

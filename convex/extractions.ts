@@ -401,6 +401,16 @@ export const editExtraction = mutation({
     }
 
     await ctx.db.patch("extractions", id, updates);
+    if (updates.topics !== undefined) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.graph.reconcileExtractionConcepts,
+        { extractionId: id },
+      );
+      await ctx.scheduler.runAfter(0, internal.graph.linkExtraction, {
+        extractionId: id,
+      });
+    }
     return null;
   },
 });

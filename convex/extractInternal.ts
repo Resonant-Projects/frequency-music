@@ -230,6 +230,10 @@ async function insertExtraction(
       extractionId,
     });
   }
+  if (!args.historical)
+    await ctx.runMutation(internal.graph.reconcileExtractionConcepts, {
+      extractionId,
+    });
 
   return { extractionId };
 }
