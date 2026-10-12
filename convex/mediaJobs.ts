@@ -1,3 +1,4 @@
+import { stableStringify } from "./shared/stableHash";
 import {
   finishRecovery,
   recordOperationFailure,
@@ -79,10 +80,21 @@ export function requireLease(
 }
 
 export const enqueue = internalMutation({
-  args: { input: mediaJobInputValidator, priority: v.optional(v.number()) },
+  args: {
+    input: mediaJobInputValidator,
+    priority: v.optional(v.number()),
+    resumeOperatorPublication: v.optional(v.boolean()),
+  },
   returns: v.object({ jobId: v.id("mediaJobs"), created: v.boolean() }),
   handler: async (ctx, args) => {
     const input = mediaJobInputZ.parse(args.input);
+    if (
+      args.resumeOperatorPublication &&
+      (!input.rendererVersion.startsWith("essay-") ||
+        !["narrate", "assembleEpisode"].includes(input.kind) ||
+        (input.kind === "narrate" && input.refs.weeklyBriefId))
+    )
+      throw new Error("Only operator essay publication snapshots may resume");
     const brief =
       input.kind === "narrate" && input.refs.weeklyBriefId
         ? await ctx.db.get(input.refs.weeklyBriefId)
@@ -94,18 +106,59 @@ export const enqueue = internalMutation({
       if (blocking) return { jobId: blocking._id, created: false };
     }
     const dedupeKey = mediaJobDedupeKey(input);
-    const existing = await ctx.db
-      .query("mediaJobs")
-      .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "queued"),
-          q.eq(q.field("status"), "claimed"),
-          q.eq(q.field("status"), "done"),
+    const findByStatus = async (statuses: Doc<"mediaJobs">["status"][]) => {
+      const rows = await Promise.all(
+        statuses.map((status) =>
+          ctx.db
+            .query("mediaJobs")
+            .withIndex("by_dedupeKey_status", (q) =>
+              q.eq("dedupeKey", dedupeKey).eq("status", status),
+            )
+            .order("desc")
+            .first(),
         ),
+      );
+      return rows
+        .filter((row): row is Doc<"mediaJobs"> => row !== null)
+        .sort((a, b) => b._creationTime - a._creationTime)[0];
+    };
+    const existing = args.resumeOperatorPublication
+      ? await findByStatus(["queued", "claimed", "done"])
+      : await ctx.db
+          .query("mediaJobs")
+          .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field("status"), "queued"),
+              q.eq(q.field("status"), "claimed"),
+              q.eq(q.field("status"), "done"),
+            ),
+          )
+          .first();
+    if (existing) {
+      if (
+        args.resumeOperatorPublication &&
+        stableStringify(existing.input) !== stableStringify(input)
       )
-      .first();
-    if (existing) return { jobId: existing._id, created: false };
+        throw new Error("Operator publication snapshot does not match");
+      return { jobId: existing._id, created: false };
+    }
+    if (args.resumeOperatorPublication) {
+      const retained = await findByStatus(["parked", "failed"]);
+      if (retained) {
+        if (stableStringify(retained.input) !== stableStringify(input))
+          throw new Error("Operator publication snapshot does not match");
+        await ctx.db.patch(retained._id, {
+          status: "queued",
+          finishedAt: undefined,
+          error: undefined,
+          leaseToken: undefined,
+          leaseExpiresAt: undefined,
+          workerId: undefined,
+        });
+        return { jobId: retained._id, created: false };
+      }
+    }
     const jobId = await ctx.db.insert("mediaJobs", {
       kind: input.kind,
       input,

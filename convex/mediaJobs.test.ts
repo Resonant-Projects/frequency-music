@@ -29,10 +29,11 @@ async function pendingArtifact(
   jobId: string,
   role: Role,
   masterArtifactId?: Id<"audioArtifacts">,
+  kind: "probe" | "narration" = "probe",
 ) {
   const artifactId = await t.mutation(internal.audioArtifacts.createPending, {
     fields: {
-      kind: "probe",
+      kind,
       role,
       masterArtifactId,
       metadataStripped: false,
@@ -79,7 +80,7 @@ async function insertBrief(t: ReturnType<typeof convexTest>) {
 function narrationInput(
   briefId: Id<"weeklyBriefs"> | undefined,
   paragraph: string,
-): MediaJobInput {
+): Extract<MediaJobInput, { kind: "narrate" }> {
   return {
     kind: "narrate",
     script: { paragraphs: [paragraph], chapters: [] },
@@ -1023,4 +1024,291 @@ describe("mediaJobs lifecycle", () => {
       }),
     ).toBeNull();
   });
+});
+
+test.each(["parked", "failed"] as const)(
+  "operator publication resumes its %s snapshot without replacing retained artifacts",
+  async (status) => {
+    const t = convexTest({ schema, modules, transactionLimits: true });
+    const input: MediaJobInput = {
+      ...narrationInput(undefined, "Essay"),
+      rendererVersion: "essay-test",
+      assembleOnDone: false,
+    };
+    const first = await t.mutation(internal.mediaJobs.enqueue, { input });
+    const master = await pendingArtifact(
+      t,
+      first.jobId,
+      "masterNormalized",
+      undefined,
+      "narration",
+    );
+    const delivery = await pendingArtifact(
+      t,
+      first.jobId,
+      "delivery",
+      master,
+      "narration",
+    );
+    await t.run((ctx) =>
+      ctx.db.patch(first.jobId, {
+        status,
+        attempts: 2,
+        error: "Upload interrupted",
+        finishedAt: 1,
+        resultArtifactIds: [master, delivery],
+      }),
+    );
+    const failureId = await t.run((ctx) =>
+      ctx.db.insert("operationFailures", {
+        operationId: `media:${first.jobId}`,
+        causeKey: "operator",
+        target: { kind: "audioUpload", jobId: first.jobId },
+        message: "Upload interrupted",
+        status: "needsReview",
+        attempts: 3,
+        createdAt: 1,
+        updatedAt: 1,
+        nextAttemptAt: 1,
+      }),
+    );
+    const resumed = await t.mutation(internal.mediaJobs.enqueue, {
+      input,
+      resumeOperatorPublication: true,
+    });
+    expect(resumed).toEqual({ jobId: first.jobId, created: false });
+    expect(await t.run((ctx) => ctx.db.get(first.jobId))).toMatchObject({
+      status: "queued",
+      attempts: 2,
+      resultArtifactIds: [master, delivery],
+    });
+    expect(
+      (await t.run((ctx) => ctx.db.query("mediaJobs").collect())).length,
+    ).toBe(1);
+    const claim = await t.mutation(internal.mediaJobs.claimNext, {
+      workerId: "operator",
+      kinds: ["narrate"],
+      rendererVersion: "essay-test",
+    });
+    expect(claim?.jobId).toBe(first.jobId);
+    await t.mutation(internal.mediaJobs.complete, {
+      jobId: first.jobId,
+      leaseToken: claim!.leaseToken,
+      result: {
+        kind: "narrate",
+        artifacts: [
+          { ...measured, artifactId: master, mimeType: "audio/wav" },
+          { ...measured, artifactId: delivery, mimeType: "audio/mpeg" },
+        ],
+        chapters: [],
+      },
+    });
+    expect((await t.run((ctx) => ctx.db.get(failureId)))?.status).toBe(
+      "resolved",
+    );
+    expect((await t.run((ctx) => ctx.db.get(master)))?.status).toBe("ready");
+    expect((await t.run((ctx) => ctx.db.get(delivery)))?.status).toBe("ready");
+  },
+);
+
+test("a parked operator publication reuses its retained completion without another upload", async () => {
+  const t = convexTest({ schema, modules, transactionLimits: true });
+  const root = await mkdtemp(join(tmpdir(), "operator-publication-"));
+  try {
+    const input: MediaJobInput = {
+      ...narrationInput(undefined, "Essay"),
+      rendererVersion: "essay-test",
+      assembleOnDone: false,
+    };
+    const first = await t.mutation(internal.mediaJobs.enqueue, {
+      input,
+      resumeOperatorPublication: true,
+    });
+    let denyCompletion = true;
+    const tool = vi.fn(async (name: string, args: Record<string, unknown>) => {
+      if (name === "claimNextMediaJob")
+        return t.mutation(internal.mediaJobs.claimNext, args as never);
+      if (name === "completeMediaJob") {
+        if (denyCompletion) throw new Error("Completion unavailable");
+        return t.mutation(internal.mediaJobs.complete, args as never);
+      }
+      if (name === "failMediaJob")
+        return t.mutation(internal.mediaJobs.fail, args as never);
+      if (name === "renewMediaLease")
+        return t.mutation(internal.mediaJobs.renewLease, args as never);
+      throw new Error(`Unexpected tool ${name}`);
+    }) as typeof callTool;
+    const upload = vi.fn(async () => {
+      const master = await pendingArtifact(
+        t,
+        first.jobId,
+        "masterNormalized",
+        undefined,
+        "narration",
+      );
+      const delivery = await pendingArtifact(
+        t,
+        first.jobId,
+        "delivery",
+        master,
+        "narration",
+      );
+      return {
+        kind: "narrate" as const,
+        artifacts: [
+          { ...measured, artifactId: master, mimeType: "audio/wav" },
+          { ...measured, artifactId: delivery, mimeType: "audio/mpeg" },
+        ],
+        chapters: [],
+      };
+    });
+    const config = {
+      workerId: "operator",
+      kinds: ["narrate"],
+      workDir: root,
+      rendererVersion: "essay-test",
+    };
+    expect(await runOnce(config, tool, { narrate: upload })).toBe("failed");
+    await t.mutation(internal.mediaJobs.deferOperatorPublication, {
+      jobId: first.jobId,
+      rendererVersion: "essay-test",
+      title: input.title,
+    });
+    const resumed = await t.mutation(internal.mediaJobs.enqueue, {
+      input,
+      resumeOperatorPublication: true,
+    });
+    expect(resumed).toEqual({ jobId: first.jobId, created: false });
+    denyCompletion = false;
+    expect(await runOnce(config, tool, { narrate: upload })).toBe("done");
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(
+      (await t.run((ctx) => ctx.db.query("audioArtifacts").collect())).length,
+    ).toBe(2);
+    expect(
+      (await t.run((ctx) => ctx.db.query("operationFailures").first()))?.status,
+    ).toBe("resolved");
+    expect(await readdir(join(root, "retained"))).toEqual([]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("operator resume leaves an existing live lease intact and concurrent resumes share the job", async () => {
+  const t = convexTest({ schema, modules, transactionLimits: true });
+  const input: MediaJobInput = {
+    ...narrationInput(undefined, "Essay"),
+    rendererVersion: "essay-test",
+    assembleOnDone: false,
+  };
+  const first = await t.mutation(internal.mediaJobs.enqueue, { input });
+  await t.run((ctx) =>
+    ctx.db.patch(first.jobId, { status: "parked", attempts: 2 }),
+  );
+  const results = await Promise.all(
+    [1, 2].map(() =>
+      t.mutation(internal.mediaJobs.enqueue, {
+        input,
+        resumeOperatorPublication: true,
+      }),
+    ),
+  );
+  expect(results).toEqual(
+    [first, first].map((row) => ({ jobId: row.jobId, created: false })),
+  );
+  const claim = await t.mutation(internal.mediaJobs.claimNext, {
+    workerId: "operator",
+    kinds: ["narrate"],
+    rendererVersion: "essay-test",
+  });
+  await t.mutation(internal.mediaJobs.enqueue, {
+    input,
+    resumeOperatorPublication: true,
+  });
+  expect((await t.run((ctx) => ctx.db.get(first.jobId)))?.leaseToken).toBe(
+    claim?.leaseToken,
+  );
+  expect((await t.run((ctx) => ctx.db.get(first.jobId)))?.attempts).toBe(2);
+});
+
+test("operator lookup is bounded with a backlog of large parked snapshots", async () => {
+  const t = convexTest({ schema, modules, transactionLimits: true });
+  const input: MediaJobInput = {
+    ...narrationInput(undefined, "x".repeat(900_000)),
+    rendererVersion: "essay-test",
+    assembleOnDone: false,
+  };
+  let latest: Id<"mediaJobs"> | undefined;
+  for (let i = 0; i < 20; i++) {
+    const row = await t.mutation(internal.mediaJobs.enqueue, { input });
+    latest = row.jobId;
+    await t.run((ctx) => ctx.db.patch(row.jobId, { status: "parked" }));
+  }
+  expect(
+    await t.mutation(internal.mediaJobs.enqueue, {
+      input,
+      resumeOperatorPublication: true,
+    }),
+  ).toEqual({ jobId: latest, created: false });
+});
+
+test("standard renderer jobs cannot opt into operator publication resume", async () => {
+  const t = convexTest({ schema, modules, transactionLimits: true });
+  await expect(
+    t.mutation(internal.mediaJobs.enqueue, {
+      input: probe,
+      resumeOperatorPublication: true,
+    }),
+  ).rejects.toThrow("Only operator essay");
+});
+
+test("operator assembly resumes the same narration-linked job", async () => {
+  const t = convexTest({ schema, modules, transactionLimits: true });
+  const parentInput = {
+    ...narrationInput(undefined, "Essay"),
+    rendererVersion: "essay-test",
+    assembleOnDone: false,
+  };
+  const parent = await t.mutation(internal.mediaJobs.enqueue, {
+    input: parentInput,
+  });
+  const narration = await pendingArtifact(
+    t,
+    parent.jobId,
+    "delivery",
+    undefined,
+    "narration",
+  );
+  await t.run((ctx) => ctx.db.patch(parent.jobId, { status: "done" }));
+  const input: MediaJobInput = {
+    kind: "assembleEpisode",
+    narrationArtifactId: narration,
+    narrationStorageUrl: "https://example.org/audio",
+    title: "Essay",
+    chapters: [],
+    refs: {},
+    rendererVersion: "essay-test",
+  };
+  const assembly = await t.mutation(internal.mediaJobs.enqueue, { input });
+  await t.run((ctx) =>
+    ctx.db.patch(assembly.jobId, { status: "parked", attempts: 2 }),
+  );
+  expect(
+    await t.mutation(internal.mediaJobs.enqueue, {
+      input,
+      resumeOperatorPublication: true,
+    }),
+  ).toEqual({ jobId: assembly.jobId, created: false });
+  expect((await t.run((ctx) => ctx.db.get(assembly.jobId)))?.input).toEqual(
+    input,
+  );
+  expect(
+    (
+      await t.mutation(internal.mediaJobs.claimNext, {
+        workerId: "operator",
+        kinds: ["assembleEpisode"],
+        rendererVersion: "essay-test",
+      })
+    )?.jobId,
+  ).toBe(assembly.jobId);
 });

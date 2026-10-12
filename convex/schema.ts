@@ -902,6 +902,7 @@ export default defineSchema({
       "createdAt",
     ])
     .index("by_dedupeKey", ["dedupeKey"])
+    .index("by_dedupeKey_status", ["dedupeKey", "status"])
     .index("by_status_leaseExpiresAt", ["status", "leaseExpiresAt"]),
 
   // String settings keyed by name (houseVoiceId, renderValidation). The

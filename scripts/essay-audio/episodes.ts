@@ -873,6 +873,7 @@ async function publishOne(
   };
 
   const outcome = await adminMutation(client, internal.mediaJobs.enqueue, {
+    resumeOperatorPublication: true,
     input: {
       kind: "narrate",
       script,
@@ -890,7 +891,7 @@ async function publishOne(
   let steps: ("narrate" | "assembleEpisode")[] = ["narrate", "assembleEpisode"];
   if (!outcome.created) {
     // An earlier run narrated this essay but its assembly did not finish:
-    // resume with the assembly alone, re-enqueueing it if the production
+    // resume with the assembly alone, requeueing its original job if the production
     // worker parked it (it refuses operator renderer versions).
     const jobs = await scanTable(client, "mediaJobs");
     type JobInput = { kind?: string; title?: string; rendererVersion?: string };
@@ -921,12 +922,15 @@ async function publishOne(
       );
     } else if (assembly.status === "parked" || assembly.status === "failed") {
       const again = await adminMutation(client, internal.mediaJobs.enqueue, {
+        resumeOperatorPublication: true,
         input: assembly.input as FunctionArgs<
           typeof internal.mediaJobs.enqueue
         >["input"],
       });
-      if (!again.created) {
-        throw new Error(`${entry.slug}: could not re-enqueue its assembly`);
+      if (again.jobId !== assembly._id) {
+        throw new Error(
+          `${entry.slug}: could not resume its original assembly`,
+        );
       }
     } else if (assembly.status !== "queued") {
       throw new Error(
