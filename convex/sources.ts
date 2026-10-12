@@ -12,6 +12,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { currentExtractions } from "./extractions";
+import { settleCaptureFailures } from "./operationFailures";
 import {
   looksLikeBotChallenge,
   SCOUTED_CONTENT_PROVIDERS,
@@ -772,6 +773,15 @@ export const createScoutedSource = internalMutation({
       .first();
     if (existing) {
       if (!awaitsScoutCapture(existing)) {
+        if (
+          existing.rawText &&
+          existing.rawText.trim().length >= SCOUTED_TEXT_MIN_CHARS &&
+          !looksLikeBotChallenge(existing.rawText)
+        )
+          await settleCaptureFailures(ctx, {
+            dedupeKey,
+            capturedAt: Date.now(),
+          });
         return { id: existing._id, created: false };
       }
       if (!rawText) {
@@ -794,6 +804,7 @@ export const createScoutedSource = internalMutation({
         return { id: existing._id, created: false };
       }
       const metadata = existing.metadata as { scoutedBy: object };
+      const capturedAt = Date.now();
       await ctx.db.patch("sources", existing._id, {
         rawText,
         rawTextSha256: await sha256Hex(rawText),
@@ -809,8 +820,9 @@ export const createScoutedSource = internalMutation({
             capturedByAgentRunId: args.agentRunId,
           },
         },
-        updatedAt: Date.now(),
+        updatedAt: capturedAt,
       });
+      await settleCaptureFailures(ctx, { dedupeKey, capturedAt });
       return { id: existing._id, created: false, enriched: true };
     }
 
@@ -831,6 +843,8 @@ export const createScoutedSource = internalMutation({
         },
       },
     });
+    if (rawText)
+      await settleCaptureFailures(ctx, { dedupeKey, capturedAt: Date.now() });
     return { id: result.id, created: result.created };
   },
 });

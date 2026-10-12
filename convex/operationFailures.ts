@@ -10,6 +10,11 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import {
+  looksLikeBotChallenge,
+  SCOUTED_TEXT_MIN_CHARS,
+} from "./shared/agentContract";
+import { generateDedupeKey } from "./sourceUtils";
 import { insertQueuedRun } from "./agentRuns";
 import {
   captureInputZ,
@@ -22,6 +27,7 @@ import {
 import { redactError } from "./shared/redactError";
 import { fnv1a64Hex } from "./shared/stableHash";
 import { truncateText } from "./shared/truncateText";
+import { failureCause } from "./shared/failureCause";
 
 /** Server-derived operation identity makes delivery retries harmless. */
 export async function recordOperationFailure(
@@ -42,6 +48,10 @@ export async function recordOperationFailure(
   const now = Date.now();
   const id = await ctx.db.insert("operationFailures", {
     ...args,
+    captureDedupeKey:
+      args.target.kind === "capture"
+        ? generateDedupeKey("url", { canonicalUrl: args.target.input.url })
+        : undefined,
     message: truncateText(args.message, 1000),
     status: "recorded",
     attempts: 0,
@@ -71,6 +81,75 @@ export async function resolveOperationFailure(
     });
 }
 
+/** Canonical intake settles prior failures in bounded transactions, including open investigations. */
+export async function settleCaptureFailures(
+  ctx: MutationCtx,
+  args: { dedupeKey: string; capturedAt: number },
+) {
+  let changed = false;
+  for (const status of [
+    "recorded",
+    "retrying",
+    "recovering",
+    "investigating",
+    "needsReview",
+  ] as const) {
+    const rows = await ctx.db
+      .query("operationFailures")
+      .withIndex("by_capture_status_created", (q) =>
+        q
+          .eq("captureDedupeKey", args.dedupeKey)
+          .eq("status", status)
+          .lte("createdAt", args.capturedAt),
+      )
+      .take(1);
+    for (const row of rows) {
+      await ctx.db.patch(row._id, {
+        status: "resolved",
+        updatedAt: Date.now(),
+      });
+      changed = true;
+    }
+  }
+  if (changed)
+    await ctx.scheduler.runAfter(
+      0,
+      internal.operationFailures.settleCaptured,
+      args,
+    );
+}
+
+export const settleCaptured = internalMutation({
+  args: { dedupeKey: v.string(), capturedAt: v.number() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Intake may have been reset while this bounded continuation was queued.
+    if (await captureCompleteForKey(ctx, args.dedupeKey))
+      await settleCaptureFailures(ctx, args);
+    return null;
+  },
+});
+
+function captureAlreadyComplete(ctx: Pick<QueryCtx, "db">, url: string) {
+  return captureCompleteForKey(
+    ctx,
+    generateDedupeKey("url", { canonicalUrl: url }),
+  );
+}
+
+async function captureCompleteForKey(ctx: Pick<QueryCtx, "db">, key: string) {
+  const source = await ctx.db
+    .query("sources")
+    .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", key))
+    .first();
+  const text = source?.rawText?.trim();
+  return (
+    !!text &&
+    text.length >= SCOUTED_TEXT_MIN_CHARS &&
+    !looksLikeBotChallenge(text)
+  );
+}
+
 export const reportCaptureFailure = internalMutation({
   args: {
     agentRunId: v.id("agentRuns"),
@@ -84,15 +163,21 @@ export const reportCaptureFailure = internalMutation({
     if (!run || run.graphName !== "source-scout")
       throw new Error("Source Scout provenance required");
     const input = args.input;
-    return recordOperationFailure(ctx, {
-      operationId: `capture:${args.agentRunId}:${fnv1a64Hex(input.url)}`,
-      causeKey: `capture:${new URL(input.url).hostname}:${args.stage}`,
+    const operationId = `capture:${args.agentRunId}:${fnv1a64Hex(input.url)}`;
+    const message = args.diagnostic
+      ? redactError(args.diagnostic)
+      : `Source Scout ${args.stage} failed`;
+    const failureId = await recordOperationFailure(ctx, {
+      operationId,
+      causeKey: `capture:${new URL(input.url).hostname}:${failureCause(message)}:${args.stage}`,
       target: { kind: "capture", input },
-      message: args.diagnostic
-        ? redactError(args.diagnostic)
-        : `Source Scout ${args.stage} failed`,
+      message,
       agentRunId: args.agentRunId,
     });
+    // A late reporter must not reopen recovery after another Scout captured the URL.
+    if (await captureAlreadyComplete(ctx, input.url))
+      await resolveOperationFailure(ctx, operationId);
+    return failureId;
   },
 });
 
@@ -193,6 +278,13 @@ export const claimRecovery = internalMutation({
       failure.nextAttemptAt > Date.now()
     )
       return null;
+    if (
+      failure.target.kind === "capture" &&
+      (await captureAlreadyComplete(ctx, failure.target.input.url))
+    ) {
+      await resolveOperationFailure(ctx, failure.operationId);
+      return null;
+    }
     if (failure.attempts >= MAX_RECOVERY_ATTEMPTS) {
       await ctx.db.patch(failureId, {
         status: "needsReview",
@@ -423,6 +515,9 @@ export const getCaptureRecovery = internalQuery({
       failure.status !== "recovering"
     )
       return null;
+    // A queued run may start before bounded settlement has reached this row.
+    if (await captureAlreadyComplete(ctx, failure.target.input.url))
+      return null;
     return { failureId, input: failure.target.input };
   },
 });
@@ -560,6 +655,6 @@ export const listForRun = query({
           row,
         ]),
       ).values(),
-    ].map(({ target: _, ...row }) => row);
+    ].map(({ target: _target, captureDedupeKey: _captureKey, ...row }) => row);
   },
 });

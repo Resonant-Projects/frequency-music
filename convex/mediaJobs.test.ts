@@ -102,6 +102,74 @@ async function probePair(t: ReturnType<typeof convexTest>, jobId: string) {
 }
 
 describe("mediaJobs lifecycle", () => {
+  test("media investigations group the actual cause and keep independent recovery decisions", async () => {
+    const t = convexTest(schema, modules);
+    const failures: Id<"operationFailures">[] = [];
+    for (const [i, error] of [
+      "TTS HTTP 429: too many requests for voice A",
+      "TTS HTTP 429: too many requests for voice B",
+      "GEMINI_API_KEY is not configured",
+    ].entries()) {
+      const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {
+        input: narrationInput(undefined, `Distinct script ${i}`),
+      });
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const claim = await t.mutation(internal.mediaJobs.claimNext, {
+          workerId: "w",
+          kinds: ["narrate"],
+        });
+        await t.mutation(internal.mediaJobs.fail, {
+          jobId,
+          leaseToken: claim!.leaseToken,
+          error,
+        });
+      }
+      const failure = await t.run((ctx) =>
+        ctx.db
+          .query("operationFailures")
+          .withIndex("by_operation", (q) =>
+            q.eq("operationId", `media:${jobId}`),
+          )
+          .unique(),
+      );
+      failures.push(failure!._id);
+      await t.run((ctx) => ctx.db.patch(failure!._id, { nextAttemptAt: 0 }));
+      await t.mutation(internal.operationFailures.claimRecovery, {
+        failureId: failure!._id,
+      });
+    }
+    const rows = await t.run(async (ctx) =>
+      Promise.all(failures.map((id) => ctx.db.get(id))),
+    );
+    expect(rows[0]?.causeKey).toBe(rows[1]?.causeKey);
+    expect(rows[0]?.investigationRunId).toBe(rows[1]?.investigationRunId);
+    expect(rows[2]?.causeKey).not.toBe(rows[0]?.causeKey);
+    expect(rows[2]?.investigationRunId).not.toBe(rows[0]?.investigationRunId);
+    for (const [i, recover] of [
+      [0, true],
+      [2, false],
+    ] as const) {
+      const runId = rows[i]!.investigationRunId!;
+      await t.run((ctx) => ctx.db.patch(runId, { status: "running" }));
+      await t.mutation(internal.operationFailures.submitDiagnosis, {
+        agentRunId: runId,
+        result: {
+          diagnosis: recover ? "Transient rejection" : "Missing key",
+          recover,
+        },
+      });
+    }
+    expect((await t.run((ctx) => ctx.db.get(failures[0]!)))?.status).toBe(
+      "recorded",
+    );
+    expect((await t.run((ctx) => ctx.db.get(failures[1]!)))?.status).toBe(
+      "recorded",
+    );
+    expect((await t.run((ctx) => ctx.db.get(failures[2]!)))?.status).toBe(
+      "needsReview",
+    );
+  });
+
   test("media failure diagnostics preserve Unicode while exhausting the existing retry budget", async () => {
     const t = convexTest(schema, modules);
     const { jobId } = await t.mutation(internal.mediaJobs.enqueue, {

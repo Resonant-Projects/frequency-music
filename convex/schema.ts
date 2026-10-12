@@ -256,6 +256,7 @@ export default defineSchema({
     operationId: v.string(),
     causeKey: v.string(),
     target: recoveryTargetValidator,
+    captureDedupeKey: v.optional(v.string()),
     agentRunId: v.optional(v.id("agentRuns")),
     status: failureStatusValidator,
     message: v.string(),
@@ -268,6 +269,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_operation", ["operationId"])
+    .index("by_capture_status_created", [
+      "captureDedupeKey",
+      "status",
+      "createdAt",
+    ])
     .index("by_status_due", ["status", "nextAttemptAt"])
     .index("by_investigation", ["investigationRunId"])
     .index("by_agent_run", ["agentRunId"])

@@ -1,5 +1,6 @@
 import { recordOperationFailure } from "./operationFailures";
 import { truncateText } from "./shared/truncateText";
+import { failureCause } from "./shared/failureCause";
 // Pull-based, leased job lifecycle. Convex never calls the media service.
 import { ConvexError, v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
@@ -277,13 +278,14 @@ export const complete = internalMutation({
 function recordMediaFailure(
   ctx: MutationCtx,
   job: Doc<"mediaJobs">,
-  message: string,
+  error: string,
 ) {
   return recordOperationFailure(ctx, {
     operationId: `media:${job._id}`,
-    causeKey: `media:${job.kind}`,
+    causeKey: `media:${job.kind}:${failureCause(error)}`,
     target: { kind: "audioUpload", jobId: job._id },
-    message,
+    message:
+      "Media job exhausted its attempts; inspect retained audio and job diagnostics",
   });
 }
 
@@ -309,12 +311,7 @@ async function requeueOrPark(
     workerId: undefined,
     ...(status === "parked" ? { finishedAt: now } : {}),
   });
-  if (status === "parked")
-    await recordMediaFailure(
-      ctx,
-      job,
-      "Media job exhausted its attempts; inspect retained audio and job diagnostics",
-    );
+  if (status === "parked") await recordMediaFailure(ctx, job, error);
   return { status, attempts };
 }
 
