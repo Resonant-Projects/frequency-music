@@ -90,7 +90,7 @@ const store = (
   });
 
 describe("operator extraction", () => {
-  test.each([MODELS.default, MODELS.sonnet])(
+  test.each([MODELS.sol, MODELS.sonnet])(
     "selected operator model %s survives snapshot export and historical import",
     async (model) => {
       const { t, sourceId, inputHash } = await setup();
@@ -314,7 +314,7 @@ describe("operator extraction", () => {
     expect(stored[0]?.claims[0]?.evidenceLevel).toBe("reference");
   });
 
-  test.each([MODELS.default, MODELS.sonnet])(
+  test.each([MODELS.sol, MODELS.sonnet])(
     "records the selected catalog model %s on the stored Extraction",
     async (model) => {
       const { t, sourceId, inputHash } = await setup();
@@ -506,7 +506,8 @@ describe("operator extraction", () => {
     const t = convexTest(schema, modules);
     expect(await t.action(api.extract.listModels, {})).toMatchObject({
       opus: "anthropic/claude-opus-5.5",
-      default: MODELS.default,
+      default: "anthropic/claude-sonnet-5.5",
+      sol: "openai/gpt-6.1-sol",
     });
   });
 });

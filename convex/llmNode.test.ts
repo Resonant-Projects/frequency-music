@@ -111,20 +111,25 @@ describe("installed AI SDK provider compatibility", () => {
     expect(body).not.toHaveProperty("output_config");
   });
 
-  test("automated extraction keeps GPT even with an Anthropic credential", async () => {
-    const fetch = mockCompletion("An extraction.");
-    await generateLlmText({
-      task: "extract_v3",
-      system: "Extract.",
-      prompt: "Source.",
-    });
-    const [url, init] = fetch.mock.calls[0]!;
-    expect(url).toBe("https://openrouter.ai/api/v1/chat/completions");
-    expect(JSON.parse(init!.body as string)).toMatchObject({
-      model: "openai/gpt-6.1-sol",
-      reasoning: { effort: "medium" },
-    });
-  });
+  test.each(["extract_v2", "extract_v3"] as const)(
+    "%s defaults to direct Sonnet despite an OpenRouter credential",
+    async (task) => {
+      const fetch = mockAnthropic("An extraction.");
+      await generateLlmText({
+        task,
+        system: "Extract.",
+        prompt: "Source.",
+      });
+      const [url, init] = fetch.mock.calls[0]!;
+      expect(url).toBe("https://api.anthropic.com/v1/messages");
+      expect(JSON.parse(init!.body as string)).toMatchObject({
+        model: "claude-sonnet-5-5",
+        thinking: { type: "adaptive" },
+        output_config: { effort: "medium" },
+        max_tokens: TOKEN_BUDGETS[task],
+      });
+    },
+  );
 
   test("task defaults select Opus for hypothesis design", async () => {
     const fetch = mockAnthropic("A musical hypothesis.");
@@ -144,7 +149,6 @@ describe("installed AI SDK provider compatibility", () => {
     await expect(
       generateLlmText({
         task: "extract_v3",
-        model: MODELS.sonnet,
         system: "Extract.",
         prompt: "Source.",
       }),

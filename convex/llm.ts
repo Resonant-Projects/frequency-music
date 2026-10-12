@@ -1,16 +1,12 @@
 import { TRANSCRIPTION_MODEL } from "./shared/agentContract";
-import {
-  ANTHROPIC_MODELS,
-  DEFAULT_EXTRACTION_MODEL,
-  TASK_MODELS,
-} from "./shared/llmPolicy";
+import { ANTHROPIC_MODELS, TASK_MODELS } from "./shared/llmPolicy";
 export { TASK_MODELS } from "./shared/llmPolicy";
 // Pure LLM configuration + parsing shared by all four generators.
 // No "use node" and no node-only imports — this file must stay importable
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
 // The node-side generation half lives in llmNode.ts.
 
-export const DEFAULT_MODEL = DEFAULT_EXTRACTION_MODEL;
+export const DEFAULT_MODEL = TASK_MODELS.extract_v3;
 
 /**
  * Per-model OpenRouter reasoning effort. Only models listed here get a
@@ -29,11 +25,13 @@ export const MODELS = {
   // YouTube transcript capture (agent transcript-capture graph): Groq Whisper.
   transcription: TRANSCRIPTION_MODEL,
 
-  // Automated extraction uses GPT; Anthropic tasks use direct API credits.
+  // Current Anthropic task defaults use direct API credits.
   default: DEFAULT_MODEL,
   quality: ANTHROPIC_MODELS.opus,
   sonnet: ANTHROPIC_MODELS.sonnet,
   haiku: ANTHROPIC_MODELS.haiku,
+  // Retain the previous extraction default as a registered manual override.
+  sol: "openai/gpt-6.1-sol",
   // Extractions written by the Claude Code operator session
   // (scripts/operator-extraction.ts, extract.storeOperatorExtraction).
   opus: ANTHROPIC_MODELS.opus,

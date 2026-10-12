@@ -1,6 +1,6 @@
 # Direct Anthropic inference cutover
 
-The source changes route Anthropic worker and Convex inference directly to Anthropic. Automated extraction retains GPT-6.1 Sol through OpenRouter; manual extraction may explicitly select Anthropic. `convex/shared/llmPolicy.ts` owns the model IDs and reasoning policy. Sonnet 5.5 uses medium effort for explicitly selected extraction and synthesis, Haiku 5.5 uses medium for bounded classification and relevance checks, and Opus 5.5 uses high for hypothesis and recipe design. Current 5.5 models use adaptive thinking. Persisted attempts pinned to older Anthropic IDs retain their original OpenRouter routing and parameters for compatible recovery. Explicit non-Anthropic Convex overrides retain their existing provider routes.
+The source changes route worker and Convex task defaults directly to Anthropic, including automated extraction. Manual extraction may select registered overrides, including GPT-6.1 Sol through OpenRouter. `convex/shared/llmPolicy.ts` owns the model IDs and reasoning policy. Sonnet 5.5 uses medium effort for extraction and synthesis, Haiku 5.5 uses medium for bounded classification and relevance checks, and Opus 5.5 uses high for hypothesis and recipe design. Current 5.5 models use adaptive thinking. Persisted attempts pinned to older Anthropic IDs retain their original OpenRouter routing and parameters for compatible recovery. Explicit non-Anthropic Convex overrides retain their existing provider routes.
 
 ## Credential and validation
 
@@ -12,7 +12,7 @@ Provider request tests cover direct endpoint selection, credential precedence, a
 
 ## Convex activation
 
-Target the existing self-hosted backend at `https://convex.resonantprojects.art`. Activation routes Anthropic task models directly while preserving the automated extraction default. Root `.env.schema` loading resolves local script credentials; it does not configure the running deployment.
+Target the existing self-hosted backend at `https://convex.resonantprojects.art`. Activation routes the task defaults, including automated extraction, directly to Anthropic. Root `.env.schema` loading resolves local script credentials; it does not configure the running deployment.
 
 After confirming the live target and effects:
 

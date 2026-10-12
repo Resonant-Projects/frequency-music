@@ -31,12 +31,9 @@ export function anthropicReasoningEffort(model: string): ReasoningEffort {
   return anthropicModelId(model).startsWith("claude-opus-") ? "high" : "medium";
 }
 
-// Automated extraction keeps the standing GPT policy; Anthropic remains an explicit override.
-export const DEFAULT_EXTRACTION_MODEL = "openai/gpt-6.1-sol";
-
 export const TASK_MODELS = {
-  extract_v2: DEFAULT_EXTRACTION_MODEL,
-  extract_v3: DEFAULT_EXTRACTION_MODEL,
+  extract_v2: ANTHROPIC_MODELS.sonnet,
+  extract_v3: ANTHROPIC_MODELS.sonnet,
   hypothesis_v1: ANTHROPIC_MODELS.opus,
   recipe_v1: ANTHROPIC_MODELS.opus,
   brief_v2: ANTHROPIC_MODELS.sonnet,

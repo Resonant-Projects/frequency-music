@@ -9,8 +9,8 @@ import {
 
 describe("llm constants", () => {
   test("default model and budgets match the shared generator configuration", () => {
-    // Automated extraction retains the standing GPT policy.
-    expect(DEFAULT_MODEL).toBe("openai/gpt-6.1-sol");
+    // Automated extraction follows the direct Anthropic task defaults.
+    expect(DEFAULT_MODEL).toBe("anthropic/claude-sonnet-5.5");
     expect(modelForTask("extract_v2")).toBe(DEFAULT_MODEL);
     expect(modelForTask("extract_v3")).toBe(DEFAULT_MODEL);
     // Raised 2026-07-10 for reasoning models (Terra): reasoning tokens count
