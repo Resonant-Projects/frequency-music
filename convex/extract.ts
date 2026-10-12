@@ -2,12 +2,7 @@
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import {
-  type ActionCtx,
-  type MutationCtx,
-  action,
-  mutation,
-} from "./_generated/server";
+import { type ActionCtx, action } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { DEFAULT_MODEL, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
@@ -355,7 +350,7 @@ const operatorExtractionValidator = v.object({
  * bypass secret Varlock resolves for scripts), never as a signed-in user.
  */
 async function requireOperator(
-  ctx: ActionCtx | MutationCtx,
+  ctx: ActionCtx,
   args: { devBypassSecret?: string },
 ): Promise<void> {
   const identity = await requireAuth(ctx, args);
@@ -407,25 +402,6 @@ export const storeOperatorExtraction = action({
         openQuestions: extraction.openQuestions,
       },
     );
-  },
-});
-
-/**
- * Starts the concept-link backfill (graph.buildGraphFromExtractions), which
- * pages through every Extraction on its own. Idempotent; operator only, run
- * through `vp run graph:backfill`.
- */
-export const startConceptBackfill = mutation({
-  args: { devBypassSecret: v.optional(v.string()) },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await requireOperator(ctx, args);
-    await ctx.scheduler.runAfter(
-      0,
-      internal.graph.buildGraphFromExtractions,
-      {},
-    );
-    return null;
   },
 });
 
