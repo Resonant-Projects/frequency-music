@@ -27,6 +27,18 @@ export async function enterEssays(page, nav, base, expect, mobile = false) {
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
 }
 
+export async function chooseEssaysSearchResult(
+  option,
+  page,
+  dialog,
+  base,
+  expect,
+) {
+  await option.click();
+  await expect(page).toHaveURL(`${base}/essays`);
+  await expect(dialog).toBeHidden();
+}
+
 export async function finishRun({
   context,
   browser,

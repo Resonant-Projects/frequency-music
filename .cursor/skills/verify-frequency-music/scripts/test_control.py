@@ -11,6 +11,8 @@ import sys
 import tempfile
 import time
 import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
@@ -82,7 +84,7 @@ class VerificationContract(unittest.TestCase):
              patch.object(control, "fingerprint", return_value="source"), \
              patch.object(control, "listeners", return_value=[43]), \
              patch.object(control, "write_json"), \
-             patch.object(control.urllib.request, "urlopen") as fetch:
+             patch.object(control.urllib.request.OpenerDirector, "open") as fetch:
             with self.assertRaisesRegex(RuntimeError, "listener owned"):
                 control.doctor("safe-run")
             fetch.assert_not_called()
@@ -166,7 +168,7 @@ class ReviewRegressions(unittest.TestCase):
              patch.object(control, "command", side_effect=["owned", "head"]), \
              patch.object(control, "fingerprint", return_value="source"), \
              patch.object(control, "listeners", return_value=[42]), \
-             patch.object(control.urllib.request, "urlopen", return_value=Response()), \
+             patch.object(control.urllib.request.OpenerDirector, "open", return_value=Response()), \
              patch.object(control, "drive", side_effect=RuntimeError("browser assertion failed")):
             with self.assertRaisesRegex(RuntimeError, "browser assertion"):
                 control.doctor("safe-run")
@@ -179,6 +181,59 @@ class ReviewRegressions(unittest.TestCase):
              patch.object(control, "state", side_effect=RuntimeError("missing instance")):
             with self.assertRaisesRegex(RuntimeError, "missing instance"):
                 control.doctor("safe-run")
+        self.assertEqual(json.loads(receipt.read_text())["status"], "fail")
+
+    def test_doctor_probe_bypasses_environment_proxy(self):
+        calls = []
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                calls.append((frontend.server_port if self.server is frontend else proxy.server_port, self.path))
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"/src/main.tsx" if self.server is frontend else b"PROXY")
+            def log_message(self, format, *args): pass
+        frontend = HTTPServer(("127.0.0.1", 0), Handler)
+        proxy = HTTPServer(("127.0.0.1", 0), Handler)
+        threads = [threading.Thread(target=server.serve_forever) for server in [frontend, proxy]]
+        for thread in threads: thread.start()
+        info = {"pgid": 42, "process_started": "owned", "head": "head", "source_sha256": "source",
+                "port": frontend.server_port, "url": f"http://127.0.0.1:{frontend.server_port}",
+                "mode": "offline-local-ui"}
+        proxy_url = f"http://127.0.0.1:{proxy.server_port}"
+        try:
+            with patch.dict(os.environ, {"HTTP_PROXY": proxy_url, "http_proxy": proxy_url,
+                                         "NO_PROXY": "", "no_proxy": ""}), \
+                 patch.object(control, "state", return_value=info), \
+                 patch.object(control, "group_members", return_value=[42]), \
+                 patch.object(control, "command", side_effect=["owned", "head"]), \
+                 patch.object(control, "fingerprint", return_value="source"), \
+                 patch.object(control, "listeners", return_value=[42]), \
+                 patch.object(control, "drive"):
+                control.check_doctor("safe-run")
+            self.assertEqual(calls, [(frontend.server_port, "/essays")])
+        finally:
+            for server in [frontend, proxy]:
+                server.shutdown()
+                server.server_close()
+            for thread in threads: thread.join(timeout=5)
+
+    def test_interrupted_checks_return_nonzero_but_launch_shutdown_is_zero(self):
+        for action in ["doctor", "drive", "cleanup", "launch"]:
+            argv = ["control.py", action, "safe-run"]
+            if action == "drive": argv.append("essays")
+            with patch.object(control.sys, "argv", argv), \
+                 patch.object(control, action, side_effect=KeyboardInterrupt):
+                self.assertEqual(control.main(), 0 if action == "launch" else 130, action)
+
+    def test_drive_preflight_failure_invalidates_previous_feature_pass(self):
+        receipt = self.base / "essays-result.json"
+        control.write_json(receipt, {"status": "pass"})
+        with patch.object(control, "directory", return_value=self.base), \
+             patch.object(control, "doctor", side_effect=RuntimeError("doctor preflight failed")), \
+             patch.object(control.subprocess, "run") as run:
+            with self.assertRaisesRegex(RuntimeError, "doctor preflight failed"):
+                control.drive("safe-run", "essays")
+            run.assert_not_called()
         self.assertEqual(json.loads(receipt.read_text())["status"], "fail")
 
     def test_drive_invalidates_result_if_sources_change_during_browser(self):

@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import {
   enterEssays,
+  chooseEssaysSearchResult,
   finishRun,
   routeOfflineWebSocket,
 } from "./driver-safety.mjs";
@@ -107,6 +108,10 @@ async function back() {
   );
 }
 async function searchEntry(trigger, target = "Essays") {
+  const detail = await titles().first().getAttribute("href");
+  await page.goto(base + detail);
+  await expect(page).toHaveURL(base + detail);
+  await expect(main().getByText("Essay text", { exact: true })).toBeVisible();
   if (trigger === "button") {
     await page
       .getByRole("button", { name: "Search Frequency", exact: true })
@@ -128,9 +133,8 @@ async function searchEntry(trigger, target = "Essays") {
     "Local Pages result is visible; backend search is not being asserted",
   );
   await capture("search-result");
-  await option.click();
+  await chooseEssaysSearchResult(option, page, dialog, base, expect);
   await archive();
-  await expect(dialog).toBeHidden();
   note(
     `Choose ${target} Page`,
     "Essays archive is visible and search is closed",

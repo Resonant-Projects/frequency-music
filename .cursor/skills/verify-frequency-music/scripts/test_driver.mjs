@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   enterEssays,
+  chooseEssaysSearchResult,
   finishRun,
   routeOfflineWebSocket,
 } from "./driver-safety.mjs";
@@ -108,6 +109,31 @@ function navigationFixture({ href = "/essays", close = true } = {}) {
   });
   return [page, nav, "http://127.0.0.1:43123", expect];
 }
+test("Search selection must navigate, not merely close its dialog", async () => {
+  const base = "http://127.0.0.1:43123";
+  const page = { url: base + "/essays/detail" };
+  const dialog = { hidden: false };
+  const expect = (value) => ({
+    toHaveURL: async (url) => assert.equal(value.url, url),
+    toBeHidden: async () => assert.equal(value.hidden, true),
+  });
+  const broken = {
+    click: async () => {
+      dialog.hidden = true;
+    },
+  };
+  await assert.rejects(
+    chooseEssaysSearchResult(broken, page, dialog, base, expect),
+  );
+  const working = {
+    click: async () => {
+      page.url = base + "/essays";
+      dialog.hidden = true;
+    },
+  };
+  await chooseEssaysSearchResult(working, page, dialog, base, expect);
+});
+
 for (const mobile of [false, true]) {
   test(`Essays entry actually navigates and closes (${mobile ? "mobile" : "desktop"})`, async () => {
     await enterEssays(...navigationFixture(), mobile);

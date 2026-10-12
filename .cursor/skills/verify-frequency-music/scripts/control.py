@@ -221,7 +221,9 @@ def check_doctor(run):
         if pids or not owned or time.monotonic() > deadline:
             raise RuntimeError("No listener owned by this run")
         time.sleep(0.2)
-    with urllib.request.urlopen(info["url"] + "/essays", timeout=10) as response:
+    # Never send the ownership/readiness probe through environment or macOS proxies.
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    with opener.open(info["url"] + "/essays", timeout=10) as response:
         if response.status != 200 or b"/src/main.tsx" not in response.read():
             raise RuntimeError("Unexpected frontend response")
     result = {"status": "pass", "mode": info["mode"], "head": info["head"],
@@ -237,10 +239,10 @@ def check_checkout(info):
 
 
 def drive(run, feature, check=True):
-    if check and feature != "ingest":
-        doctor(run)
-    info = state(run)
     try:
+        if check and feature != "ingest":
+            doctor(run)
+        info = state(run)
         if feature != "ingest":
             check_checkout(info)
         result = subprocess.run(["node", str(SKILL / "scripts/drive.mjs"), feature,
@@ -314,7 +316,7 @@ def main():
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
     except KeyboardInterrupt:
-        return 0
+        return 0 if args.action == "launch" else 130
     return 0
 
 
