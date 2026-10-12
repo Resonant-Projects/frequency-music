@@ -105,6 +105,40 @@ describe("operator extraction", () => {
     expect(stored[0]?.claims[0]?.evidenceLevel).toBe("reference");
   });
 
+  test.each([MODELS.default, MODELS.sonnet])(
+    "records the selected catalog model %s on the stored Extraction",
+    async (model) => {
+      const { t, sourceId, inputHash } = await setup();
+      expect(await store(t, sourceId, inputHash, { model })).toMatchObject({
+        success: true,
+        model,
+      });
+      const stored = await t.query(api.extractions.getBySourceId, { sourceId });
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toMatchObject({ model, inputHash });
+      expect(
+        await t.run((ctx) => ctx.db.get("sources", sourceId)),
+      ).toMatchObject({
+        status: "extracted",
+      });
+    },
+  );
+
+  test("rejects a transcription-only model before storing results", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await expect(
+      store(t, sourceId, inputHash, { model: MODELS.transcription }),
+    ).rejects.toThrow("Operator extractions record one of");
+    expect(await t.query(api.extractions.getBySourceId, { sourceId })).toEqual(
+      [],
+    );
+    expect(await t.run((ctx) => ctx.db.get("sources", sourceId))).toMatchObject(
+      {
+        status: "text_ready",
+      },
+    );
+  });
+
   test("stores an operator Extraction and marks the Source extracted", async () => {
     const { t, sourceId, inputHash } = await setup();
     expect(await store(t, sourceId, inputHash)).toEqual({
@@ -143,7 +177,7 @@ describe("operator extraction", () => {
     });
     await expect(
       store(t, sourceId, await extractionInputHash(article.repeat(2)), {
-        model: "openai/gpt-6.1-sol",
+        model: "unregistered/model",
       }),
     ).rejects.toThrow("Operator extractions record one of");
     await expect(
