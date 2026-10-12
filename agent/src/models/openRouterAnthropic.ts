@@ -43,20 +43,20 @@ export function createOpenRouterAnthropicModel(options: ChatModelOptions = {}) {
   const model = useOpenRouter
     ? normalizeOpenRouterModel(configuredModel ?? DEFAULT_OPENROUTER_MODEL)
     : anthropicModelId(configuredModel ?? DEFAULT_ANTHROPIC_MODEL);
-  // The 5.5 family rejects sampling controls. Adaptive thinking and explicit
-  // effort survive tool binding and native JSON-schema output.
-  const isClaude55 = /(?:^|\/)claude-(?:sonnet|haiku|opus)-5[.-]5(?:$|-)/.test(
-    model,
-  );
+  if (
+    !Object.values(ANTHROPIC_MODELS).some(
+      (supported) => anthropicModelId(supported) === anthropicModelId(model),
+    )
+  ) {
+    throw new Error(
+      `Unsupported worker model ${model}: use Sonnet, Haiku, or Opus 5.5 with adaptive thinking`,
+    );
+  }
 
   return new ChatAnthropic({
     model,
-    ...(isClaude55
-      ? {
-          thinking: { type: "adaptive" },
-          outputConfig: { effort: anthropicReasoningEffort(model) },
-        }
-      : { temperature: options.temperature ?? 0.2 }),
+    thinking: { type: "adaptive" },
+    outputConfig: { effort: anthropicReasoningEffort(model) },
     apiKey,
     anthropicApiUrl,
   });

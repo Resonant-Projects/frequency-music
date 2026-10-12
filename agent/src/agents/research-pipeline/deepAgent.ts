@@ -213,7 +213,10 @@ export async function createResearchDeepAgentDraft(
 ): Promise<ResearchDraftSpecialistResult> {
   const provider = getConfiguredModelProvider();
   const model =
-    options.model ?? getResearchModel({ model: ANTHROPIC_MODELS.opus });
+    options.model ??
+    getResearchModel(
+      provider === "codex-sdk" ? {} : { model: ANTHROPIC_MODELS.opus },
+    );
   const system = new SystemMessage(RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS);
   const human = new HumanMessage(
     truncateJson({

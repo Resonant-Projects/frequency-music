@@ -74,27 +74,18 @@ describe.each([
     ).toEqual({ type: "adaptive" });
   });
 
-  test("keeps the library's thinking default for older models", () => {
-    const params = createOpenRouterAnthropicModel({
-      model: "claude-sonnet-4-6",
-    }).invocationParams({});
-    expect(params.thinking).toBeUndefined();
-  });
-
-  test("preserves the default temperature for older models", () => {
-    const params = createOpenRouterAnthropicModel({
-      model: "claude-sonnet-4-6",
-    }).invocationParams({});
-    expect(params.temperature).toBe(0.2);
-  });
-
-  test("preserves temperature overrides for older models", () => {
-    const params = createOpenRouterAnthropicModel({
-      model: "claude-sonnet-4-6",
-      temperature: 0,
-    }).invocationParams({});
-    expect(params.temperature).toBe(0);
-  });
+  test.each(["claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"])(
+    "rejects an older override %s rather than omitting reasoning",
+    (olderModel) => {
+      expect(() =>
+        createOpenRouterAnthropicModel({ model: olderModel }),
+      ).toThrow("use Sonnet, Haiku, or Opus 5.5 with adaptive thinking");
+      vi.stubEnv("WEEKLY_BRIEF_AGENT_MODEL", olderModel);
+      expect(() => createOpenRouterAnthropicModel()).toThrow(
+        "Unsupported worker model",
+      );
+    },
+  );
 });
 
 describe("direct Anthropic credit routing", () => {
