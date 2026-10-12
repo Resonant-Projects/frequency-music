@@ -73,6 +73,7 @@ export const agentToolArgs = {
   }),
   recordTranscriptCapture: z.object({
     sourceId: zid("sources"),
+    expectedUpdatedAt: z.number().finite().optional(),
     agentRunId: zid("agentRuns"),
     outcome: z.enum(["captured", "unavailable", "attempted", "rate_limited"]),
     transcript: z

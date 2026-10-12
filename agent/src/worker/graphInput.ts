@@ -89,6 +89,7 @@ export type SourceScoutGraphInput = {
 
 export type TranscriptCaptureGraphInput = {
   agentRunId: string;
+  backlogCursor?: string;
   traceUrl?: string;
 };
 
@@ -196,10 +197,15 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
   }
   if (claim.graphName === "transcript-capture") {
     const traceUrl = claimedTraceUrl(claim);
+    const backlogCursor =
+      claim.input && typeof claim.input === "object"
+        ? (claim.input as { backlogCursor?: unknown }).backlogCursor
+        : undefined;
     return {
       graphName: "transcript-capture",
       input: {
         agentRunId: claim.runId,
+        ...(typeof backlogCursor === "string" ? { backlogCursor } : {}),
         ...(traceUrl ? { traceUrl } : {}),
       },
     };

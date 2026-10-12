@@ -1,10 +1,23 @@
-import { describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { modules } from "./modules";
 
 describe("extractInternal.storeExtraction", () => {
+  // Inspect queued work without starting embeddings/classification after teardown.
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
   test("inserts an extraction with normalized composition parameters", async () => {
     const t = convexTest(schema, modules);
 
@@ -57,8 +70,10 @@ describe("extractInternal.storeExtraction", () => {
     const scheduled = await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
     );
-    expect(scheduled).toHaveLength(1);
+    expect(scheduled).toHaveLength(2);
     expect(scheduled[0]?.name).toContain("embeddings:embedClaims");
+    expect(scheduled[1]?.name).toMatch(/^graph(\.js)?:linkExtraction$/);
+    expect(scheduled[1]?.args).toEqual([{ extractionId }]);
 
     const kinds = await t.run((ctx) =>
       ctx.db.query("parameterKinds").collect(),

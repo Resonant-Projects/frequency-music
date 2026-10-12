@@ -1,6 +1,6 @@
 import { literals } from "convex-helpers/validators";
 import { ConvexError, v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import {
@@ -25,12 +25,20 @@ import {
   extractYouTubeVideoId,
   generateArchivedDedupeKey,
   generateDedupeKey,
+  resolveYouTubeVideoId,
 } from "./sourceUtils";
 import {
   extractionContent,
   extractionInputHash,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
+import {
+  advanceSourceVersion,
+  publicSourceUrl,
+  RECOVERY_KINDS,
+  RECOVERY_NOTE_MAX_CHARS,
+  RECOVERY_TEXT_MAX_CHARS,
+} from "./shared/sourceRecovery";
 import { sourceReturnValidator } from "./validators";
 
 // ============================================================================
@@ -361,6 +369,7 @@ export const updateStatus = mutation({
     status: sourceStatusValidator,
     blockedReason: v.optional(sourceBlockedReasonValidator),
     blockedDetails: v.optional(v.string()),
+    expectedUpdatedAt: v.optional(v.number()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -374,12 +383,29 @@ export const updateStatus = mutation({
       });
     }
 
+    assertCaptureVersion(source, args.expectedUpdatedAt);
+    if (
+      (source.status === "archived" &&
+        args.status !== "archived" &&
+        (args.blockedReason === "no_text" ||
+          args.expectedUpdatedAt === undefined)) ||
+      (args.blockedReason === "no_text" &&
+        (source.metadata?.sourceRecovery?.providedAt !== undefined ||
+          source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
+        args.expectedUpdatedAt === undefined)
+    ) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message:
+          "Source was archived or recovered; discard this capture result.",
+      });
+    }
     await ctx.db.patch("sources", args.id, {
       status: args.status,
       activeExtractionAttemptId: undefined,
       blockedReason: args.blockedReason,
       blockedDetails: args.blockedDetails,
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -393,6 +419,7 @@ export const updateText = mutation({
     id: v.id("sources"),
     rawText: v.optional(v.string()),
     transcript: v.optional(v.string()),
+    expectedUpdatedAt: v.optional(v.number()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: v.null(),
@@ -406,6 +433,19 @@ export const updateText = mutation({
       });
     }
 
+    assertCaptureVersion(source, args.expectedUpdatedAt);
+    if (
+      source.status === "archived" ||
+      ((source.metadata?.sourceRecovery?.providedAt !== undefined ||
+        source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
+        args.expectedUpdatedAt === undefined)
+    ) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message:
+          "Source was archived or recovered; discard this capture result.",
+      });
+    }
     const text = args.rawText || args.transcript || "";
 
     // Compute hash
@@ -422,9 +462,247 @@ export const updateText = mutation({
       transcript: args.transcript,
       rawTextSha256,
       status: "text_ready",
-      updatedAt: Date.now(),
+      ...(source.blockedReason === "no_text" && text.trim()
+        ? { blockedReason: undefined, blockedDetails: undefined }
+        : {}),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
+  },
+});
+
+function assertCaptureVersion(
+  source: Doc<"sources">,
+  expectedUpdatedAt?: number,
+) {
+  if (
+    expectedUpdatedAt !== undefined &&
+    source.updatedAt !== expectedUpdatedAt
+  ) {
+    throw new ConvexError({
+      code: "CONFLICT",
+      message: "Source changed during capture; discard this stale result.",
+    });
+  }
+}
+
+async function sourceForRecovery(
+  ctx: MutationCtx,
+  id: Id<"sources">,
+  expectedUpdatedAt: number,
+) {
+  const source = await ctx.db.get("sources", id);
+  if (
+    !source ||
+    source.visibility !== "private" ||
+    !["ingested", "review_needed", "extracted"].includes(source.status) ||
+    (source.status !== "ingested" && source.blockedReason !== "no_text")
+  ) {
+    throw new ConvexError({
+      code: "INVALID_STATE",
+      message:
+        "This source no longer needs text recovery in the private queue.",
+    });
+  }
+  if (source.updatedAt !== expectedUpdatedAt) {
+    throw new ConvexError({
+      code: "CONFLICT",
+      message:
+        "This source changed while you were editing. Review its current state before saving again.",
+    });
+  }
+  return source;
+}
+
+/** Dismiss unavailable text without claiming completed review or deleting evidence. */
+export const archiveRecoverySource = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const now = advanceSourceVersion(source.updatedAt);
+    await ctx.db.patch("sources", source._id, {
+      status: "archived",
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          archivedAt: now,
+          archivedBy: identity.subject,
+          archiveReason: "Unavailable source dismissed from the Action Queue.",
+        },
+      },
+    });
+    return null;
+  },
+});
+
+/** Store human-provided evidence and clear its obsolete block in one transaction. */
+export const provideRecoveryText = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    text: v.string(),
+    kind: literals(...RECOVERY_KINDS),
+    provenanceUrl: v.optional(v.string()),
+    note: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const text = args.text.trim();
+    const reason = unextractableTextReason(text, {
+      allowExcerpt: args.kind === "excerpt",
+    });
+    if (reason || text.length > RECOVERY_TEXT_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_TEXT",
+        message:
+          reason ??
+          `Provide at most ${RECOVERY_TEXT_MAX_CHARS.toLocaleString()} characters.`,
+      });
+    const note = args.note?.trim();
+    if ((note?.length ?? 0) > RECOVERY_NOTE_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_NOTE",
+        message: `Keep the coverage note at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
+      });
+    const provenanceUrl = args.provenanceUrl?.trim() || source.canonicalUrl;
+    if (provenanceUrl && !publicSourceUrl(provenanceUrl))
+      throw new ConvexError({
+        code: "INVALID_URL",
+        message:
+          "Provide an http or https source URL without embedded credentials.",
+      });
+    const coverage =
+      args.kind === "abstract"
+        ? "Abstract only. Full text was not supplied. Extract only claims supported by this abstract."
+        : args.kind === "excerpt"
+          ? "Excerpt only. Full source coverage was not supplied. Extract only claims supported by this excerpt."
+          : args.kind === "transcript"
+            ? "Supplied transcript. Visual content, diagrams and scores are not covered by the transcript."
+            : "Supplied article text. Coverage is limited to the text below.";
+    const capturedText = `Capture supplied during source recovery. ${coverage}\n${provenanceUrl ? `Evidence URL: ${provenanceUrl}\n` : ""}${note ? `Coverage note: ${note}\n` : ""}\n${text}${args.kind === "excerpt" ? "\n\n[End of supplied excerpt. Full text was not supplied.]" : ""}`;
+    const hash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(capturedText),
+    );
+    const now = advanceSourceVersion(source.updatedAt);
+    await ctx.db.patch("sources", source._id, {
+      rawText: args.kind === "transcript" ? undefined : capturedText,
+      transcript: args.kind === "transcript" ? capturedText : undefined,
+      rawTextSha256: Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(""),
+      status: "text_ready",
+      blockedReason: undefined,
+      blockedDetails: undefined,
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          kind: args.kind,
+          provenanceUrl,
+          note,
+          providedAt: now,
+          providedBy: identity.subject,
+          previousBlock:
+            source.metadata?.sourceRecovery?.previousBlock ??
+            source.blockedDetails,
+        },
+      },
+    });
+    // Reuse the canonical completion check and bounded settlement. A
+    // transcript-only recovery does not satisfy Scout's raw-text contract.
+    await ctx.runMutation(internal.operationFailures.settleCaptured, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: now,
+    });
+    return null;
+  },
+});
+
+/** Record changed access; browser sessions are not shared with capture workers. */
+export const requestSourceRecovery = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    note: v.string(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({ transcriptQueued: v.boolean() }),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const note = args.note.trim();
+    if (!note || note.length > RECOVERY_NOTE_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_NOTE",
+        message: `Describe what access changed, in at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
+      });
+    // Even a same-millisecond access update must invalidate an old snapshot.
+    const now = advanceSourceVersion(source.updatedAt);
+    const transcriptQueued =
+      source.type === "youtube" &&
+      !source.rawText &&
+      !source.transcript &&
+      Boolean(resolveYouTubeVideoId(source));
+    await ctx.db.patch("sources", source._id, {
+      status: transcriptQueued ? "ingested" : "review_needed",
+      blockedReason: transcriptQueued ? undefined : "no_text",
+      blockedDetails: transcriptQueued
+        ? undefined
+        : "Access updated. Source text still needs recovery.",
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        ...(transcriptQueued
+          ? {
+              transcriptCapture: {
+                ...source.metadata?.transcriptCapture,
+                attempts: 0,
+              },
+            }
+          : {}),
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          accessChangedAt: now,
+          accessNote: note,
+          requestedBy: identity.subject,
+          previousBlock:
+            source.metadata?.sourceRecovery?.previousBlock ??
+            source.blockedDetails,
+        },
+      },
+    });
+    if (transcriptQueued)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.transcriptCapture.enqueueIfNeeded,
+        {},
+      );
+    return { transcriptQueued };
   },
 });
 
@@ -478,6 +756,16 @@ async function upsertExternalSource(
     .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
     .first();
 
+  // Unversioned intake cannot undo a human recovery or an archive, including
+  // by replacing metadata that carries the recovery's ownership/provenance.
+  if (
+    existing &&
+    (existing.status === "archived" ||
+      existing.metadata?.sourceRecovery?.providedAt !== undefined ||
+      existing.metadata?.sourceRecovery?.accessChangedAt !== undefined)
+  )
+    return { id: existing._id, created: false, contentChanged: false };
+
   const text = args.rawText || args.transcript;
   const rawTextSha256 = text ? await sha256Hex(text) : undefined;
 
@@ -510,7 +798,7 @@ async function upsertExternalSource(
         ? "archived"
         : existing.status,
     blockedReason: contentChanged ? undefined : existing.blockedReason,
-    updatedAt: now,
+    updatedAt: advanceSourceVersion(existing.updatedAt, now),
   });
 
   return { id: existing._id, created: false, contentChanged };
@@ -610,7 +898,7 @@ export const resetScoutCapture = mutation({
       blockedReason: "no_text",
       blockedDetails: args.reason,
       metadata: { ...metadata, scoutedBy: scoutProvenance },
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -798,7 +1086,7 @@ export const createScoutedSource = internalMutation({
                 lastCaptureAttemptRunId: args.agentRunId,
               },
             },
-            updatedAt: Date.now(),
+            updatedAt: advanceSourceVersion(existing.updatedAt),
           });
         }
         return { id: existing._id, created: false };
@@ -820,7 +1108,7 @@ export const createScoutedSource = internalMutation({
             capturedByAgentRunId: args.agentRunId,
           },
         },
-        updatedAt: capturedAt,
+        updatedAt: advanceSourceVersion(existing.updatedAt, capturedAt),
       });
       await settleCaptureFailures(ctx, { dedupeKey, capturedAt });
       return { id: existing._id, created: false, enriched: true };
@@ -881,7 +1169,7 @@ export const setVisibility = mutation({
           : args.visibility === "public"
             ? "promoted_public"
             : source.status,
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -1082,7 +1370,7 @@ export const archive = mutation({
     await ctx.db.patch("sources", args.id, {
       status: "archived",
       blockedDetails: args.reason || "Archived: off-topic or irrelevant",
-      updatedAt: Date.now(),
+      updatedAt: advanceSourceVersion(source.updatedAt),
     });
     return null;
   },
@@ -1103,7 +1391,10 @@ const DEDUPE_PROGRESS: Record<string, number> = {
 export type DedupeStanding = Pick<
   Doc<"sources">,
   "status" | "blockedReason" | "createdAt"
-> & { hasExtraction: boolean; hasText: boolean };
+> & {
+  hasExtraction: boolean;
+  hasText: boolean;
+};
 
 /**
  * Whether `holder` keeps the canonical key over a colliding `other` row:
@@ -1221,7 +1512,7 @@ export const recomputeDedupeKeys = mutation({
       if (collidesWith === null) {
         await ctx.db.patch("sources", source._id, {
           dedupeKey: canonical,
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(source.updatedAt, now),
         });
         changed++;
       } else if (
@@ -1236,7 +1527,7 @@ export const recomputeDedupeKeys = mutation({
           status: "archived",
           blockedReason: "duplicate",
           blockedDetails: `dedupe-migration: duplicate of ${holder._id}`,
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(source.updatedAt, now),
         });
         collisionsArchived++;
       } else if (holder) {
@@ -1246,11 +1537,11 @@ export const recomputeDedupeKeys = mutation({
           blockedReason: "duplicate",
           blockedDetails: `dedupe-migration: duplicate of ${source._id}`,
           dedupeKey: generateArchivedDedupeKey(holder.dedupeKey, holder._id),
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(holder.updatedAt, now),
         });
         await ctx.db.patch("sources", source._id, {
           dedupeKey: canonical,
-          updatedAt: now,
+          updatedAt: advanceSourceVersion(source.updatedAt, now),
         });
         changed++;
         collisionsArchived++;
@@ -1288,7 +1579,7 @@ export const bulkArchive = mutation({
         await ctx.db.patch("sources", id, {
           status: "archived",
           blockedDetails: args.reason || "Archived: off-topic or irrelevant",
-          updatedAt: Date.now(),
+          updatedAt: advanceSourceVersion(source.updatedAt),
         });
         archived++;
       }

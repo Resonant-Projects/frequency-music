@@ -321,6 +321,67 @@ describe("YouTube transcriber", () => {
 });
 
 describe("transcript-capture graph", () => {
+  test("starts capture at the eligible page found by the enqueue probe", async () => {
+    const callTool = vi.fn(async () => ({ rows: [], isDone: true }));
+    await createCaptureTranscriptsNode(
+      callTool,
+      {
+        configured: true,
+        transcribe: async () => ({ kind: "unavailable", detail: "unused" }),
+      },
+      async () => undefined,
+    )({ agentRunId: "run-t", backlogCursor: "eligible-page" });
+    expect(callTool).toHaveBeenCalledWith("listTranscriptBacklog", {
+      cursor: "eligible-page",
+    });
+  });
+
+  test("threads the backlog snapshot version into every outcome write", async () => {
+    for (const kind of [
+      "captured",
+      "unavailable",
+      "failed",
+      "rate_limited",
+    ] as const) {
+      const callTool = vi.fn(async (name: string) =>
+        name === "listTranscriptBacklog"
+          ? {
+              rows: [
+                {
+                  id: "source-AAAAAAAAAAA",
+                  videoId: "AAAAAAAAAAA",
+                  updatedAt: 42,
+                },
+              ],
+              isDone: true,
+            }
+          : { updated: true },
+      );
+      await createCaptureTranscriptsNode(
+        callTool,
+        {
+          configured: true,
+          transcribe: async () =>
+            kind === "captured"
+              ? {
+                  kind,
+                  text: speech.repeat(2),
+                  model: "whisper-large-v3-turbo",
+                }
+              : { kind, detail: "Capture result" },
+        },
+        async () => undefined,
+      )({ agentRunId: "run-t" });
+      expect(callTool).toHaveBeenCalledWith(
+        "recordTranscriptCapture",
+        expect.objectContaining({
+          sourceId: "source-AAAAAAAAAAA",
+          expectedUpdatedAt: 42,
+          outcome: kind === "failed" ? "attempted" : kind,
+        }),
+      );
+    }
+  });
   const backlog = (ids: string[], isDone = true) => ({
     rows: ids.map((id) => ({
       id: `source-${id}`,

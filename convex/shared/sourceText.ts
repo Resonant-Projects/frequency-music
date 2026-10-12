@@ -20,7 +20,10 @@ const EXCERPT_MARKERS = [
 ];
 
 /** Why captured text should not be extracted, or null when it should. */
-export function unextractableTextReason(text: string): string | null {
+export function unextractableTextReason(
+  text: string,
+  options: { allowExcerpt?: boolean } = {},
+): string | null {
   const trimmed = text.trim();
   if (looksLikeBotChallenge(trimmed)) {
     return "Captured text is a bot wall or browser check, not the source.";
@@ -38,6 +41,7 @@ export function unextractableTextReason(text: string): string | null {
     return `Captured text has only ${words} words.`;
   }
   if (
+    !options.allowExcerpt &&
     words <= EXCERPT_MAX_WORDS &&
     EXCERPT_MARKERS.some((marker) => marker.test(prose))
   ) {

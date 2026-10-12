@@ -27,6 +27,7 @@ import {
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
 import { failureCause } from "./shared/failureCause";
+import { advanceSourceVersion } from "./shared/sourceRecovery";
 import { unextractableTextReason } from "./shared/sourceText";
 import { truncateText } from "./shared/truncateText";
 
@@ -220,6 +221,13 @@ async function insertExtraction(
       claimIds,
     });
   }
+  // Every writer (worker, workflows, operator) links concepts here, so the
+  // correspondence miner sees each stored Extraction.
+  if (args.topics.length > 0) {
+    await ctx.scheduler.runAfter(0, internal.graph.linkExtraction, {
+      extractionId,
+    });
+  }
 
   return { extractionId };
 }
@@ -320,15 +328,15 @@ async function currentOperatorText(
 
 async function setSourceStatus(
   ctx: MutationCtx,
-  sourceId: Id<"sources">,
+  source: Doc<"sources">,
   status: Doc<"sources">["status"],
   blocked?: { reason: Doc<"sources">["blockedReason"]; details: string },
 ) {
-  await ctx.db.patch("sources", sourceId, {
+  await ctx.db.patch("sources", source._id, {
     status,
     blockedReason: blocked?.reason,
     blockedDetails: blocked?.details,
-    updatedAt: Date.now(),
+    updatedAt: advanceSourceVersion(source.updatedAt),
   });
 }
 
@@ -340,7 +348,7 @@ async function settleFoundExtraction(
 ) {
   await setSourceStatus(
     ctx,
-    source._id,
+    source,
     found.sameSource ? "extracted" : "archived",
     found.sameSource
       ? undefined
@@ -394,7 +402,7 @@ export const beginExtraction = internalMutation({
       return { skipped: true as const, reason: "Source changed since export" };
     const reason = unextractableTextReason(content);
     if (reason) {
-      await setSourceStatus(ctx, source._id, "review_needed", {
+      await setSourceStatus(ctx, source, "review_needed", {
         reason: "no_text",
         details: reason,
       });
@@ -428,7 +436,7 @@ export const beginExtraction = internalMutation({
           active.status === "failed")
       ) {
         // Saving identical text can reset disposition without changing ownership.
-        await setSourceStatus(ctx, source._id, "extracting");
+        await setSourceStatus(ctx, source, "extracting");
         return {
           attemptId: active._id,
           prompt: active.prompt,
@@ -464,7 +472,7 @@ export const beginExtraction = internalMutation({
       activeExtractionAttemptId: attemptId,
       blockedReason: undefined,
       blockedDetails: undefined,
-      updatedAt: now,
+      updatedAt: advanceSourceVersion(source.updatedAt, now),
     });
     return {
       attemptId,
@@ -655,7 +663,7 @@ export const commitExtraction = internalMutation({
         snapshotId: attemptId,
         historical: !current,
       }));
-      if (current) await setSourceStatus(ctx, attempt.sourceId, "extracted");
+      if (current) await setSourceStatus(ctx, source, "extracted");
     }
     if (current)
       await ctx.runMutation(internal.graph.linkExtractionConceptsAtomic, {
@@ -671,7 +679,7 @@ export const commitExtraction = internalMutation({
       // Metadata may change without a replacement admission. Release only
       // this completed owner; archives and newer owners retain their disposition.
       await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
-      await setSourceStatus(ctx, source._id, "text_ready");
+      await setSourceStatus(ctx, source, "text_ready");
     }
     await ctx.db.patch(attemptId, {
       extractionId,
@@ -727,7 +735,7 @@ export const failExtraction = internalMutation({
           attempt.promptVersion,
         )) === attempt.inputHash;
       if (matches) {
-        await setSourceStatus(ctx, source._id, "review_needed", {
+        await setSourceStatus(ctx, source, "review_needed", {
           reason: "ai_error",
           details: "Extraction failed; recovery pending",
         });
@@ -735,7 +743,7 @@ export const failExtraction = internalMutation({
         await ctx.db.patch(source._id, {
           activeExtractionAttemptId: undefined,
         });
-        await setSourceStatus(ctx, source._id, "text_ready");
+        await setSourceStatus(ctx, source, "text_ready");
       }
     }
     return null;
@@ -769,7 +777,7 @@ export const storeOperatorExtraction = internalMutation({
     if (checked.outcome) return checked.outcome;
     const refused = unextractableTextReason(checked.content);
     if (refused) {
-      await setSourceStatus(ctx, args.sourceId, "review_needed", {
+      await setSourceStatus(ctx, checked.source, "review_needed", {
         reason: "no_text",
         details: refused,
       });
@@ -793,7 +801,7 @@ export const storeOperatorExtraction = internalMutation({
       confidence: 0.8,
     });
     await settleExtractionOwnership(ctx, checked.source);
-    await setSourceStatus(ctx, args.sourceId, "extracted");
+    await setSourceStatus(ctx, checked.source, "extracted");
     return {
       success: true as const,
       model: args.model,
@@ -822,7 +830,7 @@ export const parkOperatorUnextractable = internalMutation({
     }
     const reason = unextractableTextReason(checked.content);
     if (!reason) return { parked: false, reason: "text is extractable" };
-    await setSourceStatus(ctx, args.sourceId, "review_needed", {
+    await setSourceStatus(ctx, checked.source, "review_needed", {
       reason: "no_text",
       details: reason,
     });
@@ -939,7 +947,7 @@ export const reconcileAttempts = internalMutation({
               activeExtractionAttemptId: undefined,
             });
             if (source.status === "extracting")
-              await setSourceStatus(ctx, source._id, "text_ready");
+              await setSourceStatus(ctx, source, "text_ready");
           }
           continue;
         }

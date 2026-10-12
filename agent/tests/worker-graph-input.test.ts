@@ -271,6 +271,20 @@ describe("worker graph-input mapping", () => {
     expect(TERMINAL_STATUS_OWNER["transcript-capture"]).toBe("graph");
   });
 
+  test("transcript capture forwards its enqueue scan cursor through the worker boundary", () => {
+    const invocation = buildGraphInvocation(
+      claimedRun({
+        runId: "run_transcripts",
+        graphName: "transcript-capture",
+        input: { backlogCursor: "eligible-page" },
+      }),
+    );
+    expect(invocation.input).toEqual({
+      agentRunId: "run_transcripts",
+      backlogCursor: "eligible-page",
+    });
+  });
+
   test("terminal-status ownership is split correctly", () => {
     expect(TERMINAL_STATUS_OWNER["research-pipeline"]).toBe("graph");
     expect(TERMINAL_STATUS_OWNER["weekly-brief"]).toBe("runner");

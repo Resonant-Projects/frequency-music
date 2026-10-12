@@ -475,3 +475,28 @@ export const backfillClaims = mutation({
     };
   },
 });
+
+/**
+ * Starts the concept-link backfill (graph.buildGraphFromExtractions), which
+ * pages through every Extraction on its own. Idempotent; operator service
+ * identity only, run through `vp run graph:backfill`. Lives here, not in the
+ * "use node" extract module, because Node-runtime modules hold only actions.
+ */
+export const startConceptBackfill = mutation({
+  args: { devBypassSecret: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    if (!identity.isBypass) {
+      throw new Error(
+        "The concept backfill requires the operator bypass secret",
+      );
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.graph.buildGraphFromExtractions,
+      {},
+    );
+    return null;
+  },
+});

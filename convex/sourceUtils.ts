@@ -53,6 +53,21 @@ export function generateDedupeKey(
   }
 }
 
+export function resolveYouTubeVideoId(source: {
+  youtubeVideoId?: string;
+  canonicalUrl?: string;
+}): string | null {
+  if (
+    source.youtubeVideoId &&
+    /^[a-zA-Z0-9_-]{11}$/.test(source.youtubeVideoId)
+  ) {
+    return source.youtubeVideoId;
+  }
+  return source.canonicalUrl
+    ? extractYouTubeVideoId(source.canonicalUrl)
+    : null;
+}
+
 export function extractYouTubeVideoId(url: string): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
