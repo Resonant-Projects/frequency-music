@@ -224,6 +224,7 @@ const FROZEN_ARGS: Record<string, string> = {
   claimNextMediaJob: frozenArgs({
     workerId: field(string),
     kinds: field(array(string)),
+    rendererVersion: field(string, true),
   }),
   renewMediaJobLease: frozenArgs({
     jobId: field(id("mediaJobs")),

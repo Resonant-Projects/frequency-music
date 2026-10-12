@@ -293,11 +293,11 @@ export const claimRecovery = internalMutation({
       return null;
     }
     // Two transient retries precede diagnosis; a supported diagnosis permits one final action.
+    const blocked = await unsupportedRecovery(ctx, failure);
     if (
-      (failure.attempts >= 2 ||
-        failure.target.kind === "audioUpload" ||
-        (await unsupportedRecovery(ctx, failure))) &&
-      !failure.diagnosis
+      blocked ||
+      ((failure.attempts >= 2 || failure.target.kind === "audioUpload") &&
+        !failure.diagnosis)
     ) {
       await investigate(ctx, failure);
       return null;
@@ -392,7 +392,13 @@ export const dispatch = internalMutation({
       await ctx.db.patch(failureId, {
         status: "recovering",
         updatedAt: Date.now(),
+        nextAttemptAt: Date.now() + 60_000,
       });
+      await ctx.scheduler.runAfter(
+        60_000,
+        internal.operationFailures.reconcile,
+        {},
+      );
       return true;
     }
     return false;

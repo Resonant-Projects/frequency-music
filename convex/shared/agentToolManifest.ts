@@ -330,7 +330,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "claimNextMediaJob",
     "media_write",
     "internal.mediaJobs:claimNext",
-    "Claim the oldest queued media job whose kind is in the caller's list and issue a 10-minute lease.",
+    "Claim the oldest queued media job matching the caller's kinds and optional renderer version, and issue a 10-minute lease.",
     "Media service only. A lifecycle write; never research data.",
     { langchain: false },
   ),

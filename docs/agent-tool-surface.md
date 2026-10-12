@@ -81,7 +81,7 @@ Used only by the media service on ai-5090-02 (a standing service identity). They
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `claimNextMediaJob` | `/agent-tools/claimNextMediaJob` | `internal.mediaJobs:claimNext` | Claim the oldest queued media job whose kind is in the caller's list and issue a 10-minute lease. | Media service only. A lifecycle write; never research data. |
+| `claimNextMediaJob` | `/agent-tools/claimNextMediaJob` | `internal.mediaJobs:claimNext` | Claim the oldest queued media job matching the caller's kinds and optional renderer version, and issue a 10-minute lease. | Media service only. A lifecycle write; never research data. |
 | `renewMediaJobLease` | `/agent-tools/renewMediaJobLease` | `internal.mediaJobs:renewLease` | Extend a claimed media job's lease; fails when the token no longer matches. | Call every few minutes while rendering. |
 | `generateAudioUploadUrl` | `/agent-tools/generateAudioUploadUrl` | `internal.mediaToolsInternal:generateAudioUploadUrl` | Create a pending audio artifact for a leased job and return a storage upload URL. | Upload, then call attachAudioStorage with the returned storageId immediately. |
 | `attachAudioStorage` | `/agent-tools/attachAudioStorage` | `internal.mediaToolsInternal:attachAudioStorage` | Record the uploaded storage id on a pending artifact. | Fenced by the job lease. Blobs never attached are reclaimed by the sweeper. |

@@ -891,6 +891,12 @@ export default defineSchema({
     finishedAt: v.optional(v.number()),
   })
     .index("by_status_priority_createdAt", ["status", "priority", "createdAt"])
+    .index("by_status_renderer_priority_createdAt", [
+      "status",
+      "input.rendererVersion",
+      "priority",
+      "createdAt",
+    ])
     .index("by_dedupeKey", ["dedupeKey"])
     .index("by_status_leaseExpiresAt", ["status", "leaseExpiresAt"]),
 

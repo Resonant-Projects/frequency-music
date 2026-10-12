@@ -40,6 +40,7 @@ export async function runOnce(
   const job = await tool<ClaimedMediaJob | null>("claimNextMediaJob", {
     workerId: config.workerId,
     kinds: config.kinds,
+    rendererVersion: config.rendererVersion,
   });
   if (!job) return "idle";
   log(`claimed ${job.kind} job ${job.jobId} (attempt ${job.attempts + 1})`);

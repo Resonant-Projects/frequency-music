@@ -277,10 +277,14 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
   getAgentRun: (ctx, args) =>
     ctx.runQuery(queryRef("agentRuns:getForWorker"), { runId: args.runId }),
   claimNextMediaJob: (ctx, args) =>
-    ctx.runMutation(internal.mediaJobs.claimNext, {
-      workerId: args.workerId as string,
-      kinds: args.kinds as string[],
-    }),
+    ctx.runMutation(
+      internal.mediaJobs.claimNext,
+      omitUndefined({
+        workerId: args.workerId as string,
+        kinds: args.kinds as string[],
+        rendererVersion: args.rendererVersion as string | undefined,
+      }),
+    ),
   renewMediaJobLease: (ctx, args) =>
     ctx.runMutation(internal.mediaJobs.renewLease, {
       jobId: args.jobId as Id<"mediaJobs">,

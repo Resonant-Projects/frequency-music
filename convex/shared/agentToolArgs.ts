@@ -171,6 +171,7 @@ export const agentToolArgs = {
   claimNextMediaJob: z.object({
     workerId: z.string().min(1),
     kinds: z.array(z.string().min(1)).min(1),
+    rendererVersion: z.string().min(1).optional(),
   }),
   renewMediaJobLease: z.object({
     jobId: zid("mediaJobs"),

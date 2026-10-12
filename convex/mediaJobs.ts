@@ -1,4 +1,8 @@
-import { recordOperationFailure } from "./operationFailures";
+import {
+  finishRecovery,
+  recordOperationFailure,
+  resolveOperationFailure,
+} from "./operationFailures";
 import { truncateText } from "./shared/truncateText";
 import { failureCause } from "./shared/failureCause";
 // Pull-based, leased job lifecycle. Convex never calls the media service.
@@ -169,18 +173,31 @@ export const narrateJobStateForBrief = internalQuery({
 });
 
 export const claimNext = internalMutation({
-  args: { workerId: v.string(), kinds: v.array(v.string()) },
+  args: {
+    workerId: v.string(),
+    kinds: v.array(v.string()),
+    rendererVersion: v.optional(v.string()),
+  },
   returns: claimedReturn,
   handler: async (ctx, args): Promise<ClaimedMediaJob | null> => {
     const kinds = args.kinds.map((kind) => mediaJobKindZ.parse(kind));
     const now = Date.now();
-    // Filter by kind before the limit: queued jobs of kinds this worker does
-    // not serve must never shadow a claimable one.
-    const job = await ctx.db
-      .query("mediaJobs")
-      .withIndex("by_status_priority_createdAt", (q) =>
-        q.eq("status", "queued"),
-      )
+    // Select renderer compatibility in the index, before loading large inputs.
+    const queued =
+      args.rendererVersion !== undefined
+        ? ctx.db
+            .query("mediaJobs")
+            .withIndex("by_status_renderer_priority_createdAt", (q) =>
+              q
+                .eq("status", "queued")
+                .eq("input.rendererVersion", args.rendererVersion!),
+            )
+        : ctx.db
+            .query("mediaJobs")
+            .withIndex("by_status_priority_createdAt", (q) =>
+              q.eq("status", "queued"),
+            );
+    const job = await queued
       .order("asc")
       .filter((q) => q.or(...kinds.map((kind) => q.eq(q.field("kind"), kind))))
       .first();
@@ -249,6 +266,7 @@ export const complete = internalMutation({
     const job = await ctx.db.get(args.jobId);
     // Idempotent repeat: same lease, already done → stored result.
     if (job && job.status === "done" && job.leaseToken === args.leaseToken) {
+      await resolveOperationFailure(ctx, `media:${job._id}`);
       return {
         jobId: job._id,
         status: "done" as const,
@@ -270,23 +288,36 @@ export const complete = internalMutation({
       resultArtifactIds,
       finishedAt: now,
     });
+    await resolveOperationFailure(ctx, `media:${live._id}`);
     return { jobId: live._id, status: "done" as const, resultArtifactIds };
   },
 });
 
 /** A parked job's failure identity; delivery retries resolve to the same record. */
-function recordMediaFailure(
+async function recordMediaFailure(
   ctx: MutationCtx,
   job: Doc<"mediaJobs">,
   error: string,
 ) {
-  return recordOperationFailure(ctx, {
+  const causeKey = `media:${job.kind}:${failureCause(error)}`;
+  const failureId = await recordOperationFailure(ctx, {
     operationId: `media:${job._id}`,
-    causeKey: `media:${job.kind}:${failureCause(error)}`,
+    causeKey,
     target: { kind: "audioUpload", jobId: job._id },
     message:
       "Media job exhausted its attempts; inspect retained audio and job diagnostics",
   });
+  const failure = await ctx.db.get(failureId);
+  if (failure && ["retrying", "recovering"].includes(failure.status)) {
+    // Diagnosis approves one execution, not every later failure of this job.
+    await finishRecovery(ctx, failureId, false, failure.attempts);
+    await ctx.db.patch(failureId, {
+      causeKey,
+      diagnosis: undefined,
+      investigationRunId: undefined,
+    });
+  }
+  return failureId;
 }
 
 async function requeueOrPark(
@@ -295,8 +326,15 @@ async function requeueOrPark(
   error: string,
   now: number,
 ): Promise<{ status: "queued" | "parked"; attempts: number }> {
-  const attempts = job.attempts + 1;
-  const status = attempts >= MAX_ATTEMPTS ? "parked" : "queued";
+  // The worker serializes Error objects with their name before the message.
+  const rendererMismatch = error
+    .replace(/^Error: /, "")
+    .startsWith(
+      `renderer version mismatch: job requested ${job.input.rendererVersion}, worker is `,
+    );
+  const attempts = job.attempts + (rendererMismatch ? 0 : 1);
+  const status =
+    !rendererMismatch && attempts >= MAX_ATTEMPTS ? "parked" : "queued";
   await ctx.db.patch(job._id, {
     status,
     attempts,
@@ -304,7 +342,7 @@ async function requeueOrPark(
     // An unknown failure or expired lease permanently removes this exemption.
     preRenderFailuresOnly:
       (job.attempts === 0 || job.preRenderFailuresOnly === true) &&
-      error.startsWith("renderer version mismatch: job requested "),
+      rendererMismatch,
     error: truncateText(error, 2000),
     leaseToken: undefined,
     leaseExpiresAt: undefined,
