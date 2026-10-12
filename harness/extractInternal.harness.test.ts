@@ -57,8 +57,10 @@ describe("extractInternal.storeExtraction", () => {
     const scheduled = await t.run((ctx) =>
       ctx.db.system.query("_scheduled_functions").collect(),
     );
-    expect(scheduled).toHaveLength(1);
+    expect(scheduled).toHaveLength(2);
     expect(scheduled[0]?.name).toContain("embeddings:embedClaims");
+    expect(scheduled[1]?.name).toContain("graph:linkExtractionConcepts");
+    expect(scheduled[1]?.args).toEqual([{ extractionId }]);
 
     const kinds = await t.run((ctx) =>
       ctx.db.query("parameterKinds").collect(),
