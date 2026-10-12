@@ -95,10 +95,17 @@ def terminate_group(pgid):
     # Caller must prove ownership before entering. The launch supervisor owns an
     # unreaped Popen child: even a zombie reserves the PID/PGID until wait().
     for sig in (signal.SIGTERM, signal.SIGKILL):
+        if not group_members(pgid):
+            return
         try:
             os.killpg(pgid, sig)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # macOS may report EPERM after concurrent cleanup drains the group.
+            if group_members(pgid):
+                raise
+            return
         for _ in range(50):
             if not group_members(pgid):
                 return

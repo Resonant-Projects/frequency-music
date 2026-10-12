@@ -245,6 +245,23 @@ class ReviewRegressions(unittest.TestCase):
                     except ProcessLookupError: pass
                     proc.wait(timeout=5)
 
+    def test_empty_group_is_not_signaled(self):
+        # On macOS killpg of a drained/zombie-only group can return EPERM,
+        # including when explicit cleanup beats the launch supervisor.
+        with patch.object(control, "group_members", return_value=[]), \
+             patch.object(control.os, "killpg", side_effect=PermissionError("drained group")) as kill:
+            control.terminate_group(42)
+            kill.assert_not_called()
+
+    def test_permission_error_is_ignored_only_after_verified_drain(self):
+        with patch.object(control, "group_members", side_effect=[[42], []]), \
+             patch.object(control.os, "killpg", side_effect=PermissionError("drained group")):
+            control.terminate_group(42)
+        with patch.object(control, "group_members", return_value=[42]), \
+             patch.object(control.os, "killpg", side_effect=PermissionError("live group")):
+            with self.assertRaisesRegex(PermissionError, "live group"):
+                control.terminate_group(42)
+
     def test_missing_executable_removes_scratch(self):
         self.run_failed_launch("popen")
 
