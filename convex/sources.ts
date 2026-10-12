@@ -1,6 +1,6 @@
 import { literals } from "convex-helpers/validators";
 import { ConvexError, v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import {
@@ -29,6 +29,12 @@ import {
   extractionInputHash,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
+import {
+  publicSourceUrl,
+  RECOVERY_KINDS,
+  RECOVERY_NOTE_MAX_CHARS,
+  RECOVERY_TEXT_MAX_CHARS,
+} from "./shared/sourceRecovery";
 import { sourceReturnValidator } from "./validators";
 
 // ============================================================================
@@ -345,6 +351,214 @@ export const updateText = mutation({
       updatedAt: Date.now(),
     });
     return null;
+  },
+});
+
+async function sourceForRecovery(
+  ctx: MutationCtx,
+  id: Id<"sources">,
+  expectedUpdatedAt: number,
+) {
+  const source = await ctx.db.get("sources", id);
+  if (
+    !source ||
+    source.visibility !== "private" ||
+    !["ingested", "review_needed", "extracted"].includes(source.status) ||
+    (source.status !== "ingested" && source.blockedReason !== "no_text")
+  ) {
+    throw new ConvexError({
+      code: "INVALID_STATE",
+      message:
+        "This source no longer needs text recovery in the private queue.",
+    });
+  }
+  if (source.updatedAt !== expectedUpdatedAt) {
+    throw new ConvexError({
+      code: "CONFLICT",
+      message:
+        "This source changed while you were editing. Review its current state before saving again.",
+    });
+  }
+  return source;
+}
+
+/** Dismiss unavailable text without claiming completed review or deleting evidence. */
+export const archiveRecoverySource = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const now = Date.now();
+    await ctx.db.patch("sources", source._id, {
+      status: "archived",
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          archivedAt: now,
+          archivedBy: identity.subject,
+          archiveReason: "Unavailable source dismissed from the Action Queue.",
+        },
+      },
+    });
+    return null;
+  },
+});
+
+/** Store human-provided evidence and clear its obsolete block in one transaction. */
+export const provideRecoveryText = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    text: v.string(),
+    kind: literals(...RECOVERY_KINDS),
+    provenanceUrl: v.optional(v.string()),
+    note: v.optional(v.string()),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const text = args.text.trim();
+    const reason = unextractableTextReason(text);
+    if (reason || text.length > RECOVERY_TEXT_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_TEXT",
+        message:
+          reason ??
+          `Provide at most ${RECOVERY_TEXT_MAX_CHARS.toLocaleString()} characters.`,
+      });
+    const note = args.note?.trim();
+    if ((note?.length ?? 0) > RECOVERY_NOTE_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_NOTE",
+        message: "Keep the coverage note under 2,000 characters.",
+      });
+    const provenanceUrl = args.provenanceUrl?.trim() || source.canonicalUrl;
+    if (provenanceUrl && !publicSourceUrl(provenanceUrl))
+      throw new ConvexError({
+        code: "INVALID_URL",
+        message:
+          "Provide an http or https source URL without embedded credentials.",
+      });
+    const coverage =
+      args.kind === "abstract"
+        ? "Abstract only. Full text was not supplied. Extract only claims supported by this abstract."
+        : args.kind === "excerpt"
+          ? "Excerpt only. Full source coverage was not supplied. Extract only claims supported by this excerpt."
+          : args.kind === "transcript"
+            ? "Supplied transcript. Visual content, diagrams and scores are not covered by the transcript."
+            : "Supplied article text. Coverage is limited to the text below.";
+    const capturedText = `Capture supplied during source recovery. ${coverage}\n${provenanceUrl ? `Evidence URL: ${provenanceUrl}\n` : ""}${note ? `Coverage note: ${note}\n` : ""}\n${text}`;
+    const hash = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(capturedText),
+    );
+    const now = Date.now();
+    await ctx.db.patch("sources", source._id, {
+      rawText: args.kind === "transcript" ? undefined : capturedText,
+      transcript: args.kind === "transcript" ? capturedText : undefined,
+      rawTextSha256: Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(""),
+      status: "text_ready",
+      blockedReason: undefined,
+      blockedDetails: undefined,
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          kind: args.kind,
+          provenanceUrl,
+          note,
+          providedAt: now,
+          providedBy: identity.subject,
+          previousBlock:
+            source.blockedDetails ??
+            source.metadata?.sourceRecovery?.previousBlock,
+        },
+      },
+    });
+    return null;
+  },
+});
+
+/** Record changed access; browser sessions are not shared with capture workers. */
+export const requestSourceRecovery = mutation({
+  args: {
+    id: v.id("sources"),
+    expectedUpdatedAt: v.number(),
+    note: v.string(),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.object({ transcriptQueued: v.boolean() }),
+  handler: async (ctx, args) => {
+    const identity = await requireAuth(ctx, args);
+    const source = await sourceForRecovery(
+      ctx,
+      args.id,
+      args.expectedUpdatedAt,
+    );
+    const note = args.note.trim();
+    if (!note || note.length > RECOVERY_NOTE_MAX_CHARS)
+      throw new ConvexError({
+        code: "INVALID_NOTE",
+        message: "Describe what access changed, in at most 2,000 characters.",
+      });
+    const now = Date.now();
+    const transcriptQueued =
+      source.type === "youtube" && !source.rawText && !source.transcript;
+    await ctx.db.patch("sources", source._id, {
+      status: transcriptQueued ? "ingested" : "review_needed",
+      blockedReason: transcriptQueued ? undefined : "no_text",
+      blockedDetails: transcriptQueued
+        ? undefined
+        : "Access updated. Source text still needs recovery.",
+      updatedAt: now,
+      metadata: {
+        ...source.metadata,
+        ...(transcriptQueued
+          ? {
+              transcriptCapture: {
+                ...source.metadata?.transcriptCapture,
+                attempts: 0,
+              },
+            }
+          : {}),
+        sourceRecovery: {
+          ...source.metadata?.sourceRecovery,
+          accessChangedAt: now,
+          accessNote: note,
+          requestedBy: identity.subject,
+          previousBlock:
+            source.blockedDetails ??
+            source.metadata?.sourceRecovery?.previousBlock,
+        },
+      },
+    });
+    if (transcriptQueued)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.transcriptCapture.enqueueIfNeeded,
+        {},
+      );
+    return { transcriptQueued };
   },
 });
 

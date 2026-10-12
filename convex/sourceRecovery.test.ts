@@ -1,0 +1,303 @@
+import { convexTest } from "convex-test";
+import { describe, expect, test } from "vite-plus/test";
+import { api, internal } from "./_generated/api";
+import schema from "./schema";
+import { modules } from "../harness/modules";
+
+const body =
+  "A recovered source explains how resonance depends on frequency, damping and boundary conditions. Its measurements describe the physical system and do not establish a musical listening effect. ".repeat(
+    3,
+  );
+const seed = (t: ReturnType<typeof convexTest>, extra = {}) =>
+  t.run((ctx) =>
+    ctx.db.insert("sources", {
+      type: "youtube",
+      canonicalUrl: "https://www.youtube.com/watch?v=AAAAAAAAAAA",
+      title: "Blocked video",
+      dedupeKey: "yt:AAAAAAAAAAA",
+      status: "review_needed",
+      blockedReason: "no_text",
+      blockedDetails: "This video is unavailable",
+      visibility: "private",
+      createdBy: "system",
+      createdAt: 1,
+      updatedAt: 2,
+      metadata: {
+        feedName: "Preserve me",
+        transcriptCapture: { attempts: 5, lastAttemptDetail: "403" },
+      },
+      ...extra,
+    }),
+  );
+
+describe("source recovery from the Action Queue", () => {
+  test("late automatic captures cannot overwrite supplied text or revive archived sources", async () => {
+    const t = convexTest(schema, modules),
+      reader = t.withIdentity({ subject: "reader" });
+    const agentRunId = await t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "transcript-capture",
+        status: "running",
+        input: {},
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const supplied = await seed(t, { status: "ingested" });
+    const archived = await seed(t, {
+      dedupeKey: "yt:BBBBBBBBBBB",
+      status: "ingested",
+    });
+    await reader.mutation(api.sources.provideRecoveryText, {
+      id: supplied,
+      expectedUpdatedAt: 2,
+      text: body,
+      kind: "transcript",
+    });
+    await reader.mutation(api.sources.archiveRecoverySource, {
+      id: archived,
+      expectedUpdatedAt: 2,
+    });
+    for (const sourceId of [supplied, archived]) {
+      expect(
+        await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
+          sourceId,
+          agentRunId,
+          outcome: "captured",
+          transcript: "Late worker transcript",
+          model: "whisper-large-v3-turbo",
+        }),
+      ).toEqual({ updated: false });
+    }
+    expect(
+      (await t.query(api.sources.get, { id: supplied }))?.transcript,
+    ).toContain(body.trim());
+    expect((await t.query(api.sources.get, { id: archived }))?.status).toBe(
+      "archived",
+    );
+  });
+  test("archive retains evidence privately, leaves the inbox and rejects stale or completed rows", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t),
+      reader = t.withIdentity({ subject: "reader" });
+    await expect(
+      t.mutation(api.sources.archiveRecoverySource, {
+        id,
+        expectedUpdatedAt: 2,
+      }),
+    ).rejects.toThrow(/Authentication/);
+    await expect(
+      reader.mutation(api.sources.archiveRecoverySource, {
+        id,
+        expectedUpdatedAt: 1,
+      }),
+    ).rejects.toThrow(/changed/i);
+    await reader.mutation(api.sources.archiveRecoverySource, {
+      id,
+      expectedUpdatedAt: 2,
+    });
+    expect(await t.query(api.sources.get, { id })).toMatchObject({
+      status: "archived",
+      visibility: "private",
+      blockedDetails: "This video is unavailable",
+      metadata: {
+        feedName: "Preserve me",
+        sourceRecovery: { archivedBy: "reader" },
+      },
+    });
+    expect(
+      (await t.query(api.inbox.list, { limit: 24 })).map((s) => s._id),
+    ).not.toContain(id);
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: body,
+        kind: "article",
+      }),
+    ).rejects.toThrow(/queue/i);
+  });
+  test("transcripts replace unusable teasers and recovery cannot write a source made public", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t, { rawText: "Old teaser" }),
+      reader = t.withIdentity({ subject: "reader" });
+    await t.run((ctx) =>
+      ctx.db.patch("sources", id, { visibility: "followers" }),
+    );
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: body,
+        kind: "transcript",
+      }),
+    ).rejects.toThrow(/queue/i);
+    await t.run((ctx) =>
+      ctx.db.patch("sources", id, { visibility: "private" }),
+    );
+    await reader.mutation(api.sources.provideRecoveryText, {
+      id,
+      expectedUpdatedAt: 2,
+      text: body,
+      kind: "transcript",
+    });
+    const s = await t.query(api.sources.get, { id });
+    expect(s?.transcript).toContain(body.trim());
+    expect(s?.rawText).toBeUndefined();
+  });
+  test("saves labelled evidence atomically, clears the block and preserves privacy and provenance", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t);
+    await t
+      .withIdentity({ subject: "reader" })
+      .mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: body,
+        kind: "abstract",
+        provenanceUrl: "https://example.org/paper",
+        note: "Verified author abstract; full text unavailable.",
+      });
+    const s = await t.query(api.sources.get, { id });
+    expect(s).toMatchObject({
+      status: "text_ready",
+      visibility: "private",
+      metadata: {
+        feedName: "Preserve me",
+        sourceRecovery: {
+          kind: "abstract",
+          providedBy: "reader",
+          provenanceUrl: "https://example.org/paper",
+        },
+      },
+    });
+    expect(s?.blockedReason).toBeUndefined();
+    expect(s?.blockedDetails).toBeUndefined();
+    expect(s?.rawText).toContain("Abstract only");
+    expect(s?.rawText).toContain(body.trim());
+    expect(s?.transcript).toBeUndefined();
+    expect(s?.rawTextSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(await t.run((ctx) => ctx.db.query("extractions").collect())).toEqual(
+      [],
+    );
+  });
+  test("rejects stale changes, completed sources, challenges and insufficient text", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t),
+      reader = t.withIdentity({ subject: "reader" });
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 1,
+        text: body,
+        kind: "transcript",
+      }),
+    ).rejects.toThrow(/changed/i);
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: "Just a moment... Checking your browser before accessing this website.",
+        kind: "article",
+      }),
+    ).rejects.toThrow();
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: "Thank you.",
+        kind: "transcript",
+      }),
+    ).rejects.toThrow();
+    await t.run((ctx) => ctx.db.patch("sources", id, { status: "triaged" }));
+    await expect(
+      reader.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: body,
+        kind: "article",
+      }),
+    ).rejects.toThrow(/queue/i);
+  });
+  test("requires authentication and rejects unsafe provenance links", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t);
+    await expect(
+      t.mutation(api.sources.provideRecoveryText, {
+        id,
+        expectedUpdatedAt: 2,
+        text: body,
+        kind: "article",
+      }),
+    ).rejects.toThrow(/Authentication/);
+    await expect(
+      t
+        .withIdentity({ subject: "reader" })
+        .mutation(api.sources.provideRecoveryText, {
+          id,
+          expectedUpdatedAt: 2,
+          text: body,
+          kind: "article",
+          provenanceUrl: "javascript:alert(1)",
+        }),
+    ).rejects.toThrow(/URL/);
+  });
+  test("access changes requeue a blocked empty YouTube source and retain the failed attempt", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t);
+    await t
+      .withIdentity({ subject: "reader" })
+      .mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: 2,
+        note: "Video now plays publicly.",
+      });
+    const s = await t.query(api.sources.get, { id });
+    expect(s).toMatchObject({
+      status: "ingested",
+      visibility: "private",
+      metadata: {
+        transcriptCapture: { attempts: 0, lastAttemptDetail: "403" },
+        sourceRecovery: {
+          previousBlock: "This video is unavailable",
+          accessNote: "Video now plays publicly.",
+          requestedBy: "reader",
+        },
+      },
+    });
+    expect(s?.blockedReason).toBeUndefined();
+    const page = await t.query(
+      internal.transcriptCapture.listTranscriptBacklog,
+      {},
+    );
+    expect(page.rows.map((r) => r.id)).toContain(id);
+  });
+  test("records access changes for articles without pretending capture succeeded", async () => {
+    const t = convexTest(schema, modules),
+      id = await seed(t, {
+        type: "url",
+        canonicalUrl: "https://example.org/paper",
+        rawText: "Feed teaser",
+      });
+    await t
+      .withIdentity({ subject: "reader" })
+      .mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: 2,
+        note: "Signed in to the publisher in the integrated browser.",
+      });
+    const s = await t.query(api.sources.get, { id });
+    expect(s).toMatchObject({
+      status: "review_needed",
+      blockedReason: "no_text",
+      rawText: "Feed teaser",
+      visibility: "private",
+      metadata: {
+        sourceRecovery: {
+          accessNote: "Signed in to the publisher in the integrated browser.",
+        },
+      },
+    });
+    expect(s?.blockedDetails).toContain("Access updated");
+  });
+});
