@@ -20,6 +20,7 @@ import {
   type ClaimedMediaJob,
   LEASE_MS,
   MAX_ATTEMPTS,
+  RENDERER_VERSION_FOR_JOBS,
   mediaJobDedupeKey,
   mediaJobInputValidator,
   mediaJobInputZ,
@@ -305,7 +306,7 @@ async function recordMediaFailure(
     causeKey,
     target: { kind: "audioUpload", jobId: job._id },
     message:
-      "Media job exhausted its attempts; inspect retained audio and job diagnostics",
+      "Media job requires recovery; inspect retained audio and job diagnostics",
   });
   const failure = await ctx.db.get(failureId);
   if (failure && ["retrying", "recovering"].includes(failure.status)) {
@@ -392,6 +393,47 @@ export const sweepStale = internalMutation({
     if (expired.length === SWEEP_LIMIT)
       await ctx.scheduler.runAfter(0, internal.mediaJobs.sweepStale, { now });
     return { requeued, parked };
+  },
+});
+
+/** Park obsolete standard snapshots after a rollout grace period. Never migrate paid inputs. */
+export const parkIncompatibleQueued = internalMutation({
+  args: { cutoff: v.number(), cursor: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    // One full input per transaction reserves space for failure recording.
+    const page = await ctx.db
+      .query("mediaJobs")
+      .withIndex("by_status_createdAt", (q) =>
+        q.eq("status", "queued").lte("createdAt", args.cutoff),
+      )
+      .paginate({
+        cursor: args.cursor ?? null,
+        numItems: 1,
+        maximumBytesRead: 1_000_000,
+      });
+    for (const job of page.page) {
+      const renderer = job.input.rendererVersion;
+      if (
+        renderer === RENDERER_VERSION_FOR_JOBS ||
+        renderer.startsWith("essay-")
+      )
+        continue;
+      const error = `renderer version mismatch: job requested ${renderer}, current renderer is ${RENDERER_VERSION_FOR_JOBS}; retained snapshot requires operator review`;
+      await ctx.db.patch(job._id, {
+        status: "parked",
+        error,
+        finishedAt: Date.now(),
+      });
+      await recordMediaFailure(ctx, job, error);
+    }
+    if (!page.isDone)
+      await ctx.scheduler.runAfter(
+        0,
+        internal.mediaJobs.parkIncompatibleQueued,
+        { cutoff: args.cutoff, cursor: page.continueCursor },
+      );
+    return null;
   },
 });
 

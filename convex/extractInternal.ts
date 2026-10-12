@@ -14,6 +14,7 @@ import { currentExtractions, retireClaimsBatch } from "./extractions";
 import {
   recordOperationFailure,
   resolveOperationFailure,
+  reopenExtractionCompletionRecovery,
 } from "./operationFailures";
 import {
   claimValidator,
@@ -24,6 +25,7 @@ import {
   EXTRACT_SYSTEM_PROMPT,
   EXTRACTION_PROMPT_VERSION,
   extractionInputHash,
+  extractionSnapshotMatchesSource,
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
 import { failureCause } from "./shared/failureCause";
@@ -503,6 +505,7 @@ export const retainExtractionResult = internalMutation({
         error: undefined,
         updatedAt: Date.now(),
       });
+      await reopenExtractionCompletionRecovery(ctx, attemptId);
     }
     return null;
   },
@@ -838,6 +841,37 @@ export const parkOperatorUnextractable = internalMutation({
   },
 });
 
+/** Recovery rejection releases obsolete admission without changing retained/in-flight output. */
+export const releaseObsoleteRecovery = internalMutation({
+  args: { attemptId: v.id("extractionAttempts") },
+  returns: v.null(),
+  handler: async (ctx, { attemptId }) => {
+    const attempt = await ctx.db.get(attemptId);
+    if (
+      !attempt ||
+      attempt.result ||
+      attempt.origin === "operator" ||
+      (attempt.generationLeaseUntil ?? 0) > Date.now()
+    )
+      return null;
+    const source = await ctx.db.get(attempt.sourceId);
+    if (
+      !source ||
+      source.status === "archived" ||
+      source.activeExtractionAttemptId !== attemptId ||
+      (await extractionSnapshotMatchesSource(attempt, source))
+    )
+      return null;
+    await ctx.db.patch(source._id, { activeExtractionAttemptId: undefined });
+    if (
+      source.status === "extracting" ||
+      (source.status === "review_needed" && source.blockedReason === "ai_error")
+    )
+      await setSourceStatus(ctx, source, "text_ready");
+    return null;
+  },
+});
+
 export const getAttempt = internalQuery({
   args: { attemptId: v.id("extractionAttempts") },
   handler: (ctx, args) => ctx.db.get(args.attemptId),
@@ -862,21 +896,7 @@ export const claimGeneration = internalMutation({
       throw new Error(
         "Archived or missing Source cannot start a new generation",
       );
-    if (
-      source.activeExtractionAttemptId !== attemptId ||
-      source.title !== attempt.title ||
-      source.canonicalUrl !== attempt.canonicalUrl ||
-      !(
-        source.status === "extracting" ||
-        source.status === "text_ready" ||
-        (source.status === "review_needed" &&
-          source.blockedReason === "ai_error")
-      ) ||
-      (await extractionInputHash(
-        source.rawText || source.transcript || "",
-        attempt.promptVersion,
-      )) !== attempt.inputHash
-    )
+    if (!(await extractionSnapshotMatchesSource(attempt, source)))
       throw new Error("Only retained output can complete this snapshot");
     await ctx.db.patch(attemptId, {
       status: "pending",

@@ -890,6 +890,7 @@ export default defineSchema({
     claimedAt: v.optional(v.number()),
     finishedAt: v.optional(v.number()),
   })
+    .index("by_status_createdAt", ["status", "createdAt"])
     .index("by_status_priority_createdAt", ["status", "priority", "createdAt"])
     .index("by_status_renderer_priority_createdAt", [
       "status",

@@ -577,6 +577,17 @@ describe("recovery seams", () => {
     }
   });
 
+  test("an empty investigation completes without invoking the model or diagnosis write", async () => {
+    const callTool = vi.fn(async () => []);
+    const invoke = vi.fn();
+    const result = await createInvestigateNode(callTool, { invoke })({
+      agentRunId: "run",
+    });
+    expect(result.summary).toContain("no active failures");
+    expect(invoke).not.toHaveBeenCalled();
+    expect(callTool).toHaveBeenCalledTimes(1);
+  });
+
   test("the investigation deadline aborts stalled evidence and submission calls", async () => {
     for (const stalled of [
       "getFailureInvestigation",
@@ -592,7 +603,7 @@ describe("recovery seams", () => {
       });
       const callTool = vi.fn(
         async (name: string, _args: unknown, signal?: AbortSignal) => {
-          if (name !== stalled) return [];
+          if (name !== stalled) return [{ id: "active-failure" }];
           entered();
           return new Promise((_resolve, reject) =>
             signal!.addEventListener("abort", () => reject(signal!.reason), {

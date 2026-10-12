@@ -113,3 +113,37 @@ export async function extractionInputHash(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
+
+/** Admission for new generation. Retained output does not need this gate. */
+export async function extractionSnapshotMatchesSource(
+  attempt: {
+    _id: string;
+    title?: string;
+    canonicalUrl?: string;
+    inputHash: string;
+    promptVersion: string;
+  },
+  source: {
+    activeExtractionAttemptId?: string;
+    title?: string;
+    canonicalUrl?: string;
+    status: string;
+    blockedReason?: string;
+    rawText?: string;
+    transcript?: string;
+  },
+): Promise<boolean> {
+  return (
+    source.activeExtractionAttemptId === attempt._id &&
+    source.title === attempt.title &&
+    source.canonicalUrl === attempt.canonicalUrl &&
+    (source.status === "extracting" ||
+      source.status === "text_ready" ||
+      (source.status === "review_needed" &&
+        source.blockedReason === "ai_error")) &&
+    (await extractionInputHash(
+      source.rawText || source.transcript || "",
+      attempt.promptVersion,
+    )) === attempt.inputHash
+  );
+}

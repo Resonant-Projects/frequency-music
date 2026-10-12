@@ -4,6 +4,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { readSetting, writeSetting } from "./settings";
+import { LEASE_MS } from "./shared/mediaJobs";
 
 const DEFAULT_ORPHAN_AGE_MS = 24 * 60 * 60 * 1000;
 // Full artifacts, their jobs and expired leases share one transaction.
@@ -80,6 +81,9 @@ export const sweep = internalMutation({
       internal.mediaJobs.sweepStale,
       { now },
     );
+    await ctx.scheduler.runAfter(0, internal.mediaJobs.parkIncompatibleQueued, {
+      cutoff: now - LEASE_MS,
+    });
 
     let artifactsDeleted = 0;
     let blobsDeleted = 0;

@@ -26,6 +26,8 @@ export function createInvestigateNode(
       },
       signal,
     );
+    if (Array.isArray(evidence) && evidence.length === 0)
+      return { summary: "Failure investigation: no active failures remain" };
     const investigator =
       judge ??
       createStructuredJudge(diagnosisZ, ANTHROPIC_MODELS.haiku, {

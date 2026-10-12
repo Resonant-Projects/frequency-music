@@ -932,7 +932,7 @@ describe("Extraction completion", () => {
     expect(source?.activeExtractionAttemptId).toBeUndefined();
     expect(await begin()).not.toBe(attemptId);
   });
-  test("recovery releases failed ownership after an actual metadata-only upsert refuses generation", async () => {
+  test("recovery admission releases failed ownership after a metadata-only upsert without attempting generation", async () => {
     const t = convexTest(schema, modules);
     const operator = t.withIdentity({ subject: "system" });
     const url = "https://example.org/failed-fifths";
@@ -981,9 +981,10 @@ describe("Extraction completion", () => {
       internal.operationFailures.claimRecovery,
       { failureId: failure._id },
     );
-    await t.action(internal.recoveryWorkflows.execute, {
-      failureId: failure._id,
-      attempt: recoveryAttempt!,
+    expect(recoveryAttempt).toBeNull();
+    expect(await t.run((ctx) => ctx.db.get(failure._id))).toMatchObject({
+      status: "needsReview",
+      attempts: 0,
     });
     const source = await t.run((ctx) => ctx.db.get(sourceId));
     expect(source?.status).toBe("text_ready");
