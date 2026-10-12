@@ -9,6 +9,20 @@ function parseClassifications(value: unknown, expectedCount: number) {
 }
 
 describe("concept classifier output", () => {
+  test("retains an otherwise valid empty-domain response for review", () => {
+    const classification = {
+      domains: [],
+      missionRelevance: "on",
+      rationale: "No registry domain describes this concept.",
+    };
+    expect(
+      parseConceptClassificationItems({ classifications: [classification] }, 1),
+    ).toEqual({
+      classifications: [{ index: 0, classification }],
+      failed: 0,
+    });
+  });
+
   test("accepts the binding output shape", () => {
     expect(
       parseClassifications(
@@ -108,7 +122,7 @@ describe("concept classifier output", () => {
             },
             {
               domains: [],
-              missionRelevance: "on",
+              missionRelevance: "maybe",
               rationale: "Malformed row.",
             },
             {

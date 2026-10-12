@@ -68,6 +68,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - Deploy with `vp run convex:deploy` (or `vp run convex:deploy:dry-run`, which still uploads and prepares schema). It typechecks, refuses uncommitted changes and `.env`/`.env.local` files in the release checkout, pins the target to `https://convex.resonantprojects.art`, resolves the admin key through Varlock, and asks you to type `deploy` before it runs the audited CLI per the [CLI contract](./docs/frequency-supported-deployment-rollback.md#cli-contract-and-side-effects).
 - The [operator evidence scripts](./docs/frequency-worker-handoff.md#privileged-queue-and-deployed-artifact-evidence) use inherited administrative credentials only; their environment-loading exception is documented in [AGENTS.md](./AGENTS.md#guardrails).
 - For CLI mutation auth, see [Guardrails in AGENTS.md](./AGENTS.md#guardrails).
+- For parked concept classifications and explicit retries, see [Concept classification](./docs/concept-classification.md).
 
 ### Agent workspace & worker
 
