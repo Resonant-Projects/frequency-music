@@ -43,6 +43,17 @@ export function buildDeployArgs(options: DeployOptions): string[] {
   ];
 }
 
+/**
+ * `convex run` of the concept-graph backfill (graph.buildGraphFromExtractions),
+ * an internal action only an admin key can call. It pages itself to the end.
+ */
+export const GRAPH_BACKFILL_ARGS: readonly string[] = [
+  CONVEX_CLI_ENTRYPOINT,
+  "run",
+  "graph:buildGraphFromExtractions",
+  "{}",
+];
+
 export function buildDeployEnv(
   source: Readonly<Record<string, string | undefined>>,
   blankKeys: Iterable<string> = [],
