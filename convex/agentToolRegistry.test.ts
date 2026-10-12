@@ -58,6 +58,7 @@ const FROZEN_ARGS: Record<string, string> = {
   }),
   recordTranscriptCapture: frozenArgs({
     sourceId: field(id("sources")),
+    expectedUpdatedAt: field(number, true),
     agentRunId: runId,
     outcome: field(
       union(
