@@ -369,6 +369,28 @@ describe("concept linking", () => {
     expect(mentions).toEqual({ tuning: 1 });
   });
 
+  test("only the operator service identity starts the backfill", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.mutation(api.extract.startConceptBackfill, {}),
+    ).rejects.toThrow();
+    await expect(
+      t
+        .withIdentity({ subject: "user_123", name: "Someone" })
+        .mutation(api.extract.startConceptBackfill, {}),
+    ).rejects.toThrow("requires the operator bypass secret");
+    expect(await jobs(t)).toEqual([]);
+    await t.mutation(api.extract.startConceptBackfill, {
+      devBypassSecret: BYPASS,
+    });
+    const scheduled = await jobs(t);
+    expect(scheduled).toHaveLength(1);
+    expect(scheduled[0]?.name).toMatch(
+      /^graph(\.js)?:buildGraphFromExtractions$/,
+    );
+    expect(scheduled[0]?.args).toEqual([{}]);
+  });
+
   test("the backfill pages through every Extraction and is safe to rerun", async () => {
     const { t, sourceId, inputHash } = await setup();
     await store(t, sourceId, inputHash);

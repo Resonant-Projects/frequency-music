@@ -7,7 +7,6 @@ import {
   CONVEX_DEPLOY_URL,
   DOTENV_LINE_SOURCE,
   envFileKeys,
-  GRAPH_BACKFILL_ARGS,
   parseDeployArgs,
 } from "./convex-deploy";
 
@@ -36,17 +35,6 @@ describe("buildDeployArgs", () => {
       "disable",
     ]);
     expect(buildDeployArgs({ dryRun: true }).at(-1)).toBe("--dry-run");
-  });
-});
-
-describe("GRAPH_BACKFILL_ARGS", () => {
-  test("runs the backfill action through the installed entrypoint", () => {
-    expect(GRAPH_BACKFILL_ARGS).toEqual([
-      "node_modules/convex/bin/main.js",
-      "run",
-      "graph:buildGraphFromExtractions",
-      "{}",
-    ]);
   });
 });
 
