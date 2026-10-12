@@ -117,7 +117,7 @@ describe("source recovery from the Action Queue", () => {
         ?.nextAction,
     ).toBe("Run extraction");
   });
-  test("in-flight article and transcript actions cannot undo a recovery save or Archive", async () => {
+  test("same-millisecond recovery and Archive invalidate in-flight article and transcript actions", async () => {
     for (const type of ["url", "youtube"] as const) {
       for (const recovery of ["text", "archive"]) {
         const t = convexTest(schema, modules),
@@ -125,6 +125,7 @@ describe("source recovery from the Action Queue", () => {
           reader = t.withIdentity({ subject: "reader" });
         const entered = Promise.withResolvers<void>(),
           release = Promise.withResolvers<void>();
+        const clock = vi.spyOn(Date, "now").mockReturnValue(2);
         const fetchMock = vi
           .spyOn(globalThis, "fetch")
           .mockImplementation(async () => {
@@ -157,10 +158,12 @@ describe("source recovery from the Action Queue", () => {
           const before = await t.query(api.sources.get, { id });
           release.resolve();
           await expect(job).rejects.toThrow(/discard/);
+          expect(before?.updatedAt).toBeGreaterThan(2);
           expect(await t.query(api.sources.get, { id })).toEqual(before);
         } finally {
           release.resolve();
           fetchMock.mockRestore();
+          clock.mockRestore();
         }
       }
     }

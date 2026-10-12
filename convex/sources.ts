@@ -446,7 +446,7 @@ export const archiveRecoverySource = mutation({
       args.id,
       args.expectedUpdatedAt,
     );
-    const now = Date.now();
+    const now = Math.max(Date.now(), source.updatedAt + 1);
     await ctx.db.patch("sources", source._id, {
       status: "archived",
       updatedAt: now,
@@ -520,7 +520,7 @@ export const provideRecoveryText = mutation({
       "SHA-256",
       new TextEncoder().encode(capturedText),
     );
-    const now = Date.now();
+    const now = Math.max(Date.now(), source.updatedAt + 1);
     await ctx.db.patch("sources", source._id, {
       rawText: args.kind === "transcript" ? undefined : capturedText,
       transcript: args.kind === "transcript" ? capturedText : undefined,
