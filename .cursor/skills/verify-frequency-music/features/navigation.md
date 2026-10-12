@@ -27,7 +27,7 @@ Run `./.cursor/skills/verify-frequency-music/scripts/control.py drive <run-id> n
 - Desktop: scope to `page.getByRole('navigation', { name: 'Main navigation' })`. Click each exact group button. Require visible links Research: Ingest, Display, Hypotheses, Theses, Correspondences, Triage; Compose: Recipes, Compositions, Feedback, Listen; Library: Essays, Weekly Turns, Editorial, Failures; Operations: Agent Runs, Review Queue, Admin. Use link names beginning with the label because descriptions are part of the accessible name.
 - Dismiss: after each group, `page.keyboard.press('Escape')`. `.app-menu-panel:visible` has count zero.
 - Keyboard: focus the exact Library button; press Enter and ArrowDown. Require `.app-menu-panel:visible a` first link focused; Escape dismisses it.
-- Mobile: set viewport 390 by 844. Choose `Open navigation menu`, then the link named `/^Essays/`. Require the Essays archive. Capture the mobile resulting state.
+- Mobile: set viewport 390 by 844. Choose `Open navigation menu`, then the link named `/^Essays/`. Start from a real local essay detail route; require link target `/essays`, the resulting archive URL, a hidden menu panel and `aria-expanded=false` on the trigger. Capture the mobile resulting state. Desktop Essays selection is checked from a detail route too.
 - Proof: `navigation-actions.jsonl`, numbered PNG/ARIA pairs, trace and `navigation-result.json` record each entry and outcome.
 
 ## Gotchas

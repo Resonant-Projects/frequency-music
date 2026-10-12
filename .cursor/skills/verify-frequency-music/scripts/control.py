@@ -231,15 +231,34 @@ def check_doctor(run):
     return result
 
 
+def check_checkout(info):
+    if fingerprint() != info["source_sha256"] or command(["git", "rev-parse", "HEAD"]) != info["head"]:
+        raise RuntimeError("Checkout changed since launch; relaunch with a fresh run ID")
+
+
 def drive(run, feature, check=True):
     if check and feature != "ingest":
         doctor(run)
     info = state(run)
-    result = subprocess.run(["node", str(SKILL / "scripts/drive.mjs"), feature,
-                             str(directory(run) / "instance.json")], cwd=WEB, check=False,
-                            env=dict(os.environ, TMPDIR=info["scratch"]))
-    if result.returncode:
-        raise RuntimeError(f"{feature} failed with exit {result.returncode}; run cleanup {run}")
+    try:
+        if feature != "ingest":
+            check_checkout(info)
+        result = subprocess.run(["node", str(SKILL / "scripts/drive.mjs"), feature,
+                                 str(directory(run) / "instance.json")], cwd=WEB, check=False,
+                                env=dict(os.environ, TMPDIR=info["scratch"]))
+        if feature != "ingest":
+            check_checkout(info)
+        if result.returncode:
+            raise RuntimeError(f"{feature} failed with exit {result.returncode}; run cleanup {run}")
+    except BaseException as error:
+        # A feature receipt must not attribute hot-reloaded/edited input to the
+        # original launch, even if Playwright's own assertions happened to pass.
+        receipt = directory(run) / f"{feature}-result.json"
+        prior = json.loads(receipt.read_text()) if receipt.exists() else {}
+        prior.update(status="fail", feature=feature, control_error=str(error),
+                     error=prior.get("error", str(error)))
+        write_json(receipt, prior)
+        raise
 
 
 def remove_scratch(scratch):

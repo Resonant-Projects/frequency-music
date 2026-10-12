@@ -30,6 +30,8 @@ All four review findings on the original publication head were reproduced or tra
 
 The correction acceptance run is `review-final-v2`, with the committed correction HEAD in `instance.json`. The initial `review-final` browser journeys passed, but its concurrent explicit cleanup exposed macOS `killpg` returning EPERM for an already drained group; a regression now requires proof of an empty group before treating that error as benign. Repeat launch, Doctor, essays, navigation, search, intentional ingest refusal and cleanup with that ID. The separate `review-leader-exit` run starts the real frontend, terminates only its recorded launcher leader and verifies descendants/listener/scratch disappear. Exact-head gate logs and real outcomes remain in ignored evidence and the PR report; this document does not assert future runs passed. No live backend coverage is added.
 
+The subsequent Codex review identified five further helper gaps: backend-port WebSocket forwarding, pass receipts preceding trace teardown, navigation entry checks already at their destination, missing mobile-collapse assertions and missing post-browser source checks. The correction closes backend sockets locally, finalizes trace/browser before writing pass, enters Essays from a real detail route with target/URL/collapse assertions, and invalidates feature receipts on post-run provenance mismatch. These have dedicated helper regressions; mocks/fixtures remain helper tests, not app proof. The final acceptance run is now `review-final-v3`; its ignored exact-head receipts and PR report supersede earlier runs for delivery provenance.
+
 ## Evidence contract
 
 Evidence is local-only under `.cursor/skills/verify-frequency-music/evidence/`; its committed `.gitignore` excludes every artifact except the ignore file itself. Python caches are also ignored. Screenshots, traces, action logs, runtime receipts, keys and browser session state must never enter the commit. Receipts contain only the three explicit nonsecret Vite flags, not an environment dump. No session state is imported or exported.
@@ -65,7 +67,7 @@ Full validation and browser acceptance are repeated on the committed publication
 
 The matching Chromium is provided by `(cd web && vp exec playwright install chromium)`. All four package installs use `vp install --frozen-lockfile`; manifests and lockfiles remain unchanged. No 1Password sign-in, credential reads, Convex migration/deploy/codegen, data seeds, authenticated live E2E suite, extraction, publication, or paid model/media operation is required or performed by this UI proof.
 
-The browser permits only read-only HTTP traffic to its owned frontend and WebSocket connections to the owned frontend or deliberately unavailable loopback port 9. It aborts HTTP writes and other destinations before dispatch, then asserts no forbidden request attempts or unhandled page errors. Port 9 is not a backend fixture; connection warnings do not establish a completed live-search empty state.
+The browser permits only read-only HTTP traffic and WebSocket connections to its owned frontend. Backend WebSockets to loopback port 9 are closed locally without connecting to a server, regardless of what may be listening there. It aborts HTTP writes and other destinations before dispatch, then asserts no forbidden request attempts or unhandled page errors. Port 9 is not a backend fixture; connection warnings do not establish a completed live-search empty state.
 
 ## Source grounding
 

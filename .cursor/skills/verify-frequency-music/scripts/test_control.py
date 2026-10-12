@@ -46,6 +46,7 @@ class VerificationContract(unittest.TestCase):
         failed = subprocess.CompletedProcess([], 1)
         with patch.object(control, "state", return_value=info), \
              patch.object(control, "doctor") as doctor, \
+             patch.object(control, "write_json"), \
              patch.object(control.subprocess, "run", return_value=failed):
             with self.assertRaisesRegex(RuntimeError, "ingest failed"):
                 control.drive("safe-run", "ingest")
@@ -179,6 +180,31 @@ class ReviewRegressions(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "missing instance"):
                 control.doctor("safe-run")
         self.assertEqual(json.loads(receipt.read_text())["status"], "fail")
+
+    def test_drive_invalidates_result_if_sources_change_during_browser(self):
+        info = {"scratch": str(self.base), "head": "head", "source_sha256": "original"}
+        result = self.base / "essays-result.json"
+        control.write_json(result, {"status": "pass"})
+        with patch.object(control, "state", return_value=info), \
+             patch.object(control, "directory", return_value=self.base), \
+             patch.object(control, "doctor"), \
+             patch.object(control, "fingerprint", side_effect=["original", "changed"]), \
+             patch.object(control, "command", return_value="head"), \
+             patch.object(control.subprocess, "run", return_value=subprocess.CompletedProcess([], 0)):
+            with self.assertRaisesRegex(RuntimeError, "Checkout changed"):
+                control.drive("safe-run", "essays")
+        self.assertEqual(json.loads(result.read_text())["status"], "fail")
+
+    def test_drive_refuses_changed_inputs_before_browser(self):
+        info = {"scratch": str(self.base), "head": "head", "source_sha256": "original"}
+        with patch.object(control, "state", return_value=info), \
+             patch.object(control, "directory", return_value=self.base), \
+             patch.object(control, "doctor"), \
+             patch.object(control, "fingerprint", return_value="changed"), \
+             patch.object(control.subprocess, "run") as run:
+            with self.assertRaisesRegex(RuntimeError, "Checkout changed"):
+                control.drive("safe-run", "essays")
+            run.assert_not_called()
 
     def run_failed_launch(self, failure):
         out = self.base / "proof"

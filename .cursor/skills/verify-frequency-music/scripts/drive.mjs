@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
+import {
+  enterEssays,
+  finishRun,
+  routeOfflineWebSocket,
+} from "./driver-safety.mjs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +23,9 @@ assert.equal(info.mode, "offline-local-ui");
 const requests = [];
 const errors = [];
 const external = [];
+const backendBlocked = [];
+let pendingResult;
+let failure;
 const actions = [];
 let browser;
 let context;
@@ -153,10 +161,8 @@ async function essays() {
   await capture("expanded-archive");
   await openEssay(titles().nth(25), "Newly revealed card");
   await back();
-  await nav().getByRole("button", { name: "Library", exact: true }).click();
-  await nav()
-    .getByRole("link", { name: /^Essays/ })
-    .click();
+  await page.goto(base + first.href);
+  await enterEssays(page, nav(), base, expect);
   await archive();
   note(
     "Choose Library then Essays in desktop navigation",
@@ -164,10 +170,8 @@ async function essays() {
   );
   await capture("desktop-entry");
   await page.setViewportSize({ width: 390, height: 844 });
-  await nav().getByRole("button", { name: "Open navigation menu" }).click();
-  await nav()
-    .getByRole("link", { name: /^Essays/ })
-    .click();
+  await page.goto(base + first.href);
+  await enterEssays(page, nav(), base, expect, true);
   await archive();
   note(
     "Choose Menu then Library / Essays on mobile",
@@ -244,11 +248,18 @@ async function navigation() {
     "First Library link is focused",
   );
   await page.keyboard.press("Escape");
+  const detail = await titles().first().getAttribute("href");
+  await page.goto(base + detail);
+  await enterEssays(page, nav(), base, expect);
+  await archive();
+  note(
+    "Choose desktop Library / Essays from a detail route",
+    "Archive URL restored; menu collapsed",
+  );
+  await capture("desktop-navigation");
   await page.setViewportSize({ width: 390, height: 844 });
-  await nav().getByRole("button", { name: "Open navigation menu" }).click();
-  await nav()
-    .getByRole("link", { name: /^Essays/ })
-    .click();
+  await page.goto(base + detail);
+  await enterEssays(page, nav(), base, expect, true);
   await archive();
   note(
     "Open mobile Menu and choose Essays",
@@ -289,6 +300,10 @@ async function search() {
 }
 
 try {
+  writeFileSync(
+    resolve(out, `${feature}-result.json`),
+    JSON.stringify({ status: "running", feature }) + "\n",
+  );
   if (feature === "ingest")
     throw new Error(
       "BLOCKED: Ingest requires an explicitly approved isolated Convex deployment and write identity. This helper will not mutate the shared live backend.",
@@ -311,16 +326,7 @@ try {
     } else await route.continue();
   });
   await context.routeWebSocket(/.*/, (ws) => {
-    const url = new URL(ws.url());
-    if (
-      url.hostname === "127.0.0.1" &&
-      [String(info.port), "9"].includes(url.port)
-    )
-      ws.connectToServer();
-    else {
-      external.push(ws.url());
-      ws.close();
-    }
+    routeOfflineWebSocket(ws, info, external, backendBlocked);
   });
   await context.tracing.start({
     screenshots: true,
@@ -352,39 +358,41 @@ try {
     resolve(out, `${feature}-console.json`),
     JSON.stringify(consoleMessages, null, 2),
   );
-  const result = {
+  pendingResult = {
     status: "pass",
     feature,
     mode: info.mode,
     actions: actions.length,
     pageErrors: errors,
     externalRequests: external,
+    backendWebSocketsBlocked: backendBlocked,
     requests,
     scope:
       "Real local frontend with existing client auth bypass. No Clerk, Convex data, backend mutations or complete research-search proof.",
   };
-  writeFileSync(
-    resolve(out, `${feature}-result.json`),
-    JSON.stringify(result, null, 2) + "\n",
-  );
-  console.log(JSON.stringify({ ...result, requests: requests.length }));
 } catch (error) {
+  failure = error;
   if (page) {
     note("Failure", String(error));
     await capture("failure").catch(() => {});
   }
-  writeFileSync(
-    resolve(out, `${feature}-result.json`),
-    JSON.stringify(
-      { status: "fail", feature, error: String(error), errors, external },
-      null,
-      2,
-    ) + "\n",
-  );
-  console.error(error);
-  process.exitCode = 1;
 } finally {
-  if (context)
-    await context.tracing.stop({ path: resolve(out, `${feature}-trace.zip`) });
-  if (browser) await browser.close();
+  const { completed, failure: finalFailure } = await finishRun({
+    context,
+    browser,
+    out,
+    feature,
+    result: pendingResult || { errors, external },
+    error: failure,
+    writeResult: (result) =>
+      writeFileSync(
+        resolve(out, `${feature}-result.json`),
+        JSON.stringify(result, null, 2) + "\n",
+      ),
+  });
+  if (finalFailure) {
+    console.error(finalFailure);
+    process.exitCode = 1;
+  } else
+    console.log(JSON.stringify({ ...completed, requests: requests.length }));
 }
