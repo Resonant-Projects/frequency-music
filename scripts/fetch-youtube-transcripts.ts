@@ -8,6 +8,7 @@ import "varlock/auto-load";
 import { spawn } from "node:child_process";
 import { api } from "../convex/_generated/api";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
+import { captureTranscript } from "./lib/transcriptCapture";
 
 const FABRIC_PATH = `${process.env.HOME}/.local/bin/fabric`;
 
@@ -95,28 +96,36 @@ async function main() {
       failed++;
       continue;
     }
-    try {
-      console.log(`📹 ${source.title}...`);
-      const transcript = await fetchTranscript(videoId);
-      if (!transcript) throw new Error("Empty transcript");
-      await client.mutation(api.sources.updateText, {
-        id: source._id,
-        expectedUpdatedAt: source.updatedAt,
-        transcript,
-        devBypassSecret,
-      });
-      console.log(`   ✅ ${transcript.length} chars`);
+    console.log(`📹 ${source.title}...`);
+    const result = await captureTranscript({
+      fetch: () => fetchTranscript(videoId),
+      save: (transcript) =>
+        client.mutation(api.sources.updateText, {
+          id: source._id,
+          expectedUpdatedAt: source.updatedAt,
+          transcript,
+          devBypassSecret,
+        }),
+      markFailed: (blockedDetails) =>
+        client.mutation(api.sources.updateStatus, {
+          id: source._id,
+          expectedUpdatedAt: source.updatedAt,
+          status: "review_needed",
+          blockedReason: "no_text",
+          blockedDetails,
+          devBypassSecret,
+        }),
+    });
+    if (result.ok) {
+      console.log(`   ✅ ${result.chars} chars`);
       success++;
-    } catch (error) {
-      console.log(`   ❌ ${String(error)}`);
-      await client.mutation(api.sources.updateStatus, {
-        id: source._id,
-        expectedUpdatedAt: source.updatedAt,
-        status: "review_needed",
-        blockedReason: "no_text",
-        blockedDetails: `Transcript fetch failed: ${String(error)}`,
-        devBypassSecret,
-      });
+    } else {
+      console.log(`   ❌ ${String(result.error)}`);
+      if (result.statusError !== undefined) {
+        console.log(
+          `   Could not record failure: ${String(result.statusError)}`,
+        );
+      }
       failed++;
     }
   }

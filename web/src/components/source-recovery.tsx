@@ -139,6 +139,8 @@ export function SourceRecovery(props: {
   const fieldId = (suffix: string) => `recovery-${props.source._id}-${suffix}`;
   const sourceUrl = () => publicSourceUrl(props.source.canonicalUrl);
   const retryAt = () => {
+    // The operator queue-clearing workflow appends "Retry <UTC ISO date>"
+    // to blockedDetails when scheduling weekly access-blocker retries.
     const match = props.source.blockedDetails?.match(
       /Retry\s+(\d{4}-\d{2}-\d{2}T[\d:.]+Z)/i,
     );

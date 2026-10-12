@@ -495,7 +495,7 @@ export const provideRecoveryText = mutation({
     if ((note?.length ?? 0) > RECOVERY_NOTE_MAX_CHARS)
       throw new ConvexError({
         code: "INVALID_NOTE",
-        message: "Keep the coverage note under 2,000 characters.",
+        message: `Keep the coverage note at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
       });
     const provenanceUrl = args.provenanceUrl?.trim() || source.canonicalUrl;
     if (provenanceUrl && !publicSourceUrl(provenanceUrl))
@@ -567,7 +567,7 @@ export const requestSourceRecovery = mutation({
     if (!note || note.length > RECOVERY_NOTE_MAX_CHARS)
       throw new ConvexError({
         code: "INVALID_NOTE",
-        message: "Describe what access changed, in at most 2,000 characters.",
+        message: `Describe what access changed, in at most ${RECOVERY_NOTE_MAX_CHARS.toLocaleString()} characters.`,
       });
     const now = Date.now();
     const transcriptQueued =
@@ -1278,7 +1278,10 @@ const DEDUPE_PROGRESS: Record<string, number> = {
 export type DedupeStanding = Pick<
   Doc<"sources">,
   "status" | "blockedReason" | "createdAt"
-> & { hasExtraction: boolean; hasText: boolean };
+> & {
+  hasExtraction: boolean;
+  hasText: boolean;
+};
 
 /**
  * Whether `holder` keeps the canonical key over a colliding `other` row:
