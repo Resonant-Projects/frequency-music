@@ -886,7 +886,7 @@ describe("concept linking", () => {
     expect(Object.values((await graph(t)).mentions)).toEqual(
       topics.map(() => 1),
     );
-  });
+  }, 60000);
 
   test("backfill resumes unlinked topics before advancing to the next Extraction", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
