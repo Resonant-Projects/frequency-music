@@ -20,7 +20,11 @@ export type StructuredJudge<Verdict> = {
 export function createStructuredJudge<Schema extends z.ZodType>(
   schema: Schema,
   model: string = ANTHROPIC_MODELS.haiku,
-  options: { maxTokens?: number; maxRetries?: number } = {},
+  options: {
+    maxTokens?: number;
+    maxRetries?: number;
+    requireDirectAnthropic?: boolean;
+  } = {},
 ): StructuredJudge<z.infer<Schema>> {
   // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
   // forced tool_choice and refuses to disable reasoning, which is what the

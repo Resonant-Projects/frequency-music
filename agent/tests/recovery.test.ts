@@ -800,3 +800,25 @@ describe("recovery seams", () => {
     ]);
   });
 });
+
+test("investigator refuses legacy provider fallback when the direct Anthropic key is missing", async () => {
+  vi.stubEnv("ANTHROPIC_API_KEY", undefined);
+  vi.stubEnv("OPENROUTER_API_KEY", "test-only-legacy");
+  vi.stubEnv("CODEX_ENABLED", "true");
+  const fetch = vi
+    .spyOn(globalThis, "fetch")
+    .mockRejectedValue(new Error("Unexpected provider request"));
+  try {
+    const tool = vi.fn(async () => [
+      { operationId: "failure", message: "timeout" },
+    ]);
+    await expect(
+      createInvestigateNode(tool)({ agentRunId: "run" }),
+    ).rejects.toThrow("ANTHROPIC_API_KEY not configured");
+    expect(tool).toHaveBeenCalledTimes(1);
+    expect(fetch).not.toHaveBeenCalled();
+  } finally {
+    fetch.mockRestore();
+    vi.unstubAllEnvs();
+  }
+});

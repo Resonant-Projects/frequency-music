@@ -10,6 +10,8 @@ export interface ChatModelOptions {
   maxTokens?: number;
   maxRetries?: number;
   model?: string;
+  /** Stop on missing direct credentials rather than using a legacy provider. */
+  requireDirectAnthropic?: boolean;
 }
 
 export const OPENROUTER_ANTHROPIC_API_URL = "https://openrouter.ai/api";
@@ -32,7 +34,9 @@ export function normalizeOpenRouterModel(model: string) {
 
 export function createOpenRouterAnthropicModel(options: ChatModelOptions = {}) {
   const useOpenRouter =
-    !process.env.ANTHROPIC_API_KEY && Boolean(process.env.OPENROUTER_API_KEY);
+    !options.requireDirectAnthropic &&
+    !process.env.ANTHROPIC_API_KEY &&
+    Boolean(process.env.OPENROUTER_API_KEY);
   const apiKey = useOpenRouter
     ? process.env.OPENROUTER_API_KEY
     : process.env.ANTHROPIC_API_KEY;

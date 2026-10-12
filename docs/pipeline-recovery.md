@@ -63,3 +63,5 @@ The outbox permits 2,000 active records and 2,000 dead letters, with 256 KB per 
 No live deployment is part of these changes. Deploy the Convex schema/functions and compatible workers together after checking the target. Provision persistent worker storage first. Do not run `convex dev`, `codegen`, `run`, or `deploy` as a local verification shortcut.
 
 Focused tests cover stale extraction completion, archive preservation, retry caps, recovery ownership, outbox restart, FLAC PCM equivalence, cap refusal, retained synthesis, and completion retry. Run `vp run verify` before release. End-to-end production recovery still requires a separately authorized deployment and controlled failure exercise. Keep workers that understand the `.spool` envelope until reserved reports have drained; older workers cannot replay that format during rollback.
+
+Failure investigations require the direct Anthropic key before constructing their Haiku judge. Missing direct credentials stop the investigation before a provider request; the existing 4,096-token cap, medium adaptive reasoning, and zero transport retries remain in effect.

@@ -33,6 +33,7 @@ export function createInvestigateNode(
       createStructuredJudge(diagnosisZ, ANTHROPIC_MODELS.haiku, {
         maxTokens: 4096,
         maxRetries: 0,
+        requireDirectAnthropic: true,
       });
     // Evidence is untrusted data, never instructions or executable remedies.
     const result = diagnosisZ.parse(
