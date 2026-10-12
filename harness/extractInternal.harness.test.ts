@@ -59,7 +59,7 @@ describe("extractInternal.storeExtraction", () => {
     );
     expect(scheduled).toHaveLength(2);
     expect(scheduled[0]?.name).toContain("embeddings:embedClaims");
-    expect(scheduled[1]?.name).toContain("graph:linkExtractionConcepts");
+    expect(scheduled[1]?.name).toMatch(/^graph(\.js)?:linkExtraction$/);
     expect(scheduled[1]?.args).toEqual([{ extractionId }]);
 
     const kinds = await t.run((ctx) =>

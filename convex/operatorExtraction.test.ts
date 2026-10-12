@@ -331,12 +331,12 @@ describe("concept linking", () => {
       sourceId,
     });
     const link = (await jobs(t)).find((job) =>
-      /^graph(\.js)?:linkExtractionConcepts$/.test(job.name),
+      /^graph(\.js)?:linkExtraction$/.test(job.name),
     );
     expect(link?.args).toEqual([{ extractionId: stored?._id }]);
   });
 
-  test("linking again adds no edges and counts no extra mentions", async () => {
+  test("linking again adds no edges, mentions, or classifier jobs", async () => {
     const { t, sourceId, inputHash } = await setup();
     await store(t, sourceId, inputHash, {
       extraction: { ...extraction, topics: ["Tuning", " tuning ", "  "] },
@@ -346,11 +346,17 @@ describe("concept linking", () => {
     });
     const extractionId = stored!._id;
     expect(
-      await t.action(internal.graph.linkExtractionConcepts, { extractionId }),
+      await t.mutation(internal.graph.linkExtraction, { extractionId }),
     ).toEqual({ linked: 1, concepts: ["Tuning"] });
+    // The workflows' action step relinks after the scheduled link: a no-op.
     expect(
       await t.action(internal.graph.linkExtractionConcepts, { extractionId }),
     ).toEqual({ linked: 0, concepts: [] });
+    // Only the call that created the Concept queued its classification.
+    const classify = (await jobs(t)).filter((job) =>
+      /^conceptClassifier(\.js)?:classifyConceptBatch$/.test(job.name),
+    );
+    expect(classify).toHaveLength(1);
     const { edges, mentions } = await graph(t);
     expect(edges).toHaveLength(1);
     expect(edges[0]).toMatchObject({
@@ -386,7 +392,7 @@ describe("concept linking", () => {
       extraction: { ...extraction, topics: ["tuning", "meantone"] },
     });
 
-    const first = await t.action(internal.graph.buildGraphFromExtractions, {
+    const first = await t.mutation(internal.graph.buildGraphFromExtractions, {
       batchSize: 1,
     });
     expect(first).toMatchObject({ processed: 1, isDone: false });
@@ -394,11 +400,11 @@ describe("concept linking", () => {
       /^graph(\.js)?:buildGraphFromExtractions$/.test(job.name),
     );
     expect(next?.args[0]).toMatchObject({ batchSize: 1 });
-    const rest = await t.action(
+    const rest = await t.mutation(
       internal.graph.buildGraphFromExtractions,
       next!.args[0],
     );
-    expect(rest).toMatchObject({ processed: 1, failures: [] });
+    expect(rest).toEqual({ processed: 1, conceptsLinked: 2, isDone: true });
 
     const linked = await graph(t);
     expect(linked.edges).toHaveLength(4);
@@ -410,8 +416,8 @@ describe("concept linking", () => {
 
     // A full rerun over already-linked Extractions changes nothing.
     expect(
-      await t.action(internal.graph.buildGraphFromExtractions, {}),
-    ).toEqual({ processed: 2, conceptsLinked: 0, failures: [], isDone: true });
+      await t.mutation(internal.graph.buildGraphFromExtractions, {}),
+    ).toEqual({ processed: 2, conceptsLinked: 0, isDone: true });
     expect(await graph(t)).toEqual(linked);
   });
 });

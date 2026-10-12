@@ -184,7 +184,7 @@ async function insertExtraction(
   // Every writer (worker, workflows, operator) links concepts here, so the
   // correspondence miner sees each stored Extraction.
   if (args.topics.length > 0) {
-    await ctx.scheduler.runAfter(0, internal.graph.linkExtractionConcepts, {
+    await ctx.scheduler.runAfter(0, internal.graph.linkExtraction, {
       extractionId,
     });
   }
