@@ -1,4 +1,13 @@
-import { describe, expect, test } from "vite-plus/test";
+beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
+afterEach(() => vi.unstubAllEnvs());
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { AIMessage } from "@langchain/core/messages";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ChatResult } from "@langchain/core/outputs";

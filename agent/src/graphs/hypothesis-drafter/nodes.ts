@@ -1,3 +1,4 @@
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { z } from "zod";
 import { PENDING_DRAFT_CAP } from "../../../../convex/shared/agentContract.js";
 import {
@@ -286,7 +287,9 @@ export function createDraftNode(
   const callTool = dependencies.callTool ?? callConvex;
   const resolveTraceUrl =
     dependencies.resolveTraceUrl ?? resolveCurrentTraceUrl;
-  const judge = dependencies.judge ?? createStructuredJudge(draftOutputSchema);
+  const judge =
+    dependencies.judge ??
+    createStructuredJudge(draftOutputSchema, ANTHROPIC_MODELS.opus);
   return async (
     state: Pick<
       HypothesisDrafterState,
@@ -356,7 +359,8 @@ export function createSelfCheckNode(
 ) {
   const callTool = dependencies.callTool ?? callConvex;
   const judge =
-    dependencies.judge ?? createStructuredJudge(selfCheckOutputSchema);
+    dependencies.judge ??
+    createStructuredJudge(selfCheckOutputSchema, ANTHROPIC_MODELS.sonnet);
   return async (
     state: Pick<
       HypothesisDrafterState,

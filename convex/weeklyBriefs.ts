@@ -24,7 +24,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
-import { DEFAULT_MODEL } from "./llm";
+import { modelForTask } from "./llm";
 import {
   loopReportValidator,
   recommendedActionValidator,
@@ -918,7 +918,7 @@ Theses: ${
     .replace("{{loopReport}}", renderLoopReportForPrompt(loopReport));
 
   // Call AI (trace name remains brief_v2.phase3 for eval-baseline continuity).
-  const modelId = args.model || DEFAULT_MODEL;
+  const modelId = args.model || modelForTask("brief_v2");
 
   const { text } = await ctx.runAction(
     internal.weeklyBriefsInternal.generateBriefText,

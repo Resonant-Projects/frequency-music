@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { getResearchModel } from "../../models/index.js";
 import { redactError } from "../../shared/redactError.js";
 import {
@@ -17,12 +18,14 @@ export type StructuredJudge<Verdict> = {
 
 export function createStructuredJudge<Schema extends z.ZodType>(
   schema: Schema,
+  model: string = ANTHROPIC_MODELS.haiku,
 ): StructuredJudge<z.infer<Schema>> {
   // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
   // forced tool_choice and refuses to disable reasoning, which is what the
   // default tool-calling method sends.
   return getResearchModel({
     requiresToolBinding: true,
+    model,
     temperature: 0,
   }).withStructuredOutput(schema, {
     method: "jsonSchema",

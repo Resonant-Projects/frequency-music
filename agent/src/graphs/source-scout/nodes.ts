@@ -1,3 +1,4 @@
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { z } from "zod";
 import type {
   ScoutJudgment,
@@ -120,7 +121,8 @@ export function createPlanQueriesNode(
 ) {
   const callTool = dependencies.callTool ?? callConvex;
   const planner =
-    dependencies.planner ?? createStructuredJudge(queryPlanOutputSchema);
+    dependencies.planner ??
+    createStructuredJudge(queryPlanOutputSchema, ANTHROPIC_MODELS.sonnet);
   return async (state: {
     agentRunId?: string;
     traceUrl?: string;

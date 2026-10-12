@@ -393,7 +393,7 @@ export const classifyConceptBatch = internalAction({
   },
   returns: batchResultValidator,
   handler: async (ctx, args): Promise<BatchResult> => {
-    const model = args.model ?? MODELS.sonnet;
+    const model = args.model ?? MODELS.haiku;
     const force = args.force ?? false;
     const apply = args.apply ?? true;
     const totals = {

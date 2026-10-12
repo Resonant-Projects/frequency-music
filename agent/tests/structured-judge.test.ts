@@ -13,6 +13,7 @@ describe("structured judges", () => {
     createStructuredJudge(schema);
     expect(getResearchModel).toHaveBeenCalledWith({
       requiresToolBinding: true,
+      model: "anthropic/claude-haiku-5.5",
       temperature: 0,
     });
     // Forced tool calling (the default method) is rejected by Sonnet 5.5.

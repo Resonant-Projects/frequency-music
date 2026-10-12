@@ -1,6 +1,10 @@
 import { isGroqModel } from "../../convex/llm.ts";
+import {
+  anthropicModelId,
+  isAnthropicModel,
+} from "../../convex/shared/llmPolicy.ts";
 
-export type ModelProvider = "Groq" | "OpenRouter";
+export type ModelProvider = "Anthropic" | "Groq" | "OpenRouter";
 export type ModelCatalogStatus = "OK" | "MISSING";
 
 export interface ModelCatalogEntry {
@@ -45,15 +49,22 @@ export function compareModelCatalogs(
   models: Readonly<Record<string, string>>,
   openRouterCatalog: ModelCatalog,
   groqCatalog: ModelCatalog,
+  anthropicCatalog: ModelCatalog,
 ): ModelCatalogResult[] {
   const openRouterIds = catalogIds(openRouterCatalog);
   const groqIds = catalogIds(groqCatalog);
+  const anthropicIds = catalogIds(anthropicCatalog);
 
   return Object.entries(models).map(([name, modelId]) => {
     const isGroq = isGroqModel(modelId);
-    const provider = isGroq ? "Groq" : "OpenRouter";
-    const providerModelId = isGroq ? modelId.slice("groq/".length) : modelId;
-    const ids = isGroq ? groqIds : openRouterIds;
+    const isAnthropic = isAnthropicModel(modelId);
+    const provider = isAnthropic ? "Anthropic" : isGroq ? "Groq" : "OpenRouter";
+    const providerModelId = isAnthropic
+      ? anthropicModelId(modelId)
+      : isGroq
+        ? modelId.slice("groq/".length)
+        : modelId;
+    const ids = isAnthropic ? anthropicIds : isGroq ? groqIds : openRouterIds;
 
     return {
       name,

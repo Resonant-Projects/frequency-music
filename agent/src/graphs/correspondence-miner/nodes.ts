@@ -1,3 +1,4 @@
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { z } from "zod";
 import { callConvex } from "../../tools/convexTools.js";
 import { resolveCurrentTraceUrl } from "../../tracing/currentTrace.js";
@@ -119,7 +120,9 @@ export function createJudgeLoopNode(
   const callTool = dependencies.callTool ?? callConvex;
   const resolveTraceUrl =
     dependencies.resolveTraceUrl ?? resolveCurrentTraceUrl;
-  const judge = dependencies.judge ?? createStructuredJudge(judgeOutputSchema);
+  const judge =
+    dependencies.judge ??
+    createStructuredJudge(judgeOutputSchema, ANTHROPIC_MODELS.sonnet);
 
   return async (
     state: Pick<

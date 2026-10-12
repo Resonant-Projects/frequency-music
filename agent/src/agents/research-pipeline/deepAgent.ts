@@ -1,3 +1,4 @@
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import type { BaseMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
@@ -211,7 +212,8 @@ export async function createResearchDeepAgentDraft(
   options: { model?: BaseChatModel } = {},
 ): Promise<ResearchDraftSpecialistResult> {
   const provider = getConfiguredModelProvider();
-  const model = options.model ?? getResearchModel({ temperature: 0.2 });
+  const model =
+    options.model ?? getResearchModel({ model: ANTHROPIC_MODELS.opus });
   const system = new SystemMessage(RESEARCH_DRAFT_SPECIALIST_INSTRUCTIONS);
   const human = new HumanMessage(
     truncateJson({
