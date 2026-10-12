@@ -1115,6 +1115,7 @@ export default defineSchema({
       v.union(v.literal("on"), v.literal("off"), v.literal("unreviewed")),
     ),
     relevanceRationale: v.optional(v.string()),
+    // Last persisted classifier response, including outcomes needing review.
     classifiedAt: v.optional(v.number()),
     classifierModel: v.optional(v.string()),
     embedding: v.optional(v.array(v.float64())),
@@ -1135,6 +1136,11 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_domain", ["domain"])
     .index("by_missionRelevance", ["missionRelevance"])
+    .index("by_missionRelevance_classifiedAt_createdAt", [
+      "missionRelevance",
+      "classifiedAt",
+      "createdAt",
+    ])
     .index("by_missionRelevance_lastProbedAt", [
       "missionRelevance",
       "lastProbedAt",

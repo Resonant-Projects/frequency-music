@@ -36,8 +36,9 @@ The new `research-pipeline` graph is intentionally dry-run first. It can load sc
 
 Model construction is centralized in `src/models/`.
 
-- `getResearchModel({ requiresToolBinding: true })` uses the OpenRouter/Anthropic-compatible path so DeepAgents can bind tools.
-- `getResearchModel()` uses the Codex SDK provider when `CODEX_ENABLED=true` for non-tool specialist nodes, wrapped in an automatic OpenRouter fallback.
+- `ANTHROPIC_API_KEY` selects the direct Anthropic API for every graph, including tool-binding calls, ahead of legacy OpenRouter keys and Codex flags. The adapter pins the Anthropic endpoint so a stale proxy URL cannot divert the key or credits.
+- `convex/shared/llmPolicy.ts` owns model IDs and reasoning effort. Haiku 5.5 handles bounded relevance and stance checks; Sonnet 5.5 handles query planning, correspondence synthesis, and weekly briefs; Opus 5.5 handles hypothesis and recipe drafts. Every 5.5 call uses adaptive thinking with medium effort, or high for Opus, and omits sampling parameters. Structured calls use native JSON schema.
+- Without an Anthropic key, explicit `CODEX_ENABLED=true` retains the legacy Codex provider for non-tool nodes and its OpenRouter fallback. `CODEX_SPECIALIST=true` also applies only without an Anthropic key. Anthropic failures do not switch billing providers.
 - `src/models/codexSdk.ts` (`CodexSdkChatModel`) wraps `@openai/codex-sdk`, which drives the local `codex` CLI binary through a thread API (`new Codex()` → `startThread()` → `thread.run(prompt, { outputSchema })`) and reuses the CLI's ChatGPT-subscription login state from `CODEX_HOME/auth.json`. There is no HTTP endpoint; the old `codexAppServer.ts` adapter targeted a protocol that does not exist and has been removed.
 - The Codex model is invoke-only: `bindTools` throws so tool-binding paths route to OpenRouter. Structured output is native via `withStructuredOutput(zodSchema)` → JSON Schema (`target: "openAi"`) → `thread.run(prompt, { outputSchema })`.
 - `src/models/withFallback.ts` (`withFallback(codexSdk, openRouterAnthropic)`) retries once on transient Codex errors, then falls back to OpenRouter on auth/quota/unknown Codex errors, tagging `llmOutput.provider` with whichever provider answered.
@@ -67,14 +68,15 @@ The spike reads `PROXMOX_TOKEN_ID` and `PROXMOX_TOKEN_SECRET` from environment v
 
 Copy `agent/.env.example` to `agent/.env` for local LangGraph runs, or source the root `.env.local` before invoking scripts.
 
-Required for Convex tools:
+Required for inference and Convex tools:
 
 - `CONVEX_SITE_URL`
 - `AGENT_TOOL_SECRET`
+- `ANTHROPIC_API_KEY` from the item referenced in `agent/.env.schema`
 
 Optional model/provider variables:
 
-- `CODEX_ENABLED` (set `true` to use the Codex SDK provider for non-tool calls)
+- `CODEX_ENABLED` (legacy non-tool Codex path, only without `ANTHROPIC_API_KEY`)
 - `CODEX_HOME` (defaults to `~/.codex`; the worker mounts a volume here)
 - `CODEX_MODEL` (optional model override passed to the SDK)
 - `CODEX_SANDBOX_MODE` (`read-only` | `workspace-write`)

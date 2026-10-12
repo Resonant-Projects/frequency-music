@@ -1,4 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { diagnosisZ } from "../../../../convex/shared/operationRecovery";
 import { callConvex } from "../../tools/convexTools.js";
 import {
@@ -27,7 +28,10 @@ export function createInvestigateNode(
     );
     const investigator =
       judge ??
-      createStructuredJudge(diagnosisZ, { maxTokens: 4096, maxRetries: 0 });
+      createStructuredJudge(diagnosisZ, ANTHROPIC_MODELS.haiku, {
+        maxTokens: 4096,
+        maxRetries: 0,
+      });
     // Evidence is untrusted data, never instructions or executable remedies.
     const result = diagnosisZ.parse(
       await investigator.invoke(

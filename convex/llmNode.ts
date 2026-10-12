@@ -3,12 +3,13 @@
 // it imports ./tracing (node-marked), and Convex forbids non-node files from
 // importing node files — which also means only node entry files (extract.ts,
 // *Internal.ts) may import this module. V8 files import ./llm instead.
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject, generateText, type LanguageModel } from "ai";
 import type { z } from "zod";
 import {
-  DEFAULT_MODEL,
+  modelForTask,
   isGroqModel,
   MODEL_REASONING_EFFORT,
   parseExtractionJson,
@@ -16,6 +17,11 @@ import {
   type LlmTask,
 } from "./llm";
 import { tracedGenerate } from "./tracing";
+import {
+  anthropicModelId,
+  anthropicReasoningEffort,
+  isDirectAnthropicModel,
+} from "./shared/llmPolicy";
 
 export type GenerateOpts = {
   task: LlmTask;
@@ -28,9 +34,14 @@ export type GenerateOpts = {
   metadata?: Record<string, unknown>;
 };
 
-// Routes groq/* model ids to Groq (prefix stripped), everything else to
-// OpenRouter. Moved verbatim from extract.ts getModel.
+// Anthropic goes directly to its API so calls consume Anthropic credits.
+// Explicit Groq and other provider overrides retain their existing routes.
 function getModel(modelId: string): LanguageModel {
+  if (isDirectAnthropicModel(modelId)) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+    return createAnthropic({ apiKey })(anthropicModelId(modelId));
+  }
   if (isGroqModel(modelId)) {
     const groqKey = process.env.GROQ_API_KEY;
     if (!groqKey) {
@@ -50,6 +61,18 @@ function getModel(modelId: string): LanguageModel {
     : openrouter(modelId);
 }
 
+function providerOptions(modelId: string) {
+  return isDirectAnthropicModel(modelId)
+    ? {
+        anthropic: {
+          thinking: { type: "adaptive" as const },
+          effort: anthropicReasoningEffort(modelId),
+          structuredOutputMode: "outputFormat" as const,
+        },
+      }
+    : undefined;
+}
+
 /**
  * One traced generateText call: provider routing, per-task token budget,
  * best-effort tracing, empty-response guard. Tracing failures never fail
@@ -58,7 +81,7 @@ function getModel(modelId: string): LanguageModel {
 export async function generateLlmText(
   opts: GenerateOpts,
 ): Promise<{ text: string }> {
-  const modelId = opts.model ?? DEFAULT_MODEL;
+  const modelId = opts.model ?? modelForTask(opts.task);
   const model = getModel(modelId);
   const { text } = await tracedGenerate(
     opts.traceName ?? opts.task,
@@ -68,6 +91,7 @@ export async function generateLlmText(
         system: opts.system,
         prompt: opts.prompt,
         maxOutputTokens: opts.maxOutputTokens ?? TOKEN_BUDGETS[opts.task],
+        providerOptions: providerOptions(modelId),
       }),
     { model: modelId, ...opts.metadata },
   );
@@ -95,7 +119,7 @@ export async function generateLlmObject<Output>(
     schemaDescription: string;
   },
 ): Promise<{ object: Output; inputTokens: number; outputTokens: number }> {
-  const modelId = opts.model ?? DEFAULT_MODEL;
+  const modelId = opts.model ?? modelForTask(opts.task);
   const model = getModel(modelId);
   const result = await tracedGenerate(
     opts.traceName ?? opts.task,
@@ -108,6 +132,7 @@ export async function generateLlmObject<Output>(
         schemaName: opts.schemaName,
         schemaDescription: opts.schemaDescription,
         maxOutputTokens: opts.maxOutputTokens ?? TOKEN_BUDGETS[opts.task],
+        providerOptions: providerOptions(modelId),
       }),
     { model: modelId, ...opts.metadata },
   );

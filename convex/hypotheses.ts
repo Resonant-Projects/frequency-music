@@ -6,7 +6,7 @@ import { api, internal } from "./_generated/api";
 import { action, internalQuery, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { recordEditCapture } from "./editCaptures";
-import { DEFAULT_MODEL, extractJsonObject } from "./llm";
+import { modelForTask, extractJsonObject } from "./llm";
 import { hypothesisStatusValidator } from "./schema";
 import {
   extractionReturnValidator,
@@ -521,7 +521,7 @@ export const generateFromExtraction = action({
       .replace("{{topics}}", extraction.topics.join(", "));
 
     // Call AI (traced as hypothesis_v1 in the Node-runtime internal action)
-    const modelId = args.model || DEFAULT_MODEL;
+    const modelId = args.model || modelForTask("hypothesis_v1");
 
     const { text } = await ctx.runAction(
       internal.hypothesesInternal.generateHypothesisText,

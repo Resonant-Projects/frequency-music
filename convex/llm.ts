@@ -1,10 +1,16 @@
 import { TRANSCRIPTION_MODEL } from "./shared/agentContract";
+import {
+  ANTHROPIC_MODELS,
+  DEFAULT_EXTRACTION_MODEL,
+  TASK_MODELS,
+} from "./shared/llmPolicy";
+export { TASK_MODELS } from "./shared/llmPolicy";
 // Pure LLM configuration + parsing shared by all four generators.
 // No "use node" and no node-only imports — this file must stay importable
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
 // The node-side generation half lives in llmNode.ts.
 
-export const DEFAULT_MODEL = "openai/gpt-6.1-sol";
+export const DEFAULT_MODEL = DEFAULT_EXTRACTION_MODEL;
 
 /**
  * Per-model OpenRouter reasoning effort. Only models listed here get a
@@ -18,26 +24,19 @@ export const MODEL_REASONING_EFFORT: Record<string, "low" | "medium" | "high"> =
 
 // Available models for different use cases (moved verbatim from extract.ts).
 export const MODELS = {
-  // === GROQ (fast, cheap) ===
-  // Groq retired moonshotai/kimi-k2-instruct (verified 2026-07-10); gpt-oss-120b
-  // is the current production-tier non-Llama option.
-  fast: "groq/openai/gpt-oss-120b",
+  // Bounded classification and relevance checks use Haiku.
+  fast: ANTHROPIC_MODELS.haiku,
   // YouTube transcript capture (agent transcript-capture graph): Groq Whisper.
   transcription: TRANSCRIPTION_MODEL,
 
-  // === OpenRouter (model variety) ===
-  // Default switched from GPT-5.6 Terra per Keith 2026-10-01: GPT-6.1 Sol at
-  // medium reasoning effort (see MODEL_REASONING_EFFORT).
+  // Automated extraction uses GPT; Anthropic tasks use direct API credits.
   default: DEFAULT_MODEL,
-  quality: DEFAULT_MODEL,
-  // Catalog-canonical ids — scripts/check-model-catalog.ts verifies these
-  // against the live provider catalogs (OpenRouter lists dot-form Anthropic
-  // slugs; claude-3-5-haiku and grok-3-mini-beta were delisted 2026-07-10).
-  sonnet: "anthropic/claude-sonnet-5.5",
-  haiku: "anthropic/claude-haiku-4.5",
+  quality: ANTHROPIC_MODELS.opus,
+  sonnet: ANTHROPIC_MODELS.sonnet,
+  haiku: ANTHROPIC_MODELS.haiku,
   // Extractions written by the Claude Code operator session
   // (scripts/operator-extraction.ts, extract.storeOperatorExtraction).
-  opus: "anthropic/claude-opus-5.5",
+  opus: ANTHROPIC_MODELS.opus,
   // Essay metadata generation (scripts/generate-essay-metadata.ts) per Keith
   // 2026-08-01. Listed here rather than as a script-local literal so
   // check-model-catalog.ts verifies it against the live OpenRouter catalog.
@@ -64,6 +63,10 @@ export const TOKEN_BUDGETS = {
 } as const;
 
 export type LlmTask = keyof typeof TOKEN_BUDGETS;
+
+export function modelForTask(task: LlmTask): string {
+  return TASK_MODELS[task];
+}
 
 export function isGroqModel(model: string): boolean {
   return model.startsWith("groq/");

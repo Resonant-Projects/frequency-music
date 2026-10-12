@@ -475,7 +475,10 @@ export async function createSpecialistOutcome(
   input: ResearchDraftSpecialistInput,
   options: { runCodexTask?: typeof runCodexTask; model?: BaseChatModel } = {},
 ): Promise<SpecialistOutcome> {
-  if (process.env.CODEX_SPECIALIST === "true") {
+  if (
+    !process.env.ANTHROPIC_API_KEY &&
+    process.env.CODEX_SPECIALIST === "true"
+  ) {
     return createReviewDraftViaCodex(
       input,
       options.runCodexTask ?? runCodexTask,

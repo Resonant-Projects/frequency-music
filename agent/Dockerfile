@@ -93,7 +93,7 @@ RUN adduser -D -h /home/agent -s /bin/sh agent \
 # File-backed Codex credential store (no OS keyring exists in a container).
 ENV CODEX_HOME=/data/codex-home
 ENV CODEX_WORKDIR=/data/codex-scratch
-ENV CODEX_ENABLED=true
+ENV CODEX_ENABLED=false
 
 COPY --from=dependencies --chown=agent:agent /app/agent/node_modules ./node_modules
 COPY --chown=agent:agent agent/. ./

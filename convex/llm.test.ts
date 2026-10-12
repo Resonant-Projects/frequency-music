@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
   DEFAULT_MODEL,
+  modelForTask,
   extractJsonObject,
   isGroqModel,
   TOKEN_BUDGETS,
@@ -8,8 +9,10 @@ import {
 
 describe("llm constants", () => {
   test("default model and budgets match the shared generator configuration", () => {
-    // Default switched to GPT-6.1 Sol (medium reasoning) per Keith 2026-10-01.
+    // Automated extraction retains the standing GPT policy.
     expect(DEFAULT_MODEL).toBe("openai/gpt-6.1-sol");
+    expect(modelForTask("extract_v2")).toBe(DEFAULT_MODEL);
+    expect(modelForTask("extract_v3")).toBe(DEFAULT_MODEL);
     // Raised 2026-07-10 for reasoning models (Terra): reasoning tokens count
     // against maxOutputTokens; recipe JSON truncated live at 3000 and 6000.
     expect(TOKEN_BUDGETS.extract_v2).toBe(8000);

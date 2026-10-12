@@ -40,6 +40,10 @@ _Avoid_: domain cleanup (implies one-off), registry review (too generic)
 Whether a concept belongs to the research program or is incidental capture (e.g. ML-engineering vocabulary from arXiv feeds). Off-mission concepts remain in the graph but are excluded from correspondence mining.
 _Avoid_: relevant/irrelevant (too generic), noise (off-mission capture may still be useful reference)
 
+**Unreviewed Concept**:
+A concept whose domain membership and mission relevance remain unresolved. It may be awaiting its first classification or human review of a completed classifier proposal.
+_Avoid_: unclassified concept (does not distinguish an untried concept from a completed proposal needing review)
+
 **Correspondence**:
 An asserted link between two concepts from different domains. The concept pair is its identity (rediscovery strengthens the one row, never duplicates it); claims cite as evidence. Lifecycle: conjectured → evidenced or contradicted → retired. A conjectured correspondence is resolved one of two ways — by found evidence (claims from sources) or by experiment (a hypothesis derived to test it). Same-domain links are ordinary edges, not correspondences.
 _Avoid_: connection, link (ambiguous with edge); edge (graph plumbing — carries no review status, may be same-domain)

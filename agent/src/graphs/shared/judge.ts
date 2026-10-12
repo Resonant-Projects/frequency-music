@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { getResearchModel } from "../../models/index.js";
 import { redactError } from "../../shared/redactError.js";
 import {
@@ -18,6 +19,7 @@ export type StructuredJudge<Verdict> = {
 
 export function createStructuredJudge<Schema extends z.ZodType>(
   schema: Schema,
+  model: string = ANTHROPIC_MODELS.haiku,
   options: { maxTokens?: number; maxRetries?: number } = {},
 ): StructuredJudge<z.infer<Schema>> {
   // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
@@ -26,6 +28,7 @@ export function createStructuredJudge<Schema extends z.ZodType>(
   return getResearchModel({
     ...options,
     requiresToolBinding: true,
+    model,
     temperature: 0,
   }).withStructuredOutput(schema, {
     method: "jsonSchema",
