@@ -606,10 +606,160 @@ describe("concept creation classification scheduling", () => {
       await asSystem.query(api.conceptClassifier.listClassificationCandidates, {
         cursor: null,
         batchSize: 20,
-        force: true,
+        force: false,
         unreviewedOnly: true,
       }),
     ).toMatchObject({ conceptIds: reviewIds, isDone: true });
+  });
+
+  test("unreviewed retries preserve decisions made before input or persistence", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await t.run(async (ctx) => {
+      const conceptIds = [];
+      for (const relevance of ["on", "off", "unreviewed"] as const) {
+        conceptIds.push(
+          await ctx.db.insert("concepts", {
+            name: `race-${relevance}`,
+            displayName: relevance,
+            aliases: [],
+            domain: "general",
+            missionRelevance: relevance,
+            classifiedAt: 1000,
+            classifierModel: "prior-model",
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1000,
+            updatedAt: 1000,
+          }),
+        );
+      }
+      return conceptIds;
+    });
+    // The retry condition takes precedence even if a caller also sets force.
+    const input = await t.query(
+      internal.conceptClassifier.getClassificationInputs,
+      {
+        conceptIds: ids,
+        force: true,
+        unreviewedOnly: true,
+      },
+    );
+    expect(input.concepts.map((concept) => concept.conceptId)).toEqual([
+      ids[2],
+    ]);
+    const raceConceptId = ids[2];
+    if (!raceConceptId) throw new Error("Missing race concept fixture");
+    const before = await t.run(async (ctx) => {
+      await ctx.db.patch("concepts", raceConceptId, {
+        missionRelevance: "on",
+        classifiedAt: 2000,
+        classifierModel: "concurrent-model",
+        relevanceRationale: "Concurrent classification won.",
+      });
+      return await Promise.all(ids.map((id) => ctx.db.get("concepts", id)));
+    });
+    // Simulate a model response arriving after another writer assigned it.
+    expect(
+      await t.mutation(
+        internal.conceptClassifier.writeClassificationsInternal,
+        {
+          classifications: ids.map((conceptId) => ({
+            conceptId,
+            domains: ["new-race-domain"],
+            missionRelevance: "off" as const,
+            rationale: "Stale retry result.",
+          })),
+          model: "retry-model",
+          force: true,
+          unreviewedOnly: true,
+        },
+      ),
+    ).toEqual({ assigned: 0, unreviewed: 0, skipped: 3 });
+    expect(
+      await t.run((ctx) =>
+        Promise.all(ids.map((id) => ctx.db.get("concepts", id))),
+      ),
+    ).toEqual(before);
+    expect(
+      await t.run((ctx) => ctx.db.query("conceptDomains").collect()),
+    ).toEqual([]);
+    // The public action carries the condition to input selection and spends nothing.
+    expect(
+      await t
+        .withIdentity({ subject: "system" })
+        .action(api.conceptClassifier.classifyConcepts, {
+          conceptIds: ids,
+          force: true,
+          unreviewedOnly: true,
+          apply: true,
+        }),
+    ).toMatchObject({ skipped: 3, llmCalls: 0 });
+  });
+
+  test("bounded retry continuation reaches later rows when earlier results stay unreviewed", async () => {
+    const t = convexTest(schema, {
+      ...modules,
+      "./conceptClassifierInternal.ts": () =>
+        import("./fixtures/conceptClassifierInternalReview"),
+    });
+    const asSystem = t.withIdentity({ subject: "system" });
+    const ids = await t.run(async (ctx) => {
+      const conceptIds = [];
+      for (let index = 0; index < 35; index++) {
+        conceptIds.push(
+          await ctx.db.insert("concepts", {
+            name: `bounded-retry-${index}`,
+            displayName: `Retry ${index}`,
+            aliases: [],
+            domain: "general",
+            missionRelevance: "unreviewed",
+            classifiedAt: 1000,
+            mentionCount: 0,
+            hypothesisCount: 0,
+            createdAt: 1000,
+            updatedAt: 1000,
+          }),
+        );
+      }
+      return conceptIds;
+    });
+    let cursor: string | null = null;
+    for (const batchSize of [20, 10]) {
+      const page: {
+        conceptIds: Id<"concepts">[];
+        continueCursor: string;
+        isDone: boolean;
+      } = await asSystem.query(
+        api.conceptClassifier.listClassificationCandidates,
+        {
+          cursor,
+          batchSize,
+          force: false,
+          unreviewedOnly: true,
+        },
+      );
+      expect(
+        await asSystem.action(api.conceptClassifier.classifyConcepts, {
+          conceptIds: page.conceptIds,
+          model: "test-model",
+          force: false,
+          unreviewedOnly: true,
+          apply: true,
+        }),
+      ).toMatchObject({ unreviewed: batchSize, assigned: 0, llmCalls: 1 });
+      cursor = page.continueCursor;
+    }
+    expect(
+      await asSystem.query(api.conceptClassifier.listClassificationCandidates, {
+        cursor,
+        batchSize: 20,
+        force: false,
+        unreviewedOnly: true,
+      }),
+    ).toMatchObject({ conceptIds: ids.slice(30), isDone: true });
+    expect(
+      await t.run((ctx) => ctx.db.query("concepts").collect()),
+    ).toHaveLength(35);
   });
 
   test("new concepts start unreviewed and schedule asynchronous classification", async () => {

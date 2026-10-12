@@ -40,7 +40,7 @@ describe("unreviewed concept retry CLI", () => {
     vi.restoreAllMocks();
   });
 
-  test("preview selects only unreviewed concepts, forces retries, and respects the cap", async () => {
+  test("preview selects only unreviewed concepts, preserves the retry precondition, and respects the cap", async () => {
     process.argv = [
       "node",
       "classify-concepts.ts",
@@ -48,20 +48,25 @@ describe("unreviewed concept retry CLI", () => {
       "--limit=2",
     ];
     client.query.mockResolvedValue({
-      conceptIds: ["one", "two", "three"],
+      conceptIds: ["one", "two"],
       continueCursor: "next",
       isDone: false,
     });
     await import("./classify-concepts");
     expect(client.query).toHaveBeenCalledExactlyOnceWith(
       api.conceptClassifier.listClassificationCandidates,
-      expect.objectContaining({ force: true, unreviewedOnly: true }),
+      expect.objectContaining({
+        batchSize: 2,
+        force: false,
+        unreviewedOnly: true,
+      }),
     );
     expect(client.action).toHaveBeenCalledExactlyOnceWith(
       api.conceptClassifier.classifyConcepts,
       expect.objectContaining({
         conceptIds: ["one", "two"],
-        force: true,
+        force: false,
+        unreviewedOnly: true,
         apply: false,
       }),
     );
@@ -77,7 +82,7 @@ describe("unreviewed concept retry CLI", () => {
     ];
     const firstIds = Array.from({ length: 20 }, (_, index) => `first-${index}`);
     const secondIds = Array.from(
-      { length: 20 },
+      { length: 10 },
       (_, index) => `second-${index}`,
     );
     client.query
@@ -97,17 +102,20 @@ describe("unreviewed concept retry CLI", () => {
       api.conceptClassifier.listClassificationCandidates,
       expect.objectContaining({
         cursor: "next",
-        force: true,
+        batchSize: 10,
+        force: false,
         unreviewedOnly: true,
       }),
     );
+    expect(console.log).toHaveBeenCalledWith("continueCursor=last");
     expect(client.action).toHaveBeenCalledTimes(2);
     expect(client.action).toHaveBeenNthCalledWith(
       1,
       api.conceptClassifier.classifyConcepts,
       expect.objectContaining({
         conceptIds: firstIds,
-        force: true,
+        force: false,
+        unreviewedOnly: true,
         apply: true,
       }),
     );
@@ -116,9 +124,43 @@ describe("unreviewed concept retry CLI", () => {
       api.conceptClassifier.classifyConcepts,
       expect.objectContaining({
         conceptIds: secondIds.slice(0, 10),
-        force: true,
+        force: false,
+        unreviewedOnly: true,
         apply: true,
       }),
     );
+  });
+  test("resumes a capped retry without skipping the remainder of a page", async () => {
+    process.argv = [
+      "node",
+      "classify-concepts.ts",
+      "--retry-unreviewed",
+      "--apply",
+      "--limit=2",
+      "--cursor=previous",
+    ];
+    client.query.mockResolvedValue({
+      conceptIds: ["later-one", "later-two"],
+      continueCursor: "resume",
+      isDone: false,
+    });
+    await import("./classify-concepts");
+    expect(client.query).toHaveBeenCalledExactlyOnceWith(
+      api.conceptClassifier.listClassificationCandidates,
+      expect.objectContaining({
+        cursor: "previous",
+        batchSize: 2,
+        unreviewedOnly: true,
+      }),
+    );
+    expect(client.action).toHaveBeenCalledExactlyOnceWith(
+      api.conceptClassifier.classifyConcepts,
+      expect.objectContaining({
+        conceptIds: ["later-one", "later-two"],
+        unreviewedOnly: true,
+        apply: true,
+      }),
+    );
+    expect(console.log).toHaveBeenCalledWith("continueCursor=resume");
   });
 });

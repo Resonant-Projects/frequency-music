@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { v } from "convex/values";
 import { makeFunctionReference } from "convex/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   action,
   internalAction,
@@ -87,7 +87,7 @@ type BatchResult = {
 
 const getClassificationInputsRef = makeFunctionReference<
   "query",
-  { conceptIds: Id<"concepts">[]; force: boolean },
+  { conceptIds: Id<"concepts">[]; force: boolean; unreviewedOnly?: boolean },
   ClassificationInputBatch
 >("conceptClassifier:getClassificationInputs");
 const generateClassificationsRef = makeFunctionReference<
@@ -97,7 +97,12 @@ const generateClassificationsRef = makeFunctionReference<
 >("conceptClassifierInternal:generateClassifications");
 const writeClassificationsInternalRef = makeFunctionReference<
   "mutation",
-  { classifications: ClassificationWrite[]; model: string; force: boolean },
+  {
+    classifications: ClassificationWrite[];
+    model: string;
+    force: boolean;
+    unreviewedOnly?: boolean;
+  },
   { assigned: number; unreviewed: number; skipped: number }
 >("conceptClassifier:writeClassificationsInternal");
 const classifyConceptBatchRef = makeFunctionReference<
@@ -106,6 +111,7 @@ const classifyConceptBatchRef = makeFunctionReference<
     conceptIds: Id<"concepts">[];
     model?: string;
     force?: boolean;
+    unreviewedOnly?: boolean;
     apply?: boolean;
   },
   BatchResult
@@ -121,12 +127,22 @@ const embedConceptsRef = makeFunctionReference<
   { requested: number; embedded: number; skipped: number }
 >("embeddings:embedConcepts");
 
+function canClassifyConcept(
+  concept: Doc<"concepts">,
+  args: { force: boolean; unreviewedOnly?: boolean },
+): boolean {
+  return args.unreviewedOnly
+    ? concept.missionRelevance === "unreviewed"
+    : args.force || concept.classifiedAt === undefined;
+}
+
 async function persistClassifications(
   ctx: MutationCtx,
   args: {
     classifications: ClassificationWrite[];
     model: string;
     force: boolean;
+    unreviewedOnly?: boolean;
   },
 ) {
   const [registry, deprecatedRegistry] = await Promise.all([
@@ -154,7 +170,7 @@ async function persistClassifications(
 
   for (const classification of args.classifications) {
     const concept = await ctx.db.get("concepts", classification.conceptId);
-    if (!concept || (concept.classifiedAt !== undefined && !args.force)) {
+    if (!concept || !canClassifyConcept(concept, args)) {
       skipped++;
       continue;
     }
@@ -252,6 +268,7 @@ export const writeClassifications = mutation({
     classifications: v.array(classificationValidator),
     model: v.string(),
     force: v.boolean(),
+    unreviewedOnly: v.optional(v.boolean()),
     devBypassSecret: v.optional(v.string()),
   },
   returns: writeResultValidator,
@@ -266,6 +283,7 @@ export const writeClassificationsInternal = internalMutation({
     classifications: v.array(classificationValidator),
     model: v.string(),
     force: v.boolean(),
+    unreviewedOnly: v.optional(v.boolean()),
   },
   returns: writeResultValidator,
   handler: persistClassifications,
@@ -296,7 +314,7 @@ export const listClassificationCandidates = query({
     ).paginate({ cursor: args.cursor, numItems: batchSize });
     return {
       conceptIds: page.page
-        .filter((concept) => args.force || concept.classifiedAt === undefined)
+        .filter((concept) => canClassifyConcept(concept, args))
         .map((concept) => concept._id),
       isDone: page.isDone,
       continueCursor: page.continueCursor,
@@ -308,6 +326,7 @@ export const getClassificationInputs = internalQuery({
   args: {
     conceptIds: v.array(v.id("concepts")),
     force: v.boolean(),
+    unreviewedOnly: v.optional(v.boolean()),
   },
   returns: v.object({
     domains: v.array(
@@ -331,7 +350,7 @@ export const getClassificationInputs = internalQuery({
     const concepts = [];
     for (const conceptId of args.conceptIds) {
       const concept = await ctx.db.get("concepts", conceptId);
-      if (!concept || (concept.classifiedAt !== undefined && !args.force)) {
+      if (!concept || !canClassifyConcept(concept, args)) {
         continue;
       }
       const sourceEdges = await ctx.db
@@ -397,6 +416,7 @@ export const classifyConceptBatch = internalAction({
     conceptIds: v.array(v.id("concepts")),
     model: v.optional(v.string()),
     force: v.optional(v.boolean()),
+    unreviewedOnly: v.optional(v.boolean()),
     apply: v.optional(v.boolean()),
   },
   returns: batchResultValidator,
@@ -419,6 +439,7 @@ export const classifyConceptBatch = internalAction({
       const input = await ctx.runQuery(getClassificationInputsRef, {
         conceptIds,
         force,
+        unreviewedOnly: args.unreviewedOnly,
       });
       if (input.concepts.length === 0) {
         totals.skipped += conceptIds.length;
@@ -467,6 +488,7 @@ export const classifyConceptBatch = internalAction({
           classifications,
           model,
           force,
+          unreviewedOnly: args.unreviewedOnly,
         });
         totals.assigned += written.assigned;
         totals.unreviewed += written.unreviewed;
@@ -482,6 +504,7 @@ export const classifyConcepts = action({
     conceptIds: v.array(v.id("concepts")),
     model: v.optional(v.string()),
     force: v.boolean(),
+    unreviewedOnly: v.optional(v.boolean()),
     apply: v.boolean(),
     devBypassSecret: v.optional(v.string()),
   },
@@ -492,6 +515,7 @@ export const classifyConcepts = action({
       conceptIds: args.conceptIds,
       model: args.model,
       force: args.force,
+      unreviewedOnly: args.unreviewedOnly,
       apply: args.apply,
     });
   },

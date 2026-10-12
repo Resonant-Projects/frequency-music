@@ -28,14 +28,14 @@ function stringArg(name: string): string | undefined {
 
 const apply = process.argv.includes("--apply");
 const retryUnreviewed = process.argv.includes("--retry-unreviewed");
-const force = process.argv.includes("--force") || retryUnreviewed;
+const force = process.argv.includes("--force");
 const all = process.argv.includes("--all") || (apply && !retryUnreviewed);
 const limit = numericArg("limit") ?? (all ? Number.POSITIVE_INFINITY : 30);
 const batchSize = Math.min(numericArg("batch-size") ?? 15, 20);
 const model = stringArg("model") ?? MODELS.sonnet;
 const client = getConvexClient();
 const devBypassSecret = getDevBypassSecret();
-let cursor: string | null = null;
+let cursor: string | null = stringArg("cursor") ?? null;
 let isDone = false;
 let selected = 0;
 const totals = {
@@ -60,7 +60,7 @@ while (!isDone && selected < limit) {
     api.conceptClassifier.listClassificationCandidates,
     {
       cursor,
-      batchSize,
+      batchSize: Math.min(batchSize, limit - selected),
       force,
       unreviewedOnly: retryUnreviewed,
       devBypassSecret,
@@ -77,6 +77,7 @@ while (!isDone && selected < limit) {
           conceptIds,
           model,
           force,
+          unreviewedOnly: retryUnreviewed,
           apply,
           devBypassSecret,
         },
@@ -131,4 +132,11 @@ if (apply) {
   );
 } else {
   console.log(`converged=${selected === 0 && isDone ? "yes" : "no"}`);
+}
+
+if (!isDone && cursor) {
+  console.log(`continueCursor=${cursor}`);
+  console.log(
+    "Use --cursor=<continueCursor> with the same selection flags to continue past this batch.",
+  );
 }
