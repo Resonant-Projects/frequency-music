@@ -708,7 +708,11 @@ export const buildGraphFromExtractions = internalMutation({
     isDone: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    const batchSize = args.batchSize ?? 10;
+    // Bounded so a continuation page stays inside one transaction's limits.
+    const batchSize = Math.min(
+      Math.max(Math.floor(args.batchSize ?? 10), 1),
+      50,
+    );
     const page = await ctx.db
       .query("extractions")
       .paginate({ cursor: args.cursor ?? null, numItems: batchSize });

@@ -436,6 +436,13 @@ describe("concept linking", () => {
       meantone: 1,
     });
 
+    // An out-of-range page size is clamped, never passed to paginate.
+    expect(
+      await t.mutation(internal.graph.buildGraphFromExtractions, {
+        batchSize: 0,
+      }),
+    ).toEqual({ processed: 1, conceptsLinked: 0, isDone: false });
+
     // A full rerun over already-linked Extractions changes nothing.
     expect(
       await t.mutation(internal.graph.buildGraphFromExtractions, {}),
