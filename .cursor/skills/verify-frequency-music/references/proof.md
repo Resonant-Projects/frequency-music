@@ -24,6 +24,12 @@ The publication acceptance run uses `publication-final` **after committing**, so
 
 Launch is a foreground supervisor started using a background-capable terminal tool. Always run cleanup, including after a failed drive. `ingest` is an intentional nonzero refusal, not an acceptance failure for the offline mode: it skips Doctor and refuses before opening a browser because no approved isolated backend/write identity exists.
 
+## Safety/provenance review correction
+
+All four review findings on the original publication head were reproduced or traced against the current helper. The added regressions first failed for stale Doctor passes, omitted shared inputs, missing-executable scratch, unreceipted descendants and leader-exit descendants. The corrected helper keeps the direct child unreaped until its process group drains, covers startup in `finally`, defers signals across resource assignment without blocking signals in the child, and records supervisor teardown. Doctor invalidates an old pass before preflight and only records a new pass after Chromium succeeds. Fingerprints include shared contracts, helper sources, build configuration and nonignored new input files, excluding run evidence and Python caches.
+
+The correction acceptance run is `review-final`, with the committed correction HEAD in `instance.json`. Repeat launch, Doctor, essays, navigation, search, intentional ingest refusal and cleanup with that ID. The separate `review-leader-exit` run starts the real frontend, terminates only its recorded launcher leader and verifies descendants/listener/scratch disappear. Exact-head gate logs and real outcomes remain in ignored evidence and the PR report; this document does not assert future runs passed. No live backend coverage is added.
+
 ## Evidence contract
 
 Evidence is local-only under `.cursor/skills/verify-frequency-music/evidence/`; its committed `.gitignore` excludes every artifact except the ignore file itself. Python caches are also ignored. Screenshots, traces, action logs, runtime receipts, keys and browser session state must never enter the commit. Receipts contain only the three explicit nonsecret Vite flags, not an environment dump. No session state is imported or exported.

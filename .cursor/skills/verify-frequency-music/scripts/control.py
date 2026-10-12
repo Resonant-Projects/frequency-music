@@ -27,11 +27,18 @@ def command(args, **kwargs):
 
 def fingerprint():
     digest = hashlib.sha256()
-    files = command(["git", "ls-files", "web", "docs/essays", "convex/_generated"]).splitlines()
-    for name in sorted(files):
+    skill_path = str(SKILL.relative_to(REPO))
+    inputs = ["web", "docs/essays", "convex/_generated", "convex/shared", skill_path,
+              "package.json", "bun.lock", "vite.config.ts", "biome.json", "tsconfig.json"]
+    files = command(["git", "ls-files", "-z", "--cached", "--others",
+                     "--exclude-standard", "--", *inputs]).split("\0")
+    for name in sorted(set(filter(None, files))):
+        relative = Path(name)
+        if relative.is_relative_to(Path(skill_path) / "evidence") or "__pycache__" in relative.parts:
+            continue
         path = REPO / name
-        digest.update(name.encode())
-        digest.update(path.read_bytes() if path.is_file() else b"MISSING")
+        content = path.read_bytes() if path.is_file() else b"MISSING"
+        digest.update(name.encode() + b"\0" + str(len(content)).encode() + b"\0" + content)
     return digest.hexdigest()
 
 
@@ -81,59 +88,116 @@ def stop_owned(info):
     actual = observed.stdout.strip()
     if actual != info["process_started"]:
         raise RuntimeError("Process identity changed; refusing cleanup")
-    os.killpg(pgid, signal.SIGTERM)
-    for _ in range(50):
-        if not group_members(pgid):
-            return
-        time.sleep(0.1)
-    os.killpg(pgid, signal.SIGKILL)
+    terminate_group(pgid)
+
+
+def terminate_group(pgid):
+    # Caller must prove ownership before entering. The launch supervisor owns an
+    # unreaped Popen child: even a zombie reserves the PID/PGID until wait().
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        try:
+            os.killpg(pgid, sig)
+        except ProcessLookupError:
+            pass
+        for _ in range(50):
+            if not group_members(pgid):
+                return
+            time.sleep(0.1)
+    raise RuntimeError("Owned process group did not stop")
 
 
 def launch(run, port):
     out = directory(run)
     out.mkdir(parents=True, exist_ok=False)
-    scratch_base = (Path.home() / ".hermes/cache/scratch").resolve()
-    scratch_base.mkdir(parents=True, exist_ok=True)
-    if str(scratch_base).startswith(("/tmp", "/private/tmp")):
-        raise RuntimeError("Set TMPDIR to a non-system scratch directory")
-    scratch = Path(tempfile.mkdtemp(prefix=f"frequency-{run}-", dir=scratch_base))
-    if port == 0:
-        with socket.socket() as reservation:
-            reservation.bind(("127.0.0.1", 0))
-            port = reservation.getsockname()[1]
-    if listeners(port):
-        shutil.rmtree(scratch)
-        raise RuntimeError(f"Port {port} already owned; refusing to reuse it")
-    env = {key: value for key, value in os.environ.items() if not key.startswith("VITE_")}
-    env.update(VITE_AUTH_BYPASS="1", VITE_E2E_MODE="0", VITE_CONVEX_URL="http://127.0.0.1:9",
-               TMPDIR=str(scratch))
-    args = ["vp", "run", "dev", "--", "--host", "127.0.0.1", "--port", str(port),
-            "--strictPort", "--mode", "verification"]
-    info = {"repo": str(REPO), "url": f"http://127.0.0.1:{port}", "port": port,
-            "scratch": str(scratch), "scratch_base": str(scratch_base),
-            "mode": "offline-local-ui", "head": command(["git", "rev-parse", "HEAD"]),
-            "source_sha256": fingerprint(), "command": args, "environment": {
-                "VITE_AUTH_BYPASS": "1", "VITE_E2E_MODE": "0", "VITE_CONVEX_URL": "http://127.0.0.1:9"}}
-    with (out / "launch.log").open("w") as log:
-        proc = subprocess.Popen(args, cwd=WEB, env=env, stdout=log, stderr=subprocess.STDOUT,
-                                start_new_session=True)
-        info.update(pgid=proc.pid, process_started=command(["ps", "-p", str(proc.pid), "-o", "lstart="]))
-        write_json(out / "instance.json", info)
-        print(json.dumps(info), flush=True)
-        def interrupted(_sig, _frame):
+    scratch = None
+    proc = None
+    watched = (signal.SIGTERM, signal.SIGINT)
+    previous_handlers = {sig: signal.getsignal(sig) for sig in watched}
+    interrupted_requested = False
+    def interrupted(_sig, _frame):
+        nonlocal interrupted_requested
+        interrupted_requested = True
+    def check_interrupted():
+        if interrupted_requested:
             raise KeyboardInterrupt
-        signal.signal(signal.SIGTERM, interrupted)
-        signal.signal(signal.SIGINT, interrupted)
-        try:
-            code = proc.wait()
+    for sig in watched:
+        signal.signal(sig, interrupted)
+    try:
+        with (out / "launch.log").open("w") as log:
+            scratch_base = (Path.home() / ".hermes/cache/scratch").resolve()
+            scratch_base.mkdir(parents=True, exist_ok=True)
+            if str(scratch_base).startswith(("/tmp", "/private/tmp")):
+                raise RuntimeError("Set TMPDIR to a non-system scratch directory")
+            # Defer interruption until the assignment owns the resource. The
+            # handler returns normally, so children inherit no blocked signals.
+            scratch = Path(tempfile.mkdtemp(prefix=f"frequency-{run}-", dir=scratch_base))
+            check_interrupted()
+            if port == 0:
+                with socket.socket() as reservation:
+                    reservation.bind(("127.0.0.1", 0))
+                    port = reservation.getsockname()[1]
+            if listeners(port):
+                raise RuntimeError(f"Port {port} already owned; refusing to reuse it")
+            env = {key: value for key, value in os.environ.items() if not key.startswith("VITE_")}
+            env.update(VITE_AUTH_BYPASS="1", VITE_E2E_MODE="0", VITE_CONVEX_URL="http://127.0.0.1:9",
+                       TMPDIR=str(scratch))
+            args = ["vp", "run", "dev", "--", "--host", "127.0.0.1", "--port", str(port),
+                    "--strictPort", "--mode", "verification"]
+            info = {"repo": str(REPO), "url": f"http://127.0.0.1:{port}", "port": port,
+                    "scratch": str(scratch), "scratch_base": str(scratch_base),
+                    "mode": "offline-local-ui", "head": command(["git", "rev-parse", "HEAD"]),
+                    "source_sha256": fingerprint(), "command": args, "environment": {
+                        "VITE_AUTH_BYPASS": "1", "VITE_E2E_MODE": "0", "VITE_CONVEX_URL": "http://127.0.0.1:9"}}
+            check_interrupted()
+            proc = subprocess.Popen(args, cwd=WEB, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                    start_new_session=True)
+            check_interrupted()
+            info.update(pgid=proc.pid, process_started=command(["ps", "-p", str(proc.pid), "-o", "lstart="]))
+            write_json(out / "instance.json", info)
+            print(json.dumps(info), flush=True)
+            # Do not poll()/wait() here: both reap an exited leader and surrender
+            # the ownership capability while its descendants can still be alive.
+            while True:
+                check_interrupted()
+                observed = command(["ps", "-p", str(proc.pid), "-o", "stat="])
+                if observed.startswith("Z"):
+                    break
+                time.sleep(0.1)
+            terminate_group(proc.pid)
+            code = proc.wait(timeout=10)
             if code not in (0, -signal.SIGTERM, -signal.SIGINT):
                 raise RuntimeError(f"Launch exited {code}; see {out / 'launch.log'}")
+    finally:
+        try:
+            if proc is not None and proc.returncode is None:
+                terminate_group(proc.pid)
+                proc.wait(timeout=10)
+            if scratch is not None:
+                remove_scratch(scratch)
+            write_json(out / "launch-cleanup.json", {
+                "status": "pass", "process_group_stopped": proc.pid if proc else None,
+                "leader_reaped": proc is None or proc.returncode is not None,
+                "scratch_removed": scratch is None or not scratch.exists(),
+                "scope": "spawned process group and allocated scratch only"})
         finally:
-            stop_owned(info)
-            proc.wait(timeout=10)
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
 
 
 def doctor(run):
+    receipt = directory(run) / "doctor-process.json"
+    write_json(receipt, {"status": "running", "scope": "local UI, not Clerk or Convex health"})
+    try:
+        result = check_doctor(run)
+    except BaseException as error:
+        write_json(receipt, {"status": "fail", "error": str(error),
+                             "scope": "local UI, not Clerk or Convex health"})
+        raise
+    write_json(receipt, result)
+    print(json.dumps(result))
+
+
+def check_doctor(run):
     info = state(run)
     if not group_members(info["pgid"]):
         raise RuntimeError("Owned process group is not running")
@@ -156,9 +220,8 @@ def doctor(run):
     result = {"status": "pass", "mode": info["mode"], "head": info["head"],
               "source_sha256": info["source_sha256"], "url": info["url"], "listener_pids": pids,
               "scope": "local essay UI, not Clerk or Convex health"}
-    write_json(directory(run) / "doctor-process.json", result)
     drive(run, "doctor", check=False)
-    print(json.dumps(result))
+    return result
 
 
 def drive(run, feature, check=True):
@@ -170,6 +233,15 @@ def drive(run, feature, check=True):
                             env=dict(os.environ, TMPDIR=info["scratch"]))
     if result.returncode:
         raise RuntimeError(f"{feature} failed with exit {result.returncode}; run cleanup {run}")
+
+
+def remove_scratch(scratch):
+    try:
+        shutil.rmtree(scratch)
+    except FileNotFoundError:
+        # The supervisor and an explicit cleanup may remove the same owned path.
+        if scratch.exists():
+            raise
 
 
 def cleanup(run):
@@ -184,8 +256,7 @@ def cleanup(run):
     scratch = Path(info["scratch"])
     if scratch.parent != Path(info["scratch_base"]) or not scratch.name.startswith(f"frequency-{run}-"):
         raise RuntimeError("Unexpected scratch path; refusing removal")
-    if scratch.exists():
-        shutil.rmtree(scratch)
+    remove_scratch(scratch)
     kept = sorted(p.name for p in directory(run).iterdir() if p.is_file())
     if "instance.json" not in kept or "launch.log" not in kept:
         raise RuntimeError("Evidence disappeared")
