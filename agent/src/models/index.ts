@@ -6,7 +6,7 @@ import {
 import { createCodexSdkModel } from "./codexSdk.js";
 import { withFallback } from "./withFallback.js";
 
-export type ModelProvider = "codex-sdk" | "openrouter-anthropic";
+export type ModelProvider = "anthropic" | "codex-sdk" | "openrouter-anthropic";
 
 export interface ResearchModelOptions extends ChatModelOptions {
   /**
@@ -18,17 +18,19 @@ export interface ResearchModelOptions extends ChatModelOptions {
 }
 
 /**
- * Codex is the configured non-tool provider when `CODEX_ENABLED === "true"`.
+ * Direct Anthropic takes precedence. Without its key, Codex is the legacy
+ * non-tool provider when `CODEX_ENABLED === "true"`.
  * Binary availability is checked lazily at first use inside the SDK adapter;
  * any auth/quota/transient failure is caught by the fallback wrapper.
  */
 export function isCodexEnabled(): boolean {
-  return process.env.CODEX_ENABLED === "true";
+  return !process.env.ANTHROPIC_API_KEY && process.env.CODEX_ENABLED === "true";
 }
 
 export function getConfiguredModelProvider(
   options: ResearchModelOptions = {},
 ): ModelProvider {
+  if (process.env.ANTHROPIC_API_KEY) return "anthropic";
   if (isCodexEnabled() && !options.requiresToolBinding) {
     return "codex-sdk";
   }
@@ -38,13 +40,15 @@ export function getConfiguredModelProvider(
 export function getResearchModel(
   options: ResearchModelOptions = {},
 ): BaseChatModel {
+  if (process.env.ANTHROPIC_API_KEY)
+    return createOpenRouterAnthropicModel(options);
   // Tool-binding calls always resolve directly to OpenRouter/Anthropic.
   if (options.requiresToolBinding) {
     return createOpenRouterAnthropicModel(options);
   }
 
   if (isCodexEnabled()) {
-    // Codex primary with automatic OpenRouter fallback on auth/quota/transient
+    // Legacy Codex primary with automatic OpenRouter fallback on auth/quota/transient
     // failure. The wrapper tags llmOutput.provider with whichever answered.
     return withFallback(
       createCodexSdkModel(options),

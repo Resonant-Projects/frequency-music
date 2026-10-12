@@ -1,4 +1,11 @@
-import { describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { AIMessage } from "@langchain/core/messages";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ChatResult } from "@langchain/core/outputs";
@@ -7,8 +14,15 @@ import {
   createResearchDeepAgentDraft,
   sanitizeSpecialistDraft,
 } from "../src/agents/research-pipeline/deepAgent";
-import { getConfiguredModelProvider } from "../src/models/index";
+import {
+  FallbackChatModel,
+  CodexSdkChatModel,
+  getConfiguredModelProvider,
+} from "../src/models/index";
 import type { ResearchPipelineDraft } from "../src/state/researchPipelineState";
+
+beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
+afterEach(() => vi.unstubAllEnvs());
 
 const fallbackDraft: ResearchPipelineDraft = {
   kind: "hypothesis_draft",
@@ -54,6 +68,47 @@ class StubResponseModel extends BaseChatModel {
 }
 
 describe("Codex/deep-agent research draft integration", () => {
+  test("the legacy specialist keeps CODEX_MODEL instead of receiving an Opus ID", async () => {
+    vi.stubEnv("CODEX_ENABLED", "true");
+    vi.stubEnv("CODEX_MODEL", "gpt-6.1-sol");
+    vi.stubEnv("OPENROUTER_API_KEY", "test-only");
+    const generate = vi
+      .spyOn(FallbackChatModel.prototype, "generate")
+      .mockImplementation(function (this: FallbackChatModel) {
+        expect(this.primary).toBeInstanceOf(CodexSdkChatModel);
+        expect((this.primary as CodexSdkChatModel).model).toBe("gpt-6.1-sol");
+        return Promise.resolve({
+          generations: [
+            [
+              {
+                text: specialistDraftText,
+                message: new AIMessage(specialistDraftText),
+              },
+            ],
+          ],
+        });
+      });
+    try {
+      const result = await createResearchDeepAgentDraft({
+        selectedCandidate: undefined,
+        candidates: [],
+        scope: {
+          activeTheses: [],
+          recentExtractions: [],
+          recentHypotheses: [],
+          recentRecipes: [],
+          failureArchive: [],
+          editorialSignals: [],
+        },
+        fallbackDraft,
+      });
+      expect(result.usedFallback).toBe(false);
+      expect(generate).toHaveBeenCalledOnce();
+    } finally {
+      generate.mockRestore();
+    }
+  });
+
   test("selects Codex SDK provider when enabled for non-tool specialist calls", () => {
     const previous = process.env.CODEX_ENABLED;
     process.env.CODEX_ENABLED = "true";

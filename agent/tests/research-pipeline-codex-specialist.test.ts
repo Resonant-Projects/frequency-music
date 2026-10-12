@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, test } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { ResearchDraftSpecialistInput } from "../src/agents/research-pipeline/deepAgent";
 import { createSpecialistOutcome } from "../src/graphs/research-pipeline/nodes";
@@ -7,6 +14,9 @@ import type {
   RunCodexTaskInput,
   RunCodexTaskResult,
 } from "../src/subagents/codexWorker";
+
+beforeEach(() => vi.stubEnv("ANTHROPIC_API_KEY", undefined));
+afterEach(() => vi.unstubAllEnvs());
 
 // Stands in for the OpenRouter/deep-agent model so tests exercising the
 // OpenRouter fallback path never make a live model call; mirrors the DI
@@ -49,6 +59,21 @@ describe("CODEX_SPECIALIST routing decision", () => {
     else process.env.CODEX_SPECIALIST = previousFlag;
     if (previousModel === undefined) delete process.env.CODEX_MODEL;
     else process.env.CODEX_MODEL = previousModel;
+  });
+
+  test("Anthropic key takes precedence over the legacy specialist flag", async () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "test-only");
+    vi.stubEnv("CODEX_SPECIALIST", "true");
+    const codexRunner = vi.fn(() =>
+      Promise.reject(new Error("Codex must not run")),
+    );
+    const outcome = await createSpecialistOutcome(specialistInput, {
+      runCodexTask: codexRunner,
+      model: failingModel,
+    });
+    expect(codexRunner).not.toHaveBeenCalled();
+    expect(outcome.provider).toBe("anthropic");
+    expect(outcome.draft).toEqual(fallbackDraft);
   });
 
   test("flag off: takes the OpenRouter path and never calls the Codex runner", async () => {

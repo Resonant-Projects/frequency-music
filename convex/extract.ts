@@ -4,7 +4,7 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { type ActionCtx, action } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { DEFAULT_MODEL, MODELS } from "./llm";
+import { modelForTask, MODELS } from "./llm";
 import { generateJson } from "./llmNode";
 import { claimValidator } from "./shared/claims";
 import {
@@ -290,7 +290,7 @@ export const extractSource = action({
       content,
     });
 
-    const modelId = args.model || DEFAULT_MODEL;
+    const modelId = args.model || modelForTask("extract_v3");
 
     try {
       const { json } = await generateJson({

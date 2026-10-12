@@ -3,7 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
-import { DEFAULT_MODEL, extractJsonObject } from "./llm";
+import { modelForTask, extractJsonObject } from "./llm";
 import { recipeStarterKitValidator, recipeStatusValidator } from "./schema";
 import {
   generatedRecipeValidator,
@@ -464,7 +464,7 @@ export const generateFromHypothesis = action({
       .replace("{{concepts}}", (hypothesis.concepts || []).join(", "));
 
     // Call AI (traced as recipe_v1 in the Node-runtime internal action)
-    const modelId = args.model || DEFAULT_MODEL;
+    const modelId = args.model || modelForTask("recipe_v1");
 
     const { text } = await ctx.runAction(
       internal.recipesInternal.generateRecipeText,
