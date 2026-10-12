@@ -10,6 +10,21 @@ export const generateClassifications = internalAction({
     model: v.string(),
     expectedCount: v.number(),
   },
+  returns: v.object({
+    classifications: v.array(
+      v.object({
+        index: v.number(),
+        classification: v.object({
+          domains: v.array(v.string()),
+          missionRelevance: v.union(v.literal("on"), v.literal("off")),
+          rationale: v.string(),
+        }),
+      }),
+    ),
+    failed: v.number(),
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+  }),
   handler: (_ctx, args) => ({
     ...parseConceptClassificationItems(
       {
