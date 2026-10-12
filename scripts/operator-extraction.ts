@@ -1,7 +1,9 @@
 /**
  * Extract text_ready Sources a chunk at a time without the worker or
- * OpenRouter: an operator session (Claude Code) reads the same extract_v3
- * prompt and writes the extraction JSON itself.
+ * OpenRouter: an operator session reads the same extract_v3
+ * prompt and writes the extraction JSON itself. Pass --model openai/gpt-6.1-sol
+ * on export and import when a Codex operator writes the results; Opus is the
+ * default for existing Claude Code sessions.
  *
  * 1. Export a chunk (pins durable snapshots before external generation; the export query
  *    is operator-only, so it also needs the bypass secret):
@@ -33,7 +35,7 @@ import {
 import { join } from "node:path";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import { MODELS } from "../convex/llm";
+import { operatorExtractionModel } from "../convex/shared/operatorExtraction";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 import {
   buildChunks,
@@ -42,11 +44,17 @@ import {
   parseResults,
 } from "./lib/operator-extraction";
 
-const MODEL = MODELS.opus;
-
 function flag(args: string[], name: string): string | undefined {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : undefined;
+}
+
+function selectedModel(args: string[]): string {
+  const model = flag(args, "--model");
+  if (args.includes("--model") && (!model || model.startsWith("--"))) {
+    throw new Error("--model needs a model id");
+  }
+  return operatorExtractionModel(model);
 }
 
 function positiveInt(value: string | undefined, fallback: number): number {
@@ -59,6 +67,7 @@ function positiveInt(value: string | undefined, fallback: number): number {
 }
 
 async function exportChunks(args: string[]) {
+  const model = selectedModel(args);
   const out = flag(args, "--out");
   if (!out) throw new Error("export needs --out <dir>");
   const limit = positiveInt(flag(args, "--limit"), 40);
@@ -82,7 +91,7 @@ async function exportChunks(args: string[]) {
       continueCursor: string;
       isDone: boolean;
     } = await client.query(api.sources.operatorExtractionSnapshots, {
-      model: MODEL,
+      model,
       limit: Math.min(limit - rows.length, 200),
       cursor: snapshotCursor,
       devBypassSecret,
@@ -113,7 +122,7 @@ async function exportChunks(args: string[]) {
     cursor = result.continueCursor;
   }
   const { chunks, unextractable } = buildChunks(rows.slice(0, limit), {
-    model: MODEL,
+    model,
     chunkSize,
   });
   for (const chunk of chunks) {
@@ -128,7 +137,7 @@ async function exportChunks(args: string[]) {
         {
           sourceId: item.sourceId as Id<"sources">,
           inputHash: item.inputHash,
-          model: MODEL,
+          model,
           devBypassSecret,
         },
       );
@@ -177,9 +186,12 @@ async function exportChunks(args: string[]) {
 }
 
 async function importResults(args: string[]) {
-  const file = args.find((arg) => !arg.startsWith("--"));
+  const model = selectedModel(args);
+  const file = args.find(
+    (arg, index) => !arg.startsWith("--") && args[index - 1] !== "--model",
+  );
   if (!file) throw new Error("import needs <results.json>");
-  const { results } = parseResults(readFileSync(file, "utf8"), MODEL);
+  const { results } = parseResults(readFileSync(file, "utf8"), model);
   // Every body is checked before anything is stored, so a bad file stores
   // nothing and --dry-run predicts the import.
   const invalid = results.flatMap((result) => {
@@ -203,7 +215,7 @@ async function importResults(args: string[]) {
     try {
       const outcome = await client.action(api.extract.storeOperatorExtraction, {
         sourceId: result.sourceId as Id<"sources">,
-        model: MODEL,
+        model,
         inputHash: result.inputHash,
         snapshotId: result.snapshotId as Id<"extractionAttempts"> | undefined,
         // Checked by extractionProblems above and by Convex's validator.
@@ -238,7 +250,7 @@ async function main() {
   if (command === "export") return exportChunks(args);
   if (command === "import") return importResults(args);
   console.log(
-    "Usage:\n  vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable]\n  vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run]",
+    "Usage:\n  vpx tsx scripts/operator-extraction.ts export --out <dir> [--limit 40] [--chunk-size 20] [--park-unextractable] [--model <id>]\n  vpx tsx scripts/operator-extraction.ts import <results.json> [--dry-run] [--model <id>]",
   );
   process.exitCode = command ? 1 : 0;
 }

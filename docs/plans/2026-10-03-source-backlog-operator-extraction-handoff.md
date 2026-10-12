@@ -1,5 +1,11 @@
 # Handoff: source backlog and operator extraction (paused 2026-10-04, resume Tuesday 2026-10-06)
 
+> Historical handoff. The approved backlog was completed on October 11 using
+> GPT-6.1 Sol directly in the operator thread. See the
+> [completion record and current model-selection procedure](./2026-10-11-source-backlog-operator-extraction-completion.md).
+> The pause, hourly cap, and parallel Opus procedure below describe the earlier
+> campaign, not instructions to restart the completed task.
+
 Paused at Keith's request. Nothing is mid-flight: the hourly extraction job was
 deleted, and no export, extraction or import is running. The worker and the
 self-hosted Convex backend are healthy, and `FREQUENCY_WORKER_CLAIMS_PAUSED`

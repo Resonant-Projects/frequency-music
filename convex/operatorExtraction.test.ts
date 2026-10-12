@@ -90,6 +90,54 @@ const store = (
   });
 
 describe("operator extraction", () => {
+  test.each([MODELS.default, MODELS.sonnet])(
+    "selected operator model %s survives snapshot export and historical import",
+    async (model) => {
+      const { t, sourceId, inputHash } = await setup();
+      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
+        sourceId,
+        inputHash,
+        model,
+        devBypassSecret: BYPASS,
+      });
+      expect(snapshot).not.toBeNull();
+      const exported = await t.query(api.sources.operatorExtractionSnapshots, {
+        model,
+        limit: 20,
+        cursor: null,
+        devBypassSecret: BYPASS,
+      });
+      expect(exported.page).toHaveLength(1);
+      expect(exported.page[0]).toMatchObject({
+        sourceId,
+        snapshotId: snapshot!.snapshotId,
+        inputHash,
+      });
+      await t
+        .withIdentity({ subject: "operator" })
+        .mutation(api.sources.updateText, {
+          id: sourceId,
+          rawText: article.repeat(3),
+        });
+      await expect(
+        store(t, sourceId, inputHash, {
+          model,
+          snapshotId: snapshot!.snapshotId,
+        }),
+      ).resolves.toMatchObject({ success: true, model, current: false });
+      const stored = await t.run((ctx) => ctx.db.query("extractions").first());
+      expect(stored).toMatchObject({
+        model,
+        historical: true,
+        snapshotId: snapshot!.snapshotId,
+        inputHash,
+      });
+      expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+        "text_ready",
+      );
+    },
+  );
+
   test("snapshot imports reject worker provenance even without a generation lease", async () => {
     const { t, sourceId, inputHash } = await setup();
     const { attemptId } = await t.mutation(
@@ -266,6 +314,40 @@ describe("operator extraction", () => {
     expect(stored[0]?.claims[0]?.evidenceLevel).toBe("reference");
   });
 
+  test.each([MODELS.default, MODELS.sonnet])(
+    "records the selected catalog model %s on the stored Extraction",
+    async (model) => {
+      const { t, sourceId, inputHash } = await setup();
+      expect(await store(t, sourceId, inputHash, { model })).toMatchObject({
+        success: true,
+        model,
+      });
+      const stored = await t.query(api.extractions.getBySourceId, { sourceId });
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toMatchObject({ model, inputHash });
+      expect(
+        await t.run((ctx) => ctx.db.get("sources", sourceId)),
+      ).toMatchObject({
+        status: "extracted",
+      });
+    },
+  );
+
+  test("rejects a transcription-only model before storing results", async () => {
+    const { t, sourceId, inputHash } = await setup();
+    await expect(
+      store(t, sourceId, inputHash, { model: MODELS.transcription }),
+    ).rejects.toThrow("Operator extractions record one of");
+    expect(await t.query(api.extractions.getBySourceId, { sourceId })).toEqual(
+      [],
+    );
+    expect(await t.run((ctx) => ctx.db.get("sources", sourceId))).toMatchObject(
+      {
+        status: "text_ready",
+      },
+    );
+  });
+
   test("stores an operator Extraction and marks the Source extracted", async () => {
     const { t, sourceId, inputHash } = await setup();
     expect(await store(t, sourceId, inputHash)).toEqual({
@@ -304,7 +386,7 @@ describe("operator extraction", () => {
     });
     await expect(
       store(t, sourceId, await extractionInputHash(article.repeat(2)), {
-        model: "openai/gpt-6.1-sol",
+        model: "unregistered/model",
       }),
     ).rejects.toThrow("Operator extractions record one of");
     await expect(

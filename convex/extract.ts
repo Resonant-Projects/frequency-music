@@ -11,6 +11,7 @@ import { generateJson } from "./llmNode";
 import { claimValidator } from "./shared/claims";
 import { redactError } from "./shared/redactError";
 import { truncateText } from "./shared/truncateText";
+import { OPERATOR_EXTRACTION_MODELS } from "./shared/operatorExtraction";
 
 export { MODELS };
 
@@ -203,7 +204,7 @@ export const resumeAttempt = internalAction({
 
 // Models an operator session may record for an Extraction it wrote itself
 // (scripts/operator-extraction.ts). Catalog-checked through MODELS.
-export const OPERATOR_EXTRACTION_MODELS: readonly string[] = [MODELS.opus];
+export { OPERATOR_EXTRACTION_MODELS };
 
 const operatorExtractionValidator = v.object({
   summary: v.string(),
