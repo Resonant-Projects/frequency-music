@@ -412,11 +412,11 @@ export const updateStatus = mutation({
       blockedDetails: args.blockedDetails,
       updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    await settleExtractionFailures(
+      ctx,
+      source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
+    );
     if (args.status === "archived") {
-      await settleExtractionFailures(
-        ctx,
-        source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
-      );
       await settleCaptureFailures(ctx, {
         dedupeKey: source.dedupeKey,
         capturedAt: Date.now(),
@@ -1615,9 +1615,25 @@ export const bulkArchive = mutation({
       if (source) {
         await ctx.db.patch("sources", id, {
           status: "archived",
+          activeExtractionAttemptId: undefined,
+          lastExtractionAttemptId:
+            source.activeExtractionAttemptId ?? source.lastExtractionAttemptId,
           blockedDetails: args.reason || "Archived: off-topic or irrelevant",
           updatedAt: advanceSourceVersion(source.updatedAt),
         });
+        const attemptId =
+          source.activeExtractionAttemptId ?? source.lastExtractionAttemptId;
+        if (attemptId)
+          await ctx.scheduler.runAfter(
+            0,
+            internal.operationFailures.settleExtractionChain,
+            { attemptId },
+          );
+        await ctx.scheduler.runAfter(
+          0,
+          internal.operationFailures.settleCaptured,
+          { dedupeKey: source.dedupeKey, capturedAt: Date.now() },
+        );
         archived++;
       }
     }

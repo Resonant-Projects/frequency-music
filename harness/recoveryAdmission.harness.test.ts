@@ -311,10 +311,10 @@ describe("recovery admission", () => {
       await t.mutation(internal.operationFailures.claimRecovery, {
         failureId: failure._id,
       }),
-    ).toBe(3);
-    await t.action(internal.recoveryWorkflows.execute, {
-      failureId: failure._id,
-      attempt: 3,
+    ).toBeNull();
+    expect((await t.run((ctx) => ctx.db.get(failure._id)))?.attempts).toBe(2);
+    await t.action(internal.extractInternal.completeExtraction, {
+      attemptId: prepared.attemptId,
     });
     const completed = (await t.query(internal.extractInternal.getAttempt, {
       attemptId: prepared.attemptId,
@@ -407,19 +407,21 @@ describe("recovery admission", () => {
         await t.mutation(internal.operationFailures.claimRecovery, {
           failureId: failure._id,
         }),
-      ).toBe(1);
+      ).toBeNull();
+      expect((await t.run((ctx) => ctx.db.get(failure._id)))?.attempts).toBe(0);
       const queuedRecovery = await t.run((ctx) =>
         ctx.db.system
           .query("_scheduled_functions")
-          .filter((q) => q.eq(q.field("name"), "recoveryWorkflows:start"))
+          .filter((q) =>
+            q.eq(q.field("name"), "extractInternal:completeExtraction"),
+          )
           .order("desc")
           .first(),
       );
-      expect(queuedRecovery?.args).toEqual([{ failureId: failure._id }]);
+      expect(queuedRecovery?.args).toEqual([{ attemptId: prepared.attemptId }]);
       expect(queuedRecovery?.scheduledTime).toBeLessThanOrEqual(Date.now());
-      await t.action(internal.recoveryWorkflows.execute, {
-        failureId: failure._id,
-        attempt: 1,
+      await t.action(internal.extractInternal.completeExtraction, {
+        attemptId: prepared.attemptId,
       });
       const completed = (await t.query(internal.extractInternal.getAttempt, {
         attemptId: prepared.attemptId,

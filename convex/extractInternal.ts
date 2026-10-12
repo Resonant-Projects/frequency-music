@@ -757,6 +757,8 @@ export const failExtraction = internalMutation({
       target: { kind: "extraction", attemptId },
       message: error,
     });
+    if (attempt.result)
+      await reopenExtractionCompletionRecovery(ctx, attemptId);
     if (
       source?.activeExtractionAttemptId === attemptId &&
       (source.status === "extracting" ||

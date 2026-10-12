@@ -544,3 +544,207 @@ test.each(["recorded", "investigating", "recovering"] as const)(
     );
   },
 );
+
+test("Mark Triaged settles detached extraction recovery and preserves late output as history", async () => {
+  const { t, sourceId, attemptId, failure } = await setup();
+  await t
+    .withIdentity({ subject: "reader" })
+    .mutation(api.sources.updateStatus, { id: sourceId, status: "triaged" });
+  expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
+    "resolved",
+  );
+  expect(
+    (await t.run((ctx) => ctx.db.get(sourceId)))?.activeExtractionAttemptId,
+  ).toBeUndefined();
+  await t.mutation(internal.extractInternal.retainExtractionResult, {
+    attemptId,
+    result,
+  });
+  await runCompletionJobs(t);
+  expect((await t.run((ctx) => ctx.db.get(attemptId)))?.current).toBe(false);
+  expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe("triaged");
+});
+
+test("bulk archive settles many large snapshots through bounded separate transactions", async () => {
+  const { t, attemptId } = await setup();
+  const original = (await t.run((ctx) => ctx.db.get(attemptId)))!;
+  const ids: Id<"sources">[] = [];
+  const failures: Id<"operationFailures">[] = [];
+  for (let i = 0; i < 20; i++) {
+    const sourceId = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        status: "review_needed",
+        blockedReason: "ai_error",
+        dedupeKey: `bulk-${i}`,
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    ids.push(sourceId);
+    const snapshot = await t.run((ctx) =>
+      ctx.db.insert("extractionAttempts", {
+        sourceId,
+        origin: "worker",
+        inputHash: original.inputHash,
+        prompt: "x".repeat(900_000),
+        systemPrompt: "s",
+        promptVersion: original.promptVersion,
+        sourceVersion: 1,
+        model: "test",
+        force: false,
+        status: "failed",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await t.run((ctx) =>
+      ctx.db.patch(sourceId, { activeExtractionAttemptId: snapshot }),
+    );
+    failures.push(
+      await t.run((ctx) =>
+        ctx.db.insert("operationFailures", {
+          operationId: `extraction:${snapshot}`,
+          causeKey: "test",
+          target: { kind: "extraction", attemptId: snapshot },
+          message: "failed",
+          status: "recorded",
+          attempts: 0,
+          createdAt: 1,
+          updatedAt: 1,
+          nextAttemptAt: 0,
+        }),
+      ),
+    );
+  }
+  expect(
+    await t
+      .withIdentity({ subject: "reader" })
+      .mutation(api.sources.bulkArchive, { ids }),
+  ).toEqual({ archived: 20 });
+  await drainSettlements(t);
+  for (const id of ids)
+    expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+      status: "archived",
+    });
+  for (const id of ids)
+    expect(
+      (await t.run((ctx) => ctx.db.get(id)))?.activeExtractionAttemptId,
+    ).toBeUndefined();
+  for (const id of failures)
+    expect((await t.run((ctx) => ctx.db.get(id)))?.status).toBe("resolved");
+});
+
+test.each([
+  "recorded",
+  "investigating",
+  "retrying",
+  "recovering",
+  "needsReview",
+] as const)(
+  "retained output replays after retry exhaustion in %s",
+  async (status) => {
+    const { t, attemptId, failure } = await setup();
+    await t.run((ctx) =>
+      ctx.db.patch(failure._id, { status, attempts: 3, nextAttemptAt: 0 }),
+    );
+    await t.mutation(internal.extractInternal.retainExtractionResult, {
+      attemptId,
+      result,
+    });
+    expect((await t.run((ctx) => ctx.db.get(failure._id)))?.attempts).toBe(3);
+    expect(
+      await t.mutation(internal.operationFailures.claimRecovery, {
+        failureId: failure._id,
+      }),
+    ).toBeNull();
+    // Simulate a crash before first completion, then drive interruption reconciliation.
+    const before = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    await t.run((ctx) =>
+      ctx.db.patch(attemptId, { updatedAt: Date.now() - 16 * 60_000 }),
+    );
+    await t.mutation(internal.extractInternal.reconcileAttempts, {});
+    const after = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(
+      after.some(
+        (job) =>
+          job.name === "extractInternal:completeExtraction" &&
+          !before.some((old) => old._id === job._id),
+      ),
+    ).toBe(true);
+    await runCompletionJobs(t);
+    expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
+      "completed",
+    );
+    expect(await t.run((ctx) => ctx.db.get(failure._id))).toMatchObject({
+      status: "resolved",
+      attempts: 3,
+    });
+  },
+);
+
+test("bulk archive fences queued investigation and stale diagnosis before chain settlement runs", async () => {
+  const { t, sourceId, failure } = await setup();
+  const runId = await t.run((ctx) =>
+    ctx.db.insert("agentRuns", {
+      graphName: "failure-investigation",
+      status: "running",
+      input: {},
+      createdAt: 1,
+      updatedAt: 1,
+    }),
+  );
+  await t.run((ctx) =>
+    ctx.db.patch(failure._id, {
+      status: "investigating",
+      investigationRunId: runId,
+    }),
+  );
+  await t
+    .withIdentity({ subject: "reader" })
+    .mutation(api.sources.bulkArchive, { ids: [sourceId] });
+  expect(
+    await t.query(internal.operationFailures.getInvestigation, {
+      agentRunId: runId,
+    }),
+  ).toEqual([]);
+  await t.mutation(internal.operationFailures.submitDiagnosis, {
+    agentRunId: runId,
+    result: { diagnosis: "Stale retry", recover: true },
+  });
+  expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
+    "resolved",
+  );
+  await drainSettlements(t);
+});
+
+test("exhausted generation without retained output still requires review", async () => {
+  const { t, failure } = await setup();
+  await t.run((ctx) =>
+    ctx.db.patch(failure._id, { attempts: 3, nextAttemptAt: 0 }),
+  );
+  expect(
+    await t.mutation(internal.operationFailures.claimRecovery, {
+      failureId: failure._id,
+    }),
+  ).toBeNull();
+  expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
+    "needsReview",
+  );
+  expect(
+    await t.run((ctx) =>
+      ctx.db.system
+        .query("_scheduled_functions")
+        .filter((q) =>
+          q.eq(q.field("name"), "extractInternal:completeExtraction"),
+        )
+        .collect(),
+    ),
+  ).toEqual([]);
+});

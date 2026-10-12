@@ -129,12 +129,7 @@ export async function reopenExtractionCompletionRecovery(
       q.eq("operationId", `extraction:${attemptId}`),
     )
     .unique();
-  if (
-    !failure ||
-    !["recorded", "investigating", "needsReview"].includes(failure.status) ||
-    failure.attempts >= MAX_RECOVERY_ATTEMPTS
-  )
-    return;
+  if (!failure || failure.status === "resolved") return;
   await ctx.db.patch(failure._id, {
     status: "recorded",
     // The server has retained output; replay cannot invoke generation.
@@ -142,10 +137,11 @@ export async function reopenExtractionCompletionRecovery(
       "Retained output available; replay completion without generation",
     investigationRunId: undefined,
     updatedAt: Date.now(),
-    nextAttemptAt: Date.now(),
+    // The generated-snapshot reconciler retries failed completion after 15 minutes.
+    nextAttemptAt: Date.now() + 15 * 60_000,
   });
-  await ctx.scheduler.runAfter(0, internal.recoveryWorkflows.start, {
-    failureId: failure._id,
+  await ctx.scheduler.runAfter(0, internal.extractInternal.completeExtraction, {
+    attemptId,
   });
 }
 
@@ -354,6 +350,23 @@ export const claimRecovery = internalMutation({
       await resolveOperationFailure(ctx, failure.operationId);
       return null;
     }
+    let extractionConstraint: string | undefined;
+    if (failure.target.kind === "extraction") {
+      const attempt = await ctx.db.get(failure.target.attemptId);
+      if (attempt?.result) {
+        await reopenExtractionCompletionRecovery(ctx, attempt._id);
+        return null;
+      }
+      const source = attempt ? await ctx.db.get(attempt.sourceId) : null;
+      if (attempt && source?.status === "archived") {
+        await settleExtractionFailures(ctx, attempt._id);
+        return null;
+      }
+      extractionConstraint = await extractionRecoveryConstraint(
+        attempt,
+        source,
+      );
+    }
     if (failure.attempts >= MAX_RECOVERY_ATTEMPTS) {
       await ctx.db.patch(failureId, {
         status: "needsReview",
@@ -362,7 +375,10 @@ export const claimRecovery = internalMutation({
       return null;
     }
     // Two transient retries precede diagnosis; a supported diagnosis permits one final action.
-    const blocked = await unsupportedRecovery(ctx, failure);
+    const blocked =
+      failure.target.kind === "extraction"
+        ? extractionConstraint
+        : await unsupportedRecovery(ctx, failure);
     if (blocked && failure.target.kind === "extraction") {
       // Obsolete inputs cannot benefit from paid investigation or generation.
       await ctx.runMutation(internal.extractInternal.releaseObsoleteRecovery, {
@@ -532,13 +548,16 @@ export const getInvestigation = internalQuery({
   args: { agentRunId: v.id("agentRuns") },
   handler: async (ctx, { agentRunId }) => {
     const rows = await assignedFailures(ctx, agentRunId);
-    return Promise.all(
+    const evidenceRows = await Promise.all(
       rows.map(async (row) => {
         let evidence: Record<string, unknown>;
         let unsupportedReason: string | undefined;
         if (row.target.kind === "extraction") {
           const attempt = await ctx.db.get(row.target.attemptId);
           const source = attempt ? await ctx.db.get(attempt.sourceId) : null;
+          // Bulk/chain settlement can still be queued when this run starts.
+          if (attempt?.recoverySettled || source?.status === "archived")
+            return null;
           unsupportedReason = await extractionRecoveryConstraint(
             attempt,
             source,
@@ -582,6 +601,7 @@ export const getInvestigation = internalQuery({
         };
       }),
     );
+    return evidenceRows.filter((row) => row !== null);
   },
 });
 export const submitDiagnosis = internalMutation({
@@ -591,7 +611,28 @@ export const submitDiagnosis = internalMutation({
     const failures = await assignedFailures(ctx, agentRunId);
     for (const failure of failures) {
       if (failure.status !== "investigating") continue;
-      const blocked = await unsupportedRecovery(ctx, failure);
+      let blocked: string | undefined;
+      if (failure.target.kind === "extraction") {
+        const attempt = await ctx.db.get(failure.target.attemptId);
+        if (attempt?.result) {
+          await reopenExtractionCompletionRecovery(ctx, attempt._id);
+          continue;
+        }
+        const source = attempt ? await ctx.db.get(attempt.sourceId) : null;
+        if (
+          attempt &&
+          (attempt.recoverySettled || source?.status === "archived")
+        ) {
+          await resolveOperationFailure(ctx, failure.operationId);
+          await ctx.scheduler.runAfter(
+            0,
+            internal.operationFailures.settleExtractionChain,
+            { attemptId: attempt._id },
+          );
+          continue;
+        }
+        blocked = await extractionRecoveryConstraint(attempt, source);
+      } else blocked = await unsupportedRecovery(ctx, failure);
       if (blocked && failure.target.kind === "extraction")
         await ctx.runMutation(
           internal.extractInternal.releaseObsoleteRecovery,

@@ -51,83 +51,94 @@ async function setup(transactionLimits = false) {
   };
   return { t, sourceId, begin };
 }
+// These scenarios inspect state before queued completion is allowed to run.
+async function withFrozenScheduler<T>(work: () => Promise<T>): Promise<T> {
+  vi.useFakeTimers();
+  try {
+    return await work();
+  } finally {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  }
+}
 describe("Extraction completion", () => {
   test.each([false, true])(
     "a result retained during generation admission is replayed, completion fails=%s",
-    async (completionFails) => {
-      const { t, begin } = await setup();
-      const attemptId = await begin();
-      await t.mutation(internal.extractInternal.failExtraction, {
-        attemptId,
-        error: "429 rate limit",
-      });
-      const failure = (await t.run((ctx) =>
-        ctx.db.query("operationFailures").first(),
-      ))!;
-      await t.run((ctx) =>
-        ctx.db.patch(failure._id, { status: "retrying", attempts: 3 }),
-      );
-      await t.mutation(internal.extractInternal.claimGeneration, {
-        attemptId,
-        lease: "producer",
-      });
-      const runMutation = vi.fn(async (ref, args) => {
-        if (getFunctionName(ref) === "extractInternal:claimGeneration") {
-          await t.mutation(internal.extractInternal.retainExtractionResult, {
-            attemptId,
+    async (completionFails) =>
+      withFrozenScheduler(async () => {
+        const { t, begin } = await setup();
+        const attemptId = await begin();
+        await t.mutation(internal.extractInternal.failExtraction, {
+          attemptId,
+          error: "429 rate limit",
+        });
+        const failure = (await t.run((ctx) =>
+          ctx.db.query("operationFailures").first(),
+        ))!;
+        await t.run((ctx) =>
+          ctx.db.patch(failure._id, { status: "retrying", attempts: 3 }),
+        );
+        await t.mutation(internal.extractInternal.claimGeneration, {
+          attemptId,
+          lease: "producer",
+        });
+        const runMutation = vi.fn(async (ref, args) => {
+          if (getFunctionName(ref) === "extractInternal:claimGeneration") {
+            await t.mutation(internal.extractInternal.retainExtractionResult, {
+              attemptId,
+              generationLease: "producer",
+              result,
+            });
+          }
+          return t.mutation(ref, args);
+        });
+        const original = new Error("Retained completion unavailable");
+        const runAction = vi.fn(async (ref, args) => {
+          if (completionFails) throw original;
+          return t.action(ref, args);
+        });
+        const handler = (
+          resumeAttempt as unknown as {
+            _handler: (
+              ctx: ActionCtx,
+              args: { attemptId: Id<"extractionAttempts"> },
+            ) => Promise<unknown>;
+          }
+        )._handler;
+        const running = handler(
+          { runQuery: t.query, runMutation, runAction } as unknown as ActionCtx,
+          { attemptId },
+        );
+        if (completionFails) {
+          await expect(running).rejects.toBe(original);
+          expect(runMutation.mock.calls.at(-1)![1]).toMatchObject({
             generationLease: "producer",
-            result,
+            error: original.message,
           });
+          expect((await t.run((ctx) => ctx.db.get(attemptId)))?.error).toBe(
+            original.message,
+          );
+        } else {
+          await expect(running).resolves.toMatchObject({ success: true });
+          await t.mutation(internal.operationFailures.finish, {
+            failureId: failure._id,
+            attempt: 3,
+            success: true,
+          });
+          expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
+            "resolved",
+          );
+          expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
+            "completed",
+          );
         }
-        return t.mutation(ref, args);
-      });
-      const original = new Error("Retained completion unavailable");
-      const runAction = vi.fn(async (ref, args) => {
-        if (completionFails) throw original;
-        return t.action(ref, args);
-      });
-      const handler = (
-        resumeAttempt as unknown as {
-          _handler: (
-            ctx: ActionCtx,
-            args: { attemptId: Id<"extractionAttempts"> },
-          ) => Promise<unknown>;
-        }
-      )._handler;
-      const running = handler(
-        { runQuery: t.query, runMutation, runAction } as unknown as ActionCtx,
-        { attemptId },
-      );
-      if (completionFails) {
-        await expect(running).rejects.toBe(original);
-        expect(runMutation.mock.calls.at(-1)![1]).toMatchObject({
-          generationLease: "producer",
-          error: original.message,
-        });
-        expect((await t.run((ctx) => ctx.db.get(attemptId)))?.error).toBe(
-          original.message,
+        // Model generation uses no runAction seam, so a result without the provider
+        // configuration also proves the rejected lease cannot start paid generation.
+        expect(runAction).toHaveBeenCalledTimes(1);
+        expect(getFunctionName(runAction.mock.calls[0]![0])).toBe(
+          "extractInternal:completeExtraction",
         );
-      } else {
-        await expect(running).resolves.toMatchObject({ success: true });
-        await t.mutation(internal.operationFailures.finish, {
-          failureId: failure._id,
-          attempt: 3,
-          success: true,
-        });
-        expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
-          "resolved",
-        );
-        expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
-          "completed",
-        );
-      }
-      // Model generation uses no runAction seam, so a result without the provider
-      // configuration also proves the rejected lease cannot start paid generation.
-      expect(runAction).toHaveBeenCalledTimes(1);
-      expect(getFunctionName(runAction.mock.calls[0]![0])).toBe(
-        "extractInternal:completeExtraction",
-      );
-    },
+      }),
   );
 
   test.each([false, true])(
@@ -223,85 +234,95 @@ describe("Extraction completion", () => {
 
   test.each(["retained-generation", undefined])(
     "retained-result completion failure records its cause and replays without generation (lease: %s)",
-    async (generationLease) => {
-      const { t, begin } = await setup();
-      const attemptId = await begin();
-      await t.run((ctx) =>
-        ctx.db.patch(attemptId, {
-          result,
-          status: "generated",
-          generationLease,
-        }),
-      );
-      const original = new Error("Completion storage temporarily unavailable");
-      const runMutation = vi.fn(async (ref, args) => t.mutation(ref, args));
-      const runAction = vi.fn(async () => {
-        throw original;
-      });
-      const ctx = {
-        runQuery: t.query,
-        runMutation,
-        runAction,
-      } as unknown as ActionCtx;
-      const handler = (
-        resumeAttempt as unknown as {
-          _handler: (
-            ctx: ActionCtx,
-            args: { attemptId: Id<"extractionAttempts"> },
-          ) => Promise<unknown>;
-        }
-      )._handler;
-      await expect(handler(ctx, { attemptId })).rejects.toBe(original);
-      expect(runMutation).toHaveBeenCalledTimes(1);
-      expect(getFunctionName(runMutation.mock.calls[0]![0])).toBe(
-        "extractInternal:failExtraction",
-      );
-      expect(runMutation.mock.calls[0]![1]).toEqual({
-        attemptId,
-        generationLease,
-        error: original.message,
-      });
-      const retained = await t.run((ctx) => ctx.db.get(attemptId));
-      expect(retained?.status).toBe("generated");
-      expect(retained?.result).toEqual(result);
-      expect(retained?.error).toBe(original.message);
-      expect(retained?.generationLease).toBeUndefined();
-      const failure = await t.run((ctx) =>
-        ctx.db
-          .query("operationFailures")
-          .withIndex("by_operation", (q) =>
-            q.eq("operationId", `extraction:${attemptId}`),
-          )
-          .unique(),
-      );
-      expect(failure?.message).toBe(original.message);
-      expect(failure?.status).toBe("recorded");
-      expect(
+    async (generationLease) =>
+      withFrozenScheduler(async () => {
+        const { t, begin } = await setup();
+        const attemptId = await begin();
         await t.run((ctx) =>
-          ctx.db.system.query("_scheduled_functions").collect(),
-        ),
-      ).toHaveLength(1);
-
-      const replayAction = vi.fn(async (ref, args) => t.action(ref, args));
-      await expect(
-        handler({ ...ctx, runAction: replayAction } as ActionCtx, {
+          ctx.db.patch(attemptId, {
+            result,
+            status: "generated",
+            generationLease,
+          }),
+        );
+        const original = new Error(
+          "Completion storage temporarily unavailable",
+        );
+        const runMutation = vi.fn(async (ref, args) => t.mutation(ref, args));
+        const runAction = vi.fn(async () => {
+          throw original;
+        });
+        const ctx = {
+          runQuery: t.query,
+          runMutation,
+          runAction,
+        } as unknown as ActionCtx;
+        const handler = (
+          resumeAttempt as unknown as {
+            _handler: (
+              ctx: ActionCtx,
+              args: { attemptId: Id<"extractionAttempts"> },
+            ) => Promise<unknown>;
+          }
+        )._handler;
+        await expect(handler(ctx, { attemptId })).rejects.toBe(original);
+        expect(runMutation).toHaveBeenCalledTimes(1);
+        expect(getFunctionName(runMutation.mock.calls[0]![0])).toBe(
+          "extractInternal:failExtraction",
+        );
+        expect(runMutation.mock.calls[0]![1]).toEqual({
           attemptId,
-        }),
-      ).resolves.toMatchObject({ success: true, summary: result.summary });
-      // Only failure reporting mutated through the action seam. No generation was claimed.
-      expect(runMutation).toHaveBeenCalledTimes(1);
-      expect(replayAction).toHaveBeenCalledTimes(1);
-      expect(getFunctionName(replayAction.mock.calls[0]![0])).toBe(
-        "extractInternal:completeExtraction",
-      );
-      expect(replayAction.mock.calls[0]![1]).toEqual({ attemptId });
-      expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
-        "completed",
-      );
-      expect((await t.run((ctx) => ctx.db.get(failure!._id)))?.status).toBe(
-        "resolved",
-      );
-    },
+          generationLease,
+          error: original.message,
+        });
+        const retained = await t.run((ctx) => ctx.db.get(attemptId));
+        expect(retained?.status).toBe("generated");
+        expect(retained?.result).toEqual(result);
+        expect(retained?.error).toBe(original.message);
+        expect(retained?.generationLease).toBeUndefined();
+        const failure = await t.run((ctx) =>
+          ctx.db
+            .query("operationFailures")
+            .withIndex("by_operation", (q) =>
+              q.eq("operationId", `extraction:${attemptId}`),
+            )
+            .unique(),
+        );
+        expect(failure?.message).toBe(original.message);
+        expect(failure?.status).toBe("recorded");
+        const queued = await t.run((ctx) =>
+          ctx.db.system.query("_scheduled_functions").collect(),
+        );
+        expect(queued.map((job) => job.name).sort()).toEqual([
+          "extractInternal:completeExtraction",
+          "recoveryWorkflows:start",
+        ]);
+        expect(
+          queued.find(
+            (job) => job.name === "extractInternal:completeExtraction",
+          )?.args,
+        ).toEqual([{ attemptId }]);
+
+        const replayAction = vi.fn(async (ref, args) => t.action(ref, args));
+        await expect(
+          handler({ ...ctx, runAction: replayAction } as ActionCtx, {
+            attemptId,
+          }),
+        ).resolves.toMatchObject({ success: true, summary: result.summary });
+        // Only failure reporting mutated through the action seam. No generation was claimed.
+        expect(runMutation).toHaveBeenCalledTimes(1);
+        expect(replayAction).toHaveBeenCalledTimes(1);
+        expect(getFunctionName(replayAction.mock.calls[0]![0])).toBe(
+          "extractInternal:completeExtraction",
+        );
+        expect(replayAction.mock.calls[0]![1]).toEqual({ attemptId });
+        expect((await t.run((ctx) => ctx.db.get(attemptId)))?.status).toBe(
+          "completed",
+        );
+        expect((await t.run((ctx) => ctx.db.get(failure!._id)))?.status).toBe(
+          "resolved",
+        );
+      }),
   );
 
   test("extraction failure retains valid Unicode diagnostics and its recovery record", async () => {
@@ -1756,57 +1777,73 @@ describe("Extraction completion", () => {
       expect((await t.run((ctx) => ctx.db.get(id)))?.historical).toBe(true);
   });
 
-  test("recovery completes concept links using the retained extraction result", async () => {
-    const { t, sourceId, begin } = await setup();
-    const attemptId = await begin();
-    await t.mutation(internal.extractInternal.retainExtractionResult, {
-      attemptId,
-      result: { ...result, topics: ["Pythagorean comma"] },
-    });
-    await t.mutation(internal.extractInternal.failExtraction, {
-      attemptId,
-      error: "commit interrupted",
-    });
-    const failure = await t.run((ctx) =>
-      ctx.db.query("operationFailures").first(),
-    );
-    await t.run((ctx) => ctx.db.patch(failure!._id, { nextAttemptAt: 0 }));
-    const attempt = await t.mutation(internal.operationFailures.claimRecovery, {
-      failureId: failure!._id,
-    });
-    await t.action(internal.recoveryWorkflows.execute, {
-      failureId: failure!._id,
-      attempt: attempt!,
-    });
-    expect(
-      (
-        await t.query(internal.operationFailures.getForRecovery, {
+  test("recovery completes concept links using the retained extraction result", async () =>
+    withFrozenScheduler(async () => {
+      const { t, sourceId, begin } = await setup();
+      const attemptId = await begin();
+      await t.mutation(internal.extractInternal.retainExtractionResult, {
+        attemptId,
+        result: { ...result, topics: ["Pythagorean comma"] },
+      });
+      await t.mutation(internal.extractInternal.failExtraction, {
+        attemptId,
+        error: "commit interrupted",
+      });
+      const failure = await t.run((ctx) =>
+        ctx.db.query("operationFailures").first(),
+      );
+      await t.run((ctx) => ctx.db.patch(failure!._id, { nextAttemptAt: 0 }));
+      expect(
+        await t.mutation(internal.operationFailures.claimRecovery, {
           failureId: failure!._id,
-        })
-      )?.status,
-    ).toBe("resolved");
-    const edges = await t.run((ctx) => ctx.db.query("edges").collect());
-    expect(edges).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          fromId: sourceId,
-          toId: "pythagorean comma",
-          relationship: "mentions",
         }),
-      ]),
-    );
-    const completed = await t.action(
-      internal.extractInternal.completeExtraction,
-      { attemptId },
-    );
-    await t.action(internal.graph.linkExtractionConcepts, {
-      extractionId: completed.extractionId,
-    });
-    expect(
-      (await t.run((ctx) => ctx.db.query("concepts").collect()))[0]
-        ?.mentionCount,
-    ).toBe(1);
-  });
+      ).toBeNull();
+      expect((await t.run((ctx) => ctx.db.get(failure!._id)))?.attempts).toBe(
+        0,
+      );
+      const replay = await t.run((ctx) =>
+        ctx.db.system
+          .query("_scheduled_functions")
+          .filter((q) =>
+            q.eq(q.field("name"), "extractInternal:completeExtraction"),
+          )
+          .order("desc")
+          .first(),
+      );
+      expect(replay).not.toBeNull();
+      await t.action(
+        internal.extractInternal.completeExtraction,
+        replay!.args[0],
+      );
+      expect(
+        (
+          await t.query(internal.operationFailures.getForRecovery, {
+            failureId: failure!._id,
+          })
+        )?.status,
+      ).toBe("resolved");
+      const edges = await t.run((ctx) => ctx.db.query("edges").collect());
+      expect(edges).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            fromId: sourceId,
+            toId: "pythagorean comma",
+            relationship: "mentions",
+          }),
+        ]),
+      );
+      const completed = await t.action(
+        internal.extractInternal.completeExtraction,
+        { attemptId },
+      );
+      await t.action(internal.graph.linkExtractionConcepts, {
+        extractionId: completed.extractionId,
+      });
+      expect(
+        (await t.run((ctx) => ctx.db.query("concepts").collect()))[0]
+          ?.mentionCount,
+      ).toBe(1);
+    }));
 
   test("retry admission reuses the failed attempt instead of creating a new failure budget", async () => {
     const { t, begin } = await setup();
@@ -1859,51 +1896,52 @@ describe("Extraction completion", () => {
 
   test.each([false, true])(
     "saving unchanged text re-admits the owned attempt as current, retained output=%s",
-    async (retained) => {
-      const { t, sourceId, begin } = await setup();
-      const attemptId = await begin();
-      if (retained)
-        await t.mutation(internal.extractInternal.retainExtractionResult, {
+    async (retained) =>
+      withFrozenScheduler(async () => {
+        const { t, sourceId, begin } = await setup();
+        const attemptId = await begin();
+        if (retained)
+          await t.mutation(internal.extractInternal.retainExtractionResult, {
+            attemptId,
+            result,
+          });
+        await t.mutation(internal.extractInternal.failExtraction, {
           attemptId,
-          result,
+          error: "interrupted",
         });
-      await t.mutation(internal.extractInternal.failExtraction, {
-        attemptId,
-        error: "interrupted",
-      });
-      await t
-        .withIdentity({ subject: "operator" })
-        .mutation(api.sources.updateText, {
-          id: sourceId,
-          rawText: text,
-        });
-      expect(await begin()).toBe(attemptId);
-      expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
-        "extracting",
-      );
-      if (!retained)
-        await t.mutation(internal.extractInternal.retainExtractionResult, {
-          attemptId,
-          result,
-        });
-      expect(
-        await t.action(internal.extractInternal.completeExtraction, {
-          attemptId,
-        }),
-      ).toMatchObject({ current: true });
-      expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
-        "extracted",
-      );
-      expect(
-        await t.mutation(internal.extractInternal.beginExtraction, {
-          sourceId,
-          model: "test",
-        }),
-      ).toMatchObject({ skipped: true, reason: "already extracted" });
-      expect(
-        await t.run((ctx) => ctx.db.query("extractionAttempts").collect()),
-      ).toHaveLength(1);
-    },
+        await t
+          .withIdentity({ subject: "operator" })
+          .mutation(api.sources.updateText, {
+            id: sourceId,
+            rawText: text,
+          });
+        expect(await begin()).toBe(attemptId);
+        expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+          "extracting",
+        );
+        if (!retained)
+          await t.mutation(internal.extractInternal.retainExtractionResult, {
+            attemptId,
+            result,
+          });
+        expect(
+          await t.action(internal.extractInternal.completeExtraction, {
+            attemptId,
+          }),
+        ).toMatchObject({ current: true });
+        expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
+          "extracted",
+        );
+        expect(
+          await t.mutation(internal.extractInternal.beginExtraction, {
+            sourceId,
+            model: "test",
+          }),
+        ).toMatchObject({ skipped: true, reason: "already extracted" });
+        expect(
+          await t.run((ctx) => ctx.db.query("extractionAttempts").collect()),
+        ).toHaveLength(1);
+      }),
   );
 
   test("concurrent generation is fenced and a lost action becomes recoverable", async () => {
