@@ -82,13 +82,20 @@ function agentPackageImports() {
   })
     .filter((name) => name.endsWith(".ts"))
     .map((name) => join(root, "harness", name));
-  const queue = harnessFiles.flatMap((file) =>
-    runtimeSpecifiers(file).flatMap((specifier) =>
-      specifier.startsWith(".") ? (agentModule(file, specifier) ?? []) : [],
-    ),
-  );
-  const seen = new Set<string>();
   const violations: string[] = [];
+  const queue: string[] = [];
+  for (const file of harnessFiles) {
+    for (const specifier of runtimeSpecifiers(file)) {
+      if (specifier.startsWith(".")) {
+        const next = agentModule(file, specifier);
+        if (next) queue.push(next);
+      } else if (specifier.startsWith("import(")) {
+        // A computed import could load any agent module unseen.
+        violations.push(`${relative(root, file)} -> ${specifier}`);
+      }
+    }
+  }
+  const seen = new Set<string>();
   while (queue.length > 0) {
     const file = queue.pop()!;
     if (seen.has(file)) continue;
