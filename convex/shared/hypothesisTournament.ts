@@ -22,8 +22,8 @@ export type TournamentSeed = {
   context: string;
   correspondenceId?: string;
 };
-/** Citations use [claim:<opaque-id>]. Reject malformed markers, bare claim
- * IDs and bare Convex IDs rather than interpreting them as evidence prose.
+/** Citations use [claim:<opaque-id>]. Reject malformed markers and bare
+ * ID-like references rather than interpreting them as evidence prose.
  * The core and the durable submission boundary share this one rule. */
 export function citedClaims(rationale: string): string[] | undefined {
   const ids: string[] = [];
@@ -35,7 +35,7 @@ export function citedClaims(rationale: string): string[] | undefined {
     },
   );
   if (
-    /\[\s*claim\b|\bclaim(?:[-_:][A-Za-z0-9_-]+|[0-9][A-Za-z0-9_-]*)\b|\b[a-z0-9]{24,}\b/i.test(
+    /\[\s*claim\b|\bclaim(?::[A-Za-z0-9_-]+|[-_][A-Za-z0-9_-]*[0-9][A-Za-z0-9_-]*|[0-9][A-Za-z0-9_-]*)\b|\b(?=[a-z0-9]*[0-9])[a-z0-9]{24,}\b/i.test(
       prose,
     )
   )

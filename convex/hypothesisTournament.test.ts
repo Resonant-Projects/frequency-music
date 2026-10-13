@@ -213,6 +213,24 @@ describe("candidate archive", () => {
 });
 
 describe("draft submission", () => {
+  test.each([
+    "a claim-based rationale",
+    "claim-level evidence",
+    "a claim-by-claim comparison",
+    "electroencephalographically measured evidence",
+  ])("accepts grounded ordinary prose: %s", async (prose) => {
+    const winner = await candidate({ outcome: "submitted" });
+    winner.payload.rationale = `${prose}: ${winner.payload.rationale}`;
+    const created = (await f.callTool(
+      "submitTournamentDraft",
+      await submission(winner),
+    )) as { status: string };
+    expect(created.status).toBe("created");
+    expect(
+      await f.t.run(async (ctx) => (await ctx.db.get(runId))?.status),
+    ).toBe("needs_review");
+  });
+
   test("rejects any draft that is not exactly the grounded winner", async () => {
     const winner = await candidate({ outcome: "submitted" });
     const valid = await submission(winner);
