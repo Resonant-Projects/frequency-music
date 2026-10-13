@@ -570,6 +570,8 @@ extensions.
 
 - WebMCP ships enabled by default in stable Chrome or Edge.
 - An agent Keith uses consumes WebMCP tools on ordinary sites.
+- Keith wants browser agents to drive Frequency badly enough to accept
+  origin-trial maintenance.
 
 ## Reversals / What Changed Our Mind
 

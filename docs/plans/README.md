@@ -102,7 +102,7 @@ retains the earlier capture history and unresolved capture issues.
 
 | # | Plan | Status |
 |---|------|--------|
-| 16 | [WebMCP readiness](./2026-10-13-16-webmcp-readiness.md) (browser-agent tools for the web app) | ⏸️ Deferred 2026-10-13: Chrome origin trial only. Start when WebMCP ships in stable Chrome or Edge, or an agent Keith uses consumes it |
+| 16 | [WebMCP readiness](./2026-10-13-16-webmcp-readiness.md) (browser-agent tools for the web app) | ⏸️ Deferred 2026-10-13: Chrome origin trial only. Start when WebMCP ships in stable Chrome or Edge, an agent Keith uses consumes it, or Keith accepts origin-trial maintenance |
 
 ## 2. Operator/live acceptance items
 
