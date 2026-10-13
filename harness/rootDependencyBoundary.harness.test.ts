@@ -21,7 +21,7 @@ const builtins = new Set(builtinModules);
 // erase), plus literal dynamic imports.
 const staticPattern =
   /^\s*(?:import|export)\s+(?!type\s)(?:[^'"]*?\sfrom\s+)?["']([^"']+)["']/gm;
-const dynamicPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+const dynamicPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*[,)]/g;
 
 function specifiersIn(source: string) {
   return [
@@ -105,8 +105,15 @@ export { c } from "./re-export.js";
 import type { D } from "type-only";
 export type { E } from "type-reexport";
 const lazy = await import("dynamic");
+const attributed = await import("with-options", { with: {} });
 `).toSorted(),
-    ).toEqual(["./re-export.js", "dynamic", "multi", "side-effect"]);
+    ).toEqual([
+      "./re-export.js",
+      "dynamic",
+      "multi",
+      "side-effect",
+      "with-options",
+    ]);
   });
 
   test("agent modules loaded by the harness need only root packages", () => {

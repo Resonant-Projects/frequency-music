@@ -1,4 +1,5 @@
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
+import { citedClaims } from "../../../../convex/shared/hypothesisTournament.js";
 import { findHallucinatedIds } from "../research-pipeline/idGate.js";
 import type {
   EvidenceClaim,
@@ -20,26 +21,6 @@ const equals = (ids: string[], expected: Set<string>) =>
   ids.length === new Set(ids).size &&
   ids.length === expected.size &&
   ids.every((id) => expected.has(id));
-
-/** Citations use [claim:<opaque-id>]. Reject malformed markers, bare claim
- * IDs and bare Convex IDs rather than interpreting them as evidence prose. */
-export function citedClaims(rationale: string): string[] | undefined {
-  const ids: string[] = [];
-  const prose = rationale.replace(
-    /\[claim:([A-Za-z0-9_-]+)\]/g,
-    (_, id: string) => {
-      ids.push(id);
-      return "";
-    },
-  );
-  if (
-    /\[\s*claim\b|\bclaim(?:[-_:][A-Za-z0-9_-]+|[0-9][A-Za-z0-9_-]*)\b|\b[a-z0-9]{24,}\b/i.test(
-      prose,
-    )
-  )
-    return undefined;
-  return ids;
-}
 
 export const groundedPayloadSchema = hypothesisDraftPayloadZ
   .strict()

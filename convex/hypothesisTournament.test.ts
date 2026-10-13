@@ -236,6 +236,19 @@ describe("draft submission", () => {
     await expect(
       f.callTool("submitTournamentDraft", await submission(repeated)),
     ).rejects.toThrow(/TournamentProvenanceRejected/);
+    // Bare or malformed references beside valid citations are not grounded.
+    for (const residue of ["claim:unread", "[claim:unread!]"]) {
+      const laundered = await candidate({
+        outcome: "submitted",
+        payload: {
+          ...winner.payload,
+          rationale: `${winner.payload.rationale} ${residue}`,
+        },
+      });
+      await expect(
+        f.callTool("submitTournamentDraft", await submission(laundered)),
+      ).rejects.toThrow(/TournamentProvenanceRejected/);
+    }
     const cases = [
       { ...valid, draft: { ...valid.draft, dedupeKey: "tournament:other" } },
       {

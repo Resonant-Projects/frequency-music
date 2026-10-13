@@ -25,6 +25,7 @@ import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
 import {
   archiveStageZ,
+  citedClaims,
   DUPLICATE_REEMBED_LIMIT,
   HYPOTHESIS_TOURNAMENT_GRAPH,
   hypothesisCandidateRowZ,
@@ -163,8 +164,6 @@ export const beginRun = internalMutation({
 // Provenance
 // ---------------------------------------------------------------------------
 
-const CITATION = /\[claim:([A-Za-z0-9_-]+)\]/g;
-
 function sameSet(values: readonly string[], expected: Set<string>) {
   const unique = new Set(values);
   return (
@@ -247,9 +246,7 @@ async function verifyCandidate(
 function verifyGrounded(candidate: TournamentCandidate) {
   const payload = candidate.finalPayload ?? candidate.payload;
   const claimIds = new Set(candidate.evidence.map((claim) => claim.claimId));
-  const cited = [...payload.rationale.matchAll(CITATION)].map(
-    (match) => match[1]!,
-  );
+  const cited = citedClaims(payload.rationale);
   if (
     claimIds.size < 2 ||
     claimIds.size !== candidate.evidence.length ||
@@ -261,6 +258,7 @@ function verifyGrounded(candidate: TournamentCandidate) {
       payload.extractionIds,
       new Set(candidate.evidence.map((claim) => claim.extractionId)),
     ) ||
+    !cited ||
     !sameSet([...new Set(cited)], claimIds)
   )
     fail("TournamentProvenanceRejected", "Winner is not fully grounded");
