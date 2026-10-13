@@ -22,24 +22,41 @@ const builtins = new Set(builtinModules);
  * re-exports erase; a dynamic import must be a literal, else it is reported
  * as its source text so the guard fails closed. */
 function specifiersIn(source: string, filename = "source.ts") {
-  const { errors, module } = parseSync(filename, source, { lang: "ts" });
+  const { errors, module, program } = parseSync(filename, source, {
+    lang: "ts",
+  });
   if (errors.length > 0) throw new Error(`cannot parse ${filename}`);
-  const imports = module.staticImports
-    .filter(
-      (entry) =>
-        entry.entries.length === 0 || entry.entries.some((e) => !e.isType),
-    )
-    .map((entry) => entry.moduleRequest.value);
-  const exports = module.staticExports.flatMap((entry) =>
-    entry.entries.flatMap((e) =>
-      e.moduleRequest && !e.isType ? [e.moduleRequest.value] : [],
-    ),
-  );
+  // Declarations, not binding entries: `export {} from "x"` has no entries
+  // but still loads x.
+  const erased = (kind: unknown, specifiers: { kind?: unknown }[]) =>
+    kind === "type" ||
+    (specifiers.length > 0 && specifiers.every((s) => s.kind === "type"));
+  const declared = program.body.flatMap((node) => {
+    if (node.type === "ImportDeclaration")
+      return erased(
+        node.importKind,
+        node.specifiers.map((s) => ({
+          kind: "importKind" in s ? s.importKind : undefined,
+        })),
+      )
+        ? []
+        : [node.source.value];
+    if (node.type === "ExportNamedDeclaration" && node.source)
+      return erased(
+        node.exportKind,
+        node.specifiers.map((s) => ({ kind: s.exportKind })),
+      )
+        ? []
+        : [node.source.value];
+    if (node.type === "ExportAllDeclaration")
+      return node.exportKind === "type" ? [] : [node.source.value];
+    return [];
+  });
   const dynamic = module.dynamicImports.map(({ moduleRequest }) => {
     const text = source.slice(moduleRequest.start, moduleRequest.end);
     return /^(["'`])([^"'`$\\]*)\1$/.exec(text)?.[2] ?? `import(${text})`;
   });
-  return [...imports, ...exports, ...dynamic];
+  return [...declared, ...dynamic];
 }
 
 function runtimeSpecifiers(file: string) {
@@ -122,6 +139,11 @@ describe("root harness dependency boundary", () => {
 import "side-effect";
 export { c } from "./re-export.js";
 export * from "star";
+export * as ns from "namespace-star";
+export {} from "empty-reexport";
+import {} from "empty-import";
+export { type G } from "inline-type-reexport";
+export type * from "type-star";
 import type { D } from "type-only";
 import { type F } from "inline-type-only";
 export type { E } from "type-reexport";
@@ -138,8 +160,11 @@ const text = "import('in-string')";
       "./re-export.js",
       "commented",
       "dynamic",
+      "empty-import",
+      "empty-reexport",
       "import(name)",
       "multi",
+      "namespace-star",
       "side-effect",
       "star",
       "template",
