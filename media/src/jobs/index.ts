@@ -1,4 +1,5 @@
 import { assembleEpisodeHandler } from "./assembleEpisode";
+import { litmusRenderHandler } from "./litmusRender";
 import { narrateHandler } from "./narrate";
 import { probeHandler } from "./probe";
 import { shootoutHandler } from "./shootout";
@@ -9,4 +10,5 @@ export const handlers: Record<string, JobHandler> = {
   narrate: narrateHandler,
   shootout: shootoutHandler,
   assembleEpisode: assembleEpisodeHandler,
+  litmusRender: litmusRenderHandler,
 };

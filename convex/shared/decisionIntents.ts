@@ -1,6 +1,10 @@
 import { zid, zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
+import { audioRatingPayloadZ } from "./audioFeedback";
 import { hypothesisDraftPayloadZ, recipeDraftPayloadZ } from "./draftPayloads";
+import { listeningConditionsZ } from "./listeningConditions";
+
+export { listeningConditionsZ };
 
 export const DECISION_TTL_MS = 30 * 60 * 1000;
 export const DOCKET_DEFERRAL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -13,12 +17,6 @@ export const decisionStatusZ = z.enum([
   "expired",
   "rejected",
 ]);
-export const listeningConditionsZ = z
-  .object({
-    listeningMethod: z.enum(["headphones", "monitors", "car", "phone speaker"]),
-    timeOfDay: z.string().trim().min(1).max(100),
-  })
-  .strict();
 const rating = z.number().finite().min(0).max(5).optional();
 export const subjectiveRatingsZ = z
   .object({
@@ -63,11 +61,22 @@ const compositionTargetZ = z
 const feedTargetZ = z
   .object({ kind: z.literal("feedProposal"), id: zid("feeds") })
   .strict();
+// Recipes and audio artifacts carry no revision counter; their proposals record
+// `targetContentHash` instead, and a changed target makes confirmation stale.
+const recipeTargetZ = z
+  .object({ kind: z.literal("recipe"), id: zid("recipes") })
+  .strict();
+const audioArtifactTargetZ = z
+  .object({ kind: z.literal("audioArtifact"), id: zid("audioArtifacts") })
+  .strict();
 export const decisionTargetZ = z.discriminatedUnion("kind", [
   draftTargetZ,
   compositionTargetZ,
   feedTargetZ,
+  recipeTargetZ,
+  audioArtifactTargetZ,
 ]);
+export type DecisionTarget = z.infer<typeof decisionTargetZ>;
 export const decisionCommandZ = z.discriminatedUnion("action", [
   z
     .object({
@@ -111,6 +120,14 @@ export const decisionCommandZ = z.discriminatedUnion("action", [
       payload: listeningIntentPayloadZ,
     })
     .strict(),
+  // Appended last: service contracts select earlier options by index.
+  z
+    .object({
+      action: z.literal("rateAudio"),
+      target: audioArtifactTargetZ,
+      payload: audioRatingPayloadZ,
+    })
+    .strict(),
 ]);
 export type DecisionCommand = z.infer<typeof decisionCommandZ>;
 export const decisionProposalZ = z
@@ -150,6 +167,7 @@ export const decisionIntentFieldsZ = z.object({
   code: z.string(),
   target: decisionTargetZ,
   targetRevision: z.number().int().nonnegative().optional(),
+  targetContentHash: z.string().optional(),
   action: z.enum([
     "approve",
     "reject",
@@ -157,6 +175,7 @@ export const decisionIntentFieldsZ = z.object({
     "defer",
     "enableFeed",
     "createListeningSession",
+    "rateAudio",
   ]),
   payload: z.union([
     approvePayloadZ,
@@ -165,6 +184,7 @@ export const decisionIntentFieldsZ = z.object({
     deferPayloadZ,
     enableFeedPayloadZ,
     listeningIntentPayloadZ,
+    audioRatingPayloadZ,
   ]),
   payloadDigest: z.string(),
   proposal: decisionProposalZ,

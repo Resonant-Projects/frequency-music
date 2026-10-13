@@ -21,6 +21,7 @@ import {
 } from "./shared/draftPayloads";
 import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
 import { hypothesisCandidateRowValidator } from "./shared/hypothesisTournament";
+import { renderPlanSnapshotValidator } from "./shared/renderPlan";
 import {
   claimCitationValidator,
   claimValidator,
@@ -50,6 +51,7 @@ import {
   SOURCE_STATUSES,
 } from "./shared/statuses";
 import { audioArtifactFieldsValidator } from "./shared/audioArtifacts";
+import { audioRatingValidator } from "./shared/audioFeedback";
 import {
   mediaJobInputValidator,
   mediaJobResultValidator,
@@ -806,6 +808,9 @@ export default defineSchema({
     // Generated studio scaffolding (plan-10 starter kits)
     starterKit: v.optional(recipeStarterKitValidator),
 
+    // Typed litmus render plan (render ladder 3.2); renders.setPlan admits it.
+    renderPlan: v.optional(renderPlanSnapshotValidator),
+
     // Lifecycle
     status: recipeStatusValidator,
 
@@ -851,6 +856,9 @@ export default defineSchema({
     versionOfId: v.optional(v.id("compositions")),
     revisionParentId: v.optional(v.id("compositions")),
     revisionVariable: v.optional(v.string()),
+
+    // The rendered delivery this composition is heard through (litmus renders).
+    audioArtifactId: v.optional(v.id("audioArtifacts")),
 
     // Lifecycle
     status: v.union(
@@ -1009,6 +1017,13 @@ export default defineSchema({
     createdBy: v.union(v.id("users"), v.string()),
     createdAt: v.number(),
   }).index("by_groupId_memberId", ["groupId", "memberId"]),
+
+  // General human ratings for ready episodes and litmus renders
+  // (audioFeedback.submit or a signed rateAudio decision). Subjective only:
+  // machine analysis stays on audioArtifacts.analysis.
+  audioRatings: defineTable(audioRatingValidator)
+    .index("by_artifactId_createdAt", ["artifactId", "createdAt"])
+    .index("by_requestKey", ["requestKey"]),
 
   // ==========================================================================
   // WEEKLY BRIEFS - Synthesized output

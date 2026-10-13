@@ -18,6 +18,7 @@ import {
 import { discordId, object, telegramId } from "./decisionSignerParsing";
 import { withSignerDeadline } from "./decisionSignerTransport";
 import { createDiscordInteractionHandler } from "./discordInteractions";
+import { isAudioRatingKind, SCORE_KEYS_BY_KIND } from "./shared/audioFeedback";
 import { createTelegramWebhookHandler } from "./telegramWebhook";
 import {
   signerCardZ,
@@ -273,6 +274,7 @@ const labels = {
   defer: "Defer",
   enableFeed: "Enable feed",
   createListeningSession: "Save listening session",
+  rateAudio: "Rate audio",
 };
 /** Full payload values are retained. Oversize displays fail closed to web review. */
 export const display = internalQuery({
@@ -319,6 +321,13 @@ export const display = internalQuery({
       ] as const) {
         if (ratings?.[name] === undefined) lines.push(`${name}: Not given`);
       }
+    }
+    if (intent.action === "rateAudio" && "scores" in intent.payload) {
+      const kind =
+        "kind" in target && isAudioRatingKind(target.kind) ? target.kind : null;
+      const scores = intent.payload.scores;
+      for (const name of kind ? SCORE_KEYS_BY_KIND[kind] : [])
+        if (scores[name] === undefined) lines.push(`${name}: Not given`);
     }
     return {
       intentId,

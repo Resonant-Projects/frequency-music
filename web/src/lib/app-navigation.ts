@@ -53,6 +53,11 @@ export const navigationGroups = [
         description: "Record listening observations",
       },
       { to: "/listen", label: "Listen", description: "Listen and compare" },
+      {
+        to: "/docket",
+        label: "Docket",
+        description: "Decisions waiting on you",
+      },
     ],
   },
   {

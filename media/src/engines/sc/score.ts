@@ -10,6 +10,10 @@ export const SCORE_LEAD_SECS = 0.01;
 export const MAX_LITMUS_FUNDAMENTAL_HZ = 5999;
 export const MAX_CONCURRENT_VOICES = 4096;
 export const SC_BLOCK_SIZE = 64;
+// Real-time memory pool for scsynth, in KB. Measured on scsynth 3.13 NRT:
+// each litmus voice takes about 5 KB, so the 4096-voice cap needs about
+// 20 MB and the 8192 KB default fails at 2048 voices. 64 MB leaves 3x room.
+export const SC_REAL_TIME_MEMORY_KB = 65536;
 const RELEASE_SECS = 0.3;
 // Count two extra blocks conservatively for gate/free scheduling granularity.
 const VOICE_TAIL_SECS = RELEASE_SECS + (2 * SC_BLOCK_SIZE) / 48000;
@@ -74,8 +78,10 @@ export function buildScores(input: unknown) {
       throw new Error(
         `Litmus exceeds ${MAX_CONCURRENT_VOICES} concurrent voices including release tails`,
       );
-    // A power-of-two node table, including the root group in addition to synths.
-    const maxNodes = 2 ** Math.ceil(Math.log2(maxConcurrentVoices + 1));
+    // A power-of-two node table. Measured on scsynth 3.13 NRT: a table of n
+    // slots holds n - 2 synths (the root and default groups take two), so a
+    // single voice needs 4 slots and 7 voices need 16.
+    const maxNodes = 2 ** Math.ceil(Math.log2(maxConcurrentVoices + 2));
     const messages = notes
       .flatMap((note, index) => [
         {

@@ -404,7 +404,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "proposeDecision",
     "service_proposal",
     "internal.decisionIntents:proposeInternal",
-    "Propose a draft, feed, or deferral decision for human confirmation.",
+    "Propose a draft, feed, deferral, or audio-rating decision for human confirmation.",
     "Creates an immutable proposal only. Does not confirm or claim signer delivery.",
     { langchain: false },
   ),

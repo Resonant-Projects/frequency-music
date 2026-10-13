@@ -2,6 +2,10 @@ import type { FunctionReturnType } from "convex/server";
 import { createSignal, onCleanup, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  AUDIO_SCORE_KEYS,
+  type AudioScoreKey,
+} from "../../../convex/shared/audioRatingKeys";
 import type { DecisionResult } from "../../../convex/shared/decisionIntents";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { IntentReview } from "./intent-review";
@@ -19,6 +23,11 @@ const ratingNames = [
 
 function payloadText(intent: Intent) {
   const exact = JSON.stringify(intent.payload, null, 2);
+  if (intent.action === "rateAudio" && "scores" in intent.payload) {
+    const scores: Partial<Record<AudioScoreKey, number>> =
+      intent.payload.scores;
+    return `${exact}\n\nAudio scores:\n${AUDIO_SCORE_KEYS.map((name) => `${name}: ${scores[name] ?? "not given"}`).join("\n")}`;
+  }
   if (intent.action !== "createListeningSession") return exact;
   const ratings =
     "ratings" in intent.payload ? intent.payload.ratings : undefined;

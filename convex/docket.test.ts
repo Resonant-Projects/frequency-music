@@ -116,11 +116,14 @@ async function setup() {
       createdAt: 1,
       updatedAt: 1,
     });
+    // A ready delivery has stored bytes; a card without them could not be rated.
+    const storageId = await ctx.storage.store(new Blob(["audio"]));
     const audio = {
       kind: "episode" as const,
       role: "delivery" as const,
       metadataStripped: true,
       status: "ready" as const,
+      storageId,
       encoding: { codec: "mp3" as const, sampleRate: 48000, channels: 2 },
       normalization: "applied" as const,
       access: "private" as const,

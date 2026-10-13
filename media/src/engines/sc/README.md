@@ -17,10 +17,13 @@ It does not remove partials or modify the shared pitch contract.
 Concurrent voices include the entire 300 ms release and two conservative
 64-sample scheduling blocks. Scores exceeding 4096 concurrent voices fail
 before execution. The scsynth node table is explicitly sized to the next
-power of two above the voice count, including the root group; block size is
-explicitly 64. The 512-note, 0.125-beat fixture at 120 BPM over 0.5 seconds
-schedules 4096 notes, peaks at 3072 concurrent voices including tails, and
-uses 4096 node slots. SC error/failure diagnostics on either output stream
+power of two at or above the voice count plus two: scsynth 3.13 NRT holds
+n - 2 synths in an n-slot table (the root and default groups). Real-time
+memory is explicitly 64 MB (`-m 65536`); each voice takes about 5 KB, and
+the 8 MB default fails at 2048 voices. Block size is explicitly 64. The
+512-note, 0.125-beat fixture at 120 BPM over 0.5 seconds schedules 4096
+notes, peaks at 3072 concurrent voices including tails, and uses 4096 node
+slots. SC error/failure diagnostics on either output stream
 fail the render even when the process reports exit code zero.
 
 The bundled `litmus.scd` defines four phase-reset sine partials, a linear
@@ -58,26 +61,41 @@ boundary also rejects peaks rounded to zero by the measurement. Missing or
 invalid measurements fail closed. This check prevents silent clipping of
 dense unnormalized chords; it is separate from the normalized music policy.
 
-These are private, unvalidated local working artifacts. This module has no
-job integration, uploads, storage writes, evidence status, or validation-gate
-mutation. File integrity checks do not establish pitch or listening validity.
+`renderLocal` itself produces private local working files with no uploads,
+storage writes, evidence status, or gate mutation. The `litmusRender` media
+job (`src/jobs/litmusRender.ts`) uploads them; Convex stamps validation at
+completion (see `media/README.md`). File integrity checks do not establish
+listening validity.
 
-## Coverage on this host
+## Coverage
 
-The one-time PATH check found neither `sclang` nor `scsynth`. No packages
-were installed. Tests cover deterministic score generation and mock the SC
-subprocesses. Most orchestration tests also mock the audio subprocesses. Separate tests execute Node child processes
-to check deadlines, cancellation, missing executables, and output bounds.
-Regression tests cover the 7040 Hz aliasing example, the 6 kHz boundary,
-release-tail concurrency and node capacity, zero-exit synthesis errors, and
-mocked float peaks for the 16-voice clipping example. These mocks establish
-admission and orchestration behavior, not actual synthesizer output.
-Four additional tests use the installed ffmpeg and ffprobe with generated
-48 kHz stereo float WAV fixtures and mocked SC. They reject mixed finite
-samples with one NaN, positive infinity, or negative infinity before 24-bit
-conversion, and successfully encode genuine silence. The NaN fixture has a
-finite -6.020600 dBFS peak, so its rejection specifically requires sample
-counts. These tests skip explicitly when ffmpeg or ffprobe is unavailable.
-No real SuperCollider synthesis, pitch-error measurement, or synthesized
-music loudness validation has been performed. A host with both SuperCollider executables is required
-for the two-second NRT smoke render and pitch check before runtime claims.
+Host tests mock the SC subprocesses: deterministic scores, admission,
+orchestration, deadlines, cancellation, output bounds, the 7040 Hz aliasing
+example, the 6 kHz boundary, release-tail concurrency and node capacity,
+zero-exit synthesis errors, and mocked float peaks for the 16-voice clipping
+example. Four tests use the installed ffmpeg and ffprobe with generated float
+WAV fixtures and mocked SC to reject NaN and infinite samples before 24-bit
+conversion and to encode genuine silence. They skip without ffmpeg.
+
+`tests/sc-real.test.ts` runs the real engine and skips unless `sclang`,
+`scsynth`, `ffmpeg`, and `ffprobe` are on PATH. On 2026-10-13 it passed
+inside a container built from the pinned media base image with Debian's
+SuperCollider 3.13.0 (`supercollider-server`, `supercollider-language`):
+
+- Three bounded kits (19-EDO at 432 Hz, 5-limit JI at 261.63 Hz, 12-EDO at
+  440 Hz; generated seeds truncated to 4 s) rendered at -18.0 LUFS, about
+  -11 dBTP, master and delivery.
+- Six sustained notes (degrees 1 and 4 of each kit) matched the tuning table
+  within the 0.005-cent resolution of a Hann-windowed DTFT peak search
+  (the 0.5-cent gate), which also recovers the pitch when started 3 cents
+  away. Each note was already sounding in the first 10 ms (peak 0.10 to
+  0.12), so the SynthDef loads before the first note.
+- The dense 3072-voice fixture rendered in 4096 node slots.
+- The `litmusRender` handler rendered and uploaded a two-member study family
+  through fake tools.
+
+The same run found the node-table and real-time-memory limits above; both
+failed real renders before the fix. None of this establishes musical or
+listening validity:
+plan 11 steps 3 and 4 (studio comparison, contamination assessment, go or
+no-go) remain human work.

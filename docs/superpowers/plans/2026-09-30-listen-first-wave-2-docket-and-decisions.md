@@ -1,6 +1,6 @@
 # Listen-first Wave 2: docket and signed decisions
 
-Date: 2026-09-30. Status: implementation plan ready; external integration setup and human acceptance remain. Wave 2 is not deployed.
+Date: 2026-09-30. Status (updated 2026-10-13): Tasks 1–6 merged to `main` in #138; external integration setup, deployment (Task 7) and human acceptance (Task 8) remain. Production deployment is unverified. See the [rollout packet](../../wave2-rollout-packet.md).
 
 October 5 update: Keith asked to proceed with Wave 2 and confirmed his
 long-form listening preferences. Production `houseVoiceId` is verified as

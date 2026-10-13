@@ -61,6 +61,7 @@ export const decisionProposeArgsZ = z
       decisionCommands[2],
       decisionCommands[3],
       decisionCommands[4],
+      decisionCommands[6],
     ]),
     proposal: decisionProposalZ,
   })
@@ -146,9 +147,10 @@ export const docketToolCardZ = z.strictObject({
         "defer",
         "enableFeed",
         "createListeningSession",
+        "rateAudio",
       ]),
     )
-    .max(6),
+    .max(7),
   contentHash: hash,
 });
 export const docketListResultZ = z

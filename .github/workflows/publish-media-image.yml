@@ -87,8 +87,10 @@ jobs:
             command -v node
             node_modules/.bin/tsx --version
             ffmpeg -version | head -1
+            scsynth -v
             test -f .env.schema
             test "$(id -u)" != 0
+            node_modules/.bin/tsx src/engines/sc/smoke.ts
           '
 
       - name: Scan pull-request image
@@ -188,8 +190,10 @@ jobs:
             command -v node
             node_modules/.bin/tsx --version
             ffmpeg -version | head -1
+            scsynth -v
             test -f .env.schema
             test "$(id -u)" != 0
+            node_modules/.bin/tsx src/engines/sc/smoke.ts
           '
 
       - name: Scan image before publishing
