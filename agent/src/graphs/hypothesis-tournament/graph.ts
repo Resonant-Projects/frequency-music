@@ -14,6 +14,8 @@ import type {
   TournamentResult,
 } from "./types.js";
 
+export const FINALIZE_TIMEOUT_MS = 30_000;
+
 export const HypothesisTournamentAnnotation = Annotation.Root({
   agentRunId: Annotation<string | undefined>,
   seedHint: Annotation<string | undefined>,
@@ -88,11 +90,16 @@ export function createSummarizeNode(callTool: ToolCaller = callConvex) {
     const result = state.result;
     if (!state.agentRunId || !result) return {};
     try {
-      const finalized = (await callTool("finalizeTournamentRun", {
-        agentRunId: state.agentRunId,
-        ...(state.leaseToken ? { leaseToken: state.leaseToken } : {}),
-        summary: `hypothesis-tournament failed: ${result.reason}`,
-      })) as { status?: unknown; runStatus?: unknown };
+      // Bounded like the other terminal writes, after the run's own budget.
+      const finalized = (await callTool(
+        "finalizeTournamentRun",
+        {
+          agentRunId: state.agentRunId,
+          ...(state.leaseToken ? { leaseToken: state.leaseToken } : {}),
+          summary: `hypothesis-tournament failed: ${result.reason}`,
+        },
+        AbortSignal.timeout(FINALIZE_TIMEOUT_MS),
+      )) as { status?: unknown; runStatus?: unknown };
       return {
         summary: `hypothesis-tournament ${String(finalized.status)}: ${result.reason}${result.draftId ? `, draft ${result.draftId} awaits human review` : ""}`,
       };

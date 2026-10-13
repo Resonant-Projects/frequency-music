@@ -191,6 +191,7 @@ describe("tournament graph terminal ownership", () => {
             ...(leaseToken ? { leaseToken } : {}),
             summary: "hypothesis-tournament failed: dependency_error",
           },
+          expect.any(AbortSignal),
         ],
       ]);
       expect(update.summary).toBe(
