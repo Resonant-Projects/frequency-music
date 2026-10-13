@@ -2,6 +2,13 @@ import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
+// Prepare cards only; channel delivery is separately configured by the human.
+crons.weekly(
+  "rebuild-docket",
+  { dayOfWeek: "thursday", hourUTC: 16, minuteUTC: 30 },
+  internal.docket.prepare,
+  {},
+);
 crons.interval(
   "normalize-legacy-extraction-history",
   { minutes: 5 },

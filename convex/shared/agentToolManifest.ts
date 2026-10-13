@@ -13,12 +13,22 @@ export type AgentToolManifestEntry = {
   // Arguments only a deterministic graph node may supply. They stay out of the
   // model-visible LangChain schema so a model cannot assert their provenance.
   graphOnlyArgs: readonly string[];
-  kind: "read" | "research_write" | "audit_write" | "media_write";
+  kind:
+    | "read"
+    | "research_write"
+    | "audit_write"
+    | "media_write"
+    | "service_proposal";
 };
 
 function entry(
   name: AgentToolName,
-  kind: "read" | "research_write" | "audit_write" | "media_write",
+  kind:
+    | "read"
+    | "research_write"
+    | "audit_write"
+    | "media_write"
+    | "service_proposal",
   backing: string,
   description: string,
   context: string,
@@ -372,6 +382,46 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "internal.mediaJobs:fail",
     "Fail a leased job; it re-queues with attempts+1 and parks after three.",
     "Error text is truncated server-side; never include secrets.",
+    { langchain: false },
+  ),
+  entry(
+    "listDocket",
+    "audit_write",
+    "internal.docket:list",
+    "Reconcile and list up to ten eligible docket cards.",
+    "Use weekly for at most three. Relative web links and optional current blind-safe narration.",
+    { langchain: false },
+  ),
+  entry(
+    "getDocketCard",
+    "read",
+    "internal.docket:card",
+    "Read one eligible docket card with optional current narration.",
+    "Returns null when no longer eligible; preserves playback blindness.",
+    { langchain: false },
+  ),
+  entry(
+    "proposeDecision",
+    "service_proposal",
+    "internal.decisionIntents:proposeInternal",
+    "Propose a draft, feed, or deferral decision for human confirmation.",
+    "Creates an immutable proposal only. Does not confirm or claim signer delivery.",
+    { langchain: false },
+  ),
+  entry(
+    "proposeListening",
+    "service_proposal",
+    "internal.decisionIntents:proposeInternal",
+    "Propose listening feedback for separate human confirmation.",
+    "Only createListeningSession commands; missing ratings remain absent.",
+    { langchain: false },
+  ),
+  entry(
+    "recordDocketDelivery",
+    "audit_write",
+    "internal.docket:recordDelivery",
+    "Reserve or complete a text card delivery receipt.",
+    "Send only when posting is admitted; complete with the actual message reference.",
     { langchain: false },
   ),
 ];

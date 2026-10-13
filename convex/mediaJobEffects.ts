@@ -2,6 +2,7 @@
 // service never writes research data; everything it produces passes through
 // here, validated by kind. Nothing in this file may touch listeningSessions.
 import { ConvexError } from "convex/values";
+import { attachDocketNarration, markDocketStale } from "./docket";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
@@ -94,6 +95,7 @@ export async function applyMediaJobResult(
   result: MediaJobResult,
 ): Promise<Id<"audioArtifacts">[]> {
   const now = Date.now();
+  await markDocketStale(ctx);
   switch (result.kind) {
     case "probe":
       requireMasterDeliveryPair(
@@ -115,6 +117,7 @@ export async function applyMediaJobResult(
         chapters: result.chapters,
         updatedAt: now,
       });
+      await attachDocketNarration(ctx, job, delivery);
       if (input.assembleOnDone) {
         // Same mutation as the ready mark: a narration is never left ready
         // without its episode queued, and the episode job is never queued

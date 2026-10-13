@@ -1,6 +1,13 @@
 import { TRANSCRIPTION_MODEL } from "./shared/agentContract";
-import { ANTHROPIC_MODELS, TASK_MODELS } from "./shared/llmPolicy";
-export { TASK_MODELS } from "./shared/llmPolicy";
+import {
+  ANTHROPIC_MODELS,
+  TASK_MODELS as SHARED_TASK_MODELS,
+} from "./shared/llmPolicy";
+// Docket blurbs are synthesis, with the shared direct Sonnet adaptive/medium policy.
+export const TASK_MODELS = {
+  ...SHARED_TASK_MODELS,
+  docket_blurb_v1: SHARED_TASK_MODELS.extract_v3,
+} as const;
 // Pure LLM configuration + parsing shared by all four generators.
 // No "use node" and no node-only imports — this file must stay importable
 // from V8 modules (hypotheses.ts, recipes.ts, weeklyBriefs.ts).
@@ -58,6 +65,7 @@ export const TOKEN_BUDGETS = {
   brief_v2: 8000,
   concept_classifier_v1: 5000,
   narration_v1: 6000,
+  docket_blurb_v1: 1500,
 } as const;
 
 export type LlmTask = keyof typeof TOKEN_BUDGETS;

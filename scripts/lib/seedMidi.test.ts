@@ -99,3 +99,43 @@ describe("deterministic seed MIDI", () => {
     expect(result.honoredParameterIndexes).toEqual([0, 1, 2, 3]);
   });
 });
+
+test("MIDI retains separate 19-EDO events that quantize to the same note", async () => {
+  const { generateSeedEvents } = await import("./seedMidi");
+  const edoTuning: TuningSpec = { kind: "edo", divisions: 19 };
+  const native = generateSeedEvents([], edoTuning);
+  const midi = generateSeedMidi([], edoTuning);
+  const notes = parseMidi(midi.bytes)
+    .tracks.flat()
+    .filter((event) => event.type === "noteOn");
+  expect(notes).toHaveLength(native.events.length);
+  expect(notes.slice(0, 3).map((event) => event.noteNumber)).toEqual([
+    60, 61, 61,
+  ]);
+  expect(native.events.slice(0, 3).map((event) => event.degree)).toEqual([
+    0, 1, 2,
+  ]);
+});
+
+test.each([
+  { kind: "ji", ratios: ["1/2", "1/1", "3/1"] },
+  { kind: "cents", values: [-100, 0, 100, 1300] },
+] satisfies TuningSpec[])(
+  "legacy scripts still accept normalized inputs %j",
+  (legacyTuning) => {
+    expect(generateSeedMidi([], legacyTuning).bytes.length).toBeGreaterThan(0);
+  },
+);
+
+test("high roots wrap MIDI pitches into range", () => {
+  const result = generateSeedMidi([{ type: "rootNote", value: "G9" }], {
+    kind: "edo",
+    divisions: 19,
+  });
+  const notes = parseMidi(result.bytes)
+    .tracks.flat()
+    .filter((event) => event.type === "noteOn");
+  expect(
+    notes.every((event) => event.noteNumber >= 0 && event.noteNumber <= 127),
+  ).toBe(true);
+});

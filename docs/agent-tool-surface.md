@@ -44,6 +44,7 @@ All tool calls require `AGENT_TOOL_SECRET`.
 | `getCorrespondence` | `/agent-tools/getCorrespondence` | `correspondences:getByPairKey` | Fetch the unique correspondence for a canonical concept pair key. | Compute the key with the shared pairKey helper; concept order never changes identity. |
 | `listCorrespondences` | `/agent-tools/listCorrespondences` | `correspondences:listByStatus` | List recent correspondences in one lifecycle status. | Accepts a lifecycle status and an optional bounded limit. |
 | `listConceptCorrespondences` | `/agent-tools/listConceptCorrespondences` | `correspondences:listForConcept` | List correspondences involving one concept on either side of the canonical pair. | The backing query unions both concept indexes and returns newest movement first. |
+| `getDocketCard` | `/agent-tools/getDocketCard` | `internal.docket:card` | Read one eligible docket card with optional current narration. | Returns null when no longer eligible; preserves playback blindness. |
 
 ### Direct provenance-stamped research write tools
 
@@ -74,6 +75,17 @@ These tools write only to agent audit/review records and must not substitute for
 | `markAgentRunFailed` | `/agent-tools/markAgentRunFailed` | `agentRuns:markFailed` | Mark an audit-only Convex agent run failed and optionally record sanitized error details. Does not mutate research data. | Error payloads should be high-level, not secrets. |
 | `claimNextPendingRun` | `/agent-tools/claimNextPendingRun` | `agentRuns:claimNextPending` | Atomically claim the oldest queued Convex agent run for a worker, flipping it to running. Production worker only. | Production worker only. A lifecycle write, not a research-data write. |
 | `getAgentRun` | `/agent-tools/getAgentRun` | `agentRuns:getForWorker` | Fetch the full Convex agent run document including raw input by id for status polling. Audit-only read. | Worker status polling; public getters strip input. |
+| `listDocket` | `/agent-tools/listDocket` | `internal.docket:list` | Reconcile and list up to ten eligible docket cards. | Use weekly for at most three. Relative web links and optional current blind-safe narration. |
+| `recordDocketDelivery` | `/agent-tools/recordDocketDelivery` | `internal.docket:recordDelivery` | Reserve or complete a text card delivery receipt. | Send only when posting is admitted; complete with the actual message reference. |
+
+### Human decision proposal tools
+
+These tools prepare immutable decision proposals for human confirmation. They do not apply decisions or create listening sessions, and do not require an agent run identity.
+
+| Tool | HTTP path | Backing function | Purpose | Context notes |
+| --- | --- | --- | --- | --- |
+| `proposeDecision` | `/agent-tools/proposeDecision` | `internal.decisionIntents:proposeInternal` | Propose a draft, feed, or deferral decision for human confirmation. | Creates an immutable proposal only. Does not confirm or claim signer delivery. |
+| `proposeListening` | `/agent-tools/proposeListening` | `internal.decisionIntents:proposeInternal` | Propose listening feedback for separate human confirmation. | Only createListeningSession commands; missing ratings remain absent. |
 
 ### Media lifecycle tools
 

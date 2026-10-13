@@ -5,9 +5,9 @@ import { agentToolArgs } from "./agentToolArgs";
 import { AGENT_TOOL_MANIFEST, AGENT_TOOL_NAMES } from "./agentToolManifest";
 
 describe("agent tool manifest", () => {
-  test("covers all 46 current tools with unique names and schemas", () => {
-    expect(AGENT_TOOL_MANIFEST).toHaveLength(46);
-    expect(new Set(AGENT_TOOL_NAMES).size).toBe(46);
+  test("covers all 51 current tools with unique names and schemas", () => {
+    expect(AGENT_TOOL_MANIFEST).toHaveLength(51);
+    expect(new Set(AGENT_TOOL_NAMES).size).toBe(51);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
       expect(entry.context.length).toBeGreaterThan(10);
@@ -44,6 +44,11 @@ describe("agent tool manifest", () => {
       "attachAudioStorage",
       "completeMediaJob",
       "failMediaJob",
+      "listDocket",
+      "getDocketCard",
+      "proposeDecision",
+      "proposeListening",
+      "recordDocketDelivery",
     ]);
   });
 

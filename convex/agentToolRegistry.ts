@@ -1,3 +1,11 @@
+import { agentToolArgs } from "./shared/agentToolArgs";
+import {
+  assertBoundedProposal,
+  projectDocketCard,
+  projectProposal,
+  docketListResultZ,
+  deliveryRecordResultZ,
+} from "./shared/docketTools";
 // Convex-only bindings from the pure manifest to backing function references
 // and behavior. Cross-workspace consumers import the manifest, not this file.
 import { makeFunctionReference } from "convex/server";
@@ -25,7 +33,65 @@ function omitUndefined<T extends Record<string, unknown>>(value: T): T {
   ) as T;
 }
 
+async function projectPlayableCard(
+  ctx: ActionCtx,
+  row: { _id: string; contentHash: string; blurbArtifactId?: string },
+) {
+  const playback = row.blurbArtifactId
+    ? await ctx.runQuery(queryRef("docket:playbackForCard"), {
+        cardId: row._id,
+        contentHash: row.contentHash,
+      })
+    : null;
+  return projectDocketCard(row, playback);
+}
+
 const runs: Record<AgentToolName, AgentToolDef["run"]> = {
+  listDocket: async (ctx, args) => {
+    const rows = await ctx.runMutation(
+      mutationRef("docket:list"),
+      agentToolArgs.listDocket.parse(args),
+    );
+    return docketListResultZ.parse(
+      await Promise.all(
+        rows.map((row: Parameters<typeof projectPlayableCard>[1]) =>
+          projectPlayableCard(ctx, row),
+        ),
+      ),
+    );
+  },
+  getDocketCard: async (ctx, args) => {
+    const row = await ctx.runQuery(
+      queryRef("docket:card"),
+      agentToolArgs.getDocketCard.parse(args),
+    );
+    return row === null ? null : projectPlayableCard(ctx, row);
+  },
+  proposeDecision: async (ctx, args) => {
+    assertBoundedProposal(args);
+    return projectProposal(
+      await ctx.runMutation(
+        mutationRef("decisionIntents:proposeInternal"),
+        agentToolArgs.proposeDecision.parse(args),
+      ),
+    );
+  },
+  proposeListening: async (ctx, args) => {
+    assertBoundedProposal(args);
+    return projectProposal(
+      await ctx.runMutation(
+        mutationRef("decisionIntents:proposeInternal"),
+        agentToolArgs.proposeListening.parse(args),
+      ),
+    );
+  },
+  recordDocketDelivery: async (ctx, args) =>
+    deliveryRecordResultZ.parse(
+      await ctx.runMutation(
+        mutationRef("docket:recordDelivery"),
+        agentToolArgs.recordDocketDelivery.parse(args),
+      ),
+    ),
   reportCaptureFailure: (ctx, args) =>
     ctx.runMutation(
       mutationRef("operationFailures:reportCaptureFailure"),

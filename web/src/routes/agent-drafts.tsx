@@ -1,3 +1,4 @@
+import { useNavigate, useSearch } from "@tanstack/solid-router";
 import {
   createEffect,
   createMemo,
@@ -13,10 +14,12 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { PENDING_DRAFT_CAP } from "../../../convex/shared/agentContract";
 import { css, cx } from "../../styled-system/css";
+import { IntentReviewBinding } from "../components/intent-review-binding";
 import { sameIds } from "../lib/keyed-rows";
 import {
   type DraftReviewContext,
   DraftReviewStory,
+  DecisionState,
   type AgentDraftPayload,
   type PersistedReviewDraft,
   PromotedLink,
@@ -739,6 +742,12 @@ export function AgentDraftsPage() {
     document.title = "Review Queue — Frequency Music";
   });
 
+  const search = useSearch({ from: "/agent-drafts" });
+  const navigate = useNavigate({ from: "/agent-drafts" });
+  const linkedDraftId = () => search().draft as DraftId | undefined;
+  const linkBlocksQueue = () =>
+    Boolean(search().intent || search().invalidReviewLink);
+
   const pending = createQueryWithStatus(api.agentDrafts.listPending, () => ({
     limit: 50,
   }));
@@ -748,7 +757,21 @@ export function AgentDraftsPage() {
   const pendingHypothesisCount = createQueryWithStatus(
     api.agentDrafts.countPendingHypothesesPublic,
   );
-  const [activeDraftId, setActiveDraftId] = createSignal<DraftId | null>(null);
+  const [queueDraftId, setQueueDraftId] = createSignal<DraftId | null>(null);
+  const activeDraftId = () =>
+    linkBlocksQueue() ? null : (linkedDraftId() ?? queueDraftId());
+  const [navigationError, setNavigationError] = createSignal<string | null>(
+    null,
+  );
+  async function selectDraft(draftId?: DraftId) {
+    setNavigationError(null);
+    try {
+      await navigate({ search: draftId ? { draft: draftId } : {} });
+      if (!draftId && !linkedDraftId() && !linkBlocksQueue()) focusActiveRow();
+    } catch (error) {
+      setNavigationError(describeError(error));
+    }
+  }
   const [lastPromotion, setLastPromotion] = createSignal<Promotion | null>(
     null,
   );
@@ -815,12 +838,14 @@ export function AgentDraftsPage() {
   // over to the next row in the previous order, not back to the top.
   createEffect<readonly DraftId[]>((previousIds = []) => {
     const ids = rowIds();
-    const selected = activeDraftId();
+    // Explicit links survive queue removal, terminal status, and an empty queue.
+    if (linkedDraftId() || linkBlocksQueue()) return ids;
+    const selected = queueDraftId();
     const handOff =
       focusAfterRemovalOf !== null && !ids.includes(focusAfterRemovalOf);
     if (handOff) focusAfterRemovalOf = null;
     if (!selected || !ids.includes(selected)) {
-      setActiveDraftId(
+      setQueueDraftId(
         selected
           ? successorDraftId(ids, previousIds, selected)
           : (ids[0] ?? null),
@@ -890,7 +915,29 @@ export function AgentDraftsPage() {
         <UINotice class={css({ mt: "4" })} status={announcement()} />
       </UICard>
 
-      <Show when={lastPromotion()}>
+      <UINotice
+        error={
+          navigationError() ??
+          (search().invalidReviewLink
+            ? "This review link is invalid. Open the pending queue to continue."
+            : null)
+        }
+      />
+      <Show when={linkedDraftId() || linkBlocksQueue()}>
+        <div>
+          <UIButton variant="outline" onClick={() => void selectDraft()}>
+            Back to pending queue
+          </UIButton>
+        </div>
+      </Show>
+
+      <Show when={!search().invalidReviewLink && search().intent} keyed>
+        {(intentId) => (
+          <IntentReviewBinding intentId={intentId as Id<"decisionIntents">} />
+        )}
+      </Show>
+
+      <Show when={!linkBlocksQueue() && lastPromotion()}>
         {(promotion) => (
           <UICard class={violetCardClass}>
             <UIBadge tone="violet">Promoted</UIBadge>
@@ -918,7 +965,7 @@ export function AgentDraftsPage() {
         />
       </UICard>
 
-      <Show when={!pending.isLoading() && rows().length > 0}>
+      <Show when={!linkBlocksQueue() && (activeDraftId() || rows().length > 0)}>
         <div
           class={css({
             alignItems: "start",
@@ -965,7 +1012,7 @@ export function AgentDraftsPage() {
                               activeQueueButtonClass,
                           )}
                           aria-pressed={activeDraftId() === draftId}
-                          onClick={() => setActiveDraftId(draftId)}
+                          onClick={() => void selectDraft(draftId)}
                         >
                           <div class={queueRowHeaderClass}>
                             <UIBadge tone="violet">
@@ -1003,15 +1050,39 @@ export function AgentDraftsPage() {
               status={contextStatus()}
               error={contextError()}
             />
-            <Show when={!context.isLoading() && context.data()}>
+            <Show
+              when={
+                !context.isLoading() &&
+                context.data()?.draft._id === activeDraftId() &&
+                context.data()
+              }
+            >
               {(reviewContext) => (
-                <ReviewWorkspace
-                  context={reviewContext()}
-                  pendingDrafts={rows()}
-                  onApproved={setLastPromotion}
-                  onDecided={handleDecided}
-                  onFocusOrphaned={focusActiveRow}
-                />
+                <>
+                  <Show when={!reviewContext().draft.payload}>
+                    <h2 class={sectionTitleClass}>
+                      {reviewContext().draft.title}
+                    </h2>
+                  </Show>
+                  <Show
+                    when={reviewContext().draft.status === "pending_review"}
+                    fallback={
+                      <DraftReviewStory
+                        context={reviewContext()}
+                        payload={reviewContext().draft.payload}
+                        decide={<DecisionState draft={reviewContext().draft} />}
+                      />
+                    }
+                  >
+                    <ReviewWorkspace
+                      context={reviewContext()}
+                      pendingDrafts={rows()}
+                      onApproved={setLastPromotion}
+                      onDecided={handleDecided}
+                      onFocusOrphaned={focusActiveRow}
+                    />
+                  </Show>
+                </>
               )}
             </Show>
           </UICard>

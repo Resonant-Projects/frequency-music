@@ -1,3 +1,10 @@
+import {
+  docketListArgsZ,
+  docketCardArgsZ,
+  decisionProposeArgsZ,
+  listeningProposeArgsZ,
+  deliveryRecordArgsZ,
+} from "./docketTools";
 import { captureInputZ, diagnosisZ } from "./operationRecovery";
 // Zod-first argument schemas for the agent-tool surface. The transport owns
 // agentSecret, so it never appears in these cross-workspace schemas.
@@ -22,6 +29,11 @@ import {
 const limit = z.number().int().positive().max(100).optional();
 
 export const agentToolArgs = {
+  listDocket: docketListArgsZ,
+  getDocketCard: docketCardArgsZ,
+  proposeDecision: decisionProposeArgsZ,
+  proposeListening: listeningProposeArgsZ,
+  recordDocketDelivery: deliveryRecordArgsZ,
   reportCaptureFailure: z.object({
     agentRunId: zid("agentRuns"),
     input: captureInputZ,

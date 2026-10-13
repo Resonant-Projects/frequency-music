@@ -194,3 +194,21 @@ describe("tuning parameters to Scala", () => {
     );
   });
 });
+
+test("legacy script parsing retains tunings beyond render admission limits", () => {
+  const cents = Array(300).fill(100);
+  expect(
+    parseTuningFromParameters([
+      { type: "tuning", value: "custom", details: { cents } },
+    ]),
+  ).toEqual({ kind: "cents", values: cents });
+  const ratio = "1".repeat(64) + "/" + "1".repeat(64);
+  expect(
+    parseTuningFromParameters([
+      { type: "tuning", value: "custom", details: { ratios: [ratio] } },
+    ]),
+  ).toEqual({ kind: "ji", ratios: [ratio] });
+  expect(
+    parseTuningFromParameters([{ type: "tuning", value: "4096 EDO" }]),
+  ).toEqual({ kind: "edo", divisions: 4096 });
+});

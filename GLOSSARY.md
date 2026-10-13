@@ -154,3 +154,39 @@ _Avoid_: Failure Archive (which records research outcomes, not service failures)
 
 **Recovery**:
 A bounded attempt to finish a failed operation using retained inputs and completed outputs. Persistent failures receive an investigation; unsupported fixes remain for review.
+
+## Decision intent
+
+An immutable proposal to approve, reject, supersede, defer, enable a proposed
+feed, or record human listening feedback. Convex assigns its code, captures the
+target revision and payload digest, and expires it after 30 minutes. An agent
+may propose it. Only an authenticated human or a verified platform signer can
+apply or cancel it. A service bypass identity cannot confirm a decision.
+
+## Webhook event
+
+A receipt keyed by platform and event ID. It records the result of an intent
+confirmation attempt so retries return the original result without repeating
+its effects. Failed card or signer checks leave the proposal available to its
+real signer.
+
+## Docket card
+
+One stored review or listening task per target. Eligibility comes from current
+research state, independent of the weekly loop report's age cutoff. Confirmed
+deferrals suppress a card for two weeks without changing research records.
+Cards reference audio artifact IDs, never storage blobs.
+
+## Docket delivery
+
+A channel-specific receipt for one content version of a card. Atomic posting
+admission suppresses unfinished attempts for 24 hours. A posted unchanged card
+is suppressed for seven days. Changed content can post as an update.
+
+## Target revision
+
+A draft or feed write counter. New rows start at zero and every later row write,
+including feed polling, increments it. Legacy absent revisions read as zero;
+a bounded idempotent migration fills them without overwriting newer revisions.
+Deletion makes the target unavailable. Confirmation compares the exact revision
+captured by the proposal before applying a decision.
