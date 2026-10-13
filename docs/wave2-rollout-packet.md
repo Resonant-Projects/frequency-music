@@ -159,9 +159,16 @@ stored in 1Password; a working Kubernetes context; DNS and TLS for
 `mcp.frequency.rproj.art`.
 
 Acceptance: an unauthenticated `POST /mcp` is rejected; an authenticated
-`tools/list` returns exactly `docket.list`, `docket.card`, `decision.propose`,
-`listening.propose` and `delivery.record`; `GET /health` returns 200; the
-research worker stays healthy. Rollback: scale the MCP deployment to zero.
+`tools/list` returns exactly seven tools: the five Wave 2 tools
+`docket.list`, `docket.card`, `decision.propose`, `listening.propose` and
+`delivery.record`, plus `render.request` and `tournament.request`.
+`render.request` is an explicit Wave 3 unavailable stub that enqueues nothing.
+On `main`, `tournament.request` is the same kind of stub. With PR #142 it calls
+the gated `requestTournamentRun` agent tool. While
+`HYPOTHESIS_TOURNAMENT_ENABLED` is not `true`, that call is refused and no run
+is queued. Do not call `tournament.request` as part of this acceptance.
+`GET /health` returns 200, and the research worker stays healthy. Rollback:
+scale the MCP deployment to zero.
 
 ## Stage 4. Signer configuration
 
@@ -253,3 +260,55 @@ These require Keith and cannot be produced by an agent or a test:
 
 Record dates, intent codes and observed results in a dated handoff. Until all
 five pass, Wave 2 stays "deployed, acceptance pending".
+
+## Listen-first next tracks
+
+Four follow-up PRs build on this packet. As of 2026-10-13 all four are open
+and none is merged or deployed: #139 (this rollout tooling), #141 (general
+audio feedback and recipe/audio deferral), #140 (litmus render jobs) and #142
+(hypothesis tournament persistence and worker). The recommended landing order
+is #139, #141, #140, #142. They were assembled together locally and tested as
+one candidate. That is test evidence, not production
+acceptance. Every step below contacts production or a live host and needs
+coordinator approval of the exact target first.
+
+All new gates stay closed after deployment: `DECISION_SIGNERS_ENABLED`,
+`DOCKET_PREPARATION_ENABLED` and `HYPOTHESIS_TOURNAMENT_ENABLED` are unset or
+`false`, and `renderValidation` stays unset (`unvalidated`). Weekly Turn
+narration and the `reconcile-episodes` cron stay off.
+
+Deployment order, from the current contracts:
+
+1. **Convex functions and schema** carrying #141, #140 and #142. The schema
+   changes are additive (`audioRatings`, `decisionIntents.targetContentHash`,
+   `recipes.renderPlan`, the tournament tables and
+   `agentReviewDrafts.dedupeKey`). After the deploy, docket reconciliation
+   changes each recipe card's hash once, and `unratedAudio` cards for render
+   masters stop listing. If Convex is deployed before all three land, #141
+   must be deployed before #140: without #141's delivery-only rule, the docket
+   lists each render's master as well as its delivery.
+2. **Media image 0.3.0 on ai-5090-02, promptly after Convex.** #140 raises
+   `RENDERER_VERSION_FOR_JOBS` to `0.3.0`. Every media job enqueued after the
+   Convex deploy carries that version, including narration and shootout jobs,
+   not only renders. A 0.2.2 worker claims none of them, and the sweep parks
+   queued mismatches after ten minutes. Add `litmusRender` to `MEDIA_JOB_KINDS`
+   on the host. Then run the image smoke test before requesting any render.
+3. **Agent worker image containing the `hypothesis-tournament` graph**, before
+   the tournament gate opens. An older worker would claim a queued tournament
+   run and fail it as an unknown graph. The MCP workload (Stage 3) needs the
+   same agent build for `tournament.request` to reach the backend.
+4. **Gates, each one a separate approval:**
+   - signer and docket gates per Stages 4 and 5;
+   - the hypothesis embedding backfill and then `HYPOTHESIS_TOURNAMENT_ENABLED=true`
+     (paid embeddings and Anthropic inference), per
+     `docs/hypothesis-tournament-integration.md` (added by #142);
+   - `renderValidation=go`, only after the human studio comparison and go/no-go
+     in the render ladder plan. A human rating of a render does not validate it.
+
+Integration evidence (fixtures only): `convex/listenNextIntegration.test.ts`
+needs all four PRs, so it lands in a small integration PR after them. It
+drives a real render completion into the feedback queue, the docket and
+signed ratings. It checks that a master and its delivery project once, as the
+delivery; that a study family stays hidden until reveal; that a signed rating
+binds to the delivery's current content; and that tournament drafts share the
+canonical pending-draft cap and publish only through a signed human decision.

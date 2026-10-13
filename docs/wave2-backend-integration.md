@@ -25,7 +25,10 @@ deployment, backfill, signer configuration and acceptance steps are in the
 
 The command is `{ action, target, payload }`. Targets are discriminated by
 `kind`: `agentReviewDraft` has an `agentReviewDrafts` ID, `feedProposal` has a
-`feeds` ID, and `composition` has a `compositions` ID.
+`feeds` ID, and `composition` has a `compositions` ID. PR #141 (open, not
+merged or deployed) adds `recipe` (a `recipes` ID) and `audioArtifact` (an
+`audioArtifacts` ID). Those two carry no revision counter, so their proposals
+record `targetContentHash` and a changed target rejects confirmation as stale.
 
 | Action | Target | Payload |
 | --- | --- | --- |
@@ -33,8 +36,9 @@ The command is `{ action, target, payload }`. Targets are discriminated by
 | `reject` | draft | `{ note }`, nonblank |
 | `supersede` | draft | `{ byDraftId, note? }` |
 | `enableFeed` | feed proposal | `{ note? }` |
-| `defer` | any of the three target kinds | `{ note? }` |
+| `defer` | any target kind (recipe and audio artifact with PR #141) | `{ note? }` |
 | `createListeningSession` | composition | `{ conditions, ratings?, feltQualities?, standoutMoments?, expandVerdict? }` |
+| `rateAudio` (PR #141) | audio artifact | `{ scores, conditions?, notes? }` |
 
 Conditions are `{ listeningMethod: "headphones" | "monitors" | "car" |
 "phone speaker", timeOfDay: string }`. The six subjective ratings are optional,
@@ -173,13 +177,23 @@ never storage, and is not exposed in the MCP projection.
   checks, media-completion hooks and Thursday preparation are implemented.
   `DOCKET_PREPARATION_ENABLED=false` and `DECISION_SIGNERS_ENABLED=false`
   keep inference, narration preparation and signer delivery disabled by default.
-- `unratedAudio` checks the existing `voiceRatings` artifact references and
-  excludes unrevealed blind members in both directions. The current rating
-  submission API only supports voice shootouts. General episode/render rating
-  creation remains unavailable; no new rating contract was invented here.
-- The canonical intent target union excludes recipes and audio artifacts.
-  Their docket cards therefore expose no decision actions. A recipe/audio
-  deferral needs an approved shared-contract extension, not a cast to another ID.
+- On `main`, `unratedAudio` checks the existing `voiceRatings` artifact
+  references and excludes unrevealed blind members in both directions, and the
+  rating submission API only supports voice shootouts.
+- PR #141 (open draft, not merged or deployed) implements general ratings and
+  recipe/audio deferral; its contract is `docs/audio-feedback-contract.md`,
+  added by that PR. Ratings go to a new
+  `audioRatings` table, keyed to the content hash that was heard. Only a ready,
+  stored, blind-safe `role: "delivery"` episode or litmus render is a feedback
+  target. Render masters, which share the `litmusRender` kind, never reach the
+  queue, the docket or a signed rating. With it, `unratedAudio` cards offer
+  `rateAudio` and `defer`, and recipe cards offer `defer`.
+- PR #140 (open, not merged or deployed) produces those litmus renders as a
+  master and its delivery. They remain `unvalidated`, with no composition,
+  until `renderValidation=go`. A human rating does not validate a render.
+  Study-family members stay hidden until their blind group is revealed. The
+  assembly and its cross-lane test are described in the
+  [rollout packet](wave2-rollout-packet.md#listen-first-next-tracks).
 - Existing API declarations were updated by hand for the new modules.
   No Convex codegen, run, dev or deploy command was executed.
 
