@@ -20,8 +20,8 @@ specs in the active folder.
 
 The active plan files are now: **008** (next, operator-gated eval baseline
 sweep), **13** (recipe loop closure, blocked on 008), **11** (deferred studio
-spike), **15** (passage-index foundation), and the autonomous Proxmox operations
-plan.
+spike), **15** (passage-index foundation), **16** (deferred WebMCP
+readiness), and the autonomous Proxmox operations plan.
 
 The sequencing rule, per the 2026-07-07 decision-log entry: **synthesis is the
 bottleneck, not capture** (1,580+ extractions and a 5,400-concept graph had
@@ -97,6 +97,12 @@ continuation was disabled.
 See the [completion record and model-selection procedure](./2026-10-11-source-backlog-operator-extraction-completion.md).
 The [October 3 handoff](./2026-10-03-source-backlog-operator-extraction-handoff.md)
 retains the earlier capture history and unresolved capture issues.
+
+## 1e. Deferred until an external trigger
+
+| # | Plan | Status |
+|---|------|--------|
+| 16 | [WebMCP readiness](./2026-10-13-16-webmcp-readiness.md) (browser-agent tools for the web app) | ⏸️ Deferred 2026-10-13: Chrome origin trial only. Start when WebMCP ships in stable Chrome or Edge, or an agent Keith uses consumes it |
 
 ## 2. Operator/live acceptance items
 
