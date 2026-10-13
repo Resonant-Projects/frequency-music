@@ -95,6 +95,10 @@ const IngestPage = lazyRoute(() =>
   import("./routes/ingest").then((m) => ({ default: m.IngestPage })),
 );
 
+const DocketPage = lazyRoute(() =>
+  import("./routes/docket").then((m) => ({ default: m.DocketPage })),
+);
+
 const ListenPage = lazyRoute(() =>
   import("./routes/listen").then((m) => ({ default: m.ListenPage })),
 );
@@ -348,6 +352,12 @@ const listenRoute = createRoute({
   component: ListenPage,
 });
 
+const docketRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/docket",
+  component: DocketPage,
+});
+
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
@@ -402,6 +412,7 @@ const routeTree = rootRoute.addChildren([
   failuresRoute,
   feedbackRoute,
   listenRoute,
+  docketRoute,
   agentRunsRoute,
   agentRunDetailRoute,
   agentDraftsRoute,

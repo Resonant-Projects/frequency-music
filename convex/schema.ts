@@ -50,6 +50,7 @@ import {
   SOURCE_STATUSES,
 } from "./shared/statuses";
 import { audioArtifactFieldsValidator } from "./shared/audioArtifacts";
+import { audioRatingValidator } from "./shared/audioFeedback";
 import {
   mediaJobInputValidator,
   mediaJobResultValidator,
@@ -969,6 +970,13 @@ export default defineSchema({
     createdBy: v.union(v.id("users"), v.string()),
     createdAt: v.number(),
   }).index("by_groupId_memberId", ["groupId", "memberId"]),
+
+  // General human ratings for ready episodes and litmus renders
+  // (audioFeedback.submit or a signed rateAudio decision). Subjective only:
+  // machine analysis stays on audioArtifacts.analysis.
+  audioRatings: defineTable(audioRatingValidator)
+    .index("by_artifactId_createdAt", ["artifactId", "createdAt"])
+    .index("by_requestKey", ["requestKey"]),
 
   // ==========================================================================
   // WEEKLY BRIEFS - Synthesized output

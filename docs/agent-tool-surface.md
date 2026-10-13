@@ -84,7 +84,7 @@ These tools prepare immutable decision proposals for human confirmation. They do
 
 | Tool | HTTP path | Backing function | Purpose | Context notes |
 | --- | --- | --- | --- | --- |
-| `proposeDecision` | `/agent-tools/proposeDecision` | `internal.decisionIntents:proposeInternal` | Propose a draft, feed, or deferral decision for human confirmation. | Creates an immutable proposal only. Does not confirm or claim signer delivery. |
+| `proposeDecision` | `/agent-tools/proposeDecision` | `internal.decisionIntents:proposeInternal` | Propose a draft, feed, deferral, or audio-rating decision for human confirmation. | Creates an immutable proposal only. Does not confirm or claim signer delivery. |
 | `proposeListening` | `/agent-tools/proposeListening` | `internal.decisionIntents:proposeInternal` | Propose listening feedback for separate human confirmation. | Only createListeningSession commands; missing ratings remain absent. |
 
 ### Media lifecycle tools
