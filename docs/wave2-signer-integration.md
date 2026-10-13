@@ -7,6 +7,11 @@ messages, or human decisions were created during implementation.
 
 ## Parent integration requirements
 
+Status 2026-10-13: satisfied on `main`. `convex/_generated/api.d.ts` and
+`harness/modules.ts` both register `decisionSignerRuntime`. The staged
+configuration procedure and a readiness check for these settings are in the
+[rollout packet](wave2-rollout-packet.md).
+
 - Add `decisionSignerRuntime` to `convex/_generated/api.d.ts` using the existing
   declaration pattern. The runtime uses typed `makeFunctionReference` references
   for its own functions, so it typechecks before this registration.
