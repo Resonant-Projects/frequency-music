@@ -408,8 +408,14 @@ export const submitDraft = internalMutation({
   handler: async (ctx, args) => {
     const row = await fence(ctx, args.agentRunId, args.leaseToken);
     const run = await ctx.db.get(args.agentRunId);
-    if (!run || run.graphName !== HYPOTHESIS_TOURNAMENT_GRAPH)
-      fail("TournamentRunUnavailable", "Agent run is not a tournament");
+    // The stale sweep can fail a run without touching its lease; a terminal
+    // run must never gain a draft or return to needs_review.
+    if (
+      !run ||
+      run.graphName !== HYPOTHESIS_TOURNAMENT_GRAPH ||
+      run.status !== "running"
+    )
+      fail("TournamentRunUnavailable", "Agent run is not a running tournament");
     const draft = tournamentDraftZ.parse(args.draft);
     const result = tournamentResultZ.parse(args.result);
     const dedupeKey = tournamentDedupeKey(args.agentRunId);

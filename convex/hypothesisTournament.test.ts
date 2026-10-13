@@ -322,6 +322,23 @@ describe("draft submission", () => {
     ).rejects.toThrow(/DraftTargetUnavailable/);
   });
 
+  test("a run the stale sweep failed cannot submit under a still-valid lease", async () => {
+    const winner = await candidate({ outcome: "submitted" });
+    // The sweep fails the agent run without touching the tournament lease.
+    await f.t.run((ctx) =>
+      ctx.db.patch(runId, { status: "failed", finishedAt: Date.now() }),
+    );
+    await expect(
+      f.callTool("submitTournamentDraft", await submission(winner)),
+    ).rejects.toThrow(/TournamentRunUnavailable/);
+    expect(
+      await f.t.run((ctx) => ctx.db.query("agentReviewDrafts").collect()),
+    ).toHaveLength(0);
+    expect(await f.t.run((ctx) => ctx.db.get(runId))).toMatchObject({
+      status: "failed",
+    });
+  });
+
   test("cap reached returns cap_reached and keeps the lease for the terminal write", async () => {
     for (const n of [1, 2, 3]) await f.pendingDraft(runId, n);
     expect(
