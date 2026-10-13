@@ -47,10 +47,21 @@ try {
 } catch {
   fail("invalid_origin", 2);
 }
-const batchSize = values["batch-size"] ? Number(values["batch-size"]) : 50;
-const maxPages = values["max-pages"] ? Number(values["max-pages"]) : undefined;
-if (maxPages !== undefined && (!Number.isInteger(maxPages) || maxPages < 1))
-  fail("invalid_max_pages", 2);
+// An omitted --batch-size keeps a resumed state's stored size; a supplied one
+// must be valid and, on resume, must match it.
+const batchSizeArg = values["batch-size"];
+const batchSize =
+  batchSizeArg === undefined ? undefined : parseBoundedInteger(batchSizeArg);
+if (batchSize !== undefined && (batchSize === null || batchSize > 100))
+  fail("invalid_batch_size", 2);
+const maxPagesArg = values["max-pages"];
+const maxPages =
+  maxPagesArg === undefined ? undefined : parseBoundedInteger(maxPagesArg);
+if (maxPages === null) fail("invalid_max_pages", 2);
+
+function parseBoundedInteger(value: string): number | null {
+  return /^[1-9]\d*$/.test(value) ? Number(value) : null;
+}
 
 let state: BackfillState;
 try {
@@ -60,10 +71,12 @@ try {
           JSON.parse(readFileSync(values.state, "utf8")),
           target,
         )
-      : initialBackfillState(target, batchSize);
+      : initialBackfillState(target, batchSize ?? undefined);
 } catch {
   fail("invalid_state", 2);
 }
+if (batchSize !== undefined && batchSize !== state.batchSize)
+  fail("batch_size_mismatch", 2);
 if (values.reverify)
   for (const table of Object.keys(state.tables) as BackfillTable[])
     state.tables[table].verify = freshPass();

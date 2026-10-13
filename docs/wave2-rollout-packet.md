@@ -130,6 +130,9 @@ CONVEX_SELF_HOSTED_ADMIN_KEY=... vpx tsx scripts/wave2-revision-backfill.ts \
   `--max-pages` stop. If a verification page's result was lost, its committed
   update count is unknown, so the verification pass for that table restarts
   from the beginning.
+- A resumed run keeps the batch size stored in the state file. Omit
+  `--batch-size` or repeat the stored value; a different value exits 2 with
+  `batch_size_mismatch` before any call.
 - Exit codes: 0 complete and verified; 3 stopped at `--max-pages`; 4 a
   verification pass updated rows, so rerun with `--reverify`; 1 a page failed;
   2 invalid arguments, origin, state file, or missing admin key.
@@ -171,8 +174,13 @@ op run --env-file=<operator env file> -- \
   vpx tsx scripts/wave2-signer-readiness.ts --require=telegram --require=discord
 ```
 
-It applies the same rules as `convex/decisionSignerRuntime.ts`; a parity test
-compares the two. Exit 1 means a required platform is incomplete.
+It applies the same configuration rules as `convex/decisionSignerRuntime.ts`;
+a parity test compares the two. Exit 1 means a required platform is
+incomplete. The parity covers configuration only: the tool counts each
+nonempty `DECISION_SIGNERS` value but cannot check that it names a `users`
+row. At admission the runtime looks each mapped ID up in `users` and answers
+an unresolved one with `signers_only`, so a platform the tool reports ready can
+still reject every signature.
 
 | Setting | Format the runtime requires |
 | --- | --- |
@@ -183,6 +191,13 @@ compares the two. Exit 1 means a required platform is incomplete.
 | `DECISION_TELEGRAM_BOT_TOKEN` | `<digits>:<token>` |
 | `DECISION_TELEGRAM_CHAT_ID` | nonzero integer, canonical form |
 | `DECISION_TELEGRAM_PATH_SECRET`, `DECISION_TELEGRAM_HEADER_SECRET` | 1 to 256 of `A-Z a-z 0-9 _ -` |
+
+Before enabling, look up every `DECISION_SIGNERS` value in the production
+`users` table with a read-only query (the Convex dashboard data view, or
+`convex data users` under the inherited admin key) and confirm each ID returns
+an existing row. The lookup contacts production, so it needs the same
+coordinator review of target as the other live reads. Do not enable signers
+while any mapped ID is missing.
 
 Install the values on the Convex deployment environment only, never in
 OpenClaw or the MCP workload. Set `DECISION_SIGNERS_ENABLED=true` last.
