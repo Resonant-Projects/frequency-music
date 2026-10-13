@@ -8,7 +8,12 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { buildScores, SCORE_LEAD_SECS, SC_BLOCK_SIZE } from "./score";
+import {
+  buildScores,
+  SCORE_LEAD_SECS,
+  SC_BLOCK_SIZE,
+  SC_REAL_TIME_MEMORY_KB,
+} from "./score";
 import { runCommand, type RunCommand } from "./process";
 
 const MAX_BYTES = 95_000_000;
@@ -212,6 +217,8 @@ export async function renderLocal(
         "0",
         "-n",
         String(score.maxNodes),
+        "-m",
+        String(SC_REAL_TIME_MEMORY_KB),
         "-z",
         String(SC_BLOCK_SIZE),
       ]);

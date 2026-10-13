@@ -1,4 +1,5 @@
 import { listeningConditionsValidator } from "./shared/decisionIntents";
+import { renderPlanSnapshotValidator } from "./shared/renderPlan";
 import { v } from "convex/values";
 import {
   agentOriginFields,
@@ -294,6 +295,7 @@ export const recipeReturnValidator = v.object({
   protocol: v.optional(recipeProtocolValidator),
   verification: v.optional(recipeVerificationValidator),
   starterKit: v.optional(recipeStarterKitValidator),
+  renderPlan: v.optional(renderPlanSnapshotValidator),
   status: recipeStatusValidator,
   ...agentOriginFields,
   visibility: visibilityValidator,
@@ -330,6 +332,7 @@ export const compositionReturnValidator = v.object({
   versionOfId: v.optional(v.id("compositions")),
   revisionParentId: v.optional(v.id("compositions")),
   revisionVariable: v.optional(v.string()),
+  audioArtifactId: v.optional(v.id("audioArtifacts")),
   status: v.union(
     v.literal("idea"),
     v.literal("in_progress"),

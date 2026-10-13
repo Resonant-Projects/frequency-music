@@ -1,14 +1,16 @@
 // Blindness by projection: this is the only query that serves an unrevealed
 // group, and it returns nothing that identifies a member.
 import { ConvexError, v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
+  type MutationCtx,
   type QueryCtx,
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { createLitmusCompositions } from "./mediaJobEffects";
 
 // Total members including X. Eight is the most a listener can hold in one
 // blind comparison without losing track of the earlier takes.
@@ -232,8 +234,39 @@ export const reveal = internalMutation({
       });
     }
     if (group.revealedAt === undefined) {
-      await ctx.db.patch(args.groupId, { revealedAt: Date.now() });
+      const now = Date.now();
+      await ctx.db.patch(args.groupId, { revealedAt: now });
+      if (group.purpose === "studyFamily")
+        await linkRevealedStudyFamily(ctx, group, now);
     }
     return null;
   },
 });
+
+// A validated litmus study family gets its compositions only once revealed:
+// they carry variant-identifying titles and would otherwise surface on the
+// docket while the family is still blind. The job that rendered the members
+// is found through any member's refs.
+async function linkRevealedStudyFamily(
+  ctx: MutationCtx,
+  group: Doc<"blindGroups">,
+  now: number,
+) {
+  const first = group.members[0]
+    ? await ctx.db.get(group.members[0].artifactId)
+    : null;
+  const job = first?.refs.mediaJobId
+    ? await ctx.db.get(first.refs.mediaJobId)
+    : null;
+  if (job?.input.kind !== "litmusRender" || job.result?.kind !== "litmusRender")
+    return;
+  const recipe = await ctx.db.get(job.input.recipeId);
+  if (!recipe) return;
+  await createLitmusCompositions(
+    ctx,
+    job.input,
+    job.result.members,
+    recipe.title,
+    now,
+  );
+}

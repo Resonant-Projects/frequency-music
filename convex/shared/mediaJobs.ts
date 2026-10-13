@@ -3,6 +3,7 @@
 import { zid, zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
 import { audioChapterZ, audioRefsZ } from "./audioArtifacts";
+import { renderPlanSnapshotZ } from "./renderPlan";
 import { fnv1a64Hex, stableStringify } from "./stableHash";
 
 export const LEASE_MS = 10 * 60 * 1000;
@@ -10,7 +11,11 @@ export const MAX_ATTEMPTS = 3;
 // Renderer a freshly enqueued job expects; a job snapshot records it so a
 // worker on an older build refuses the job instead of rendering it wrong.
 // The media package's RENDERER_VERSION must match this string.
-export const RENDERER_VERSION_FOR_JOBS = "0.2.2";
+export const RENDERER_VERSION_FOR_JOBS = "0.3.0";
+
+// Settings key for the plan 11 gate. Only the value "go" stamps a litmus
+// render `validated`; anything else, including absence, keeps it unvalidated.
+export const RENDER_VALIDATION_KEY = "renderValidation";
 
 // Blind labels in presentation order: the label the listener hears in the
 // shootout episode is the label the blind group stores, so both the media
@@ -35,6 +40,7 @@ export const MEDIA_JOB_KINDS = [
   "narrate",
   "shootout",
   "assembleEpisode",
+  "litmusRender",
 ] as const;
 export type MediaJobKind = (typeof MEDIA_JOB_KINDS)[number];
 export const mediaJobKindZ = z.enum(MEDIA_JOB_KINDS);
@@ -55,6 +61,9 @@ export const ARTIFACT_POLICY_BY_JOB_KIND: Record<
   },
   // The delivery is published; its WAV master is uploaded private.
   assembleEpisode: { artifactKinds: ["episode"], access: ["feed", "private"] },
+  // Litmus renders are private until a listener hears them; study-family
+  // members are blind, and nothing here is ever feed-published.
+  litmusRender: { artifactKinds: ["litmusRender"], access: ["private"] },
 };
 export const mediaJobStatusZ = z.enum([
   "queued",
@@ -138,11 +147,23 @@ export const assembleEpisodeJobInputZ = z.object({
   rendererVersion: z.string().min(1),
 });
 
+// An immutable snapshot of the recipe's plan at request time (spec 3.3): an
+// edited plan or recipe yields a new job, and a stale job can only render the
+// revision it was admitted with.
+export const litmusRenderJobInputZ = z.object({
+  kind: z.literal("litmusRender"),
+  recipeId: zid("recipes"),
+  recipeUpdatedAt: z.number(),
+  renderPlan: renderPlanSnapshotZ,
+  rendererVersion: z.string().min(1),
+});
+
 export const mediaJobInputZ = z.discriminatedUnion("kind", [
   probeJobInputZ,
   narrateJobInputZ,
   shootoutJobInputZ,
   assembleEpisodeJobInputZ,
+  litmusRenderJobInputZ,
 ]);
 export type MediaJobInput = z.infer<typeof mediaJobInputZ>;
 
@@ -196,11 +217,26 @@ export const assembleEpisodeJobResultZ = z.object({
   chapters: z.array(audioChapterZ),
 });
 
+// One entry per rendered member: 0 is the baseline, then the plan's variants
+// in declaration order. Labels are not part of the result; the completion
+// effect assigns them so the worker cannot choose a blind presentation.
+export const litmusRenderMemberResultZ = z.object({
+  member: z.number().int().min(0).max(3),
+  master: artifactResultZ,
+  delivery: artifactResultZ,
+});
+
+export const litmusRenderJobResultZ = z.object({
+  kind: z.literal("litmusRender"),
+  members: z.array(litmusRenderMemberResultZ).min(1).max(4),
+});
+
 export const mediaJobResultZ = z.discriminatedUnion("kind", [
   probeJobResultZ,
   narrateJobResultZ,
   shootoutJobResultZ,
   assembleEpisodeJobResultZ,
+  litmusRenderJobResultZ,
 ]);
 export type MediaJobResult = z.infer<typeof mediaJobResultZ>;
 

@@ -6,11 +6,17 @@ import { attachDocketNarration, markDocketStale } from "./docket";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
+import { readSetting } from "./settings";
 import {
   type ArtifactResult,
   type MediaJobResult,
+  RENDER_VALIDATION_KEY,
   spokenLabel,
 } from "./shared/mediaJobs";
+import {
+  type RenderPlanSnapshot,
+  renderPlanMemberCount,
+} from "./shared/renderPlan";
 
 // Ownership fence: a result may only name artifacts minted under this job's
 // lease (generateAudioUploadUrl pins refs.mediaJobId), so a worker cannot
@@ -306,6 +312,8 @@ export async function applyMediaJobResult(
       });
       return ids;
     }
+    case "litmusRender":
+      return await applyLitmusRender(ctx, job, result, now);
     default: {
       // Exhaustiveness guard: a new result kind must be handled above.
       const unknownResult: never = result;
@@ -314,5 +322,223 @@ export async function applyMediaJobResult(
         message: `Unknown result kind ${JSON.stringify(unknownResult)}`,
       });
     }
+  }
+}
+
+const STUDY_LABELS = ["A", "B", "C", "D"] as const;
+
+function tuningLabel(tuning: RenderPlanSnapshot["tuning"]): string {
+  switch (tuning.kind) {
+    case "edo":
+      return `${tuning.divisions}-EDO`;
+    case "ji":
+      return `JI ${tuning.ratios.join(" ")}`;
+    case "cents":
+      return `cents ${tuning.values.join(" ")}`;
+    case "named":
+      return tuning.name;
+  }
+}
+
+// What distinguishes member `index` (0 = baseline) in a composition record.
+function memberVariable(plan: RenderPlanSnapshot, index: number): string {
+  const variable = plan.variable;
+  const text =
+    variable?.kind === "temperament"
+      ? `temperament: ${tuningLabel(index === 0 ? plan.tuning : variable.variants[index - 1]!)}`
+      : variable?.kind === "referenceHz"
+        ? `referenceHz: ${index === 0 ? plan.referenceHz : variable.variants[index - 1]!}`
+        : `baseline: ${tuningLabel(plan.tuning)} at ${plan.referenceHz} Hz`;
+  return text.length > 200 ? `${text.slice(0, 199)}…` : text;
+}
+
+// Litmus render completion (render ladder 3.3). The worker supplies bytes and
+// measurements; the server owns titles, refs, engine provenance, the
+// validation stamp, blind labels, and composition linkage.
+async function applyLitmusRender(
+  ctx: MutationCtx,
+  job: Doc<"mediaJobs">,
+  result: Extract<MediaJobResult, { kind: "litmusRender" }>,
+  now: number,
+): Promise<Id<"audioArtifacts">[]> {
+  if (job.input.kind !== "litmusRender")
+    throw inputKindMismatch(job, "litmusRender");
+  const input = job.input;
+  const plan = input.renderPlan;
+  const count = renderPlanMemberCount(plan);
+  const members = result.members.toSorted((a, b) => a.member - b.member);
+  if (
+    members.length !== count ||
+    members.some((member, index) => member.member !== index)
+  ) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: `litmusRender must return members 0..${count - 1} exactly once`,
+    });
+  }
+  const ids = members.flatMap((member) => [
+    member.master.artifactId,
+    member.delivery.artifactId,
+  ]);
+  if (new Set(ids).size !== ids.length) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "litmusRender members must name distinct artifacts",
+    });
+  }
+  // normalize:false keeps levels, so its master is honestly a raw master.
+  const masterRole = plan.normalize ? "masterNormalized" : "masterRaw";
+  for (const member of members) {
+    const [master, delivery] = await ownedArtifacts(ctx, job, [
+      member.master,
+      member.delivery,
+    ]);
+    if (
+      master!.kind !== "litmusRender" ||
+      delivery!.kind !== "litmusRender" ||
+      master!.role !== masterRole ||
+      delivery!.role !== "delivery" ||
+      delivery!.masterArtifactId !== master!._id
+    ) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: `litmusRender member ${member.member} needs a ${masterRole} master and its delivery`,
+      });
+    }
+    if (!master!.metadataStripped || !delivery!.metadataStripped) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: `litmusRender member ${member.member} is not metadata-stripped`,
+      });
+    }
+  }
+  await readyArtifacts(
+    ctx,
+    members.map((member) => member.master),
+  );
+  await readyArtifacts(
+    ctx,
+    members.map((member) => member.delivery),
+  );
+  // The gate is read at completion: a render finished before go stays
+  // unvalidated even if the setting flips while it is queued.
+  const validation =
+    (await readSetting(ctx, RENDER_VALIDATION_KEY)) === "go"
+      ? ("validated" as const)
+      : ("unvalidated" as const);
+  const recipe = await ctx.db.get(input.recipeId);
+  const recipeTitle = recipe?.title ?? "Deleted recipe";
+  // Members share one neutral title so nothing but the blind label tells
+  // them apart before reveal.
+  const title =
+    count === 1
+      ? `${recipeTitle} — litmus render`
+      : `${recipeTitle} — study family member`;
+  const engine = {
+    name: "sc-litmus",
+    version: input.rendererVersion,
+    params: {
+      recipeId: input.recipeId,
+      recipeUpdatedAt: input.recipeUpdatedAt,
+    },
+  };
+  for (const member of members) {
+    await ctx.db.patch(member.master.artifactId, {
+      title: `${title} (master)`,
+      validation,
+      engine,
+      refs: { mediaJobId: job._id },
+      updatedAt: now,
+    });
+    await ctx.db.patch(member.delivery.artifactId, {
+      title,
+      validation,
+      engine,
+      refs: { mediaJobId: job._id, recipeId: input.recipeId },
+      updatedAt: now,
+    });
+  }
+  if (count > 1) {
+    // Random label assignment: A is not reliably the baseline.
+    const shuffled = members
+      .map((member) => ({ member, key: crypto.randomUUID() }))
+      .toSorted((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+    const { groupId } = await ctx.runMutation(internal.blindGroups.create, {
+      purpose: "studyFamily",
+      members: shuffled.map(({ member }, index) => ({
+        artifactId: member.delivery.artifactId,
+        label: STUDY_LABELS[index]!,
+      })),
+    });
+    // Masters are not rated members, but they carry the group so playback
+    // and the docket hide them until the family is revealed.
+    for (const member of members) {
+      await ctx.db.patch(member.master.artifactId, {
+        blindGroupId: groupId,
+        updatedAt: now,
+      });
+    }
+  }
+  // A single render links now. A study family links at its first reveal
+  // (blindGroups.reveal): compositions are listed and offered on the docket
+  // with variant-identifying titles, so they must not exist while blind.
+  if (count === 1 && validation === "validated" && recipe) {
+    await createLitmusCompositions(ctx, input, members, recipe.title, now);
+  }
+  return ids;
+}
+
+/** One composition per member of a validated litmus render, baseline first,
+ * variants revising it. Unvalidated renders get none: they must stay out of
+ * evidence, docket composition debt, loop debt, and tournament fitness. The
+ * stamp is read from the delivery, as completion recorded it. */
+export async function createLitmusCompositions(
+  ctx: MutationCtx,
+  input: Extract<Doc<"mediaJobs">["input"], { kind: "litmusRender" }>,
+  members: Extract<MediaJobResult, { kind: "litmusRender" }>["members"],
+  recipeTitle: string,
+  now: number,
+): Promise<void> {
+  const plan = input.renderPlan;
+  const sorted = members.toSorted((a, b) => a.member - b.member);
+  const deliveries = [];
+  for (const member of sorted) {
+    const delivery = await ctx.db.get(member.delivery.artifactId);
+    // Every member shares one stamp; any gap means nothing to link.
+    if (delivery?.validation !== "validated" || delivery.refs.compositionId)
+      return;
+    deliveries.push(delivery);
+  }
+  let baselineId: Id<"compositions"> | undefined;
+  for (const [index, member] of sorted.entries()) {
+    const delivery = deliveries[index]!;
+    const variable = memberVariable(plan, member.member);
+    const compositionId: Id<"compositions"> = await ctx.db.insert(
+      "compositions",
+      {
+        title:
+          member.member === 0
+            ? `${recipeTitle} — litmus baseline`
+            : `${recipeTitle} — litmus variant ${member.member}`,
+        recipeId: input.recipeId,
+        artifactType: "microStudy",
+        projectNotesMd: `Litmus render (renderer ${input.rendererVersion}) of the recipe revision saved at ${new Date(input.recipeUpdatedAt).toISOString()}. ${variable}.`,
+        version: "m0.1",
+        ...(baselineId
+          ? { revisionParentId: baselineId, revisionVariable: variable }
+          : {}),
+        audioArtifactId: member.delivery.artifactId,
+        status: "rendered",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: now,
+        updatedAt: now,
+      },
+    );
+    baselineId ??= compositionId;
+    await ctx.db.patch(member.delivery.artifactId, {
+      refs: { ...delivery.refs, compositionId },
+      updatedAt: now,
+    });
   }
 }

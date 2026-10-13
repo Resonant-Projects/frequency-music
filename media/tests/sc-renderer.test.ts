@@ -181,13 +181,32 @@ describe("SC score", () => {
       }),
     ).toThrow(/four-partial limit/);
   });
+  it("reserves the two group slots scsynth keeps in its node table", () => {
+    const chord = (voices: number) =>
+      buildScores({
+        ...plan,
+        seed: Array.from({ length: voices }, (_, degree) => ({
+          degree,
+          octave: 0,
+          startBeat: 0,
+          beats: 4,
+          velocity: 64,
+        })),
+      })[0]!;
+    // scsynth 3.13 NRT holds n - 2 synths in an n-slot table.
+    expect([1, 2, 3, 6, 7, 14].map((voices) => chord(voices).maxNodes)).toEqual(
+      [4, 4, 8, 8, 16, 16],
+    );
+  });
   it("counts overlapping release tails and rejects excessive concurrency", () => {
     const [score] = buildScores(densePlan);
     expect(score!.notes).toHaveLength(4096);
     // Six onsets coexist: the 62.5 ms gate plus 300 ms release lasts 362.5 ms.
     expect(score!.maxConcurrentVoices).toBe(3072);
     expect(score!.maxNodes).toBe(4096);
-    expect(score!.maxNodes).toBeGreaterThan(score!.maxConcurrentVoices);
+    expect(score!.maxNodes).toBeGreaterThanOrEqual(
+      score!.maxConcurrentVoices + 2,
+    );
     expect(score!.maxConcurrentVoices).toBeLessThanOrEqual(
       MAX_CONCURRENT_VOICES,
     );
@@ -279,6 +298,7 @@ describe("mocked rendering", () => {
     });
     const args = calls.find((c) => c.executable === "scsynth")!.args;
     expect(args[args.indexOf("-n") + 1]).toBe("4096");
+    expect(args[args.indexOf("-m") + 1]).toBe("65536");
     expect(args[args.indexOf("-z") + 1]).toBe("64");
     await result.dispose();
   });

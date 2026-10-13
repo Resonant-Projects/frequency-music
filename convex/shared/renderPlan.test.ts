@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from "vite-plus/test";
 import {
+  admitRenderPlan,
   expandRenderPlan,
+  renderPlanMemberCount,
+  renderPlanSnapshotZ,
   renderPlanZ,
   renderTuningZ,
   RENDER_LIMITS,
@@ -449,4 +452,30 @@ test("prepared pitch mapping normalizes once and detaches from mutable input", (
   } finally {
     sort.mockRestore();
   }
+});
+
+describe("render plan snapshots", () => {
+  test("admission returns the storable plan, unchanged in shape", () => {
+    const plan = {
+      ...fixture(),
+      variable: {
+        kind: "temperament" as const,
+        variants: [geometric, geometric],
+      },
+    };
+    const admitted = admitRenderPlan(plan);
+    expect(admitted).toEqual(plan);
+    expect(renderPlanSnapshotZ.parse(admitted)).toEqual(admitted);
+    expect(renderPlanMemberCount(admitted)).toBe(3);
+    expect(renderPlanMemberCount(admitRenderPlan(fixture()))).toBe(1);
+    // A stored snapshot re-admits identically, so a job always renders it.
+    expect(admitRenderPlan(admitted)).toEqual(admitted);
+  });
+
+  test("admission applies the semantic contract, not just the shape", () => {
+    const shapeOnly = { ...fixture(), durationSecs: 600 };
+    expect(renderPlanSnapshotZ.safeParse(shapeOnly).success).toBe(true);
+    expect(() => admitRenderPlan(shapeOnly)).toThrow();
+    expect(() => admitRenderPlan({ ...fixture(), period: 3 })).toThrow();
+  });
 });

@@ -72,6 +72,7 @@ import type * as phase2 from "../phase2.js";
 import type * as podcast from "../podcast.js";
 import type * as recipes from "../recipes.js";
 import type * as recipesInternal from "../recipesInternal.js";
+import type * as renders from "../renders.js";
 import type * as settings from "../settings.js";
 import type * as shared_agentContract from "../shared/agentContract.js";
 import type * as shared_agentRunClaim from "../shared/agentRunClaim.js";
@@ -177,6 +178,7 @@ declare const fullApi: ApiFromModules<{
   podcast: typeof podcast;
   recipes: typeof recipes;
   recipesInternal: typeof recipesInternal;
+  renders: typeof renders;
   settings: typeof settings;
   "shared/agentContract": typeof shared_agentContract;
   "shared/agentRunClaim": typeof shared_agentRunClaim;

@@ -35,6 +35,7 @@ RUN echo "security refresh ${DEBIAN_SECURITY_REFRESH}" \
     && apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+       supercollider-server supercollider-language \
     && for pkg in libssl3t64 openssl; do \
          installed="$(dpkg-query -W -f='${Version}' "$pkg")"; \
          dpkg --compare-versions "$installed" ge "$OPENSSL_FLOOR" \
@@ -42,6 +43,9 @@ RUN echo "security refresh ${DEBIAN_SECURITY_REFRESH}" \
        done \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# sclang and scsynth (Debian's SuperCollider 3.13) render litmus studies
+# offline. sclang links Qt; the renderer runs it with QT_QPA_PLATFORM=offscreen
+# and a private HOME, so no display or user config is involved.
 # The base image bundles npm, whose vendored tar/brace-expansion carry open
 # CVEs the scan rejects; the worker runs under tsx and never needs npm.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
@@ -60,6 +64,10 @@ COPY --chown=media:media convex/shared /app/convex/shared
 # convex/shared files resolve their imports (zod, convex-helpers, convex)
 # upward from /app/convex — link them to the media install.
 RUN ln -s /app/media/node_modules /app/node_modules
+# The repo root's package.json makes convex/shared ESM; without the same
+# boundary here tsx loads it as CommonJS and barrel re-exports
+# (convex/shared/tuning) lose their named exports.
+RUN printf '{ "type": "module", "private": true }\n' > /app/package.json
 USER media
 
 ENV MEDIA_WORK_DIR=/work

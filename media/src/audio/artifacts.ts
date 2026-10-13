@@ -92,10 +92,12 @@ export async function uploadArtifact(
   path: string,
   artifact: NewArtifact,
   mimeType: string,
-  targetLufs: number,
+  // null: levels were deliberately kept (a normalize:false litmus study), so
+  // the file is measured and reported but not held to a loudness target.
+  targetLufs: number | null,
 ): Promise<ArtifactResult> {
   const measured = await measure(path, ctx.signal);
-  assertWithinPolicy(measured, targetLufs);
+  if (targetLufs !== null) assertWithinPolicy(measured, targetLufs);
   assertUnderUploadCap(artifact.role, (await stat(path)).size);
   const { artifactId, uploadUrl, storageAttached } =
     await ctx.tools.generateAudioUploadUrl({
