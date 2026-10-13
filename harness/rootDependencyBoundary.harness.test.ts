@@ -4,6 +4,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { builtinModules } from "node:module";
 import { dirname, join, relative, resolve } from "node:path";
+import { parseSync } from "vite-plus";
 import { describe, expect, test } from "vite-plus/test";
 
 const root = resolve(import.meta.dirname, "..");
@@ -17,21 +18,32 @@ const rootPackages = new Set([
 ]);
 const builtins = new Set(builtinModules);
 
-// Static runtime imports and re-exports (`import type` and `export type`
-// erase), plus literal dynamic imports.
-const staticPattern =
-  /^\s*(?:import|export)\s+(?!type\s)(?:[^'"]*?\sfrom\s+)?["']([^"']+)["']/gm;
-const dynamicPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*[,)]/g;
-
-function specifiersIn(source: string) {
-  return [
-    ...source.matchAll(staticPattern),
-    ...source.matchAll(dynamicPattern),
-  ].map((match) => match[1]!);
+/** Runtime module requests, from a real parse: type-only imports and
+ * re-exports erase; a dynamic import must be a literal, else it is reported
+ * as its source text so the guard fails closed. */
+function specifiersIn(source: string, filename = "source.ts") {
+  const { errors, module } = parseSync(filename, source, { lang: "ts" });
+  if (errors.length > 0) throw new Error(`cannot parse ${filename}`);
+  const imports = module.staticImports
+    .filter(
+      (entry) =>
+        entry.entries.length === 0 || entry.entries.some((e) => !e.isType),
+    )
+    .map((entry) => entry.moduleRequest.value);
+  const exports = module.staticExports.flatMap((entry) =>
+    entry.entries.flatMap((e) =>
+      e.moduleRequest && !e.isType ? [e.moduleRequest.value] : [],
+    ),
+  );
+  const dynamic = module.dynamicImports.map(({ moduleRequest }) => {
+    const text = source.slice(moduleRequest.start, moduleRequest.end);
+    return /^(["'`])([^"'`$\\]*)\1$/.exec(text)?.[2] ?? `import(${text})`;
+  });
+  return [...imports, ...exports, ...dynamic];
 }
 
 function runtimeSpecifiers(file: string) {
-  return specifiersIn(readFileSync(file, "utf8"));
+  return specifiersIn(readFileSync(file, "utf8"), file);
 }
 
 /** The agent source a relative import loads; root modules are out of scope. */
@@ -102,16 +114,29 @@ describe("root harness dependency boundary", () => {
 } from "multi";
 import "side-effect";
 export { c } from "./re-export.js";
+export * from "star";
 import type { D } from "type-only";
+import { type F } from "inline-type-only";
 export type { E } from "type-reexport";
 const lazy = await import("dynamic");
 const attributed = await import("with-options", { with: {} });
+const commented = import(/* lazy */ "commented");
+const trailing = import("trailing" /* lazy */);
+const template = import(\`template\`);
+const computed = import(name);
+// import("in-comment")
+const text = "import('in-string')";
 `).toSorted(),
     ).toEqual([
       "./re-export.js",
+      "commented",
       "dynamic",
+      "import(name)",
       "multi",
       "side-effect",
+      "star",
+      "template",
+      "trailing",
       "with-options",
     ]);
   });
