@@ -260,6 +260,33 @@ describe("hypothesis tournament over durable Convex state", () => {
     expect(await agentRun()).toMatchObject({ status: "completed" });
   });
 
+  test("a statement the production tools cannot accept is invalid output, not a dependency failure", async () => {
+    stubEmbeddings();
+    let first = true;
+    const m = scriptedModel((r) => {
+      if (r.kind !== "generation" || !first) return undefined;
+      first = false;
+      return {
+        ok: true,
+        totalTokens: 1,
+        value: {
+          title: "Too long",
+          question: "Q",
+          statement: "s".repeat(4_001),
+          rationale: "R",
+          whyThisMatters: "Changes the studio choice",
+        },
+      };
+    });
+    const result = await run(m.model);
+    expect(result.events).toContainEqual({
+      kind: "attempt_failed",
+      reason: "invalid_generation",
+      batchIndex: 0,
+    });
+    expect(result.reason).toBe("submitted");
+  });
+
   test("calls that cannot fit the remaining allowance are refused before any provider request", async () => {
     const embeddings = stubEmbeddings();
     // Generation leaves 5 tokens: less than the byte bound of any statement.

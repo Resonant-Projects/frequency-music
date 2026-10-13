@@ -1,10 +1,11 @@
+import { TOURNAMENT_MAX_DUPLICATE_JUDGMENTS } from "../../../../convex/shared/hypothesisTournament.js";
 import type { CallContext, Metered } from "./types.js";
 
 export const TOURNAMENT_LIMITS = {
   generation: 8,
   grounding: 8,
   scoring: 24,
-  duplicate: 3, // per candidate, including the revised-statement check
+  duplicate: TOURNAMENT_MAX_DUPLICATE_JUDGMENTS, // per candidate, including the revised-statement check
   finalist: 3,
   selfCheck: 2,
   revision: 1,

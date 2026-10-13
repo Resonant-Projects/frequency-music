@@ -170,10 +170,15 @@ export const TOURNAMENT_SEED_HINT_MAX_CHARS = 500;
 export const TOURNAMENT_MAX_CANDIDATES = 8;
 export const TOURNAMENT_MAX_PAIRS = 3;
 export const TOURNAMENT_MAX_EVIDENCE = 20;
+// Duplicate judgments per candidate, shared by the revised-statement recheck;
+// each judgment records at most one relation.
+export const TOURNAMENT_MAX_DUPLICATE_JUDGMENTS = 3;
 // Durable text bounds the core enforces before persistence.
 export const TOURNAMENT_TITLE_MAX_CHARS = 240;
 export const TOURNAMENT_SUMMARY_MAX_CHARS = 8_000;
 export const TOURNAMENT_FEEDBACK_MAX_CHARS = 4_000;
+// Every tool that takes a statement (search, embed, neighbors) caps it here.
+export const TOURNAMENT_STATEMENT_MAX_CHARS = 4_000;
 export const TOURNAMENT_DUPLICATE_THRESHOLD = 0.86;
 // Missing or stale hypothesis vectors re-embedded per neighbor query. More
 // than this fails closed until backfillHypothesisEmbeddings runs.
@@ -262,7 +267,9 @@ export const tournamentCandidateZ = z
     evidence: z.array(evidenceClaimZ).max(TOURNAMENT_MAX_EVIDENCE),
     selfCheck: tournamentSelfCheckZ.optional(),
     statementEmbedding: z.array(z.number()).max(4_096).optional(),
-    relations: z.array(z.object({ id, kind: duplicateKindZ }).strict()).max(4),
+    relations: z
+      .array(z.object({ id, kind: duplicateKindZ }).strict())
+      .max(TOURNAMENT_MAX_DUPLICATE_JUDGMENTS),
     duplicateOf: id.optional(),
     duplicateKind: duplicateKindZ.optional(),
     scores: z.array(tournamentScoreZ).max(3),
@@ -366,7 +373,7 @@ export const tournamentSubmitResultZ = z.discriminatedUnion("status", [
 export const tournamentNeighborZ = z
   .object({
     id,
-    statement: z.string().max(4_000),
+    statement: z.string().max(TOURNAMENT_STATEMENT_MAX_CHARS),
     similarity: z.number(),
   })
   .strict();

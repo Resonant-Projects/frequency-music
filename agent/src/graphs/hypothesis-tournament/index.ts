@@ -4,6 +4,7 @@ import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads
 import {
   TOURNAMENT_FAMILIES,
   TOURNAMENT_FEEDBACK_MAX_CHARS,
+  TOURNAMENT_MAX_DUPLICATE_JUDGMENTS,
   TOURNAMENT_SUMMARY_MAX_CHARS,
 } from "../../../../convex/shared/hypothesisTournament.js";
 import {
@@ -268,7 +269,7 @@ async function runLeasedTournament(
     const seen = new Set<string>();
     const unique = nearest
       .filter((n) => !seen.has(n.id) && Boolean(seen.add(n.id)))
-      .slice(0, 3);
+      .slice(0, TOURNAMENT_MAX_DUPLICATE_JUDGMENTS);
     for (const neighbor of unique) {
       const parsed = duplicateSchema.safeParse(
         await model(
@@ -538,11 +539,13 @@ async function runLeasedTournament(
         await record("self_check");
         return finish("failed_self_check");
       }
-      // Clear the old vector in the same synchronous step as changing text.
-      // Even budget.count or a throwing/timed-out embedding must archive no
-      // vector rather than one that describes the original statement.
-      if (revised.statement !== winner.payload.statement)
+      // Clear the old vector and relations in the same synchronous step as
+      // changing text. Even budget.count or a throwing/timed-out embedding
+      // must archive neither a vector nor neighbors of the original statement.
+      if (revised.statement !== winner.payload.statement) {
         winner.statementEmbedding = undefined;
+        winner.relations = [];
+      }
       winner.finalPayload = revised;
       if (revised.statement !== winner.payload.statement) {
         budget.count("duplicateRecheck");

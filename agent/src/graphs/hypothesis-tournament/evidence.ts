@@ -2,6 +2,7 @@ import { z } from "zod";
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
 import {
   citedClaims,
+  TOURNAMENT_STATEMENT_MAX_CHARS,
   TOURNAMENT_TITLE_MAX_CHARS,
 } from "../../../../convex/shared/hypothesisTournament.js";
 import { findHallucinatedIds } from "../research-pipeline/idGate.js";
@@ -11,11 +12,17 @@ import type {
   TournamentSeed,
 } from "./types.js";
 
-// A title the durable draft cannot hold is invalid output, not a crash later.
+// Text the durable draft or the statement tools cannot take is invalid
+// output here, not a persistence or dependency failure later.
 const titleZ = z.string().min(1).max(TOURNAMENT_TITLE_MAX_CHARS);
+const statementZ = z
+  .string()
+  .max(TOURNAMENT_STATEMENT_MAX_CHARS)
+  .refine((text) => text.trim().length > 0, "Must not be blank");
+const bounded = { title: titleZ, statement: statementZ };
 
 export const generationSchema = hypothesisDraftPayloadZ
-  .extend({ title: titleZ })
+  .extend(bounded)
   .omit({
     sourceIds: true,
     extractionIds: true,
@@ -31,7 +38,7 @@ const equals = (ids: string[], expected: Set<string>) =>
   ids.every((id) => expected.has(id));
 
 export const groundedPayloadSchema = hypothesisDraftPayloadZ
-  .extend({ title: titleZ })
+  .extend(bounded)
   .strict()
   .refine((payload) => citedClaims(payload.rationale) !== undefined, {
     message: "Use only [claim:<id>] citations, with no bare claim IDs",

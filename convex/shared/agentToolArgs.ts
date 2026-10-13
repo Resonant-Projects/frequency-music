@@ -29,6 +29,7 @@ import {
   archiveStageZ,
   TOURNAMENT_MAX_EVIDENCE,
   TOURNAMENT_SEED_HINT_MAX_CHARS,
+  TOURNAMENT_STATEMENT_MAX_CHARS,
 } from "./hypothesisTournament";
 
 const limit = z.number().int().positive().max(100).optional();
@@ -247,16 +248,16 @@ export const agentToolArgs = {
     claimIds: z.array(z.string().min(1).max(200)).max(TOURNAMENT_MAX_EVIDENCE),
   }),
   searchTournamentEvidence: z.object({
-    text: z.string().trim().min(1).max(4_000),
+    text: z.string().trim().min(1).max(TOURNAMENT_STATEMENT_MAX_CHARS),
     maxTotalTokens: z.number().int().min(0),
   }),
   embedTournamentStatement: z.object({
-    text: z.string().trim().min(1).max(4_000),
+    text: z.string().trim().min(1).max(TOURNAMENT_STATEMENT_MAX_CHARS),
     maxTotalTokens: z.number().int().min(0),
   }),
   findTournamentNeighbors: z.object({
     agentRunId: zid("agentRuns"),
-    statement: z.string().trim().min(1).max(4_000),
+    statement: z.string().trim().min(1).max(TOURNAMENT_STATEMENT_MAX_CHARS),
     embedding: z.array(z.number()).max(4_096),
     maxTotalTokens: z.number().int().min(0),
   }),
