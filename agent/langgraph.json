@@ -5,6 +5,7 @@
     "correspondence-miner": "./src/graphs/correspondence-miner/index.ts:graph",
     "evidence-hunter": "./src/graphs/evidence-hunter/index.ts:graph",
     "hypothesis-drafter": "./src/graphs/hypothesis-drafter/index.ts:graph",
+    "hypothesis-tournament": "./src/graphs/hypothesis-tournament/graph.ts:graph",
     "source-scout": "./src/graphs/source-scout/index.ts:graph"
   },
   "env": ".env"

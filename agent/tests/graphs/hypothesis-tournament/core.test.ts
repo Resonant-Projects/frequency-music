@@ -1,6 +1,11 @@
 import { durableStore } from "./store.js";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { TOURNAMENT_FAMILIES } from "../../../../convex/shared/hypothesisTournament.js";
+import {
+  TOURNAMENT_FAMILIES,
+  tournamentCandidateZ,
+  tournamentDraftZ,
+  tournamentSelfCheckZ,
+} from "../../../../convex/shared/hypothesisTournament.js";
 import {
   runTournament,
   rotateSeeds,
@@ -88,7 +93,7 @@ function fixture(store = durableStore()) {
           : {}),
       },
     ]),
-    searchClaimsSemantic: vi.fn(async () => ["claim-1", "claim-2"]),
+    searchClaimsSemantic: vi.fn(async () => ok(["claim-1", "claim-2"])),
     hydrateClaims: vi.fn(async () =>
       [1, 2].map((n) => ({
         claimId: `claim-${n}`,
@@ -201,9 +206,37 @@ test("complete run preserves evidence, archives transitions, and submits one hum
       },
     ]),
   );
-  expect(r.budget.totalTokens).toBe(25);
+  // Includes one metered evidence search per candidate.
+  expect(r.budget.totalTokens).toBe(28);
   for (const req of f.requests)
     if (req.kind === "scoring") expect(req.candidate.scores).toEqual([]);
+});
+test("provider-valid oversized text stays within the durable bounds", async () => {
+  const f = fixture();
+  f.override((r) => {
+    if (r.kind === "generation") {
+      const value = f.response(r) as Record<string, string>;
+      // The first title is too long to persist; statements at the tool limit
+      // and long feedback must not make the draft or archive unwritable.
+      return ok({
+        ...value,
+        title: value.title === "Title 0" ? "T".repeat(241) : value.title,
+        statement: `${value.statement} ${"s".repeat(3_980)}`,
+      });
+    }
+    if (r.kind === "selfCheck")
+      return ok({ ...checked, feedback: "f".repeat(5_000) });
+    return undefined;
+  });
+  const r = await f.run();
+  expect(r.reason).toBe("submitted");
+  expect(r.candidates.every((c) => c.payload.title.length <= 240)).toBe(true);
+  expect(() => tournamentDraftZ.parse(r.draft)).not.toThrow();
+  for (const candidate of r.candidates)
+    if (candidate.selfCheck)
+      expect(() =>
+        tournamentSelfCheckZ.parse(candidate.selfCheck),
+      ).not.toThrow();
 });
 test("bounds each available family to two and includes the hint", async () => {
   const f = fixture();
@@ -251,7 +284,7 @@ test("malformed capacity fails closed and failed families are recorded", async (
 });
 test("repeated or unsearched hydrated IDs cannot satisfy two claims", async () => {
   const f = fixture();
-  f.d.searchClaimsSemantic = async () => ["claim-1", "claim-1"];
+  f.d.searchClaimsSemantic = async () => ok(["claim-1", "claim-1"]);
   const r = await f.run();
   expect(r.candidates.every((c) => c.outcome === "dropped_evidence")).toBe(
     true,
@@ -601,6 +634,36 @@ test("revision duplicate recheck shares the three classification calls", async (
   expect(f.d.createDraft).not.toHaveBeenCalled();
 });
 
+test("a revised winner's relations describe only its revised statement", async () => {
+  for (const [after, expected] of [
+    ["prior-1", [{ id: "prior-1", kind: "refinement" }]],
+    ["prior-2", [{ id: "prior-2", kind: "refinement" }]],
+  ] as const) {
+    const f = fixture();
+    f.d.neighbors = async ({ statement }) =>
+      ok([
+        {
+          id: statement.endsWith("revised") ? after : "prior-1",
+          statement: "prior",
+          similarity: 0.9,
+        },
+      ]);
+    let checks = 0;
+    f.override((r) =>
+      r.kind === "selfCheck" && checks++ === 0
+        ? ok({ ...checked, pass: false })
+        : undefined,
+    );
+    const r = await f.run();
+    expect(r.reason).toBe("submitted");
+    const winner = r.candidates.find((c) => c.outcome === "submitted")!;
+    expect(winner.finalPayload?.statement).toMatch(/revised$/);
+    expect(winner.relations).toEqual(expected);
+    expect(r.draft?.draft.summary).toContain(`refinement: ${after}`);
+    for (const candidate of r.candidates)
+      expect(() => tournamentCandidateZ.parse(candidate)).not.toThrow();
+  }
+});
 test("second self-check audits the revision rather than the original payload", async () => {
   const f = fixture();
   f.override((r) =>

@@ -19,5 +19,12 @@ export function tournamentPrompt(request: ModelRequest): string {
     revision:
       "This is the single allowed revision. Return the full hypothesis payload, fixing the supplied self-check feedback. Keep the supplied provenance IDs and [claim:<id>] evidence citations, citing every supplied claim and no unread IDs or bare IDs; no new evidence. Design a 30-90 second test of exactly one variable. Return no seed metadata.",
   };
-  return `${instructions[request.kind]}\n\n${JSON.stringify(request, null, 2)}`;
+  // Statement vectors and archive bookkeeping are not model context.
+  const context = JSON.stringify(
+    request,
+    (key, value) =>
+      key === "statementEmbedding" || key === "agentRunId" ? undefined : value,
+    2,
+  );
+  return `${instructions[request.kind]}\n\n${context}`;
 }

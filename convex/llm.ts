@@ -2,6 +2,7 @@ import { TRANSCRIPTION_MODEL } from "./shared/agentContract";
 import {
   ANTHROPIC_MODELS,
   TASK_MODELS as SHARED_TASK_MODELS,
+  TOURNAMENT_TOKEN_BUDGETS,
 } from "./shared/llmPolicy";
 // Docket blurbs are synthesis, with the shared direct Sonnet adaptive/medium policy.
 export const TASK_MODELS = {
@@ -66,6 +67,7 @@ export const TOKEN_BUDGETS = {
   concept_classifier_v1: 5000,
   narration_v1: 6000,
   docket_blurb_v1: 1500,
+  ...TOURNAMENT_TOKEN_BUDGETS,
 } as const;
 
 export type LlmTask = keyof typeof TOKEN_BUDGETS;

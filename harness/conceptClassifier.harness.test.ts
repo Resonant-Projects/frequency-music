@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { makeFunctionReference } from "convex/server";
-import { describe, expect, test, vi } from "vite-plus/test";
+import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
@@ -763,6 +763,12 @@ describe("concept creation classification scheduling", () => {
   });
 
   test("new concepts start unreviewed and schedule asynchronous classification", async () => {
+    // Fake timers keep the scheduled batch from running after this test, when
+    // it would log into a later test's console spy.
+    vi.useFakeTimers();
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const t = convexTest(schema, modules);
     const extractionId = await t.run(async (ctx) => {
       const sourceId = await ctx.db.insert("sources", {

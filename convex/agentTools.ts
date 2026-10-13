@@ -265,3 +265,29 @@ export const getDocketCard = makeAgentToolAction("getDocketCard");
 export const proposeDecision = makeAgentToolAction("proposeDecision");
 export const proposeListening = makeAgentToolAction("proposeListening");
 export const recordDocketDelivery = makeAgentToolAction("recordDocketDelivery");
+
+export const beginTournamentRun = makeAgentToolAction("beginTournamentRun");
+export const completeTournamentRun = makeAgentToolAction(
+  "completeTournamentRun",
+);
+export const recordHypothesisCandidates = makeAgentToolAction(
+  "recordHypothesisCandidates",
+);
+export const submitTournamentDraft = makeAgentToolAction(
+  "submitTournamentDraft",
+);
+export const listTournamentSeeds = makeAgentToolAction("listTournamentSeeds");
+export const hydrateClaims = makeAgentToolAction("hydrateClaims");
+export const searchTournamentEvidence = makeAgentToolAction(
+  "searchTournamentEvidence",
+);
+export const finalizeTournamentRun = makeAgentToolAction(
+  "finalizeTournamentRun",
+);
+export const embedTournamentStatement = makeAgentToolAction(
+  "embedTournamentStatement",
+);
+export const findTournamentNeighbors = makeAgentToolAction(
+  "findTournamentNeighbors",
+);
+export const requestTournamentRun = makeAgentToolAction("requestTournamentRun");

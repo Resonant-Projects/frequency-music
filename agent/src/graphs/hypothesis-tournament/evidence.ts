@@ -1,4 +1,10 @@
+import { z } from "zod";
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
+import {
+  citedClaims,
+  TOURNAMENT_STATEMENT_MAX_CHARS,
+  TOURNAMENT_TITLE_MAX_CHARS,
+} from "../../../../convex/shared/hypothesisTournament.js";
 import { findHallucinatedIds } from "../research-pipeline/idGate.js";
 import type {
   EvidenceClaim,
@@ -6,7 +12,17 @@ import type {
   TournamentSeed,
 } from "./types.js";
 
+// Text the durable draft or the statement tools cannot take is invalid
+// output here, not a persistence or dependency failure later.
+const titleZ = z.string().min(1).max(TOURNAMENT_TITLE_MAX_CHARS);
+const statementZ = z
+  .string()
+  .max(TOURNAMENT_STATEMENT_MAX_CHARS)
+  .refine((text) => text.trim().length > 0, "Must not be blank");
+const bounded = { title: titleZ, statement: statementZ };
+
 export const generationSchema = hypothesisDraftPayloadZ
+  .extend(bounded)
   .omit({
     sourceIds: true,
     extractionIds: true,
@@ -21,27 +37,8 @@ const equals = (ids: string[], expected: Set<string>) =>
   ids.length === expected.size &&
   ids.every((id) => expected.has(id));
 
-/** Citations use [claim:<opaque-id>]. Reject malformed markers, bare claim
- * IDs and bare Convex IDs rather than interpreting them as evidence prose. */
-export function citedClaims(rationale: string): string[] | undefined {
-  const ids: string[] = [];
-  const prose = rationale.replace(
-    /\[claim:([A-Za-z0-9_-]+)\]/g,
-    (_, id: string) => {
-      ids.push(id);
-      return "";
-    },
-  );
-  if (
-    /\[\s*claim\b|\bclaim(?:[-_:][A-Za-z0-9_-]+|[0-9][A-Za-z0-9_-]*)\b|\b[a-z0-9]{24,}\b/i.test(
-      prose,
-    )
-  )
-    return undefined;
-  return ids;
-}
-
 export const groundedPayloadSchema = hypothesisDraftPayloadZ
+  .extend(bounded)
   .strict()
   .refine((payload) => citedClaims(payload.rationale) !== undefined, {
     message: "Use only [claim:<id>] citations, with no bare claim IDs",

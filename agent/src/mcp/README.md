@@ -45,8 +45,12 @@ Proposal tools have kind `service_proposal` and require no Agent Run ID.
 Docket reconciliation and delivery receipts are `audit_write`; fetching a
 card is `read`. These five tools are excluded from the research LangChain
 catalog. No apply, confirm, cancel or listening-session creation operation
-is exposed. Render and tournament requests still return explicit unavailable
-responses for Waves 3 and 4, without enqueueing work.
+is exposed. `render.request` still returns an explicit Wave 3 unavailable
+response without enqueueing work. `tournament.request` calls the
+`requestTournamentRun` agent tool with an optional `seedHint` and returns only
+`{ runId, status }`. The backend refuses unless
+`HYPOTHESIS_TOURNAMENT_ENABLED=true` and returns an existing queued or running
+tournament instead of a second one. See `docs/hypothesis-tournament-integration.md`.
 
 Use strict nested shared input and result schemas with bounded strings and
 collections. The adapter makes top-level inputs strict and rejects authority

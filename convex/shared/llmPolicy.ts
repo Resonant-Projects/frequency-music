@@ -39,4 +39,26 @@ export const TASK_MODELS = {
   brief_v2: ANTHROPIC_MODELS.sonnet,
   concept_classifier_v1: ANTHROPIC_MODELS.haiku,
   narration_v1: ANTHROPIC_MODELS.sonnet,
+  // Hypothesis tournament: design calls on Opus, judgments on Sonnet, and
+  // bounded duplicate classification on Haiku.
+  tournament_generation_v1: ANTHROPIC_MODELS.opus,
+  tournament_grounding_v1: ANTHROPIC_MODELS.opus,
+  tournament_revision_v1: ANTHROPIC_MODELS.opus,
+  tournament_scoring_v1: ANTHROPIC_MODELS.sonnet,
+  tournament_finalist_v1: ANTHROPIC_MODELS.sonnet,
+  tournament_self_check_v1: ANTHROPIC_MODELS.sonnet,
+  tournament_duplicate_v1: ANTHROPIC_MODELS.haiku,
+} as const;
+
+// Per-call maxOutputTokens caps for tournament prompts. Kept beside the task
+// models because the worker reads them; convex/llm.ts mirrors them in
+// TOKEN_BUDGETS. The 300 000-token run budget lives in the graph.
+export const TOURNAMENT_TOKEN_BUDGETS = {
+  tournament_generation_v1: 6000,
+  tournament_grounding_v1: 6000,
+  tournament_revision_v1: 6000,
+  tournament_scoring_v1: 3000,
+  tournament_finalist_v1: 3000,
+  tournament_self_check_v1: 3000,
+  tournament_duplicate_v1: 1500,
 } as const;

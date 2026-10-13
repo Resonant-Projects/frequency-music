@@ -11,6 +11,7 @@ import {
   type BackendOperations,
   createWave2Operations,
   manifestOperation,
+  tournamentRequestResultZ,
   wave2Tools,
 } from "../../src/mcp/backend";
 import { authenticated, createMcpHttpServer } from "../../src/mcp/server";
@@ -244,6 +245,45 @@ describe("stateless MCP", () => {
       const response = await call(name);
       expect(response.body.error ?? response.body.result?.isError).toBeTruthy();
     }
+  });
+
+  it("queues a tournament through the gated backend and returns only its run id", async () => {
+    const real = createWave2Operations()["tournament.request"];
+    expect(real.args.safeParse({ seedHint: "Slow beating" }).success).toBe(
+      true,
+    );
+    expect(real.args.safeParse({ seedHint: "x", force: true }).success).toBe(
+      false,
+    );
+    const invoke = vi.fn(async () => ({
+      runId: "run-1",
+      status: "queued",
+      created: true,
+    }));
+    const { call, request } = await start({
+      "tournament.request": {
+        args: real.args,
+        result: tournamentRequestResultZ,
+        invoke,
+      },
+    });
+    const listed = await (await request("tools/list")).json();
+    expect(
+      listed.result.tools.find(
+        (tool: { name: string }) => tool.name === "tournament.request",
+      ).annotations.readOnlyHint,
+    ).toBe(false);
+    const response = await call("tournament.request", {
+      seedHint: "Slow beating",
+    });
+    expect(JSON.parse(response.body.result.content[0].text)).toEqual({
+      runId: "run-1",
+      status: "queued",
+    });
+    expect(invoke).toHaveBeenCalledWith(
+      { seedHint: "Slow beating" },
+      expect.any(AbortSignal),
+    );
   });
 
   it("reports unavailable capabilities without writes or fabricated success", async () => {
