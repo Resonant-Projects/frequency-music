@@ -17,6 +17,8 @@ const fixture = (page: Page, fn: string, value?: string) =>
   );
 const calls = (page: Page) =>
   page.evaluate(() => (window as any).feedbackFixture.calls);
+const committed = (page: Page) =>
+  page.evaluate(() => (window as any).feedbackFixture.committed);
 const render = (page: Page) =>
   page.getByRole("listitem").filter({
     has: page.getByRole("heading", { name: /7-limit triad drift/ }),
@@ -250,5 +252,74 @@ test("a docket link rates audio outside the queue window", async ({ page }) => {
   await open(page, "/listen?audio=hidden-artifact");
   await expect(
     page.getByText("The linked audio is not available for rating."),
+  ).toBeVisible();
+});
+
+test("a committed save whose answer was lost: an unchanged retry replays it once", async ({
+  page,
+}) => {
+  await open(page, "/listen");
+  const item = render(page);
+  await item.getByLabel("Overall").fill("3");
+  await fixture(page, "setMode", "lost");
+  await item.getByRole("button", { name: "Save rating" }).click();
+  await expect(item.getByText(/may have been saved/)).toBeVisible();
+  await fixture(page, "setMode", "ok");
+  await item.getByRole("button", { name: "Save rating" }).click();
+  await expect(
+    page.getByText(
+      "Your rating of “Litmus render: 7-limit triad drift” was already saved.",
+    ),
+  ).toBeVisible();
+  const ids = (await calls(page)).map((c: any) => c.args.clientRequestId);
+  expect(ids).toHaveLength(2);
+  expect(ids[1]).toBe(ids[0]);
+  expect(await committed(page)).toHaveLength(1);
+});
+
+test("an edit after a lost answer is saved as itself, never as the old rating", async ({
+  page,
+}) => {
+  await open(page, "/listen");
+  const item = render(page);
+  await item.getByLabel("Overall").fill("3");
+  await fixture(page, "setMode", "lost");
+  await item.getByRole("button", { name: "Save rating" }).click();
+  await expect(item.getByText(/may have been saved/)).toBeVisible();
+  await item.getByLabel("Overall").fill("5");
+  await fixture(page, "setMode", "ok");
+  await item.getByRole("button", { name: "Save rating" }).click();
+  await expect(
+    page.getByText(
+      "Saved your edited rating of “Litmus render: 7-limit triad drift”. The earlier unconfirmed save may also be recorded.",
+    ),
+  ).toBeVisible();
+  const sent = (await calls(page)).map((c: any) => c.args);
+  expect(sent).toHaveLength(2);
+  expect(sent[1].clientRequestId).not.toBe(sent[0].clientRequestId);
+  expect(sent[1].payload.scores).toEqual({ overall: 5 });
+  // Both the lost first save and the edit are on record; neither was dropped.
+  expect(await committed(page)).toHaveLength(2);
+});
+
+test("a docket link to audio already rated offers no deferral", async ({
+  page,
+}) => {
+  await open(page, "/listen?audio=rated-episode");
+  const linked = page.getByRole("listitem").filter({
+    has: page.getByRole("heading", { name: /Episode you already rated/ }),
+  });
+  await expect(
+    linked.getByRole("button", { name: "Save rating" }),
+  ).toBeVisible();
+  await expect(
+    linked.getByRole("button", { name: "Defer two weeks" }),
+  ).toHaveCount(0);
+  await open(page, "/listen?audio=old-episode");
+  await expect(
+    page
+      .getByRole("listitem")
+      .filter({ has: page.getByRole("heading", { name: /Older episode/ }) })
+      .getByRole("button", { name: "Defer two weeks" }),
   ).toBeVisible();
 });

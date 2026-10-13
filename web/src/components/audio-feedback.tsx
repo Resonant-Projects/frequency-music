@@ -5,7 +5,8 @@ import {
   AUDIO_RATING_NOTES_MAX,
   SCORE_KEYS_BY_KIND,
   type AudioScoreKey,
-} from "../../../convex/shared/audioFeedback";
+} from "../../../convex/shared/audioRatingKeys";
+import { stableStringify } from "../../../convex/shared/stableHash";
 import { css, cx } from "../../styled-system/css";
 import { createKeyedRows } from "../lib/keyed-rows";
 import {
@@ -204,7 +205,10 @@ function AudioFeedbackItem(props: {
   const [invalid, setInvalid] = createSignal<string | null>(null);
   const [error, setError] = createSignal<string | null>(null);
   const [busy, setBusy] = createSignal<"rate" | "defer" | null>(null);
-  let rateRequest = newRequestId();
+  // An unanswered save keeps its request ID only for the exact same rating.
+  // Any edit gets a new ID, so the server never replays the old rating as if
+  // the edit had been saved.
+  let unanswered: { requestId: string; fingerprint: string } | null = null;
   let deferRequest = newRequestId();
   const base = () => `audio-${props.item.artifactId}`;
 
@@ -235,30 +239,51 @@ function AudioFeedbackItem(props: {
     }
     setInvalid(null);
     setError(null);
+    const payload = {
+      scores: parsed,
+      conditions: method()
+        ? { listeningMethod: method() as Method, timeOfDay: time }
+        : undefined,
+      notes: note || undefined,
+    };
+    const fingerprint = stableStringify({
+      contentHash: props.item.contentHash,
+      payload,
+    });
+    const requestId =
+      unanswered?.fingerprint === fingerprint
+        ? unanswered.requestId
+        : newRequestId();
+    // The unconfirmed earlier save may have landed; say so instead of hiding it.
+    const afterUnconfirmed =
+      unanswered !== null && unanswered.requestId !== requestId;
     setBusy("rate");
     try {
       const result = await submit({
         artifactId: props.item.artifactId,
         contentHash: props.item.contentHash,
-        clientRequestId: rateRequest,
-        payload: {
-          scores: parsed,
-          conditions: method()
-            ? { listeningMethod: method() as Method, timeOfDay: time }
-            : undefined,
-          notes: note || undefined,
-        },
+        clientRequestId: requestId,
+        payload,
       });
-      rateRequest = newRequestId();
+      unanswered = null;
       props.onDone(
         result.replayed
           ? `Your rating of “${props.item.title}” was already saved.`
-          : `Saved your rating of “${props.item.title}”.`,
+          : afterUnconfirmed
+            ? `Saved your edited rating of “${props.item.title}”. The earlier unconfirmed save may also be recorded.`
+            : `Saved your rating of “${props.item.title}”.`,
       );
     } catch (failure) {
-      // Keep the request ID across transport failures so a retry is deduped.
-      if (serverAnswered(failure)) rateRequest = newRequestId();
-      setError(describeError(failure));
+      if (serverAnswered(failure)) {
+        unanswered = null;
+        setError(describeError(failure));
+      } else {
+        // Keep the request ID so an unchanged retry is deduped server-side.
+        unanswered = { requestId, fingerprint };
+        setError(
+          `${describeError(failure)} The rating may have been saved. Save again without changes to confirm it once; an edited rating is saved separately.`,
+        );
+      }
     } finally {
       setBusy(null);
     }
@@ -414,14 +439,17 @@ function AudioFeedbackItem(props: {
         >
           Save rating
         </UIButton>
-        <UIButton
-          type="button"
-          variant="outline"
-          aria-busy={busy() === "defer"}
-          onClick={() => void deferItem()}
-        >
-          Defer two weeks
-        </UIButton>
+        {/* Rated or already-deferred audio has no docket debt to defer. */}
+        <Show when={props.item.deferrable}>
+          <UIButton
+            type="button"
+            variant="outline"
+            aria-busy={busy() === "defer"}
+            onClick={() => void deferItem()}
+          >
+            Defer two weeks
+          </UIButton>
+        </Show>
       </div>
     </li>
   );

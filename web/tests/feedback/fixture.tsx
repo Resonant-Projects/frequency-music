@@ -15,6 +15,7 @@ import { DocketPage } from "../../src/routes/docket";
 import { ListenPage } from "../../src/routes/listen";
 import {
   calls,
+  committed,
   releaseHeld,
   setMode,
   setRenderHash,
@@ -22,7 +23,14 @@ import {
 } from "./convex-fixture";
 
 Object.assign(window, {
-  feedbackFixture: { setState, setMode, setRenderHash, releaseHeld, calls },
+  feedbackFixture: {
+    setState,
+    setMode,
+    setRenderHash,
+    releaseHeld,
+    calls,
+    committed,
+  },
 });
 const root = createRootRoute({
   component: () => (

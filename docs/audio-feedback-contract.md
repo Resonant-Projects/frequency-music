@@ -8,7 +8,14 @@ edited by hand.
 
 ## Shared contracts
 
-`convex/shared/audioFeedback.ts` owns the rating contract.
+`convex/shared/audioFeedback.ts` owns the rating contract. Its plain
+vocabulary (kinds, score keys, the notes limit and `isGeneralFeedbackAudio`)
+lives in `convex/shared/audioRatingKeys.ts`, which imports no package and is
+re-exported by `audioFeedback.ts`. The web app imports the keys module at
+runtime: its Vercel build installs only `web/` dependencies, so `zod` and
+`convex-helpers` are not resolvable from browser code. Type-only imports are
+fine. `convex/shared/webImports.test.ts` fails if a runtime import from
+`web/src` reaches a convex module that needs a package `web/` does not install.
 
 - `AUDIO_RATING_KINDS` is `["episode", "litmusRender"]`. No artifact kind was added.
 - `audioRatingScoresZ` is a strict object. Every score is optional and must be a
@@ -39,7 +46,11 @@ no change.
 ### Rateable artifact
 
 An artifact can be rated only while it is `ready`, has storage, is an episode
-or litmus render, and is blind-safe. Blind-safe means no unrevealed group lists
+or litmus render with `role: "delivery"`, and is blind-safe. A render stores a
+WAV master and its MP3 delivery, both of kind `litmusRender`; only the delivery
+is what a listener hears, so masters never enter the queue or the docket, and
+item, forArtifact, submit and the signed `rateAudio` and `defer` paths refuse
+them. Blind-safe means no unrevealed group lists
 it as a member and its own `blindGroupId`, when set, points at a revealed
 group. A dangling group fails closed. A refused artifact returns the same
 "not available" error whether it is hidden, pending or the wrong kind.
@@ -54,18 +65,25 @@ user through `requireDecisionUser`, as the decision APIs already do.
   rating for their current content and no active docket deferral, newest first.
   It scans the newest 200 artifacts of each kind. Each item is
   `{ artifactId, kind, title, durationSecs?, engineName?, validation?,
-  contentHash, docketContentHash, createdAt }`. It never returns storage IDs,
+  contentHash, docketContentHash, deferrable, createdAt }`. `deferrable` is
+  true when the docket would accept a deferral now: no human rating of the
+  current content and no active deferral. It never returns storage IDs,
   refs, voice, blind labels or analysis.
 - `audioFeedback.submit({ artifactId, contentHash, payload, clientRequestId })`
   returns `{ ratingId, replayed }`. `clientRequestId` is 8 to 200 characters of
   `[A-Za-z0-9._:-]`. The idempotency key is `${userId}:${clientRequestId}`: a
-  repeat returns the first rating with `replayed: true`, and reusing the key
-  for another artifact is rejected. A `contentHash` that no longer matches the
-  artifact is rejected as stale. The web keeps one request ID across transport
-  retries and replaces it after any server answer.
+  repeat with the same artifact, content hash, scores, conditions and notes
+  (after the contract's trimming) returns the first rating with
+  `replayed: true`. Reusing the key for anything else is rejected with "This
+  request ID was already used for a different rating." A `contentHash` that no
+  longer matches the artifact is rejected as stale. The web binds a request ID
+  to the exact rating it sent. After a transport failure it reuses that ID
+  only when the rating is unchanged; an edited rating gets a new ID and is
+  saved as its own row, and the page says the unconfirmed earlier save may also
+  be recorded. Any server answer replaces the ID.
 - `audioFeedback.item({ artifactId })` returns the same projection for one
   rateable artifact, whether or not it was rated, deferred or outside the
-  queue window, and `null` for anything else (including malformed IDs and
+  queue window (with `deferrable` false when rated or deferred), and `null` for anything else (including malformed IDs and
   blind-hidden audio). Docket links use it through `/listen?audio=<id>`.
 - `audioFeedback.forArtifact({ artifactId })` returns up to 50 ratings for a
   rateable artifact, newest first, with `current` marking ratings of the
@@ -107,6 +125,11 @@ was not given.
 
 ## Docket
 
+- `unratedAudio` cards exist only for delivery artifacts with storage
+  (`isGeneralFeedbackAudio`). After deploy, an existing card for a render
+  master is no longer listed or decidable; its stored row stays for audit, as
+  for any inactive card.
+
 - `recipeNoComposition` cards offer `["defer"]`; `unratedAudio` cards offer
   `["rateAudio", "defer"]`. The MCP card projection allows `rateAudio`.
 - `unratedAudio` also clears when an `audioRatings` row exists for the
@@ -125,7 +148,9 @@ was not given.
 - `/listen` has a "Rate audio" section above the podcast feed. Each item plays
   through the Clerk-gated playback query and shows kind-specific optional
   scores, optional listening conditions (both or neither), notes, "Save rating"
-  and "Defer two weeks". A `?audio=<id>` link pins that artifact first. Rows
+  and "Defer two weeks" when the item is `deferrable`. A `?audio=<id>` link
+  pins that artifact first; already-rated or deferred linked audio can be rated
+  again but offers no deferral. Rows
   are keyed by artifact and content hash, so new content under the same ID
   discards an unsaved draft instead of submitting it against the new version.
 - `/docket` (new, in the main navigation) lists the web docket with a link to
@@ -134,7 +159,10 @@ was not given.
 
 ## Verification
 
-- `vp test convex/audioFeedback.test.ts`: 22 tests covering blind safety in
+- `vp test convex/audioFeedback.test.ts`: 28 tests covering paired
+  master/delivery renders (queue, docket, direct master IDs, signed master
+  ratings, unrevealed groups), replay with an edited payload, linked-item
+  deferrability, blind safety in
   both membership directions, auth, zero versus absent, kind bounds, stale
   content, idempotency, docket clearing per content version, signed `rateAudio`,
   terminal staleness (including recipe parameters and checklist), the targeted
@@ -142,5 +170,7 @@ was not given.
 - `web/tests/feedback` is an isolated fixture (synthetic data, port 5192, no
   backend) over the real `/listen` and `/docket` routes:
   `vp exec playwright test --config tests/feedback/playwright.config.ts`.
-  Its 10 tests cover loading, empty, error, success, transport retry, stale,
-  double-click, content-version remount and linked-audio states. It is not production acceptance.
+  Its 13 tests cover loading, empty, error, success, transport retry, a
+  committed save whose answer was lost (unchanged retry and edited retry),
+  stale, double-click, content-version remount, linked-audio states and no
+  deferral for already-rated linked audio. It is not production acceptance.

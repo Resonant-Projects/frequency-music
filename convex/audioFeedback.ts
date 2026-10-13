@@ -18,16 +18,20 @@ import {
   audioRatingPayloadZ,
   audioRatingScoresValidator,
   isAudioRatingKind,
+  isGeneralFeedbackAudio,
   scoreKeysOutsideKind,
   type AudioRatingPayload,
 } from "./shared/audioFeedback";
 import { listeningConditionsValidator } from "./shared/decisionIntents";
+import { stableStringify } from "./shared/stableHash";
 import { unratedAudioCardHash } from "./docket";
 
 export const AUDIO_RATING_STALE =
   "This audio changed since you opened it. Reload and listen again.";
 export const AUDIO_RATING_UNAVAILABLE =
   "This audio is not available for rating.";
+export const AUDIO_REQUEST_REUSED =
+  "This request ID was already used for a different rating.";
 // Newest candidates scanned per kind before filtering; older debt stays on the docket.
 const QUEUE_SCAN_PER_KIND = 200;
 
@@ -63,9 +67,7 @@ export async function rateableArtifact(
   const row = await ctx.db.get(artifactId);
   if (
     !row ||
-    row.status !== "ready" ||
-    !row.storageId ||
-    !isAudioRatingKind(row.kind) ||
+    !isGeneralFeedbackAudio(row) ||
     !(await isBlindSafe(ctx, row, await blindHiddenArtifactIds(ctx)))
   )
     return null;
@@ -129,7 +131,43 @@ export async function createAudioRating(
   });
 }
 
-async function queueItem(row: Doc<"audioArtifacts">) {
+/** A shootout rating by a person already settles the artifact's listening debt. */
+async function shootoutRatedIds(
+  ctx: QueryCtx | MutationCtx,
+): Promise<Set<Id<"audioArtifacts">>> {
+  return new Set(
+    (await ctx.db.query("voiceRatings").collect())
+      .filter((row) => row.createdBy !== "system" && row.createdBy !== "agent")
+      .map((row) => row.artifactId),
+  );
+}
+
+async function deferredNow(
+  ctx: QueryCtx | MutationCtx,
+  row: Doc<"audioArtifacts">,
+  now: number,
+): Promise<boolean> {
+  const card = await ctx.db
+    .query("docketCards")
+    .withIndex("by_targetId", (q) => q.eq("targetId", row._id))
+    .unique();
+  return (card?.deferredUntil ?? 0) > now;
+}
+
+/** Same semantic fields the rating row stores, so a replay compares like with like. */
+function ratingFingerprint(
+  contentHash: string,
+  payload: Pick<AudioRatingPayload, "scores" | "conditions" | "notes">,
+): string {
+  return stableStringify({
+    contentHash,
+    scores: payload.scores,
+    conditions: payload.conditions,
+    notes: payload.notes,
+  });
+}
+
+async function queueItem(row: Doc<"audioArtifacts">, deferrable: boolean) {
   if (!isAudioRatingKind(row.kind)) throw new Error("Unrateable kind");
   return {
     artifactId: row._id,
@@ -140,6 +178,7 @@ async function queueItem(row: Doc<"audioArtifacts">) {
     validation: row.validation,
     contentHash: row.contentHash,
     docketContentHash: await unratedAudioCardHash(row),
+    deferrable,
     createdAt: row.createdAt,
   };
 }
@@ -153,7 +192,14 @@ export const item = query({
     await requireHumanIdentity(ctx);
     const id = ctx.db.normalizeId("audioArtifacts", args.artifactId);
     const row = id ? await rateableArtifact(ctx, id) : null;
-    return row ? await queueItem(row) : null;
+    if (!row) return null;
+    // A linked item may already be rated or deferred; the docket would refuse
+    // its deferral, so the page must not offer one.
+    const deferrable =
+      !(await shootoutRatedIds(ctx)).has(row._id) &&
+      !(await hasHumanAudioRating(ctx, row)) &&
+      !(await deferredNow(ctx, row, Date.now()));
+    return await queueItem(row, deferrable);
   },
 });
 
@@ -164,13 +210,7 @@ export const queue = query({
   handler: async (ctx) => {
     await requireHumanIdentity(ctx);
     const hidden = await blindHiddenArtifactIds(ctx);
-    const shootoutRated = new Set(
-      (await ctx.db.query("voiceRatings").collect())
-        .filter(
-          (row) => row.createdBy !== "system" && row.createdBy !== "agent",
-        )
-        .map((row) => row.artifactId),
-    );
+    const shootoutRated = await shootoutRatedIds(ctx);
     const now = Date.now();
     const candidates: Doc<"audioArtifacts">[] = [];
     for (const kind of AUDIO_RATING_KINDS)
@@ -187,20 +227,14 @@ export const queue = query({
     )) {
       if (items.length >= AUDIO_FEEDBACK_QUEUE_LIMIT) break;
       if (
-        row.status !== "ready" ||
-        !row.storageId ||
-        !isAudioRatingKind(row.kind) ||
+        !isGeneralFeedbackAudio(row) ||
         shootoutRated.has(row._id) ||
         !(await isBlindSafe(ctx, row, hidden)) ||
         (await hasHumanAudioRating(ctx, row))
       )
         continue;
-      const card = await ctx.db
-        .query("docketCards")
-        .withIndex("by_targetId", (q) => q.eq("targetId", row._id))
-        .unique();
-      if ((card?.deferredUntil ?? 0) > now) continue;
-      items.push(await queueItem(row));
+      if (await deferredNow(ctx, row, now)) continue;
+      items.push(await queueItem(row, true));
     }
     return items;
   },
@@ -228,8 +262,16 @@ export const submit = mutation({
       .withIndex("by_requestKey", (q) => q.eq("requestKey", requestKey))
       .unique();
     if (existing) {
-      if (existing.artifactId !== args.artifactId)
-        throw new ConvexError("Client request ID was already used");
+      // A replay must be the same rating. Reusing the key for edited scores
+      // would otherwise report the edit as saved while keeping the old row.
+      const payload = audioRatingPayloadZ.safeParse(args.payload);
+      if (
+        existing.artifactId !== args.artifactId ||
+        !payload.success ||
+        ratingFingerprint(existing.artifactContentHash, existing) !==
+          ratingFingerprint(args.contentHash, payload.data)
+      )
+        throw new ConvexError(AUDIO_REQUEST_REUSED);
       return { ratingId: existing._id, replayed: true };
     }
     const ratingId = await createAudioRating(ctx, {

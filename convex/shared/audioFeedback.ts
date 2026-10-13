@@ -4,48 +4,18 @@
 import { zid, zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
 import { listeningConditionsZ } from "./listeningConditions";
+import {
+  AUDIO_RATING_KINDS,
+  AUDIO_RATING_NOTES_MAX,
+  SCORE_KEYS_BY_KIND,
+  type AudioRatingKind,
+  type AudioScoreKey,
+} from "./audioRatingKeys";
 
-export const AUDIO_RATING_KINDS = ["episode", "litmusRender"] as const;
-export type AudioRatingKind = (typeof AUDIO_RATING_KINDS)[number];
+export * from "./audioRatingKeys";
 export const audioRatingKindZ = z.enum(AUDIO_RATING_KINDS);
-export function isAudioRatingKind(kind: string): kind is AudioRatingKind {
-  return (AUDIO_RATING_KINDS as readonly string[]).includes(kind);
-}
 
 const score = z.number().finite().min(0).max(5).optional();
-export const EPISODE_SCORE_KEYS = [
-  "overall",
-  "clarity",
-  "naturalness",
-  "pacing",
-] as const;
-export const RENDER_SCORE_KEYS = [
-  "overall",
-  "bodilyPleasantness",
-  "goosebumps",
-  "perceivedConsonance",
-  "musicality",
-  "easeOfComposability",
-  "expandability",
-] as const;
-export const AUDIO_SCORE_KEYS = [
-  "overall",
-  "clarity",
-  "naturalness",
-  "pacing",
-  "bodilyPleasantness",
-  "goosebumps",
-  "perceivedConsonance",
-  "musicality",
-  "easeOfComposability",
-  "expandability",
-] as const;
-export type AudioScoreKey = (typeof AUDIO_SCORE_KEYS)[number];
-export const SCORE_KEYS_BY_KIND: Record<
-  AudioRatingKind,
-  readonly AudioScoreKey[]
-> = { episode: EPISODE_SCORE_KEYS, litmusRender: RENDER_SCORE_KEYS };
-
 /** Absent means "not given"; zero is a real rating and is preserved. */
 export const audioRatingScoresZ = z
   .object({
@@ -64,7 +34,6 @@ export const audioRatingScoresZ = z
 export type AudioRatingScores = z.infer<typeof audioRatingScoresZ>;
 export const audioRatingScoresValidator = zodToConvex(audioRatingScoresZ);
 
-export const AUDIO_RATING_NOTES_MAX = 4000;
 export const audioRatingPayloadZ = z
   .object({
     scores: audioRatingScoresZ,
@@ -130,6 +99,8 @@ export const audioFeedbackQueueItemZ = z.object({
   contentHash: z.string(),
   // The matching docket card version, for deferring from Listen.
   docketContentHash: z.string(),
+  // The web defer would be admitted now: unrated and not already deferred.
+  deferrable: z.boolean(),
   createdAt: z.number(),
 });
 export const audioFeedbackQueueItemValidator = zodToConvex(

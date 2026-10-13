@@ -139,6 +139,45 @@ async function setup() {
   return { t, human: t.withIdentity({ subject: "human" }), ...ids };
 }
 
+/** A render as the media lane stores it: a WAV master and its MP3 delivery,
+ * both kind litmusRender. Only the delivery is what a listener hears. */
+async function pairedRender(
+  t: Awaited<ReturnType<typeof setup>>["t"],
+  title: string,
+  createdAt: number,
+) {
+  return await t.run(async (ctx) => {
+    const storageId = await ctx.storage.store(new Blob([title]));
+    const common = {
+      kind: "litmusRender" as const,
+      metadataStripped: true,
+      status: "ready" as const,
+      storageId,
+      normalization: "applied" as const,
+      access: "private" as const,
+      refs: {},
+      title,
+      createdBy: "system" as const,
+      createdAt,
+      updatedAt: createdAt,
+    };
+    const masterId = await ctx.db.insert("audioArtifacts", {
+      ...common,
+      role: "masterNormalized",
+      encoding: { codec: "wav", sampleRate: 48000, channels: 2 },
+      contentHash: `${title}-master`,
+    });
+    const deliveryId = await ctx.db.insert("audioArtifacts", {
+      ...common,
+      role: "delivery",
+      masterArtifactId: masterId,
+      encoding: { codec: "mp3", sampleRate: 48000, channels: 2 },
+      contentHash: `${title}-delivery`,
+    });
+    return { masterId, deliveryId };
+  });
+}
+
 describe("general audio feedback", () => {
   test("queue is human-only and blind-safe in both membership directions", async () => {
     const { t, human, episodeId, renderId } = await setup();
@@ -156,6 +195,7 @@ describe("general audio feedback", () => {
       validation: "unvalidated",
       contentHash: "render-v1",
       docketContentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      deferrable: true,
       createdAt: 6,
     });
     const card = (await human.query(api.docket.listWeb, {})).find(
@@ -306,7 +346,9 @@ describe("general audio feedback", () => {
         contentHash: "render-v1",
         payload: { scores: { overall: 1 } },
       }),
-    ).rejects.toThrow("Client request ID was already used");
+    ).rejects.toThrow(
+      "This request ID was already used for a different rating.",
+    );
     // Another person may reuse the same client ID without colliding.
     const other = await t
       .withIdentity({ subject: "someone-else" })
@@ -370,6 +412,183 @@ describe("general audio feedback", () => {
       artifactId: episodeId,
     });
     expect(history).toMatchObject([{ current: false, notes: "Heard it" }]);
+  });
+});
+
+describe("render masters are never general feedback targets", () => {
+  test("a paired render queues and dockets once, as its delivery", async () => {
+    const { t, human } = await setup();
+    const { masterId, deliveryId } = await pairedRender(t, "Paired", 50);
+    const queue = await human.query(api.audioFeedback.queue, {});
+    expect(queue.map((row) => row.artifactId)).toContain(deliveryId);
+    expect(queue.map((row) => row.artifactId)).not.toContain(masterId);
+    const cards = await human.query(api.docket.listWeb, {});
+    expect(cards.filter((row) => row.title === "Paired")).toEqual([
+      expect.objectContaining({ kind: "unratedAudio", targetId: deliveryId }),
+    ]);
+  });
+
+  test("direct master IDs are refused by item, forArtifact, submit and the signed path", async () => {
+    const { t, human } = await setup();
+    const { masterId } = await pairedRender(t, "Direct", 50);
+    expect(
+      await human.query(api.audioFeedback.item, { artifactId: masterId }),
+    ).toBeNull();
+    expect(
+      await human.query(api.audioFeedback.forArtifact, {
+        artifactId: masterId,
+      }),
+    ).toEqual([]);
+    await expect(
+      human.mutation(api.audioFeedback.submit, {
+        artifactId: masterId,
+        contentHash: "Direct-master",
+        clientRequestId: "master-0001",
+        payload: { scores: { overall: 4 } },
+      }),
+    ).rejects.toThrow("This audio is not available for rating.");
+    await expect(
+      t.mutation(api.decisionIntents.propose, {
+        secret: "service",
+        command: {
+          action: "rateAudio",
+          target: { kind: "audioArtifact", id: masterId },
+          payload: { scores: { overall: 4 } },
+        },
+        proposal,
+      }),
+    ).rejects.toThrow("This audio is not available for rating.");
+    await expect(
+      t.mutation(api.decisionIntents.propose, {
+        secret: "service",
+        command: {
+          action: "defer",
+          target: { kind: "audioArtifact", id: masterId },
+          payload: {},
+        },
+        proposal,
+      }),
+    ).rejects.toThrow("This audio is not available for rating.");
+    expect(
+      await t.run((ctx) => ctx.db.query("audioRatings").collect()),
+    ).toEqual([]);
+  });
+
+  test("a signed rating whose target stops being a delivery is rejected at apply", async () => {
+    const { t, human } = await setup();
+    const { deliveryId } = await pairedRender(t, "Signed", 50);
+    const intent = await t.mutation(api.decisionIntents.propose, {
+      secret: "service",
+      command: {
+        action: "rateAudio",
+        target: { kind: "audioArtifact", id: deliveryId },
+        payload: { scores: { overall: 4 } },
+      },
+      proposal,
+    });
+    await t.run((ctx) => ctx.db.patch(deliveryId, { role: "masterRaw" }));
+    expect(
+      await human.mutation(api.decisionIntents.applyWeb, {
+        intentId: intent._id,
+        digest8: intent.payloadDigest.slice(0, 8),
+        eventId: "master-apply-1",
+      }),
+    ).toEqual({ status: "rejected", error: "Target changed: unavailable" });
+    expect(
+      await t.run((ctx) => ctx.db.query("audioRatings").collect()),
+    ).toEqual([]);
+  });
+
+  test("an unrevealed group hides the delivery without exposing its master", async () => {
+    const { t, human } = await setup();
+    const { masterId, deliveryId } = await pairedRender(t, "Blind pair", 50);
+    const groupId = await t.run((ctx) =>
+      ctx.db.insert("blindGroups", {
+        purpose: "studyFamily",
+        members: [{ memberId: "b1", artifactId: deliveryId, label: "B" }],
+        requiredRatings: [],
+        createdAt: 1,
+      }),
+    );
+    const visible = async () => [
+      ...(await human.query(api.audioFeedback.queue, {})).map(
+        (row) => row.artifactId as string,
+      ),
+      ...(await human.query(api.docket.listWeb, {})).map((row) => row.targetId),
+    ];
+    expect(await visible()).not.toContain(deliveryId);
+    expect(await visible()).not.toContain(masterId);
+    expect(JSON.stringify(await visible())).not.toMatch(/Blind pair/);
+    await t.run((ctx) => ctx.db.patch(groupId, { revealedAt: 60 }));
+    expect(await visible()).toContain(deliveryId);
+    expect(await visible()).not.toContain(masterId);
+  });
+});
+
+describe("linked item deferral", () => {
+  test("a linked item is deferrable only while it is unrated and not deferred", async () => {
+    const { human, episodeId, renderId } = await setup();
+    const deferrable = async (artifactId: string) =>
+      (await human.query(api.audioFeedback.item, { artifactId }))?.deferrable;
+    expect(await deferrable(episodeId)).toBe(true);
+    await human.mutation(api.audioFeedback.submit, {
+      artifactId: episodeId,
+      contentHash: "episode-v1",
+      clientRequestId: "rated-0001",
+      payload: { scores: { clarity: 4 } },
+    });
+    // Still rateable again from the link, but no longer docket debt.
+    expect(
+      await human.query(api.audioFeedback.item, { artifactId: episodeId }),
+    ).toMatchObject({ artifactId: episodeId, deferrable: false });
+    const card = (await human.query(api.docket.listWeb, {})).find(
+      (row) => row.targetId === renderId,
+    );
+    await human.mutation(api.decisionIntents.deferWeb, {
+      targetId: renderId,
+      contentHash: card!.contentHash,
+      eventId: "defer-linked-1",
+    });
+    expect(await deferrable(renderId)).toBe(false);
+  });
+});
+
+describe("rating replay", () => {
+  test("a replayed request ID must carry the same rating", async () => {
+    const { t, human, renderId } = await setup();
+    const args = {
+      artifactId: renderId,
+      contentHash: "render-v1",
+      clientRequestId: "lost-0001",
+      payload: { scores: { overall: 3 }, notes: "Warm" },
+    };
+    const first = await human.mutation(api.audioFeedback.submit, args);
+    // Committed but the answer was lost: the unchanged retry replays it,
+    // including after insignificant whitespace the contract trims anyway.
+    expect(
+      await human.mutation(api.audioFeedback.submit, {
+        ...args,
+        payload: { scores: { overall: 3 }, notes: "  Warm " },
+      }),
+    ).toEqual({ ratingId: first.ratingId, replayed: true });
+    // An edit under the same ID is refused instead of reported as saved.
+    await expect(
+      human.mutation(api.audioFeedback.submit, {
+        ...args,
+        payload: { scores: { overall: 5 }, notes: "Warm" },
+      }),
+    ).rejects.toThrow(
+      "This request ID was already used for a different rating.",
+    );
+    // The edit under its own ID is kept alongside the first rating.
+    const edited = await human.mutation(api.audioFeedback.submit, {
+      ...args,
+      clientRequestId: "edit-0001",
+      payload: { scores: { overall: 5 }, notes: "Warm" },
+    });
+    expect(edited.replayed).toBe(false);
+    const rows = await t.run((ctx) => ctx.db.query("audioRatings").collect());
+    expect(rows.map((row) => row.scores.overall)).toEqual([3, 5]);
   });
 });
 

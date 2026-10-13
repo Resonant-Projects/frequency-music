@@ -5,7 +5,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import {
   AUDIO_SCORE_KEYS,
   type AudioScoreKey,
-} from "../../../convex/shared/audioFeedback";
+} from "../../../convex/shared/audioRatingKeys";
 import type { DecisionResult } from "../../../convex/shared/decisionIntents";
 import { createMutation, createQueryWithStatus } from "../integrations/convex";
 import { IntentReview } from "./intent-review";

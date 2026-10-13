@@ -8,17 +8,21 @@ import type {
 import { getFunctionName } from "convex/server";
 import { ConvexError } from "convex/values";
 import { createMemo, createSignal } from "solid-js";
+import { stableStringify } from "../../../convex/shared/stableHash";
 import type { QueryStatus } from "../../src/integrations/convex/query";
 export { describeError } from "../../src/integrations/convex/errors";
 export { describeLoad } from "../../src/integrations/convex/query";
 
 export type FixtureState = "ready" | "loading" | "error" | "empty";
-export type MutationMode = "ok" | "stale" | "network" | "hold";
+// "lost": the server commits the rating, then the response never arrives.
+export type MutationMode = "ok" | "stale" | "network" | "hold" | "lost";
 export const [state, setState] = createSignal<FixtureState>("ready");
 export const [mode, setMode] = createSignal<MutationMode>("ok");
 export const [removed, setRemoved] = createSignal<string[]>([]);
 export const [renderHash, setRenderHash] = createSignal("render-hash");
 export const calls: { name: string; args: unknown }[] = [];
+// Server-side ratings by request ID, as audioFeedback.submit stores them.
+export const committed: { requestId: string; fingerprint: string }[] = [];
 let release: (() => void) | null = null;
 export function releaseHeld() {
   release?.();
@@ -38,6 +42,7 @@ const queueItems = [
       return renderHash();
     },
     docketContentHash: "c".repeat(64),
+    deferrable: true,
     createdAt: Date.UTC(2026, 9, 12, 18),
   },
   {
@@ -47,6 +52,7 @@ const queueItems = [
     durationSecs: 1460,
     contentHash: "episode-hash",
     docketContentHash: "d".repeat(64),
+    deferrable: true,
     createdAt: Date.UTC(2026, 9, 5, 12),
   },
 ];
@@ -90,6 +96,31 @@ const cards = [
   },
 ];
 
+// Docket links to audio outside the queue window. One is already rated, so
+// the server would refuse to defer it.
+const linkedItems = {
+  "old-episode": {
+    artifactId: "old-episode",
+    kind: "episode",
+    title: "Older episode outside the queue",
+    durationSecs: 900,
+    contentHash: "old-hash",
+    docketContentHash: "e".repeat(64),
+    deferrable: true,
+    createdAt: Date.UTC(2026, 6, 1),
+  },
+  "rated-episode": {
+    artifactId: "rated-episode",
+    kind: "episode",
+    title: "Episode you already rated",
+    durationSecs: 600,
+    contentHash: "rated-hash",
+    docketContentHash: "f".repeat(64),
+    deferrable: false,
+    createdAt: Date.UTC(2026, 5, 1),
+  },
+};
+
 export function createQueryWithStatus<Q extends FunctionReference<"query">>(
   query: Q,
   args: () => FunctionArgs<Q> | "skip",
@@ -113,21 +144,13 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
           : queueItems
               .filter((row) => !gone.has(row.artifactId))
               .map((row) => ({ ...row }));
-    else if (name === "audioFeedback:item")
+    else if (name === "audioFeedback:item") {
+      const id = (input as { artifactId: string }).artifactId;
       value =
-        (input as { artifactId: string }).artifactId === "old-episode" &&
-        !gone.has("old-episode")
-          ? {
-              artifactId: "old-episode",
-              kind: "episode",
-              title: "Older episode outside the queue",
-              durationSecs: 900,
-              contentHash: "old-hash",
-              docketContentHash: "e".repeat(64),
-              createdAt: Date.UTC(2026, 6, 1),
-            }
+        id in linkedItems && !gone.has(id)
+          ? linkedItems[id as keyof typeof linkedItems]
           : null;
-    else if (name === "audioArtifacts:playback")
+    } else if (name === "audioArtifacts:playback")
       value = {
         url: "/synthetic-audio.mp3",
         mimeType: "audio/mpeg",
@@ -170,10 +193,26 @@ export function createMutation<M extends FunctionReference<"mutation">>(
       });
     const input = args as Record<string, unknown>;
     const target = String(input.artifactId ?? input.targetId);
+    let replayed = false;
+    if (name === "audioFeedback:submit") {
+      const requestId = String(input.clientRequestId);
+      const fingerprint = stableStringify({
+        contentHash: input.contentHash,
+        payload: input.payload,
+      });
+      const prior = committed.find((row) => row.requestId === requestId);
+      if (prior && prior.fingerprint !== fingerprint)
+        throw new ConvexError(
+          "This request ID was already used for a different rating.",
+        );
+      replayed = prior !== undefined;
+      if (!prior) committed.push({ requestId, fingerprint });
+      if (current === "lost") throw new Error("Failed to fetch");
+    }
     setRemoved((all) => [...all, target]);
     return (
       name === "audioFeedback:submit"
-        ? { ratingId: "rating-one", replayed: false }
+        ? { ratingId: "rating-one", replayed }
         : { status: "applied", appliedRecordId: "card-one" }
     ) as FunctionReturnType<M>;
   };

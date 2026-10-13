@@ -15,6 +15,7 @@ import {
 } from "./_generated/server";
 import { requireHumanIdentity } from "./decisionIdentity";
 import { feedProposalZ } from "./shared/feedProposals";
+import { isGeneralFeedbackAudio } from "./shared/audioRatingKeys";
 import { isHumanListeningSession } from "./shared/listeningPredicates";
 import { stableContentDigest } from "./shared/decisionIntents";
 import {
@@ -177,7 +178,8 @@ async function eligible(
       );
   for (const row of artifacts)
     if (
-      (row.kind === "episode" || row.kind === "litmusRender") &&
+      // Masters share the render's kind; only the delivery is listening debt.
+      isGeneralFeedbackAudio(row) &&
       !rated.has(row._id) &&
       !ratedVersions.has(`${row._id}:${row.contentHash}`) &&
       !hidden.has(row._id) &&
