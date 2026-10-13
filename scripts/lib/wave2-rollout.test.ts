@@ -193,7 +193,8 @@ describe("revision backfill driver", () => {
       maxPages: 2,
     });
     expect(backfillOutcome(partial).complete).toBe(false);
-    expect(checkpoints).toHaveLength(2);
+    // One checkpoint before and one after each page.
+    expect(checkpoints).toHaveLength(4);
     expect(describeBackfillPlan(partial).nextStep).toMatchObject({
       function: "decisionIntentsMigrations:backfillRevisions",
       phase: "backfill",
@@ -242,6 +243,66 @@ describe("revision backfill driver", () => {
     });
     expect(backfillOutcome(done).verified).toBe(true);
     expect((await revisions()).feeds).toEqual([0, 0, 7, 0, 0]);
+  });
+
+  test("a lost verification response restarts that verification pass", async () => {
+    const { t, call } = await seed();
+    let saved = await runRevisionBackfill({
+      state: initialBackfillState(TARGET, 2),
+      call,
+      checkpoint: () => {},
+      maxPages: 3,
+    });
+    expect(saved.tables.feeds.backfill.done).toBe(true);
+    // Advance the feeds verification pass by one clean page.
+    saved = await runRevisionBackfill({
+      state: saved,
+      call,
+      checkpoint: () => {},
+      maxPages: 1,
+    });
+    expect(saved.tables.feeds.verify).toMatchObject({ pages: 1, updated: 0 });
+    // A row in the second page loses its revision; the next verification page
+    // fixes it, then the response is lost before its count is checkpointed.
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query("feeds").collect();
+      const { _id, _creationTime, revision: _revision, ...rest } = rows[3]!;
+      await ctx.db.replace(_id, rest);
+    });
+    const lost: BackfillCall = async (args) => {
+      await call(args);
+      throw new Error("response lost");
+    };
+    await expect(
+      runRevisionBackfill({
+        state: saved,
+        call: lost,
+        checkpoint: (state) => {
+          saved = structuredClone(state);
+        },
+      }),
+    ).rejects.toThrow("response lost");
+    expect(saved.tables.feeds.verify).toMatchObject({
+      pending: true,
+      pages: 1,
+    });
+    expect(describeBackfillPlan(saved).nextStep).toMatchObject({
+      phase: "verify",
+      args: { table: "feeds", cursor: null },
+    });
+    const done = await runRevisionBackfill({
+      state: saved,
+      call,
+      checkpoint: () => {},
+    });
+    // The restarted pass covers every feed from the beginning.
+    expect(done.tables.feeds.verify).toMatchObject({
+      updated: 0,
+      pending: false,
+      done: true,
+    });
+    expect(done.tables.feeds.verify.pages).toBeGreaterThanOrEqual(3);
+    expect(backfillOutcome(done).verified).toBe(true);
   });
 
   test("verification fails when legacy rows appear after the backfill pass", async () => {

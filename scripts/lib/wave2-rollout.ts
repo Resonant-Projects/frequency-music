@@ -132,6 +132,12 @@ export interface BackfillPass {
   done: boolean;
   pages: number;
   updated: number;
+  /**
+   * Set before each call and cleared once its result is checkpointed. A pending
+   * verification page on resume may have committed updates whose count was
+   * lost, so the verification pass restarts from the beginning.
+   */
+  pending: boolean;
 }
 export interface BackfillTableState {
   backfill: BackfillPass;
@@ -150,11 +156,12 @@ export type BackfillCall = (args: {
   batchSize: number;
 }) => Promise<unknown>;
 
-const freshPass = (): BackfillPass => ({
+export const freshPass = (): BackfillPass => ({
   cursor: null,
   done: false,
   pages: 0,
   updated: 0,
+  pending: false,
 });
 
 export function initialBackfillState(
@@ -180,6 +187,7 @@ function isPass(value: unknown): value is BackfillPass {
     pass !== null &&
     (pass.cursor === null || typeof pass.cursor === "string") &&
     typeof pass.done === "boolean" &&
+    typeof pass.pending === "boolean" &&
     Number.isSafeInteger(pass.pages) &&
     (pass.pages as number) >= 0 &&
     Number.isSafeInteger(pass.updated) &&
@@ -225,7 +233,11 @@ export function nextBackfillStep(state: BackfillState): BackfillStep {
     if (!entry.backfill.done)
       return { table, phase: "backfill", cursor: entry.backfill.cursor };
     if (!entry.verify.done)
-      return { table, phase: "verify", cursor: entry.verify.cursor };
+      return {
+        table,
+        phase: "verify",
+        cursor: entry.verify.pending ? null : entry.verify.cursor,
+      };
   }
   return null;
 }
@@ -296,6 +308,11 @@ export async function runRevisionBackfill(options: {
   for (let calls = 0; calls < maxPages; calls++) {
     const step = nextBackfillStep(state);
     if (!step) return state;
+    const pass = state.tables[step.table][step.phase];
+    if (step.phase === "verify" && pass.pending)
+      Object.assign(pass, freshPass());
+    pass.pending = true;
+    await options.checkpoint(state);
     const page = parsePage(
       await options.call({
         table: step.table,
@@ -304,13 +321,13 @@ export async function runRevisionBackfill(options: {
       }),
       state.batchSize,
     );
-    const pass = state.tables[step.table][step.phase];
     if (!page.done && page.cursor === step.cursor)
       throw new Error("Backfill cursor did not advance");
     pass.cursor = page.cursor;
     pass.done = page.done;
     pass.pages++;
     pass.updated += page.updated;
+    pass.pending = false;
     await options.checkpoint(state);
   }
   return state;

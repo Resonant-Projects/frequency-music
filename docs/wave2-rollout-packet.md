@@ -97,9 +97,17 @@ Post-deployment checks:
    only that no signer handler answers.
 4. Media worker probe jobs still complete.
 
-Rollback: redeploy the previous source. The added tables and optional fields
-are additive, so the earlier code ignores them. Do not delete the new tables
-during rollback; a later redeploy reuses them.
+Rollback: keep the Wave 2 schema. Convex validates existing documents against
+the schema on every deploy, and the previous schema does not declare
+`revision`, the decision provenance fields, or the new tables. Once any
+document holds one of these (after the Stage 2 backfill, any feed poll or
+draft decision on the new code, or any intent or docket write), redeploying
+the previous source as-is fails schema validation. The first response is to
+leave both flags off, which disables every new outbound behavior without a
+deploy. If application code must be reverted, deploy the previous functions
+together with the current `convex/schema.ts`, `convex/validators.ts` and
+`convex/shared/` contracts, and confirm the dry-run reports no schema
+removal. Never delete the new tables or fields to make an old schema fit.
 
 ## Stage 2. Revision backfill
 
@@ -117,9 +125,11 @@ CONVEX_SELF_HOSTED_ADMIN_KEY=... vpx tsx scripts/wave2-revision-backfill.ts \
 
 - Order: `feeds` to completion, a verification pass over `feeds` from the
   start, then the same for `agentReviewDrafts`.
-- The state file is written (mode 0600) after every page. Rerun the same
-  command to resume from the last committed cursor after a failure or
-  `--max-pages` stop.
+- The state file is written (mode 0600) before and after every page. Rerun the
+  same command to resume from the last committed cursor after a failure or
+  `--max-pages` stop. If a verification page's result was lost, its committed
+  update count is unknown, so the verification pass for that table restarts
+  from the beginning.
 - Exit codes: 0 complete and verified; 3 stopped at `--max-pages`; 4 a
   verification pass updated rows, so rerun with `--reverify`; 1 a page failed;
   2 invalid arguments, origin, state file, or missing admin key.
@@ -132,7 +142,8 @@ Acceptance: exit code 0 with `verified: true` for both tables. Keep the schema
 field optional; making it required is a separate future change.
 
 Rollback: none needed. Revision 0 matches what readers already assume for an
-absent value.
+absent value. The populated field is one reason Stage 1's rollback keeps the
+Wave 2 schema.
 
 ## Stage 3. MCP workload (external infrastructure)
 

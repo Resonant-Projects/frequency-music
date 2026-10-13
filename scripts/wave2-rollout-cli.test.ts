@@ -18,7 +18,7 @@ function run(script: string, args: string[], extra: Record<string, string>) {
       HOME: process.env.HOME ?? "",
       APP_ENV: "test",
       ...extra,
-    },
+    } as unknown as typeof process.env,
   });
 }
 
@@ -97,6 +97,7 @@ describe("wave2 revision backfill CLI", () => {
       done: false,
       pages: 3,
       updated: 60,
+      pending: false,
     };
     const path = join(dir, "state.json");
     writeFileSync(path, JSON.stringify(state));

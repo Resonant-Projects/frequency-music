@@ -10,6 +10,7 @@ import {
   BACKFILL_FUNCTION,
   backfillOutcome,
   describeBackfillPlan,
+  freshPass,
   initialBackfillState,
   parseBackfillState,
   runRevisionBackfill,
@@ -65,12 +66,7 @@ try {
 }
 if (values.reverify)
   for (const table of Object.keys(state.tables) as BackfillTable[])
-    state.tables[table].verify = {
-      cursor: null,
-      done: false,
-      pages: 0,
-      updated: 0,
-    };
+    state.tables[table].verify = freshPass();
 
 if (!values.execute) {
   console.log(JSON.stringify(describeBackfillPlan(state), null, 2));
