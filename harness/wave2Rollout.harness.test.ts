@@ -269,4 +269,6 @@ test("rehearses backfill, docket receipts, signed and web confirmation, replay a
     status: "applied",
     signature: { userId },
   });
+  // Decisions schedule run reconciliation; settle it inside this test.
+  await t.finishAllScheduledFunctions(() => vi.runAllTimers());
 });
