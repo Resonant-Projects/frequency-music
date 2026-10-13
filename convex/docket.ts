@@ -33,6 +33,18 @@ import {
   type DocketCandidate,
 } from "./shared/docket";
 
+/** Every persisted recipe field except identity and timestamps. The docket card
+ * version and signed recipe decisions share it, so neither can miss an edit. */
+export function recipeDecisionContent(row: Doc<"recipes">) {
+  const {
+    _id: _rowId,
+    _creationTime: _rowCreated,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    ...content
+  } = row;
+  return content;
+}
 function unratedAudioSemantic(row: Doc<"audioArtifacts">) {
   return { title: row.title, contentHash: row.contentHash };
 }
@@ -149,7 +161,7 @@ async function eligible(
         `/recipes/${row._id}`,
         ["defer"],
         row.createdAt,
-        { title: row.title, body: row.bodyMd, protocol: row.protocol },
+        recipeDecisionContent(row),
       );
   for (const row of compositions)
     if (row.status === "rendered" && !heard.has(row._id))

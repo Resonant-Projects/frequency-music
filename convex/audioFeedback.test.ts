@@ -636,6 +636,35 @@ describe("web docket deferral", () => {
     ).toBe(false);
   });
 
+  test("a recipe card version covers parameters and checklist", async () => {
+    const { t, human, recipeId } = await setup();
+    const card = (await human.query(api.docket.listWeb, {})).find(
+      (row) => row.targetId === recipeId,
+    );
+    await t.run((ctx) =>
+      ctx.db.patch(recipeId, { dawChecklist: ["Bounce stems"] }),
+    );
+    await expect(
+      human.mutation(api.decisionIntents.deferWeb, {
+        targetId: recipeId,
+        contentHash: card!.contentHash,
+        eventId: "recipe-card-stale",
+      }),
+    ).rejects.toThrow("Docket card changed or is no longer eligible");
+    await t.run((ctx) => ctx.db.patch(recipeId, { updatedAt: 500 }));
+    const fresh = (await human.query(api.docket.listWeb, {})).find(
+      (row) => row.targetId === recipeId,
+    );
+    expect(fresh!.contentHash).not.toBe(card!.contentHash);
+    expect(
+      await human.mutation(api.decisionIntents.deferWeb, {
+        targetId: recipeId,
+        contentHash: fresh!.contentHash,
+        eventId: "recipe-card-fresh",
+      }),
+    ).toMatchObject({ status: "applied" });
+  });
+
   test("a stale or ineligible card is refused without consuming the click", async () => {
     const { t, human, renderId } = await setup();
     const card = (await human.query(api.docket.listWeb, {})).find(

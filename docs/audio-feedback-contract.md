@@ -112,6 +112,11 @@ was not given.
 - `unratedAudio` also clears when an `audioRatings` row exists for the
   artifact's current content hash. A content change brings the card back.
 - `unratedAudio` cards link to `/listen?audio=<artifactId>`.
+- A `recipeNoComposition` card version now hashes the same full recipe
+  content as a recipe decision (all fields except identity and timestamps),
+  so a parameter or checklist edit makes an open web deferral stale. Existing
+  recipe cards change hash once on the next reconcile, which also clears their
+  generated blurb and narration reference.
 - Reconciliation updates a stored card's `decisions` and `pageUrl` when they
   change without a content change, so existing cards gain the new actions.
 
@@ -129,7 +134,7 @@ was not given.
 
 ## Verification
 
-- `vp test convex/audioFeedback.test.ts`: 21 tests covering blind safety in
+- `vp test convex/audioFeedback.test.ts`: 22 tests covering blind safety in
   both membership directions, auth, zero versus absent, kind bounds, stale
   content, idempotency, docket clearing per content version, signed `rateAudio`,
   terminal staleness (including recipe parameters and checklist), the targeted
