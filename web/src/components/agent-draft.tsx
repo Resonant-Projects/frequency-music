@@ -61,6 +61,9 @@ export type PersistedReviewDraft = {
   decidedAt?: number;
   decidedBy?: "human";
   decisionNote?: string;
+  decisionSource?: DraftReviewContext["draft"]["decisionSource"];
+  decisionTranscript?: DraftReviewContext["draft"]["decisionTranscript"];
+  decisionIntentId?: DraftReviewContext["draft"]["decisionIntentId"];
   promotedId?: string;
 };
 
@@ -927,6 +930,28 @@ export function DecisionState(props: { draft: PersistedReviewDraft }) {
             <p class={helperClass}>
               <span class={fieldLabelClass}>Note</span> {note()}
             </p>
+          )}
+        </Show>
+        <Show when={props.draft.decisionSource}>
+          {(source) => <p class={helperClass}>Decision source: {source()}</p>}
+        </Show>
+        <Show when={props.draft.decisionTranscript}>
+          {(transcript) => (
+            <details>
+              <summary>Decision transcript</summary>
+              <p class={helperClass}>{transcript()}</p>
+            </details>
+          )}
+        </Show>
+        <Show when={props.draft.decisionIntentId}>
+          {(intentId) => (
+            <Link
+              class={inlineActionLink}
+              to="/agent-drafts"
+              search={{ intent: intentId() }}
+            >
+              Review decision intent {intentId()}
+            </Link>
           )}
         </Show>
         <PromotedLink

@@ -1,3 +1,7 @@
+import { nextRevision } from "./shared/decisionIntents";
+import { requireDecisionUser } from "./decisionIdentity";
+import { markDocketStale } from "./docket";
+import type { MutationCtx } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -204,6 +208,13 @@ export function summarizeAgentReviewDraftPublic(
 export function summarizeAgentReviewDraft(draft: Doc<"agentReviewDrafts">) {
   return {
     ...summarizeAgentReviewDraftPublic(draft),
+    ...(draft.decisionSource ? { decisionSource: draft.decisionSource } : {}),
+    ...(draft.decisionTranscript
+      ? { decisionTranscript: draft.decisionTranscript }
+      : {}),
+    ...(draft.decisionIntentId
+      ? { decisionIntentId: draft.decisionIntentId }
+      : {}),
     // Decision + payload fields only appear once set, so legacy drafts and the
     // existing exact-equality summary tests round-trip unchanged.
     ...(draft.payload !== undefined ? { payload: draft.payload } : {}),
@@ -323,7 +334,11 @@ export const createFromAgentRun = internalMutation({
       });
     }
 
-    const draftId = await ctx.db.insert("agentReviewDrafts", row);
+    const draftId = await ctx.db.insert("agentReviewDrafts", {
+      ...row,
+      revision: 0,
+    });
+    await markDocketStale(ctx);
     const now = Date.now();
     await ctx.db.insert("agentRunEvents", {
       runId: args.agentRunId,
@@ -782,139 +797,12 @@ export const approve = mutation({
     promotedKind: v.union(v.literal("hypothesis"), v.literal("recipe")),
   }),
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
-    const draft = await ctx.db.get(args.draftId);
-    if (!draft)
-      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
-    assertDraftPending(draft.status);
-    if (!draft.payload) {
-      throw new ConvexError({
-        code: "INVALID_STATE",
-        message:
-          "Draft has no structured payload and is acknowledge-only (not promotable)",
-        field: "payload",
-      });
-    }
-
-    const promotionPayload = args.amendedPayload ?? draft.payload;
-    const amendmentMatchesKind =
-      (draft.kind === "hypothesis_draft" && "statement" in promotionPayload) ||
-      (draft.kind === "recipe_draft" && "parameters" in promotionPayload);
-    if (!amendmentMatchesKind) {
-      throw new ConvexError({
-        code: "INVALID_STATE",
-        message: `${draft.kind} amended payload shape mismatch`,
-        field: "amendedPayload",
-      });
-    }
-    const editedFields = args.amendedPayload
-      ? diffDraftPayloadFields(draft.payload, args.amendedPayload)
-      : [];
-    const now = Date.now();
-    const createdBy =
-      identity.subject === "system"
-        ? "system"
-        : (identity.subject as Id<"users">);
-    const run = await ctx.db.get(draft.agentRunId);
-    const provenance = {
-      agentRunId: draft.agentRunId,
-      agentDraftId: draft._id,
-      ...(run?.traceUrl ? { traceUrl: run.traceUrl } : {}),
-      ...(editedFields.length > 0
-        ? { approvedWithEdits: true as const, editedFields }
-        : {}),
-    };
-
-    let promotedId: Id<"hypotheses"> | Id<"recipes">;
-    let promotedKind: "hypothesis" | "recipe";
-    let promotedCorrespondenceId: Id<"correspondences"> | undefined;
-    if (draft.kind === "hypothesis_draft") {
-      if (!("statement" in promotionPayload)) {
-        throw new ConvexError({
-          code: "INVALID_STATE",
-          message: "hypothesis_draft payload shape mismatch",
-          field: "payload",
-        });
-      }
-      const hypothesisId = await ctx.db.insert(
-        "hypotheses",
-        buildHypothesisInsertFromPayload({
-          payload: promotionPayload,
-          provenance,
-          createdBy,
-          now,
-        }),
-      );
-      // Concept linking is an action; schedule it (mutations cannot await actions).
-      await ctx.scheduler.runAfter(0, internal.graph.linkHypothesisConcepts, {
-        hypothesisId,
-      });
-      promotedId = hypothesisId;
-      promotedKind = "hypothesis";
-      promotedCorrespondenceId = promotionPayload.correspondenceId;
-    } else {
-      if (!("parameters" in promotionPayload)) {
-        throw new ConvexError({
-          code: "INVALID_STATE",
-          message: "recipe_draft payload shape mismatch",
-          field: "payload",
-        });
-      }
-      const hypothesisId = assertRecipeHypothesisId(promotionPayload);
-      const hypothesis = await ctx.db.get(hypothesisId);
-      if (!hypothesis) {
-        throw new ConvexError({
-          code: "NOT_FOUND",
-          message: "Referenced hypothesis not found",
-          field: "payload.hypothesisId",
-        });
-      }
-      const recipeId = await ctx.db.insert(
-        "recipes",
-        buildRecipeInsertFromPayload({
-          payload: promotionPayload,
-          provenance,
-          createdBy,
-          now,
-        }),
-      );
-      promotedId = recipeId;
-      promotedKind = "recipe";
-    }
-
-    await ctx.db.patch(args.draftId, {
-      status: "approved",
-      promotedId,
-      decidedAt: now,
-      decidedBy: "human",
-      ...(args.amendedPayload ? { amendedPayload: args.amendedPayload } : {}),
-      ...(args.decisionNote?.trim()
-        ? { decisionNote: args.decisionNote.trim() }
-        : {}),
-      updatedAt: now,
+    const userId = await requireDecisionUser(ctx);
+    return await applyDraftDecision(ctx, {
+      ...args,
+      action: "approve",
+      actor: { source: "web", userId },
     });
-    await ctx.db.insert("agentRunEvents", {
-      runId: draft.agentRunId,
-      kind: "draft_write",
-      message: `Approved ${draft.kind}; promoted to ${promotedKind} ${promotedId}`,
-      payload: { draftId: args.draftId, promotedId, promotedKind },
-      createdAt: now,
-    });
-    if (promotedCorrespondenceId) {
-      await ctx.db.insert("agentRunEvents", {
-        runId: draft.agentRunId,
-        kind: "decision",
-        message: "Promoted correspondence-linked hypothesis",
-        payload: {
-          draftId: args.draftId,
-          hypothesisId: promotedId,
-          correspondenceId: promotedCorrespondenceId,
-        },
-        createdAt: now,
-      });
-    }
-    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
-    return { draftId: args.draftId, promotedId, promotedKind };
   },
 });
 
@@ -929,31 +817,12 @@ export const reject = mutation({
     status: v.literal("rejected"),
   }),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
-    // Rejections are learning signal for plan 05 — a note is always required.
-    const note = assertDecisionNote(args.decisionNote);
-    const draft = await ctx.db.get(args.draftId);
-    if (!draft)
-      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
-    assertDraftPending(draft.status);
-
-    const now = Date.now();
-    await ctx.db.patch(args.draftId, {
-      status: "rejected",
-      decidedAt: now,
-      decidedBy: "human",
-      decisionNote: note,
-      updatedAt: now,
+    const userId = await requireDecisionUser(ctx);
+    return await applyDraftDecision(ctx, {
+      ...args,
+      action: "reject",
+      actor: { source: "web", userId },
     });
-    await ctx.db.insert("agentRunEvents", {
-      runId: draft.agentRunId,
-      kind: "decision",
-      message: "Rejected agent draft",
-      payload: { draftId: args.draftId, note },
-      createdAt: now,
-    });
-    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
-    return { draftId: args.draftId, status: "rejected" as const };
   },
 });
 
@@ -970,43 +839,287 @@ export const supersede = mutation({
     byDraftId: v.id("agentReviewDrafts"),
   }),
   handler: async (ctx, args) => {
-    await requireAuth(ctx, args);
-    const draft = await ctx.db.get(args.draftId);
-    if (!draft)
-      throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
-    assertDraftPending(draft.status);
-    const superseding = await ctx.db.get(args.byDraftId);
-    if (!superseding) {
-      throw new ConvexError({
-        code: "NOT_FOUND",
-        message: "Superseding draft not found",
-      });
-    }
-    if (args.draftId === args.byDraftId) {
-      throw new ConvexError({
-        code: "INVALID_ARGUMENT",
-        message: "A draft cannot supersede itself",
-        field: "byDraftId",
-      });
-    }
-    assertDraftPending(superseding.status);
-
-    const now = Date.now();
-    await ctx.db.patch(args.draftId, {
-      status: "superseded",
-      promotedId: args.byDraftId,
-      decidedAt: now,
-      decidedBy: "human",
-      ...(args.decisionNote?.trim()
-        ? { decisionNote: args.decisionNote.trim() }
-        : {}),
-      updatedAt: now,
+    const userId = await requireDecisionUser(ctx);
+    return await applyDraftDecision(ctx, {
+      ...args,
+      action: "supersede",
+      actor: { source: "web", userId },
     });
-    await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
-    return {
-      draftId: args.draftId,
-      status: "superseded" as const,
-      byDraftId: args.byDraftId,
-    };
   },
 });
+
+export type DraftDecisionActor = {
+  source: "web" | "discord" | "telegram";
+  userId: Id<"users">;
+  intentId?: Id<"decisionIntents">;
+  transcript?: string;
+};
+
+type DraftDecisionArgs = {
+  draftId: Id<"agentReviewDrafts">;
+  actor: DraftDecisionActor;
+} & (
+  | {
+      action: "approve";
+      decisionNote?: string;
+      amendedPayload?: Doc<"agentReviewDrafts">["payload"];
+    }
+  | { action: "reject"; decisionNote: string }
+  | {
+      action: "supersede";
+      byDraftId: Id<"agentReviewDrafts">;
+      decisionNote?: string;
+    }
+);
+export function applyDraftDecision(
+  ctx: MutationCtx,
+  args: Extract<DraftDecisionArgs, { action: "approve" }>,
+): ReturnType<typeof approveDraft>;
+export function applyDraftDecision(
+  ctx: MutationCtx,
+  args: Extract<DraftDecisionArgs, { action: "reject" }>,
+): ReturnType<typeof rejectDraft>;
+export function applyDraftDecision(
+  ctx: MutationCtx,
+  args: Extract<DraftDecisionArgs, { action: "supersede" }>,
+): ReturnType<typeof supersedeDraft>;
+export function applyDraftDecision(ctx: MutationCtx, args: DraftDecisionArgs) {
+  switch (args.action) {
+    case "approve":
+      return approveDraft(ctx, args, args.actor);
+    case "reject":
+      return rejectDraft(ctx, args, args.actor);
+    case "supersede":
+      return supersedeDraft(ctx, args, args.actor);
+  }
+}
+async function approveDraft(
+  ctx: MutationCtx,
+  args: {
+    draftId: Id<"agentReviewDrafts">;
+    decisionNote?: string;
+    amendedPayload?: Doc<"agentReviewDrafts">["payload"];
+  },
+  actor: DraftDecisionActor,
+) {
+  const draft = await ctx.db.get(args.draftId);
+  if (!draft)
+    throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+  assertDraftPending(draft.status);
+  if (!draft.payload) {
+    throw new ConvexError({
+      code: "INVALID_STATE",
+      message:
+        "Draft has no structured payload and is acknowledge-only (not promotable)",
+      field: "payload",
+    });
+  }
+
+  const promotionPayload = args.amendedPayload ?? draft.payload;
+  const amendmentMatchesKind =
+    (draft.kind === "hypothesis_draft" && "statement" in promotionPayload) ||
+    (draft.kind === "recipe_draft" && "parameters" in promotionPayload);
+  if (!amendmentMatchesKind) {
+    throw new ConvexError({
+      code: "INVALID_STATE",
+      message: `${draft.kind} amended payload shape mismatch`,
+      field: "amendedPayload",
+    });
+  }
+  const editedFields = args.amendedPayload
+    ? diffDraftPayloadFields(draft.payload, args.amendedPayload)
+    : [];
+  const now = Date.now();
+  const createdBy = actor.userId;
+  const run = await ctx.db.get(draft.agentRunId);
+  const provenance = {
+    agentRunId: draft.agentRunId,
+    agentDraftId: draft._id,
+    ...(run?.traceUrl ? { traceUrl: run.traceUrl } : {}),
+    ...(editedFields.length > 0
+      ? { approvedWithEdits: true as const, editedFields }
+      : {}),
+  };
+
+  let promotedId: Id<"hypotheses"> | Id<"recipes">;
+  let promotedKind: "hypothesis" | "recipe";
+  let promotedCorrespondenceId: Id<"correspondences"> | undefined;
+  if (draft.kind === "hypothesis_draft") {
+    if (!("statement" in promotionPayload)) {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: "hypothesis_draft payload shape mismatch",
+        field: "payload",
+      });
+    }
+    const hypothesisId = await ctx.db.insert(
+      "hypotheses",
+      buildHypothesisInsertFromPayload({
+        payload: promotionPayload,
+        provenance,
+        createdBy,
+        now,
+      }),
+    );
+    // Concept linking is an action; schedule it (mutations cannot await actions).
+    await ctx.scheduler.runAfter(0, internal.graph.linkHypothesisConcepts, {
+      hypothesisId,
+    });
+    promotedId = hypothesisId;
+    promotedKind = "hypothesis";
+    promotedCorrespondenceId = promotionPayload.correspondenceId;
+  } else {
+    if (!("parameters" in promotionPayload)) {
+      throw new ConvexError({
+        code: "INVALID_STATE",
+        message: "recipe_draft payload shape mismatch",
+        field: "payload",
+      });
+    }
+    const hypothesisId = assertRecipeHypothesisId(promotionPayload);
+    const hypothesis = await ctx.db.get(hypothesisId);
+    if (!hypothesis) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Referenced hypothesis not found",
+        field: "payload.hypothesisId",
+      });
+    }
+    const recipeId = await ctx.db.insert(
+      "recipes",
+      buildRecipeInsertFromPayload({
+        payload: promotionPayload,
+        provenance,
+        createdBy,
+        now,
+      }),
+    );
+    promotedId = recipeId;
+    promotedKind = "recipe";
+  }
+
+  await ctx.db.patch(args.draftId, {
+    revision: nextRevision(draft),
+    decisionSource: actor.source,
+    ...(actor.intentId ? { decisionIntentId: actor.intentId } : {}),
+    ...(actor.transcript ? { decisionTranscript: actor.transcript } : {}),
+    status: "approved",
+    promotedId,
+    decidedAt: now,
+    decidedBy: "human",
+    ...(args.amendedPayload ? { amendedPayload: args.amendedPayload } : {}),
+    ...(args.decisionNote?.trim()
+      ? { decisionNote: args.decisionNote.trim() }
+      : {}),
+    updatedAt: now,
+  });
+  await ctx.db.insert("agentRunEvents", {
+    runId: draft.agentRunId,
+    kind: "draft_write",
+    message: `Approved ${draft.kind}; promoted to ${promotedKind} ${promotedId}`,
+    payload: { draftId: args.draftId, promotedId, promotedKind },
+    createdAt: now,
+  });
+  if (promotedCorrespondenceId) {
+    await ctx.db.insert("agentRunEvents", {
+      runId: draft.agentRunId,
+      kind: "decision",
+      message: "Promoted correspondence-linked hypothesis",
+      payload: {
+        draftId: args.draftId,
+        hypothesisId: promotedId,
+        correspondenceId: promotedCorrespondenceId,
+      },
+      createdAt: now,
+    });
+  }
+  await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
+  return { draftId: args.draftId, promotedId, promotedKind };
+}
+
+async function rejectDraft(
+  ctx: MutationCtx,
+  args: { draftId: Id<"agentReviewDrafts">; decisionNote: string },
+  actor: DraftDecisionActor,
+) {
+  // Rejections are learning signal for plan 05 — a note is always required.
+  const note = assertDecisionNote(args.decisionNote);
+  const draft = await ctx.db.get(args.draftId);
+  if (!draft)
+    throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+  assertDraftPending(draft.status);
+
+  const now = Date.now();
+  await ctx.db.patch(args.draftId, {
+    revision: nextRevision(draft),
+    decisionSource: actor.source,
+    ...(actor.intentId ? { decisionIntentId: actor.intentId } : {}),
+    ...(actor.transcript ? { decisionTranscript: actor.transcript } : {}),
+    status: "rejected",
+    decidedAt: now,
+    decidedBy: "human",
+    decisionNote: note,
+    updatedAt: now,
+  });
+  await ctx.db.insert("agentRunEvents", {
+    runId: draft.agentRunId,
+    kind: "decision",
+    message: "Rejected agent draft",
+    payload: { draftId: args.draftId, note },
+    createdAt: now,
+  });
+  await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
+  return { draftId: args.draftId, status: "rejected" as const };
+}
+
+async function supersedeDraft(
+  ctx: MutationCtx,
+  args: {
+    draftId: Id<"agentReviewDrafts">;
+    decisionNote?: string;
+    byDraftId: Id<"agentReviewDrafts">;
+  },
+  actor: DraftDecisionActor,
+) {
+  const draft = await ctx.db.get(args.draftId);
+  if (!draft)
+    throw new ConvexError({ code: "NOT_FOUND", message: "Draft not found" });
+  assertDraftPending(draft.status);
+  const superseding = await ctx.db.get(args.byDraftId);
+  if (!superseding) {
+    throw new ConvexError({
+      code: "NOT_FOUND",
+      message: "Superseding draft not found",
+    });
+  }
+  if (args.draftId === args.byDraftId) {
+    throw new ConvexError({
+      code: "INVALID_ARGUMENT",
+      message: "A draft cannot supersede itself",
+      field: "byDraftId",
+    });
+  }
+  assertDraftPending(superseding.status);
+
+  const now = Date.now();
+  await ctx.db.patch(args.draftId, {
+    revision: nextRevision(draft),
+    decisionSource: actor.source,
+    ...(actor.intentId ? { decisionIntentId: actor.intentId } : {}),
+    ...(actor.transcript ? { decisionTranscript: actor.transcript } : {}),
+    status: "superseded",
+    promotedId: args.byDraftId,
+    decidedAt: now,
+    decidedBy: "human",
+    ...(args.decisionNote?.trim()
+      ? { decisionNote: args.decisionNote.trim() }
+      : {}),
+    updatedAt: now,
+  });
+  await completeReviewedRunIfReady(ctx, draft.agentRunId, now);
+  return {
+    draftId: args.draftId,
+    status: "superseded" as const,
+    byDraftId: args.byDraftId,
+  };
+}

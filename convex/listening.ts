@@ -1,22 +1,15 @@
+import { requireDecisionUser } from "./decisionIdentity";
+import {
+  listeningConditionsValidator,
+  listeningIntentPayloadZ,
+  subjectiveRatingsZ,
+} from "./shared/decisionIntents";
+import { internalMutation, type MutationCtx } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { listeningSessionReturnValidator } from "./validators";
-
-function assertOptionalZeroToFive(
-  value: number | undefined,
-  field: string,
-): void {
-  if (value === undefined) return;
-  if (value < 0 || value > 5) {
-    throw new ConvexError({
-      code: "INVALID_ARGUMENT",
-      message: `${field} must be between 0 and 5`,
-      field,
-    });
-  }
-}
 
 export const listByComposition = query({
   args: { compositionId: v.id("compositions") },
@@ -53,6 +46,7 @@ export const create = mutation({
         role: v.optional(v.string()),
       }),
     ),
+    conditions: v.optional(listeningConditionsValidator),
     contextMd: v.optional(v.string()),
     feedbackMd: v.string(),
     ratings: v.optional(
@@ -77,7 +71,7 @@ export const create = mutation({
   },
   returns: v.id("listeningSessions"),
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
+    const userId = await requireDecisionUser(ctx);
     const composition = await ctx.db.get("compositions", args.compositionId);
     if (!composition) {
       throw new ConvexError({
@@ -85,14 +79,15 @@ export const create = mutation({
         message: "Composition not found",
       });
     }
-    assertOptionalZeroToFive(
-      args.ratings?.expandability,
-      "ratings.expandability",
-    );
+    if (args.ratings) {
+      const { consonanceComputed: _computed, ...subjective } = args.ratings;
+      subjectiveRatingsZ.parse(subjective);
+    }
 
     return await ctx.db.insert("listeningSessions", {
       compositionId: args.compositionId,
       participants: args.participants,
+      conditions: args.conditions,
       contextMd: args.contextMd,
       feedbackMd: args.feedbackMd,
       ratings: args.ratings ?? {},
@@ -102,7 +97,7 @@ export const create = mutation({
       standoutMoments: args.standoutMoments,
       expandVerdict: args.expandVerdict,
       visibility: "private",
-      createdBy: identity.subject as Id<"users">,
+      createdBy: userId,
       createdAt: Date.now(),
     });
   },
@@ -120,7 +115,7 @@ export const updateVisibility = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const identity = await requireAuth(ctx, args);
+    const userId = await requireDecisionUser(ctx);
     const session = await ctx.db.get("listeningSessions", args.id);
     if (!session) {
       throw new ConvexError({
@@ -129,7 +124,7 @@ export const updateVisibility = mutation({
       });
     }
 
-    if (session.createdBy !== identity.subject) {
+    if (session.createdBy !== userId) {
       throw new ConvexError({
         code: "FORBIDDEN",
         message: "Not authorized to update this session",
@@ -154,5 +149,60 @@ export const deleteById = mutation({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);
+  },
+});
+
+/** Shared with decision application so session and intent commit atomically. */
+export async function createSignedListeningSession(
+  ctx: MutationCtx,
+  args: {
+    compositionId: Id<"compositions">;
+    payload: import("zod").infer<typeof listeningIntentPayloadZ>;
+    transcript: string;
+    userId: Id<"users">;
+    intentId: Id<"decisionIntents">;
+  },
+) {
+  const payload = listeningIntentPayloadZ.parse(args.payload);
+  if (!(await ctx.db.get(args.compositionId)))
+    throw new ConvexError("Composition not found");
+  if (!(await ctx.db.get(args.userId))) throw new ConvexError("User not found");
+  return await ctx.db.insert("listeningSessions", {
+    compositionId: args.compositionId,
+    participants: [{ userId: args.userId, role: "self" }],
+    feedbackMd: args.transcript,
+    conditions: payload.conditions,
+    ratings: payload.ratings ?? {},
+    feltQualities: payload.feltQualities,
+    standoutMoments: payload.standoutMoments,
+    expandVerdict: payload.expandVerdict,
+    decisionIntentId: args.intentId,
+    createdBy: args.userId,
+    visibility: "private",
+    createdAt: Date.now(),
+  });
+}
+
+// This internal entry point accepts only an already verified, applied intent.
+// Normal confirmation calls the shared helper in its own transaction.
+export const createInternal = internalMutation({
+  args: { intentId: v.id("decisionIntents") },
+  returns: v.id("listeningSessions"),
+  handler: async (ctx, { intentId }) => {
+    const intent = await ctx.db.get(intentId);
+    if (
+      intent?.action !== "createListeningSession" ||
+      intent.status !== "applied" ||
+      !intent.signature ||
+      !intent.result?.appliedRecordId
+    )
+      throw new ConvexError("Signed listening intent required");
+    const id = ctx.db.normalizeId(
+      "listeningSessions",
+      intent.result.appliedRecordId,
+    );
+    if (!id || !(await ctx.db.get(id)))
+      throw new ConvexError("Applied session not found");
+    return id;
   },
 });

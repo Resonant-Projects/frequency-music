@@ -1,3 +1,6 @@
+import { feedProposalZ } from "./shared/feedProposals";
+import { requireDecisionUser } from "./decisionIdentity";
+import { nextRevision } from "./shared/decisionIntents";
 import { ConvexError, v } from "convex/values";
 import { api } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
@@ -67,6 +70,7 @@ export const createFeed = mutation({
     const { devBypassSecret: _devBypassSecret, ...createArgs } = args;
     const now = Date.now();
     return await ctx.db.insert("feeds", {
+      revision: 0,
       ...createArgs,
       enabled: true,
       createdAt: now,
@@ -89,7 +93,14 @@ export const setFeedEnabled = mutation({
       throw new ConvexError({ code: "NOT_FOUND", message: "Feed not found" });
     }
 
+    if (
+      args.enabled &&
+      !feed.enabled &&
+      feedProposalZ.safeParse(feed.metadata?.proposal).success
+    )
+      await requireDecisionUser(ctx);
     await ctx.db.patch("feeds", args.id, {
+      revision: nextRevision(feed),
       enabled: args.enabled,
       updatedAt: Date.now(),
     });

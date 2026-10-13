@@ -13,7 +13,8 @@
     "run:research-pipeline": "RUN_RESEARCH_PIPELINE_REAL=true vpx tsx scripts/smoke-research-pipeline.ts",
     "worker": "vpx tsx src/worker/runner.ts",
     "automation:local": "vpx tsx scripts/build-and-smoke.ts",
-    "test": "vp test"
+    "test": "vp test",
+    "mcp": "vpx tsx src/mcp/main.ts"
   },
   "dependencies": {
     "@langchain/anthropic": "1.5.12",
@@ -29,7 +30,10 @@
     "langchain": "1.5.16",
     "langsmith": "0.10.11",
     "tsx": "4.23.15",
-    "zod": "4.6.6"
+    "zod": "4.6.6",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "varlock": "1.22.0",
+    "@varlock/1password-plugin": "2.0.5"
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "1.5.2",

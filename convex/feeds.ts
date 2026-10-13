@@ -1,3 +1,5 @@
+import { requireDecisionUser } from "./decisionIdentity";
+import { nextRevision } from "./shared/decisionIntents";
 import { ConvexError, v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
@@ -92,6 +94,7 @@ export const create = mutation({
     await requireAuth(ctx, args);
     const now = Date.now();
     return await ctx.db.insert("feeds", {
+      revision: 0,
       ...createArgs,
       enabled: true,
       createdAt: now,
@@ -137,6 +140,7 @@ export const proposeFeed = internalMutation({
       sampleItems: args.sampleItems,
     });
     const id = await ctx.db.insert("feeds", {
+      revision: 0,
       name: args.name,
       url: args.url,
       type: args.type,
@@ -159,7 +163,10 @@ export const updateLastPolled = internalMutation({
     lastItemAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const feed = await ctx.db.get("feeds", args.id);
+    if (!feed) throw new ConvexError("Feed not found");
     await ctx.db.patch("feeds", args.id, {
+      revision: nextRevision(feed),
       lastPolledAt: args.lastPolledAt,
       lastItemAt: args.lastItemAt,
       updatedAt: Date.now(),
@@ -186,7 +193,14 @@ export const setEnabled = mutation({
       typeof feed.metadata === "object" && feed.metadata !== null
         ? feed.metadata
         : {};
+    if (
+      args.enabled &&
+      !feed.enabled &&
+      feedProposalZ.safeParse(feed.metadata?.proposal).success
+    )
+      await requireDecisionUser(ctx);
     await ctx.db.patch("feeds", args.id, {
+      revision: nextRevision(feed),
       enabled: args.enabled,
       metadata:
         !args.enabled && args.disabledReason
@@ -303,6 +317,7 @@ export const seedInitialFeeds = internalMutation({
 
       if (!existing) {
         const id = await ctx.db.insert("feeds", {
+          revision: 0,
           ...feed,
           enabled: true,
           createdAt: now,
@@ -317,3 +332,23 @@ export const seedInitialFeeds = internalMutation({
     return results;
   },
 });
+
+/** Called only after a human confirmation and its target revision check. */
+export async function applyFeedProposal(
+  ctx: import("./_generated/server").MutationCtx,
+  id: import("./_generated/dataModel").Id<"feeds">,
+) {
+  const feed = await ctx.db.get(id);
+  if (
+    !feed ||
+    feed.enabled ||
+    !feedProposalZ.safeParse(feed.metadata?.proposal).success
+  )
+    throw new ConvexError("Feed is not a disabled proposal");
+  await ctx.db.patch(id, {
+    enabled: true,
+    revision: nextRevision(feed),
+    updatedAt: Date.now(),
+  });
+  return id;
+}

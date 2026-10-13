@@ -11,6 +11,11 @@
 import type * as operationFailures from "../operationFailures.js";
 import type * as recoveryWorkflows from "../recoveryWorkflows.js";
 import type * as admin from "../admin.js";
+import type * as decisionIntents from "../decisionIntents.js";
+import type * as decisionSignerRuntime from "../decisionSignerRuntime.js";
+import type * as decisionIntentsMigrations from "../decisionIntentsMigrations.js";
+import type * as docket from "../docket.js";
+import type * as docketBlurbs from "../docketBlurbs.js";
 import type * as agentDraftPromotion from "../agentDraftPromotion.js";
 import type * as agentDrafts from "../agentDrafts.js";
 import type * as agentRuns from "../agentRuns.js";
@@ -111,6 +116,11 @@ declare const fullApi: ApiFromModules<{
   operationFailures: typeof operationFailures;
   recoveryWorkflows: typeof recoveryWorkflows;
   admin: typeof admin;
+  decisionIntents: typeof decisionIntents;
+  decisionSignerRuntime: typeof decisionSignerRuntime;
+  decisionIntentsMigrations: typeof decisionIntentsMigrations;
+  docket: typeof docket;
+  docketBlurbs: typeof docketBlurbs;
   agentDraftPromotion: typeof agentDraftPromotion;
   agentDrafts: typeof agentDrafts;
   agentRuns: typeof agentRuns;

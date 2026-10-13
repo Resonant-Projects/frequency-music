@@ -5,6 +5,18 @@ import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import { modules } from "./modules";
 
+async function humanClient(t: ReturnType<typeof convexTest>) {
+  await t.run(async (ctx) =>
+    ctx.db.insert("users", {
+      clerkUserId: "human-test",
+      role: "admin",
+      createdAt: 1,
+      updatedAt: 1,
+    }),
+  );
+  return t.withIdentity({ subject: "human-test" });
+}
+
 async function seedRunAndDraft(
   t: ReturnType<typeof convexTest>,
   payload: Record<string, unknown> | undefined,
@@ -50,7 +62,7 @@ const hypothesisPayload = {
 describe("agentDrafts.approve promotes through the real interface", () => {
   test("correspondence-linked hypothesis draft preserves lineage on promotion", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const correspondenceId = await t.run(async (ctx) => {
       const conceptAId = await ctx.db.insert("concepts", {
         name: "nonagon angles",
@@ -95,7 +107,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
       "hypothesis_draft",
     );
 
-    const result = await asSystem.mutation(api.agentDrafts.approve, {
+    const result = await asHuman.mutation(api.agentDrafts.approve, {
       draftId,
     });
 
@@ -140,7 +152,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 
   test("recipe draft becomes a recipes row with generated parameter kind", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const hypothesisId = await t.run((ctx) =>
       ctx.db.insert("hypotheses", {
         title: "432Hz warmth hypothesis",
@@ -168,7 +180,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
       "recipe_draft",
     );
 
-    const result = await asSystem.mutation(api.agentDrafts.approve, {
+    const result = await asHuman.mutation(api.agentDrafts.approve, {
       draftId,
     });
 
@@ -185,7 +197,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 
   test("amended payload promotes with edit provenance and preserves the original", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const originalPayload = { ...hypothesisPayload };
     const amendedPayload = {
       ...originalPayload,
@@ -198,7 +210,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
       "hypothesis_draft",
     );
 
-    const result = await asSystem.mutation(api.agentDrafts.approve, {
+    const result = await asHuman.mutation(api.agentDrafts.approve, {
       draftId,
       amendedPayload,
     });
@@ -218,7 +230,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 
   test("shared whole-payload validation rejects an invalid amendment", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
@@ -226,7 +238,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     );
 
     await expect(
-      asSystem.mutation(api.agentDrafts.approve, {
+      asHuman.mutation(api.agentDrafts.approve, {
         draftId,
         amendedPayload: { ...hypothesisPayload, whyThisMatters: "" },
       }),
@@ -238,7 +250,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 
   test("kind-changing amendment rejects with INVALID_STATE", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
@@ -246,7 +258,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
     );
 
     await expect(
-      asSystem.mutation(api.agentDrafts.approve, {
+      asHuman.mutation(api.agentDrafts.approve, {
         draftId,
         amendedPayload: {
           title: "Wrong payload kind",
@@ -262,26 +274,26 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 
   test("payload-less draft is acknowledge-only: approve throws INVALID_STATE", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { draftId } = await seedRunAndDraft(t, undefined, "hypothesis_draft");
 
     await expect(
-      asSystem.mutation(api.agentDrafts.approve, { draftId }),
+      asHuman.mutation(api.agentDrafts.approve, { draftId }),
     ).rejects.toThrow(/acknowledge-only|INVALID_STATE/);
   });
 
   test("approve on an already-decided draft throws", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
       "hypothesis_draft",
     );
-    await asSystem.mutation(api.agentDrafts.approve, { draftId });
+    await asHuman.mutation(api.agentDrafts.approve, { draftId });
 
     await expect(
-      asSystem.mutation(api.agentDrafts.approve, { draftId }),
+      asHuman.mutation(api.agentDrafts.approve, { draftId }),
     ).rejects.toThrow();
   });
 });
@@ -289,7 +301,7 @@ describe("agentDrafts.approve promotes through the real interface", () => {
 describe("agentDrafts pending hypothesis WIP cap", () => {
   test("blocks the fourth hypothesis draft, ignores recipes, and reopens after approval", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const agentRunId = await t.run((ctx) =>
       ctx.db.insert("agentRuns", {
         graphName: "hypothesis-drafter",
@@ -339,14 +351,14 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
       t.query(internal.agentDrafts.countPending, { kind: "recipe_draft" }),
     ).resolves.toBe(1);
     await expect(
-      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+      asHuman.query(api.agentDrafts.countPendingHypothesesPublic, {}),
     ).resolves.toBe(3);
 
-    await asSystem.mutation(api.agentDrafts.approve, {
+    await asHuman.mutation(api.agentDrafts.approve, {
       draftId: first.draftId,
     });
     await expect(
-      asSystem.query(api.agentDrafts.countPendingHypothesesPublic, {}),
+      asHuman.query(api.agentDrafts.countPendingHypothesesPublic, {}),
     ).resolves.toBe(2);
     await expect(
       createDraft("hypothesis_draft", "4-reopened"),
@@ -357,7 +369,7 @@ describe("agentDrafts pending hypothesis WIP cap", () => {
 describe("agentDrafts.getReviewContext", () => {
   test("hydrates the correspondence story and bounded related work", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const correspondenceId = await t.run(async (ctx) => {
       const sourceId = await ctx.db.insert("sources", {
         type: "url",
@@ -507,7 +519,7 @@ describe("agentDrafts.getReviewContext", () => {
       }),
     );
 
-    const result = await asSystem.query(api.agentDrafts.getReviewContext, {
+    const result = await asHuman.query(api.agentDrafts.getReviewContext, {
       draftId: seeded.draftId,
     });
 
@@ -560,7 +572,7 @@ describe("agentDrafts.getReviewContext", () => {
       traceUrl: "https://smith.langchain.com/r/test",
       summary: "Drafted from the strongest evidenced correspondence.",
     });
-    const queue = await asSystem.query(api.agentDrafts.listPending, {
+    const queue = await asHuman.query(api.agentDrafts.listPending, {
       limit: 10,
     });
     expect(queue.find((draft) => draft._id === seeded.draftId)).toMatchObject({
@@ -573,7 +585,7 @@ describe("agentDrafts.getReviewContext", () => {
 
   test("legacy payload-less and correspondence-less drafts return null context", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const payloadless = await seedRunAndDraft(t, undefined, "hypothesis_draft");
     const correspondenceLess = await seedRunAndDraft(
       t,
@@ -582,7 +594,7 @@ describe("agentDrafts.getReviewContext", () => {
     );
 
     for (const draftId of [payloadless.draftId, correspondenceLess.draftId]) {
-      const result = await asSystem.query(api.agentDrafts.getReviewContext, {
+      const result = await asHuman.query(api.agentDrafts.getReviewContext, {
         draftId,
       });
       expect(result.correspondence).toBeNull();
@@ -880,14 +892,14 @@ describe("agentDrafts draftable correspondence read", () => {
 describe("agentDrafts.reject requires a decision note", () => {
   test("reject stores the note and an audit event", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { agentRunId, draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
       "hypothesis_draft",
     );
 
-    await asSystem.mutation(api.agentDrafts.reject, {
+    await asHuman.mutation(api.agentDrafts.reject, {
       draftId,
       decisionNote: "Statement is not falsifiable as written.",
     });
@@ -911,7 +923,7 @@ describe("agentDrafts.reject requires a decision note", () => {
 
   test("reject with a whitespace note throws", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
@@ -919,7 +931,7 @@ describe("agentDrafts.reject requires a decision note", () => {
     );
 
     await expect(
-      asSystem.mutation(api.agentDrafts.reject, {
+      asHuman.mutation(api.agentDrafts.reject, {
         draftId,
         decisionNote: "  ",
       }),
@@ -928,7 +940,7 @@ describe("agentDrafts.reject requires a decision note", () => {
 
   test("keeps the run in review until its final pending draft is resolved", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const { agentRunId, draftId } = await seedRunAndDraft(
       t,
       hypothesisPayload,
@@ -950,7 +962,7 @@ describe("agentDrafts.reject requires a decision note", () => {
       }),
     );
 
-    await asSystem.mutation(api.agentDrafts.reject, {
+    await asHuman.mutation(api.agentDrafts.reject, {
       draftId,
       decisionNote: "Not ready to promote.",
     });
@@ -958,7 +970,7 @@ describe("agentDrafts.reject requires a decision note", () => {
     const stillPending = await t.run((ctx) => ctx.db.get(agentRunId));
     expect(stillPending?.status).toBe("needs_review");
 
-    await asSystem.mutation(api.agentDrafts.reject, {
+    await asHuman.mutation(api.agentDrafts.reject, {
       draftId: secondDraftId,
       decisionNote: "Also not ready to promote.",
     });
@@ -971,7 +983,7 @@ describe("agentDrafts.reject requires a decision note", () => {
 describe("agentDrafts.supersede closes the resolved draft's run", () => {
   test("completes the original run when its superseding draft belongs to another run", async () => {
     const t = convexTest(schema, modules);
-    const asSystem = t.withIdentity({ subject: "system" });
+    const asHuman = await humanClient(t);
     const original = await seedRunAndDraft(
       t,
       hypothesisPayload,
@@ -983,7 +995,7 @@ describe("agentDrafts.supersede closes the resolved draft's run", () => {
       "hypothesis_draft",
     );
 
-    await asSystem.mutation(api.agentDrafts.supersede, {
+    await asHuman.mutation(api.agentDrafts.supersede, {
       draftId: original.draftId,
       byDraftId: replacement.draftId,
     });

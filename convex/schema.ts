@@ -1,4 +1,10 @@
 import {
+  decisionIntentValidator,
+  webhookEventValidator,
+  listeningConditionsValidator,
+} from "./shared/decisionIntents";
+import { docketCardValidator, docketDeliveryValidator } from "./shared/docket";
+import {
   recoveryTargetValidator,
   failureStatusValidator,
 } from "./shared/operationRecovery";
@@ -343,7 +349,28 @@ export default defineSchema({
     .index("by_runId_createdAt", ["runId", "createdAt"])
     .index("by_delivery", ["deliveryId"]),
 
+  decisionIntents: defineTable(decisionIntentValidator)
+    .index("by_code", ["code"])
+    .index("by_status_createdAt", ["status", "createdAt"])
+    .index("by_status_expiresAt", ["status", "expiresAt"])
+    .index("by_target", ["target.kind", "target.id"]),
+  webhookEvents: defineTable(webhookEventValidator).index(
+    "by_platform_eventId",
+    ["platform", "eventId"],
+  ),
+  docketCards: defineTable(docketCardValidator)
+    .index("by_targetId", ["targetId"])
+    .index("by_rank", ["rank"]),
+  docketDeliveries: defineTable(docketDeliveryValidator)
+    .index("by_card_channel", ["cardId", "channel"])
+    .index("by_card_channel_contentHash", ["cardId", "channel", "contentHash"]),
   agentReviewDrafts: defineTable({
+    revision: v.optional(v.number()),
+    decisionSource: v.optional(
+      v.union(v.literal("web"), v.literal("discord"), v.literal("telegram")),
+    ),
+    decisionTranscript: v.optional(v.string()),
+    decisionIntentId: v.optional(v.id("decisionIntents")),
     agentRunId: v.id("agentRuns"),
     graphName: v.string(),
     kind: v.union(v.literal("hypothesis_draft"), v.literal("recipe_draft")),
@@ -474,6 +501,7 @@ export default defineSchema({
   // FEEDS - RSS/Podcast feed configurations
   // ==========================================================================
   feeds: defineTable({
+    revision: v.optional(v.number()),
     name: v.string(),
     url: v.string(),
     type: v.union(v.literal("rss"), v.literal("podcast"), v.literal("youtube")),
@@ -797,6 +825,8 @@ export default defineSchema({
   // LISTENING SESSIONS - Evaluation data
   // ==========================================================================
   listeningSessions: defineTable({
+    conditions: v.optional(listeningConditionsValidator),
+    decisionIntentId: v.optional(v.id("decisionIntents")),
     compositionId: v.id("compositions"),
 
     // Context
@@ -848,6 +878,7 @@ export default defineSchema({
     .index("by_access_kind_createdAt", ["access", "kind", "createdAt"])
     .index("by_blindGroupId", ["blindGroupId"])
     .index("by_refs_compositionId", ["refs.compositionId"])
+    .index("by_refs_recipeId", ["refs.recipeId"])
     .index("by_job_content_role_status", [
       "refs.mediaJobId",
       "contentHash",

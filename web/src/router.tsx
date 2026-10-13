@@ -14,6 +14,7 @@ import {
   onCleanup,
 } from "solid-js";
 import { AppNavigation } from "./components/app-navigation";
+import { parseDraftReviewSearch } from "./lib/draft-review-search";
 import { appLinks } from "./lib/app-navigation";
 import { SiteSearch } from "./components/site-search";
 import { SpaceNavigationProvider } from "./lib/space-navigation";
@@ -368,6 +369,7 @@ const agentRunDetailRoute = createRoute({
 const agentDraftsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/agent-drafts",
+  validateSearch: parseDraftReviewSearch,
   component: AgentDraftsPage,
 });
 

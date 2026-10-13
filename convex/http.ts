@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import { discordSignerHttp, telegramSignerHttp } from "./decisionSignerRuntime";
 import { internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { agentToolHttpHandlers } from "./agentToolsHttp";
@@ -12,6 +13,17 @@ import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 import { generateDedupeKey } from "./sourceUtils";
 
 const http = httpRouter();
+
+http.route({
+  path: "/discord/interactions",
+  method: "POST",
+  handler: httpAction(discordSignerHttp),
+});
+http.route({
+  pathPrefix: "/telegram/webhook/",
+  method: "POST",
+  handler: httpAction(telegramSignerHttp),
+});
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {

@@ -1,3 +1,4 @@
+import { TargetAudio } from "../components/target-audio";
 import { Link, useParams } from "@tanstack/solid-router";
 import { createEffect, For, onMount, Show } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -168,6 +169,8 @@ export function RecipeDetailPage() {
             </div>
 
             <h1 class={detailTitleClass}>{r().title}</h1>
+
+            <TargetAudio target={{ kind: "recipe", id: r()._id }} />
 
             <Show when={r().hypothesis}>
               {(hyp) => (

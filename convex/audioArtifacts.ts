@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 // Audio artifact lifecycle: pending -> (attachStorage) -> ready | failed.
 // Bytes live in Convex file storage; `playback` is the only Clerk-gated way a
 // non-feed artifact's URL is reached, and it refuses unrevealed blind-group
@@ -172,7 +173,8 @@ async function isBlindHidden(
 ): Promise<boolean> {
   if (!row.blindGroupId) return false;
   const group = await ctx.db.get(row.blindGroupId);
-  return Boolean(group && group.revealedAt === undefined);
+  // A dangling membership must fail closed, too.
+  return !group || group.revealedAt === undefined;
 }
 
 async function playbackFor(ctx: QueryCtx, artifactId: Id<"audioArtifacts">) {
@@ -206,4 +208,86 @@ export const playbackInternal = internalQuery({
   args: { artifactId: v.id("audioArtifacts") },
   returns: playbackReturn,
   handler: async (ctx, args) => await playbackFor(ctx, args.artifactId),
+});
+
+// Fail explicitly instead of silently presenting a partial listening library.
+// All takes happen before filtering, so pending/failed rows cannot cause an
+// unbounded scan.
+const MAX_TARGET_ARTIFACTS = 100;
+const MAX_RECIPE_COMPOSITIONS = 25;
+
+function assertWithinLimit(rows: unknown[], limit: number) {
+  if (rows.length > limit) {
+    throw new ConvexError({
+      code: "LIMIT_EXCEEDED",
+      message: "Too many audio records to list for this target",
+    });
+  }
+}
+
+export const listReadyForTarget = query({
+  args: {
+    target: v.union(
+      v.object({ kind: v.literal("recipe"), id: v.id("recipes") }),
+      v.object({ kind: v.literal("composition"), id: v.id("compositions") }),
+    ),
+    devBypassSecret: v.optional(v.string()),
+  },
+  returns: v.array(
+    v.object({
+      artifactId: v.id("audioArtifacts"),
+      title: v.string(),
+    }),
+  ),
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args);
+    const target = args.target;
+    if (!(await ctx.db.get(target.id))) return [];
+    const candidates = new Map<Id<"audioArtifacts">, Doc<"audioArtifacts">>();
+    const add = (rows: Doc<"audioArtifacts">[]) => {
+      assertWithinLimit(rows, MAX_TARGET_ARTIFACTS);
+      for (const row of rows) candidates.set(row._id, row);
+      assertWithinLimit([...candidates.values()], MAX_TARGET_ARTIFACTS);
+    };
+    let compositionIds: Id<"compositions">[];
+    if (target.kind === "recipe") {
+      add(
+        await ctx.db
+          .query("audioArtifacts")
+          .withIndex("by_refs_recipeId", (q) =>
+            q.eq("refs.recipeId", target.id),
+          )
+          .take(MAX_TARGET_ARTIFACTS + 1),
+      );
+      const compositions = await ctx.db
+        .query("compositions")
+        .withIndex("by_recipeId_updatedAt", (q) => q.eq("recipeId", target.id))
+        .take(MAX_RECIPE_COMPOSITIONS + 1);
+      assertWithinLimit(compositions, MAX_RECIPE_COMPOSITIONS);
+      compositionIds = compositions.map((row) => row._id);
+    } else {
+      compositionIds = [target.id];
+    }
+    for (const compositionId of compositionIds) {
+      add(
+        await ctx.db
+          .query("audioArtifacts")
+          .withIndex("by_refs_compositionId", (q) =>
+            q.eq("refs.compositionId", compositionId),
+          )
+          .take(MAX_TARGET_ARTIFACTS + 1),
+      );
+    }
+    const visible: Doc<"audioArtifacts">[] = [];
+    for (const row of candidates.values()) {
+      if (row.status !== "ready" || !row.storageId) continue;
+      if (await isBlindHidden(ctx, row)) continue;
+      visible.push(row);
+    }
+    return visible
+      .toSorted(
+        (a, b) => b.createdAt - a.createdAt || a._id.localeCompare(b._id),
+      )
+      .map((row) => ({ artifactId: row._id, title: row.title }));
+  },
 });

@@ -1,3 +1,4 @@
+import { TargetAudio } from "../components/target-audio";
 import { Link, useNavigate, useParams } from "@tanstack/solid-router";
 import {
   createEffect,
@@ -629,6 +630,10 @@ export function CompositionDetailPage() {
               </div>
 
               <h1 class={detailTitleClass}>{row().composition.title}</h1>
+
+              <TargetAudio
+                target={{ kind: "composition", id: row().composition._id }}
+              />
 
               <div class={css({ display: "flex", gap: "2", mt: "3" })}>
                 <UIButton

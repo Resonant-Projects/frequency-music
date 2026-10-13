@@ -1,3 +1,4 @@
+import { listeningConditionsValidator } from "./shared/decisionIntents";
 import { v } from "convex/values";
 import {
   agentOriginFields,
@@ -100,6 +101,7 @@ const feedTypeValidator = v.union(
 );
 
 export const feedReturnValidator = v.object({
+  revision: v.optional(v.number()),
   _id: v.id("feeds"),
   _creationTime: v.number(),
   name: v.string(),
@@ -355,6 +357,8 @@ const ratingsValidator = v.object({
 });
 
 export const listeningSessionReturnValidator = v.object({
+  conditions: v.optional(listeningConditionsValidator),
+  decisionIntentId: v.optional(v.id("decisionIntents")),
   _id: v.id("listeningSessions"),
   _creationTime: v.number(),
   compositionId: v.id("compositions"),

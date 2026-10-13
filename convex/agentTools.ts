@@ -259,3 +259,9 @@ export const getCaptureRecovery = makeAgentToolAction("getCaptureRecovery");
 export const finishCaptureRecovery = makeAgentToolAction(
   "finishCaptureRecovery",
 );
+
+export const listDocket = makeAgentToolAction("listDocket");
+export const getDocketCard = makeAgentToolAction("getDocketCard");
+export const proposeDecision = makeAgentToolAction("proposeDecision");
+export const proposeListening = makeAgentToolAction("proposeListening");
+export const recordDocketDelivery = makeAgentToolAction("recordDocketDelivery");

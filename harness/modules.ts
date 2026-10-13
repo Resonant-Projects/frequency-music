@@ -3,6 +3,13 @@
 // Excludes *.test.ts, testHelpers.ts, and harness/. The generated sentinel is
 // required so convex-test can derive the module root; it is never registered.
 export const modules: Record<string, () => Promise<unknown>> = {
+  "./docket.ts": () => import("../convex/docket"),
+  "./docketBlurbs.ts": () => import("../convex/docketBlurbs"),
+  "./decisionIdentity.ts": () => import("../convex/decisionIdentity"),
+  "./decisionIntents.ts": () => import("../convex/decisionIntents"),
+  "./decisionSignerRuntime.ts": () => import("../convex/decisionSignerRuntime"),
+  "./decisionIntentsMigrations.ts": () =>
+    import("../convex/decisionIntentsMigrations"),
   "./_generated/api.d.ts": () => import("../convex/_generated/api"),
   "./operationFailures.ts": () => import("../convex/operationFailures"),
   "./recoveryWorkflows.ts": () => import("../convex/recoveryWorkflows"),
