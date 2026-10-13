@@ -25,8 +25,8 @@ deployment, backfill, signer configuration and acceptance steps are in the
 
 The command is `{ action, target, payload }`. Targets are discriminated by
 `kind`: `agentReviewDraft` has an `agentReviewDrafts` ID, `feedProposal` has a
-`feeds` ID, and `composition` has a `compositions` ID. PR #141 (open, not
-merged or deployed) adds `recipe` (a `recipes` ID) and `audioArtifact` (an
+`feeds` ID, and `composition` has a `compositions` ID. PR #141, merged as
+`6e33381`, adds `recipe` (a `recipes` ID) and `audioArtifact` (an
 `audioArtifacts` ID). Those two carry no revision counter, so their proposals
 record `targetContentHash` and a changed target rejects confirmation as stale.
 
@@ -177,29 +177,36 @@ never storage, and is not exposed in the MCP projection.
   checks, media-completion hooks and Thursday preparation are implemented.
   `DOCKET_PREPARATION_ENABLED=false` and `DECISION_SIGNERS_ENABLED=false`
   keep inference, narration preparation and signer delivery disabled by default.
-- On `main`, `unratedAudio` checks the existing `voiceRatings` artifact
-  references and excludes unrevealed blind members in both directions, and the
-  rating submission API only supports voice shootouts.
-- PR #141 (open draft, not merged or deployed) implements general ratings and
-  recipe/audio deferral; its contract is `docs/audio-feedback-contract.md`,
-  added by that PR. Ratings go to a new
+- On `main`, `unratedAudio` checks human `voiceRatings` and current-content
+  `audioRatings`, and excludes unrevealed blind members in both directions.
+- PR #141 (merged as `6e33381`) implements general ratings and
+  recipe/audio deferral; see [the contract](audio-feedback-contract.md).
+  Ratings go to a new
   `audioRatings` table, keyed to the content hash that was heard. Only a ready,
   stored, blind-safe `role: "delivery"` episode or litmus render is a feedback
   target. Render masters, which share the `litmusRender` kind, never reach the
   queue, the docket or a signed rating. With it, `unratedAudio` cards offer
   `rateAudio` and `defer`, and recipe cards offer `defer`.
-- PR #140 (open, not merged or deployed) produces those litmus renders as a
+- PR #140 (merged as `1a368d1`) produces those litmus renders as a
   master and its delivery. They remain `unvalidated`, with no composition,
   until `renderValidation=go`. A human rating does not validate a render.
   Study-family members stay hidden until their blind group is revealed. The
   assembly and its cross-lane test are described in the
   [rollout packet](wave2-rollout-packet.md#listen-first-next-tracks).
+- PR #142 (merged as `0cc0592`) adds durable tournament leases, provenance
+  checks and worker adapters. `HYPOTHESIS_TOURNAMENT_ENABLED=false` remains
+  the default, and publication requires a signed human decision. See
+  [the tournament integration](hypothesis-tournament-integration.md).
+- PR #139 (merged as `52b7664`) supplies rollout tooling and the deployment
+  packet. These merge records establish implementation status; deployment
+  and live acceptance remain unverified. Headed visual acceptance for the
+  audio feedback UI is still blocked on this host by AppArmor.
 - Existing API declarations were updated by hand for the new modules.
   No Convex codegen, run, dev or deploy command was executed.
 
 ## Validation and worktree setup
 
-The assembled integration passed `vp run verify` with 1,894 tests, all package
+The original Wave 2 integration passed `vp run verify` with 1,894 tests, all package
 typechecks, formatting and lint, plus the web build and both isolated browser
 suites. The final signer shared-budget fix is included in that run and passed independent
 review with no actionable P0–P2 findings. The web, Listen lookup, MCP playback,
