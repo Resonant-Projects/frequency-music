@@ -18,7 +18,7 @@ import {
   type TournamentResult,
 } from "../agent/src/graphs/hypothesis-tournament/index";
 import { createTournamentDependencies } from "../agent/src/graphs/hypothesis-tournament/adapters";
-import { createSummarizeNode } from "../agent/src/graphs/hypothesis-tournament/graph";
+import { createFinalizeNode } from "../agent/src/graphs/hypothesis-tournament/finalize";
 import {
   enableTournamentEnv,
   setupTournament,
@@ -131,14 +131,7 @@ const leaseRow = () =>
 const agentRun = () => f.t.run((ctx) => ctx.db.get(runId));
 /** The graph's real summarize node, through the real agent tools. */
 const finalize = (result: TournamentResult, leaseToken?: string) =>
-  createSummarizeNode(f.callTool)({
-    agentRunId: runId,
-    seedHint: undefined,
-    traceUrl: undefined,
-    result,
-    leaseToken,
-    summary: undefined,
-  });
+  createFinalizeNode(f.callTool)({ agentRunId: runId, result, leaseToken });
 
 describe("hypothesis tournament over durable Convex state", () => {
   test("submits one grounded human-review draft from production seeds and evidence", async () => {
