@@ -10,12 +10,46 @@ with a typed result. It never writes research data directly.
   `narrate` (a script through one voice into a normalized narration),
   `shootout` (the calibration passage through every configured voice, blind
   takes plus one feed episode), `assembleEpisode` (a narration master behind
-  a 1 s lead-in becomes the feed episode). Handlers live in `src/jobs/`.
+  a 1 s lead-in becomes the feed episode), `litmusRender` (a recipe's frozen
+  render plan through the SuperCollider litmus engine; see below). Handlers
+  live in `src/jobs/`.
 - Run locally: `cd media && vp install && APP_ENV=dev vp run start` (needs
   ffmpeg and the 1Password app or `OP_SERVICE_ACCOUNT_TOKEN`).
 - Tests: `vp run test:media` (needs ffmpeg on PATH).
 - Deployment: `homelab-infra/hosts/frequency-media/` (compose, deploy script,
   operator notes for ai-5090-02).
+
+## Litmus renders
+
+`renders.request` (Clerk or service bypass) or `renders.requestInternal`
+snapshots `recipes.renderPlan` into a `litmusRender` job:
+`{ recipeId, recipeUpdatedAt, renderPlan, rendererVersion }`. A missing plan
+fails with "needs a typed render plan"; a plan with `variable` (a study
+family) is refused until the plan 11 gate setting `renderValidation` is
+`go`. `renders.setPlan` admits a plan through `renderPlanZ` and bumps the
+recipe revision, so an edit yields a new job; the same revision dedupes to
+the queued, running, or finished job.
+
+The handler (`src/jobs/litmusRender.ts`) renders every member with
+`renderLocal` and uploads each as a 24-bit stereo WAV master
+(`masterNormalized`, or `masterRaw` when `normalize: false`) and a 256 kbps
+MP3 delivery, all private and metadata-stripped, upload-cap checked before a
+URL is minted. Normalized members must meet -18 LUFS and -1 dBTP. The
+result names members by index only.
+
+Completion (`mediaJobEffects`) owns everything else: neutral titles, refs
+(the delivery carries `recipeId`; masters carry only the job), `engine`
+provenance, and `validation`, stamped `validated` only when
+`renderValidation` is `go` at completion. Workers cannot set `validation`.
+A study family becomes a `studyFamily` blind group with labels A to D
+assigned at random (no X member yet); its masters carry the group id so
+playback hides them until reveal. Validated renders get one `compositions`
+row per member (`microStudy`, `m0.1`, `rendered`, private, system; variants
+revise the baseline with `revisionVariable`) whose `audioArtifactId` is the
+delivery. Unvalidated renders create no compositions, so they stay out of
+evidence, docket composition debt, and loop debt. Recipe and composition
+pages reach deliveries through `audioArtifacts.listReadyForTarget`.
+The `analyze` job (spec 3.4) is not implemented.
 
 ## TTS voices
 
@@ -87,7 +121,12 @@ from the repo root (the build context needs `media/` and `convex/shared/`;
 `node:24.18.1-trixie-slim` base with `ffmpeg`/`ffprobe` from apt, a non-root
 `media` user (uid 1001), `MEDIA_WORK_DIR=/work` owned by that user, and
 `/app/node_modules` symlinked to the media install so `convex/shared` files
-resolve their imports. `media/.env.schema` ships in the image because
+resolve their imports, and an `/app/package.json` declaring `"type": "module"`
+so `convex/shared` loads as ESM, as it does under the repo root (barrel
+re-exports such as `convex/shared/tuning` lose their names under CommonJS).
+Debian's SuperCollider 3.13 (`supercollider-server`, `supercollider-language`)
+supplies `scsynth` and `sclang` for litmus renders; sclang links Qt and runs
+offscreen. The image is about 1.6 GB. `media/.env.schema` ships in the image because
 `varlock/auto-load` (the first import in `src/main.ts`) execs `varlock load`,
 which reads the schema from the working directory; values come from the
 container environment, and no `.env.local` is ever baked.
@@ -95,8 +134,13 @@ container environment, and no `.env.local` is ever baked.
 ```sh
 docker build -f media/Dockerfile -t frequency-music-media:local .
 docker run --rm --entrypoint /bin/sh frequency-music-media:local \
-  -ec 'command -v node; node_modules/.bin/tsx --version; ffmpeg -version | head -1; id -u'
+  -ec 'command -v node; node_modules/.bin/tsx --version; ffmpeg -version | head -1; scsynth -v; id -u; node_modules/.bin/tsx src/engines/sc/smoke.ts'
 ```
+
+`src/engines/sc/smoke.ts` is a two-second real render; the publish workflow
+runs it in its smoke step. `tests/sc-real.test.ts` holds the real-engine
+tests (kits, pitch, dense voices, handler). It skips on hosts without
+SuperCollider, so run it in an image that has the tools.
 
 CI publishes the image through `.github/workflows/publish-media-image.yml`
 (pull requests build, smoke-test, and scan; `main` publishes an immutable

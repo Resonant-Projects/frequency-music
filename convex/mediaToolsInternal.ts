@@ -37,6 +37,14 @@ export const generateAudioUploadUrl = internalMutation({
         message: "storageId is assigned by attachAudioStorage",
       });
     }
+    // The plan 11 gate is server-owned: completion stamps validation from the
+    // renderValidation setting, so a worker can never self-certify a render.
+    if (args.artifact?.validation !== undefined) {
+      throw new ConvexError({
+        code: "INVALID_ARGUMENT",
+        message: "validation is assigned at job completion",
+      });
+    }
     // createPending stamps createdAt/updatedAt/uploadIssuedAt itself; the
     // server owns createdBy and pins refs to the leased job.
     const fields = audioArtifactInputZ.parse({

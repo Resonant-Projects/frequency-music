@@ -4,6 +4,7 @@ import {
   LEASE_MS,
   MAX_ATTEMPTS,
   MEDIA_JOB_KINDS,
+  type MediaJobInput,
   mediaJobDedupeKey,
   mediaJobInputZ,
   mediaJobResultZ,
@@ -11,7 +12,63 @@ import {
   spokenLabel,
 } from "./mediaJobs";
 
+const litmusInput: Extract<MediaJobInput, { kind: "litmusRender" }> = {
+  kind: "litmusRender",
+  recipeId: "recipe" as never,
+  recipeUpdatedAt: 1,
+  rendererVersion: "0.3.0",
+  renderPlan: {
+    version: 1,
+    engine: "sc-litmus",
+    tuning: { kind: "edo", divisions: 19 },
+    referenceHz: 432,
+    normalize: true,
+    tempoBpm: 120,
+    durationSecs: 2,
+    seed: [{ degree: 1, octave: 0, startBeat: 0, beats: 1, velocity: 100 }],
+  },
+};
+
 describe("media job contracts", () => {
+  test("litmus snapshots dedupe by recipe revision and plan", () => {
+    expect(mediaJobInputZ.parse(litmusInput)).toEqual(litmusInput);
+    const key = mediaJobDedupeKey(litmusInput);
+    expect(key.startsWith("litmusRender:")).toBe(true);
+    expect(mediaJobDedupeKey({ ...litmusInput, recipeUpdatedAt: 2 })).not.toBe(
+      key,
+    );
+    expect(
+      mediaJobDedupeKey({
+        ...litmusInput,
+        renderPlan: { ...litmusInput.renderPlan, referenceHz: 440 },
+      }),
+    ).not.toBe(key);
+  });
+
+  test("litmus results carry one to four members and no labels", () => {
+    const artifact = {
+      artifactId: "a",
+      durationSecs: 2,
+      loudnessLufs: -18,
+      truePeakDbtp: -2,
+      mimeType: "audio/mpeg",
+    };
+    const member = { member: 0, master: artifact, delivery: artifact };
+    expect(
+      mediaJobResultZ.safeParse({ kind: "litmusRender", members: [member] })
+        .success,
+    ).toBe(true);
+    expect(
+      mediaJobResultZ.safeParse({ kind: "litmusRender", members: [] }).success,
+    ).toBe(false);
+    expect(
+      mediaJobResultZ.safeParse({
+        kind: "litmusRender",
+        members: [{ ...member, member: 4 }],
+      }).success,
+    ).toBe(false);
+  });
+
   test("probe input validates and dedupes by snapshot", () => {
     const input = {
       kind: "probe",
@@ -154,6 +211,12 @@ describe("media job contracts", () => {
       "narrate",
       "shootout",
       "assembleEpisode",
+      "litmusRender",
     ]);
+    // Litmus renders are never feed-published by their own job.
+    expect(ARTIFACT_POLICY_BY_JOB_KIND.litmusRender).toEqual({
+      artifactKinds: ["litmusRender"],
+      access: ["private"],
+    });
   });
 });

@@ -1,3 +1,4 @@
+import { zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
 import {
   degreeCentsToHz,
@@ -255,4 +256,58 @@ export function expandRenderPlan(input: unknown): readonly RenderPlanVariant[] {
     );
   }
   return Object.freeze(variants.map((variant) => Object.freeze(variant)));
+}
+
+// Storage and job-snapshot shape. It mirrors renderPlanZ's accepted input
+// without transforms so Convex can derive a validator from it; renderPlanZ
+// remains the semantic admission check and runs again in the renderer.
+const tuningSnapshotZ = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("edo"), divisions: z.number() }),
+  z.strictObject({ kind: z.literal("ji"), ratios: z.array(z.string()) }),
+  z.strictObject({ kind: z.literal("cents"), values: z.array(z.number()) }),
+  z.strictObject({ kind: z.literal("named"), name: z.string() }),
+]);
+
+export const renderPlanSnapshotZ = z.strictObject({
+  version: z.literal(1),
+  engine: z.literal("sc-litmus"),
+  tuning: tuningSnapshotZ,
+  referenceHz: z.number(),
+  normalize: z.boolean(),
+  variable: z
+    .discriminatedUnion("kind", [
+      z.strictObject({
+        kind: z.literal("temperament"),
+        variants: z.array(tuningSnapshotZ),
+      }),
+      z.strictObject({
+        kind: z.literal("referenceHz"),
+        variants: z.array(z.number()),
+      }),
+    ])
+    .optional(),
+  seed: z.array(
+    z.strictObject({
+      degree: z.number(),
+      octave: z.number(),
+      startBeat: z.number(),
+      beats: z.number(),
+      velocity: z.number(),
+    }),
+  ),
+  tempoBpm: z.number(),
+  durationSecs: z.number(),
+});
+export type RenderPlanSnapshot = z.infer<typeof renderPlanSnapshotZ>;
+export const renderPlanSnapshotValidator = zodToConvex(renderPlanSnapshotZ);
+
+/** Admit an unknown plan: full semantic validation, then the storable shape.
+ * Throws the Zod error, whose issues name the rejected field. */
+export function admitRenderPlan(input: unknown): RenderPlanSnapshot {
+  return renderPlanSnapshotZ.parse(renderPlanZ.parse(input));
+}
+
+/** Baseline plus declared variants: the number of rendered members. */
+export function renderPlanMemberCount(plan: RenderPlanSnapshot): number {
+  return 1 + (plan.variable?.variants.length ?? 0);
 }

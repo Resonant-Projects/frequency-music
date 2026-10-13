@@ -20,6 +20,7 @@ import {
   recipeProtocolValidator,
 } from "./shared/draftPayloads";
 import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
+import { renderPlanSnapshotValidator } from "./shared/renderPlan";
 import {
   claimCitationValidator,
   claimValidator,
@@ -759,6 +760,9 @@ export default defineSchema({
     // Generated studio scaffolding (plan-10 starter kits)
     starterKit: v.optional(recipeStarterKitValidator),
 
+    // Typed litmus render plan (render ladder 3.2); renders.setPlan admits it.
+    renderPlan: v.optional(renderPlanSnapshotValidator),
+
     // Lifecycle
     status: recipeStatusValidator,
 
@@ -804,6 +808,9 @@ export default defineSchema({
     versionOfId: v.optional(v.id("compositions")),
     revisionParentId: v.optional(v.id("compositions")),
     revisionVariable: v.optional(v.string()),
+
+    // The rendered delivery this composition is heard through (litmus renders).
+    audioArtifactId: v.optional(v.id("audioArtifacts")),
 
     // Lifecycle
     status: v.union(
