@@ -17,14 +17,21 @@ const rootPackages = new Set([
 ]);
 const builtins = new Set(builtinModules);
 
-// Static runtime imports and re-exports; `import type` and `export type` erase.
-const specifierPattern =
+// Static runtime imports and re-exports (`import type` and `export type`
+// erase), plus literal dynamic imports.
+const staticPattern =
   /^\s*(?:import|export)\s+(?!type\s)(?:[^'"]*?\sfrom\s+)?["']([^"']+)["']/gm;
+const dynamicPattern = /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
+
+function specifiersIn(source: string) {
+  return [
+    ...source.matchAll(staticPattern),
+    ...source.matchAll(dynamicPattern),
+  ].map((match) => match[1]!);
+}
 
 function runtimeSpecifiers(file: string) {
-  return [...readFileSync(file, "utf8").matchAll(specifierPattern)].map(
-    (match) => match[1]!,
-  );
+  return specifiersIn(readFileSync(file, "utf8"));
 }
 
 /** The agent source a relative import loads; root modules are out of scope. */
@@ -87,6 +94,21 @@ function agentPackageImports() {
 }
 
 describe("root harness dependency boundary", () => {
+  test("the scanner sees every runtime import form and skips type imports", () => {
+    expect(
+      specifiersIn(`import {
+  a,
+  type B,
+} from "multi";
+import "side-effect";
+export { c } from "./re-export.js";
+import type { D } from "type-only";
+export type { E } from "type-reexport";
+const lazy = await import("dynamic");
+`).toSorted(),
+    ).toEqual(["./re-export.js", "dynamic", "multi", "side-effect"]);
+  });
+
   test("agent modules loaded by the harness need only root packages", () => {
     const { visited, violations } = agentPackageImports();
     expect(visited).toContain(

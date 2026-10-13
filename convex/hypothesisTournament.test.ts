@@ -220,6 +220,22 @@ describe("draft submission", () => {
       outcome: "submitted",
       payload: { ...winner.payload, rationale: "No citations" },
     });
+    // One claim repeated is still one claim of evidence.
+    const [only] = winner.evidence;
+    const repeated = await candidate({
+      outcome: "submitted",
+      evidence: [only!, only!],
+      evidenceClaimIds: [only!.claimId],
+      payload: {
+        ...winner.payload,
+        rationale: `[claim:${only!.claimId}] and [claim:${only!.claimId}]`,
+        sourceIds: [only!.sourceId] as never,
+        extractionIds: [only!.extractionId] as never,
+      },
+    });
+    await expect(
+      f.callTool("submitTournamentDraft", await submission(repeated)),
+    ).rejects.toThrow(/TournamentProvenanceRejected/);
     const cases = [
       { ...valid, draft: { ...valid.draft, dedupeKey: "tournament:other" } },
       {

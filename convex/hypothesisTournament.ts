@@ -241,8 +241,9 @@ async function verifyCandidate(
   }
 }
 
-/** The submitted payload must be exactly grounded: at least two claims, the
- * full source/extraction sets, and one [claim:<id>] citation per claim. */
+/** The submitted payload must be exactly grounded: at least two distinct
+ * claims, the full source/extraction sets, and one [claim:<id>] citation per
+ * claim. */
 function verifyGrounded(candidate: TournamentCandidate) {
   const payload = candidate.finalPayload ?? candidate.payload;
   const claimIds = new Set(candidate.evidence.map((claim) => claim.claimId));
@@ -250,7 +251,8 @@ function verifyGrounded(candidate: TournamentCandidate) {
     (match) => match[1]!,
   );
   if (
-    candidate.evidence.length < 2 ||
+    claimIds.size < 2 ||
+    claimIds.size !== candidate.evidence.length ||
     !sameSet(
       payload.sourceIds,
       new Set(candidate.evidence.map((claim) => claim.sourceId)),
