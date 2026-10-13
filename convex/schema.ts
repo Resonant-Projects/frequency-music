@@ -20,6 +20,7 @@ import {
   recipeProtocolValidator,
 } from "./shared/draftPayloads";
 import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
+import { hypothesisCandidateRowValidator } from "./shared/hypothesisTournament";
 import {
   claimCitationValidator,
   claimValidator,
@@ -398,9 +399,12 @@ export default defineSchema({
     // Id (as string) of the hypothesis/recipe created on approval, or the
     // superseding draft id when superseded.
     promotedId: v.optional(v.string()),
+    // Per-run idempotency key, e.g. tournament:<agentRunId>.
+    dedupeKey: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_dedupeKey", ["dedupeKey"])
     .index("by_agentRunId_updatedAt", ["agentRunId", "updatedAt"])
     .index("by_agentRunId_status_updatedAt", [
       "agentRunId",
@@ -410,6 +414,49 @@ export default defineSchema({
     .index("by_status_updatedAt", ["status", "updatedAt"])
     .index("by_status_kind_updatedAt", ["status", "kind", "updatedAt"])
     .index("by_graphName_updatedAt", ["graphName", "updatedAt"]),
+
+  // ==========================================================================
+  // HYPOTHESIS TOURNAMENT - durable leases, candidate archive, statement vectors
+  // ==========================================================================
+  // One row per tournament agent run. The lease token fences every write; a
+  // completed row keeps the canonical result for replay after lease expiry.
+  tournamentRuns: defineTable({
+    agentRunId: v.id("agentRuns"),
+    status: v.union(v.literal("leased"), v.literal("completed")),
+    epoch: v.number(),
+    leaseToken: v.string(),
+    leaseExpiresAt: v.number(),
+    // Zod-validated (tournamentPairZ / tournamentResultZ) on every write.
+    pairs: v.array(v.any()),
+    result: v.optional(v.any()),
+    draftId: v.optional(v.id("agentReviewDrafts")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_agentRunId", ["agentRunId"]),
+  // Every tournament candidate, upserted by (agentRunId, batchIndex). Rows are
+  // audit data and are never promoted directly.
+  hypothesisCandidates: defineTable(hypothesisCandidateRowValidator)
+    .index("by_agentRunId_batchIndex", ["agentRunId", "batchIndex"])
+    .index("by_outcome_createdAt", ["outcome", "createdAt"])
+    .vectorIndex("by_statementEmbedding", {
+      vectorField: "statementEmbedding",
+      dimensions: EMBEDDING_DIMENSIONS,
+      filterFields: ["agentRunId"],
+    }),
+  // Statement vectors for duplicate checks. statementHash is sha256 of the
+  // statement embedded; a mismatch with the hypothesis text marks it stale.
+  hypothesisEmbeddings: defineTable({
+    hypothesisId: v.id("hypotheses"),
+    statementHash: v.string(),
+    embedding: v.array(v.float64()),
+    model: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_hypothesisId", ["hypothesisId"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: EMBEDDING_DIMENSIONS,
+    }),
 
   // ==========================================================================
   // EDIT CAPTURES - Human edits of AI/agent-generated content become eval data

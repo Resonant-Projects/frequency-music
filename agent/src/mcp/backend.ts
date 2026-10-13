@@ -26,7 +26,14 @@ export interface BackendOperation {
   result: z.ZodType;
   invoke(args: Record<string, unknown>, signal: AbortSignal): Promise<unknown>;
 }
-export type BackendOperations = Partial<Record<Wave2Tool, BackendOperation>>;
+export type OperatedTool = Wave2Tool | "tournament.request";
+export type BackendOperations = Partial<Record<OperatedTool, BackendOperation>>;
+
+/** Freq learns only the run id and its queue state; drafts arrive on the docket. */
+export const tournamentRequestResultZ = z.object({
+  runId: z.string().min(1),
+  status: z.enum(["queued", "running"]),
+});
 
 /** Reuse the manifest and existing JSON-body secret transport. No route guessing. */
 export function manifestOperation(
@@ -49,7 +56,10 @@ export function manifestOperation(
   };
 }
 
-export function createWave2Operations(): Record<Wave2Tool, BackendOperation> {
+export function createWave2Operations(): Record<
+  OperatedTool,
+  BackendOperation
+> {
   const operation = (
     name: AgentToolManifestEntry["name"],
     result: z.ZodType,
@@ -64,5 +74,10 @@ export function createWave2Operations(): Record<Wave2Tool, BackendOperation> {
     "decision.propose": operation("proposeDecision", proposalResultZ),
     "listening.propose": operation("proposeListening", proposalResultZ),
     "delivery.record": operation("recordDocketDelivery", deliveryRecordResultZ),
+    // Wave 4. The backend refuses unless HYPOTHESIS_TOURNAMENT_ENABLED=true.
+    "tournament.request": operation(
+      "requestTournamentRun",
+      tournamentRequestResultZ,
+    ),
   };
 }

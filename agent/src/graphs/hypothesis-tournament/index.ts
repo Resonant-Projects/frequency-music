@@ -88,7 +88,7 @@ export function rankCandidates(candidates: TournamentCandidate[]) {
 function cosine(a: number[], b: number[]) {
   if (a.length !== b.length) return -1;
   return (
-    a.reduce((sum, x, i) => sum + x * b[i], 0) /
+    a.reduce((sum, x, i) => sum + x * b[i]!, 0) /
     Math.sqrt(
       a.reduce((s, x) => s + x * x, 0) * b.reduce((s, x) => s + x * x, 0),
     )
@@ -429,7 +429,7 @@ async function runLeasedTournament(
           await model({
             kind: "scoring",
             candidate: { ...candidate, scores: [] },
-            seed: seeds[candidate.batchIndex],
+            seed: seeds[candidate.batchIndex]!,
             judgeIndex,
           }),
         );
@@ -451,8 +451,8 @@ async function runLeasedTournament(
     );
     for (let i = 0; i < finalists.length; i++) {
       for (let j = i + 1; j < finalists.length; j++) {
-        const left = finalists[i];
-        const right = finalists[j];
+        const left = finalists[i]!;
+        const right = finalists[j]!;
         const parsed = pairSchema.safeParse(
           await model({ kind: "finalist", left, right }),
         );
@@ -481,12 +481,12 @@ async function runLeasedTournament(
         mean(b.scores, "falsifiability") - mean(a.scores, "falsifiability") ||
         mean(b.scores) - mean(a.scores) ||
         a.batchIndex - b.batchIndex,
-    )[0];
+    )[0]!;
     phase = "winner";
     for (const candidate of finalists)
       if (candidate !== winner) candidate.outcome = "lost";
     await record("finalists");
-    const seed = seeds[winner.batchIndex];
+    const seed = seeds[winner.batchIndex]!;
     for (let check = 0; check < 2; check++) {
       const parsed = checkSchema.safeParse(
         await model({

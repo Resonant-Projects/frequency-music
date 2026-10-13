@@ -14,6 +14,8 @@ import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import type { ScoutedContentProvider } from "./shared/agentContract";
 import type { AgentToolName } from "./shared/agentToolArgs";
+import { correspondenceSeed, inversionSeeds } from "./hypothesisTournament";
+import { tournamentSeedZ } from "./shared/hypothesisTournament";
 import {
   AGENT_TOOL_MANIFEST,
   type AgentToolManifestEntry,
@@ -382,6 +384,76 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       leaseToken: args.leaseToken as string,
       error: args.error as string,
     }),
+  beginTournamentRun: (ctx, args) =>
+    ctx.runMutation(internal.hypothesisTournament.beginRun, {
+      agentRunId: args.agentRunId as Id<"agentRuns">,
+      leaseDurationMs: args.leaseDurationMs as number,
+    }),
+  completeTournamentRun: (ctx, args) =>
+    ctx.runMutation(internal.hypothesisTournament.completeRun, {
+      agentRunId: args.agentRunId as Id<"agentRuns">,
+      leaseToken: args.leaseToken as string,
+      result: args.result,
+    }),
+  recordHypothesisCandidates: (ctx, args) =>
+    ctx.runMutation(internal.hypothesisTournament.recordCandidates, {
+      agentRunId: args.agentRunId as Id<"agentRuns">,
+      leaseToken: args.leaseToken as string,
+      stage: args.stage as string,
+      candidates: args.candidates,
+      pairs: args.pairs,
+    }),
+  submitTournamentDraft: (ctx, args) =>
+    ctx.runMutation(internal.hypothesisTournament.submitDraft, {
+      agentRunId: args.agentRunId as Id<"agentRuns">,
+      leaseToken: args.leaseToken as string,
+      draft: args.draft,
+      result: args.result,
+    }),
+  listTournamentSeeds: async (ctx, args) => {
+    const family = args.family as "correspondence" | "claim" | "inversion";
+    const seeds =
+      family === "correspondence"
+        ? (
+            await ctx.runQuery(
+              internal.agentDrafts.listDraftableCorrespondences,
+              { limit: 2 },
+            )
+          ).map(correspondenceSeed)
+        : family === "claim"
+          ? await ctx.runQuery(
+              internal.hypothesisTournament.listUnhypothesizedClaimSeeds,
+              {},
+            )
+          : inversionSeeds(
+              await ctx.runQuery(queryRef("failures:listArchive"), {
+                limit: 20,
+              }),
+            );
+    return tournamentSeedZ.array().max(2).parse(seeds.slice(0, 2));
+  },
+  hydrateClaims: (ctx, args) =>
+    ctx.runQuery(internal.hypothesisTournament.hydrateClaims, {
+      claimIds: args.claimIds as string[],
+    }),
+  embedTournamentStatement: (ctx, args) =>
+    ctx.runAction(internal.hypothesisTournamentNode.embedStatement, {
+      text: args.text as string,
+    }),
+  findTournamentNeighbors: (ctx, args) =>
+    ctx.runAction(internal.hypothesisTournamentNode.findNeighbors, {
+      agentRunId: args.agentRunId as string,
+      statement: args.statement as string,
+      embedding: args.embedding as number[],
+    }),
+  requestTournamentRun: (ctx, args) =>
+    ctx.runMutation(
+      internal.hypothesisTournament.request,
+      omitUndefined({
+        seedHint: args.seedHint as string | undefined,
+        requestedBy: "freq" as const,
+      }),
+    ),
 };
 
 export const AGENT_TOOL_REGISTRY: readonly AgentToolDef[] =

@@ -7,7 +7,11 @@ import {
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
-import { type BackendOperations, wave2Tools } from "./backend";
+import {
+  type BackendOperations,
+  type OperatedTool,
+  wave2Tools,
+} from "./backend";
 
 import {
   MCP_MAX_RESPONSE_BYTES,
@@ -90,14 +94,18 @@ function unavailable(requiredWave: 2 | 3 | 4) {
 
 export function createMcpServer(operations: BackendOperations = {}) {
   const server = new McpServer({ name: "frequency", version: "0.1.0" });
-  for (const name of wave2Tools) {
+  const registerOperated = (name: OperatedTool, wave: 2 | 4) => {
     const operation = operations[name];
     server.registerTool(
       name,
       {
-        description: operation
-          ? `${name}. Human decisions require the separate signer path.`
-          : `${name} is unavailable until the Wave 2 backend is registered.`,
+        description: !operation
+          ? wave === 2
+            ? `${name} is unavailable until the Wave 2 backend is registered.`
+            : `Unavailable until Wave ${wave}. Enqueues nothing.`
+          : wave === 2
+            ? `${name}. Human decisions require the separate signer path.`
+            : `${name}. Queues one hypothesis tournament and returns its run id; any draft still needs human review.`,
         inputSchema: operation?.args.strict() ?? z.strictObject({}),
         annotations: {
           readOnlyHint: name === "docket.card",
@@ -105,7 +113,7 @@ export function createMcpServer(operations: BackendOperations = {}) {
         },
       },
       async (args, extra) => {
-        if (!operation) return unavailable(2);
+        if (!operation) return unavailable(wave);
         try {
           if (hasAuthority(args)) throw new Error("Untrusted authority");
           // A hard deadline also bounds injected adapters that ignore cancellation.
@@ -136,21 +144,18 @@ export function createMcpServer(operations: BackendOperations = {}) {
         }
       },
     );
-  }
-  for (const [name, wave] of [
-    ["render.request", 3],
-    ["tournament.request", 4],
-  ] as const) {
-    server.registerTool(
-      name,
-      {
-        description: `Unavailable until Wave ${wave}. Enqueues nothing.`,
-        inputSchema: z.strictObject({}),
-        annotations: { readOnlyHint: true, destructiveHint: false },
-      },
-      async () => unavailable(wave),
-    );
-  }
+  };
+  for (const name of wave2Tools) registerOperated(name, 2);
+  server.registerTool(
+    "render.request",
+    {
+      description: "Unavailable until Wave 3. Enqueues nothing.",
+      inputSchema: z.strictObject({}),
+      annotations: { readOnlyHint: true, destructiveHint: false },
+    },
+    async () => unavailable(3),
+  );
+  registerOperated("tournament.request", 4);
   return server;
 }
 

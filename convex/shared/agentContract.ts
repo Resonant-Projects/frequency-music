@@ -118,6 +118,7 @@ export const KNOWN_GRAPH_NAMES = [
   "hypothesis-drafter",
   "source-scout",
   "transcript-capture",
+  "hypothesis-tournament",
 ] as const;
 export type KnownGraphName = (typeof KNOWN_GRAPH_NAMES)[number];
 
@@ -148,4 +149,5 @@ export const TERMINAL_STATUS_OWNER: Record<KnownGraphName, "graph" | "runner"> =
     "hypothesis-drafter": "graph",
     "source-scout": "graph",
     "transcript-capture": "graph",
+    "hypothesis-tournament": "graph",
   };

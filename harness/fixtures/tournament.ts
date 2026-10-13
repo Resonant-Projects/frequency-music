@@ -1,0 +1,222 @@
+// Local fixture for hypothesis-tournament persistence: an isolated convex-test
+// deployment, the real agent-tool actions, a deterministic OpenAI embeddings
+// stub with usage, and a scripted model. No network, no paid calls.
+import { convexTest } from "convex-test";
+import { makeFunctionReference } from "convex/server";
+import { vi } from "vite-plus/test";
+import type { Id } from "../../convex/_generated/dataModel";
+import schema from "../../convex/schema";
+import {
+  EMBEDDING_DIMENSIONS,
+  EMBEDDING_MODEL,
+} from "../../convex/shared/embeddingText";
+import { fnv1a64Hex } from "../../convex/shared/stableHash";
+import { modules } from "../modules";
+
+export const AGENT_SECRET = "synthetic-tournament-secret";
+
+/** One-hot vector per text: equal statements are identical, others orthogonal. */
+export function vectorFor(text: string): number[] {
+  const vector = Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0);
+  vector[1 + (Number.parseInt(fnv1a64Hex(text).slice(0, 8), 16) % 1535)] = 1;
+  return vector;
+}
+
+export type EmbeddingCall = { texts: string[] };
+
+/** Stub fetch for api.openai.com/v1/embeddings. Usage is 3 tokens per text. */
+export function stubEmbeddings(
+  options: {
+    fail?: (texts: string[]) => boolean;
+    omitUsage?: () => boolean;
+  } = {},
+) {
+  const calls: EmbeddingCall[] = [];
+  const respond = (url: string | URL, init?: RequestInit) => {
+    if (!String(url).startsWith("https://api.openai.com/v1/embeddings"))
+      throw new Error(`Unexpected fetch ${String(url)}`);
+    const { input } = JSON.parse(init?.body as string) as { input: string[] };
+    calls.push({ texts: input });
+    if (options.fail?.(input))
+      return new Response("unavailable", { status: 503 });
+    return Response.json({
+      data: input.map((text, index) => ({ index, embedding: vectorFor(text) })),
+      ...(options.omitUsage?.()
+        ? {}
+        : { usage: { total_tokens: input.length * 3 } }),
+    });
+  };
+  const fetchStub = vi.fn((url: string | URL, init?: RequestInit) =>
+    Promise.resolve().then(() => respond(url, init)),
+  );
+  vi.stubGlobal("fetch", fetchStub);
+  return { calls, fetchStub };
+}
+
+export function enableTournamentEnv(enabled = true) {
+  vi.stubEnv("AGENT_TOOL_SECRET", AGENT_SECRET);
+  vi.stubEnv("OPENAI_API_KEY", "synthetic-openai-key");
+  vi.stubEnv("HYPOTHESIS_TOURNAMENT_ENABLED", enabled ? "true" : "false");
+}
+
+export type TournamentFixture = Awaited<ReturnType<typeof setupTournament>>;
+
+/** Two sources, four active claims, an evidenced correspondence, an unused
+ * on-mission concept, a contradicted hypothesis, and a running tournament. */
+export async function setupTournament() {
+  const t = convexTest(schema, modules);
+  const ids = await t.run(async (ctx) => {
+    const source = (title: string) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        title,
+        status: "extracted",
+        dedupeKey: title,
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    const sourceIds = [await source("Source A"), await source("Source B")];
+    const extractionIds: Id<"extractions">[] = [];
+    for (const sourceId of sourceIds)
+      extractionIds.push(
+        await ctx.db.insert("extractions", {
+          sourceId,
+          model: "test-model",
+          promptVersion: "test",
+          inputHash: `input-${sourceId}`,
+          summary: "Summary",
+          claims: [],
+          compositionParameters: [],
+          topics: [],
+          openQuestions: [],
+          confidence: 1,
+          createdBy: "system",
+          createdAt: 1,
+        }),
+      );
+    const claimIds: Id<"claims">[] = [];
+    for (let i = 0; i < 4; i++)
+      claimIds.push(
+        await ctx.db.insert("claims", {
+          extractionId: extractionIds[i % 2]!,
+          sourceId: sourceIds[i % 2]!,
+          ordinal: i,
+          text: `Claim ${i}: beating near 4 Hz reads as tremolo`,
+          evidenceLevel: "peer_reviewed",
+          citations: [],
+          status: "active",
+          embedding: Array.from({ length: EMBEDDING_DIMENSIONS }, () => 1),
+          embeddingModel: EMBEDDING_MODEL,
+          createdBy: "system",
+          createdAt: 10 + i,
+        }),
+      );
+    const concept = (name: string, domain: string) =>
+      ctx.db.insert("concepts", {
+        name,
+        displayName: name,
+        aliases: [],
+        domain,
+        missionRelevance: "on",
+        mentionCount: 1,
+        hypothesisCount: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    const conceptAId = await concept("beating", "psychoacoustics");
+    const conceptBId = await concept("cymatics", "cymatics");
+    for (const sourceId of sourceIds)
+      await ctx.db.insert("edges", {
+        fromType: "source",
+        fromId: sourceId,
+        toType: "concept",
+        toId: "beating",
+        relationship: "mentions",
+        autoGenerated: true,
+        createdAt: 1,
+        createdBy: "system",
+      });
+    const correspondenceId = await ctx.db.insert("correspondences", {
+      conceptAId,
+      conceptBId,
+      pairKey: "beating|cymatics",
+      statement: "Beating rates map onto cymatic node spacing",
+      rationaleMd: "Both are interference phenomena.",
+      evidence: claimIds.slice(0, 2).map((claimId) => ({
+        claimId,
+        stance: "supports" as const,
+        addedBy: "agent" as const,
+        addedAt: 1,
+      })),
+      status: "evidenced",
+      createdBy: "system",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    const contradictedId = await ctx.db.insert("hypotheses", {
+      title: "Contradicted",
+      question: "Does detuning by 7 cents always add warmth?",
+      hypothesis: "Detuning by 7 cents always adds warmth",
+      rationaleMd: "Old rationale",
+      concepts: ["detuning"],
+      sourceIds: [],
+      status: "evaluated",
+      resolution: "contradicted",
+      visibility: "private",
+      createdBy: "system",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    return {
+      sourceIds,
+      extractionIds,
+      claimIds,
+      correspondenceId,
+      contradictedId,
+    };
+  });
+  const newRun = (status: "running" | "queued" = "running") =>
+    t.run((ctx) =>
+      ctx.db.insert("agentRuns", {
+        graphName: "hypothesis-tournament",
+        status,
+        input: null,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+  /** The real secret-authenticated agent-tool actions, as the worker calls them. */
+  const callTool = (name: string, args: Record<string, unknown>) =>
+    t.action(makeFunctionReference<"action">(`agentTools:${name}`), {
+      agentSecret: AGENT_SECRET,
+      ...args,
+    });
+  const pendingDraft = (runId: Id<"agentRuns">, n: number) =>
+    t.run((ctx) =>
+      ctx.db.insert("agentReviewDrafts", {
+        agentRunId: runId,
+        graphName: "hypothesis-drafter",
+        kind: "hypothesis_draft",
+        title: `Pending ${n}`,
+        summary: `Pending ${n}`,
+        candidateIds: ["x"],
+        payload: {
+          title: `Pending ${n}`,
+          question: "Q",
+          statement: `Pending statement ${n}`,
+          rationale: "R",
+          whyThisMatters: "It changes how Keith voices the pad layer.",
+          sourceIds: [],
+          extractionIds: [],
+        },
+        status: "pending_review",
+        createdBy: "agent",
+        revision: 0,
+        createdAt: n,
+        updatedAt: n,
+      }),
+    );
+  return { t, ids, newRun, callTool, pendingDraft };
+}

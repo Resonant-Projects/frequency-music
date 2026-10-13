@@ -252,6 +252,49 @@ const FROZEN_ARGS: Record<string, string> = {
     leaseToken: field(string),
     error: field(string),
   }),
+  beginTournamentRun: frozenArgs({
+    agentRunId: runId,
+    leaseDurationMs: field(number),
+  }),
+  completeTournamentRun: frozenArgs({
+    agentRunId: runId,
+    leaseToken: field(string),
+    result: field(any),
+  }),
+  recordHypothesisCandidates: frozenArgs({
+    agentRunId: runId,
+    leaseToken: field(string),
+    stage: field(
+      union(
+        literal("duplicates"),
+        literal("finalists"),
+        literal("self_check"),
+        literal("submitted"),
+        literal("terminal"),
+      ),
+    ),
+    candidates: field(any),
+    pairs: field(any),
+  }),
+  submitTournamentDraft: frozenArgs({
+    agentRunId: runId,
+    leaseToken: field(string),
+    draft: field(any),
+    result: field(any),
+  }),
+  listTournamentSeeds: frozenArgs({
+    family: field(
+      union(literal("correspondence"), literal("claim"), literal("inversion")),
+    ),
+  }),
+  hydrateClaims: frozenArgs({ claimIds: field(array(string)) }),
+  embedTournamentStatement: frozenArgs({ text: field(string) }),
+  findTournamentNeighbors: frozenArgs({
+    agentRunId: runId,
+    statement: field(string),
+    embedding: field(array(number)),
+  }),
+  requestTournamentRun: frozenArgs({ seedHint: field(string, true) }),
 };
 
 describe("agent tool registry", () => {

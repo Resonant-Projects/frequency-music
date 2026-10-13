@@ -52,6 +52,9 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./http.ts": () => import("../convex/http"),
   "./hypotheses.ts": () => import("../convex/hypotheses"),
   "./hypothesesInternal.ts": () => import("../convex/hypothesesInternal"),
+  "./hypothesisTournament.ts": () => import("../convex/hypothesisTournament"),
+  "./hypothesisTournamentNode.ts": () =>
+    import("../convex/hypothesisTournamentNode"),
   "./inbox.ts": () => import("../convex/inbox"),
   "./ingest.ts": () => import("../convex/ingest"),
   "./listen.ts": () => import("../convex/listen"),

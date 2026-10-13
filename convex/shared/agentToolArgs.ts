@@ -25,6 +25,11 @@ import {
   listCorrespondencesArgsZ,
   upsertCorrespondenceArgsZ,
 } from "./correspondences";
+import {
+  archiveStageZ,
+  TOURNAMENT_MAX_EVIDENCE,
+  TOURNAMENT_SEED_HINT_MAX_CHARS,
+} from "./hypothesisTournament";
 
 const limit = z.number().int().positive().max(100).optional();
 
@@ -210,6 +215,52 @@ export const agentToolArgs = {
     jobId: zid("mediaJobs"),
     leaseToken: z.string().min(1),
     error: z.string().min(1),
+  }),
+  // Hypothesis tournament (wave 4). Graph-only; results and archives are
+  // validated by the shared tournament zod schemas inside the mutations.
+  beginTournamentRun: z.object({
+    agentRunId: zid("agentRuns"),
+    leaseDurationMs: z.number().int().positive(),
+  }),
+  completeTournamentRun: z.object({
+    agentRunId: zid("agentRuns"),
+    leaseToken: z.string().min(1).max(200),
+    result: z.any(),
+  }),
+  recordHypothesisCandidates: z.object({
+    agentRunId: zid("agentRuns"),
+    leaseToken: z.string().min(1).max(200),
+    stage: archiveStageZ,
+    candidates: z.any(),
+    pairs: z.any(),
+  }),
+  submitTournamentDraft: z.object({
+    agentRunId: zid("agentRuns"),
+    leaseToken: z.string().min(1).max(200),
+    draft: z.any(),
+    result: z.any(),
+  }),
+  listTournamentSeeds: z.object({
+    family: z.enum(["correspondence", "claim", "inversion"]),
+  }),
+  hydrateClaims: z.object({
+    claimIds: z.array(z.string().min(1).max(200)).max(TOURNAMENT_MAX_EVIDENCE),
+  }),
+  embedTournamentStatement: z.object({
+    text: z.string().trim().min(1).max(4_000),
+  }),
+  findTournamentNeighbors: z.object({
+    agentRunId: zid("agentRuns"),
+    statement: z.string().trim().min(1).max(4_000),
+    embedding: z.array(z.number()).max(4_096),
+  }),
+  requestTournamentRun: z.object({
+    seedHint: z
+      .string()
+      .trim()
+      .min(1)
+      .max(TOURNAMENT_SEED_HINT_MAX_CHARS)
+      .optional(),
   }),
 } as const;
 

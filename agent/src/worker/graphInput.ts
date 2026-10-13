@@ -12,6 +12,7 @@ import {
   type KnownGraphName,
 } from "../../../convex/shared/agentContract";
 import type { ClaimedRun } from "../../../convex/shared/agentRunClaim";
+import { TOURNAMENT_SEED_HINT_MAX_CHARS } from "../../../convex/shared/hypothesisTournament";
 
 export {
   isKnownGraphName,
@@ -93,6 +94,12 @@ export type TranscriptCaptureGraphInput = {
   traceUrl?: string;
 };
 
+export type HypothesisTournamentGraphInput = {
+  agentRunId: string;
+  seedHint?: string;
+  traceUrl?: string;
+};
+
 export type GraphInvocation =
   | { graphName: "failure-investigation"; input: { agentRunId: string } }
   | { graphName: "research-pipeline"; input: ResearchPipelineGraphInput }
@@ -101,7 +108,11 @@ export type GraphInvocation =
   | { graphName: "evidence-hunter"; input: EvidenceHunterGraphInput }
   | { graphName: "hypothesis-drafter"; input: HypothesisDrafterGraphInput }
   | { graphName: "source-scout"; input: SourceScoutGraphInput }
-  | { graphName: "transcript-capture"; input: TranscriptCaptureGraphInput };
+  | { graphName: "transcript-capture"; input: TranscriptCaptureGraphInput }
+  | {
+      graphName: "hypothesis-tournament";
+      input: HypothesisTournamentGraphInput;
+    };
 
 function traceUrlFrom(input: unknown): string | undefined {
   if (!input || typeof input !== "object") return undefined;
@@ -206,6 +217,25 @@ export function buildGraphInvocation(claim: ClaimedRun): GraphInvocation {
       input: {
         agentRunId: claim.runId,
         ...(typeof backlogCursor === "string" ? { backlogCursor } : {}),
+        ...(traceUrl ? { traceUrl } : {}),
+      },
+    };
+  }
+  if (claim.graphName === "hypothesis-tournament") {
+    const traceUrl = claimedTraceUrl(claim);
+    const raw =
+      claim.input && typeof claim.input === "object"
+        ? (claim.input as { seedHint?: unknown }).seedHint
+        : undefined;
+    const seedHint =
+      typeof raw === "string"
+        ? raw.trim().slice(0, TOURNAMENT_SEED_HINT_MAX_CHARS)
+        : "";
+    return {
+      graphName: "hypothesis-tournament",
+      input: {
+        agentRunId: claim.runId,
+        ...(seedHint ? { seedHint } : {}),
         ...(traceUrl ? { traceUrl } : {}),
       },
     };

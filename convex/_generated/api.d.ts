@@ -55,6 +55,8 @@ import type * as graph from "../graph.js";
 import type * as http from "../http.js";
 import type * as hypotheses from "../hypotheses.js";
 import type * as hypothesesInternal from "../hypothesesInternal.js";
+import type * as hypothesisTournament from "../hypothesisTournament.js";
+import type * as hypothesisTournamentNode from "../hypothesisTournamentNode.js";
 import type * as inbox from "../inbox.js";
 import type * as ingest from "../ingest.js";
 import type * as listen from "../listen.js";
@@ -160,6 +162,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   hypotheses: typeof hypotheses;
   hypothesesInternal: typeof hypothesesInternal;
+  hypothesisTournament: typeof hypothesisTournament;
+  hypothesisTournamentNode: typeof hypothesisTournamentNode;
   inbox: typeof inbox;
   ingest: typeof ingest;
   listen: typeof listen;
