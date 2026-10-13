@@ -10,6 +10,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { fetchMeteredEmbeddings } from "./hypothesisTournamentNode";
 import {
+  evidenceClaimZ,
   statementHash,
   type TournamentCandidate,
   type TournamentResult,
@@ -360,6 +361,23 @@ describe("seeds, evidence and requests", () => {
         refs: [`hypothesis:${f.ids.contradictedId}:contradicted`],
       }),
     ]);
+  });
+
+  test("claim text with surrounding whitespace survives hydration and verification", async () => {
+    await f.t.run((ctx) =>
+      ctx.db.patch(f.ids.claimIds[0]!, { text: "  Padded claim text \n" }),
+    );
+    const hydrated = (await f.callTool("hydrateClaims", {
+      claimIds: [f.ids.claimIds[0]],
+    })) as Array<{ text: string }>;
+    // The worker adapter parses hydration with this schema: no rewriting.
+    expect(evidenceClaimZ.array().parse(hydrated)[0]!.text).toBe(
+      "  Padded claim text \n",
+    );
+    expect(() =>
+      evidenceClaimZ.parse({ ...hydrated[0], text: "   " }),
+    ).toThrow();
+    await record([await candidate()]);
   });
 
   test("hydrateClaims returns only active claims for valid ids", async () => {

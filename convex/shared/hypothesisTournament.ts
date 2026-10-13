@@ -167,7 +167,14 @@ export async function statementHash(statement: string): Promise<string> {
 }
 export const tournamentDedupeKey = (runId: string) => `tournament:${runId}`;
 
-const id = z.string().trim().min(1).max(200);
+// Validate without transforming: provenance compares these values exactly
+// against the database, so parsing must never rewrite them.
+const nonblank = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .refine((value) => value.trim().length > 0, "Must not be blank");
+const id = nonblank(200);
 const text = (max: number) => z.string().max(max);
 const familyZ = z.enum(TOURNAMENT_FAMILIES);
 const duplicateKindZ = z.enum(["duplicate", "inversion", "refinement"]);
@@ -183,7 +190,7 @@ export const tournamentSeedZ = z
 export const evidenceClaimZ = z
   .object({
     claimId: id,
-    text: z.string().trim().min(1).max(4_000),
+    text: nonblank(4_000),
     sourceId: id,
     extractionId: id,
   })
