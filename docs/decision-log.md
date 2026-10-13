@@ -538,6 +538,41 @@ Operator-item delegations recorded: the Proxmox worker restart + UNAUTHORIZED-ca
 - If triage volume stays trivial (<5 provisional domains/month), the standing surface can freeze after the initial 49 are decided.
 - If scheduled generation cadence feels wrong once volume arrives, that is the signal to build generator steering.
 
+## 2026-10-13 — WebMCP Deferred Until It Becomes a Standard
+
+## **Decision**
+
+Do not add WebMCP browser-agent tools to the web app yet. Keep the research and
+a ready design in [plan 16](./plans/2026-10-13-16-webmcp-readiness.md).
+
+## **Rationale**
+
+WebMCP is a proposed standard available only through a Chrome origin trial
+(Chrome 149+), with no stable release and no Firefox or Safari commitment. Its
+API has already moved from `navigator.modelContext` to `document.modelContext`.
+Shipping now buys token renewals and API churn for an audience of test
+extensions.
+
+## **Alternatives considered**
+
+- Register for the origin trial now — rejected: per-origin token maintenance and
+  a moving API for little present use.
+- A remote MCP server for the web app — out of scope: headless agents already
+  have `/agent-tools/*` and the Wave 2 MCP service.
+
+## **Downstream implications**
+
+- None today. When started, tools inherit the user's Clerk session, so the
+  registered tool list is the permission boundary: human-approved publication
+  and signed decisions stay out of it.
+
+## **Revisit trigger**
+
+- WebMCP ships enabled by default in stable Chrome or Edge.
+- An agent Keith uses consumes WebMCP tools on ordinary sites.
+- Keith wants browser agents to drive Frequency badly enough to accept
+  origin-trial maintenance.
+
 ## Reversals / What Changed Our Mind
 
 ## 2026-07-07 — Agent drafts are no longer the only door
