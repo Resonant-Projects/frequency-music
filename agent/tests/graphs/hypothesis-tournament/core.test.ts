@@ -1,6 +1,10 @@
 import { durableStore } from "./store.js";
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { TOURNAMENT_FAMILIES } from "../../../../convex/shared/hypothesisTournament.js";
+import {
+  TOURNAMENT_FAMILIES,
+  tournamentDraftZ,
+  tournamentSelfCheckZ,
+} from "../../../../convex/shared/hypothesisTournament.js";
 import {
   runTournament,
   rotateSeeds,
@@ -205,6 +209,33 @@ test("complete run preserves evidence, archives transitions, and submits one hum
   expect(r.budget.totalTokens).toBe(28);
   for (const req of f.requests)
     if (req.kind === "scoring") expect(req.candidate.scores).toEqual([]);
+});
+test("provider-valid oversized text stays within the durable bounds", async () => {
+  const f = fixture();
+  f.override((r) => {
+    if (r.kind === "generation") {
+      const value = f.response(r) as Record<string, string>;
+      // The first title is too long to persist; long statements and feedback
+      // are legitimate and must not make the draft or archive unwritable.
+      return ok({
+        ...value,
+        title: value.title === "Title 0" ? "T".repeat(241) : value.title,
+        statement: `${value.statement} ${"s".repeat(9_000)}`,
+      });
+    }
+    if (r.kind === "selfCheck")
+      return ok({ ...checked, feedback: "f".repeat(5_000) });
+    return undefined;
+  });
+  const r = await f.run();
+  expect(r.reason).toBe("submitted");
+  expect(r.candidates.every((c) => c.payload.title.length <= 240)).toBe(true);
+  expect(() => tournamentDraftZ.parse(r.draft)).not.toThrow();
+  for (const candidate of r.candidates)
+    if (candidate.selfCheck)
+      expect(() =>
+        tournamentSelfCheckZ.parse(candidate.selfCheck),
+      ).not.toThrow();
 });
 test("bounds each available family to two and includes the hint", async () => {
   const f = fixture();

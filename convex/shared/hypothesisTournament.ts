@@ -170,6 +170,10 @@ export const TOURNAMENT_SEED_HINT_MAX_CHARS = 500;
 export const TOURNAMENT_MAX_CANDIDATES = 8;
 export const TOURNAMENT_MAX_PAIRS = 3;
 export const TOURNAMENT_MAX_EVIDENCE = 20;
+// Durable text bounds the core enforces before persistence.
+export const TOURNAMENT_TITLE_MAX_CHARS = 240;
+export const TOURNAMENT_SUMMARY_MAX_CHARS = 8_000;
+export const TOURNAMENT_FEEDBACK_MAX_CHARS = 4_000;
 export const TOURNAMENT_DUPLICATE_THRESHOLD = 0.86;
 // Missing or stale hypothesis vectors re-embedded per neighbor query. More
 // than this fails closed until backfillHypothesisEmbeddings runs.
@@ -229,7 +233,7 @@ export const tournamentSelfCheckZ = z
     testable: z.boolean(),
     oneVariable: z.boolean(),
     evidenceGrounded: z.boolean(),
-    feedback: text(4_000),
+    feedback: text(TOURNAMENT_FEEDBACK_MAX_CHARS),
   })
   .strict();
 export const tournamentOutcomeZ = z.enum([
@@ -303,8 +307,8 @@ export const tournamentDraftZ = z
     draft: z
       .object({
         kind: z.literal("hypothesis_draft"),
-        title: z.string().min(1).max(240),
-        summary: z.string().min(1).max(8_000),
+        title: z.string().min(1).max(TOURNAMENT_TITLE_MAX_CHARS),
+        summary: z.string().min(1).max(TOURNAMENT_SUMMARY_MAX_CHARS),
         candidateIds: z.array(id).min(1).max(40),
         needsReview: z.literal(true),
         payload: hypothesisDraftPayloadZ,

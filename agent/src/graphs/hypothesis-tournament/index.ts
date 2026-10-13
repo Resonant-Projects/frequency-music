@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { PENDING_DRAFT_CAP } from "../../../../convex/shared/agentContract.js";
 import { hypothesisDraftPayloadZ } from "../../../../convex/shared/draftPayloads.js";
-import { TOURNAMENT_FAMILIES } from "../../../../convex/shared/hypothesisTournament.js";
+import {
+  TOURNAMENT_FAMILIES,
+  TOURNAMENT_FEEDBACK_MAX_CHARS,
+  TOURNAMENT_SUMMARY_MAX_CHARS,
+} from "../../../../convex/shared/hypothesisTournament.js";
 import {
   BudgetExhausted,
   TournamentBudget,
@@ -40,7 +44,10 @@ const checkSchema = z
     testable: z.boolean(),
     oneVariable: z.boolean(),
     evidenceGrounded: z.boolean(),
-    feedback: z.string(),
+    // Advisory text: keep the verdict, trim what the archive cannot hold.
+    feedback: z
+      .string()
+      .transform((text) => text.slice(0, TOURNAMENT_FEEDBACK_MAX_CHARS)),
   })
   .strict();
 const duplicateSchema = z
@@ -576,7 +583,9 @@ async function runLeasedTournament(
             .join("; ")}.`,
           ...relations,
           ...winner.flags,
-        ].join("\n"),
+        ]
+          .join("\n")
+          .slice(0, TOURNAMENT_SUMMARY_MAX_CHARS),
       },
     };
     winner.outcome = "submitted";
