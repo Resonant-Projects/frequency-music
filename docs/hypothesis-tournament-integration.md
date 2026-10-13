@@ -12,8 +12,8 @@ Nothing here schedules a run, and no production command was run.
 literal `true` lets `beginTournamentRun` issue a lease or `requestTournamentRun`
 queue a run. When it is absent or any other value:
 
-- a claimed tournament run gets no lease, makes no model or embedding call, and
-  is marked failed with reason `dependency_error`;
+- a claimed tournament run gets no lease and makes no model or embedding call,
+  and finalization marks it failed (`dependency_error`);
 - freq's `tournament.request` returns the MCP adapter's generic error;
 - a completed run still replays its saved result.
 
@@ -37,15 +37,20 @@ tournament, prunes the archive or backfills vectors.
    lease and marks the run `needs_review`. A response lost after commit replays
    from step 2. The run cannot end with a draft but no result, so the spec's
    reconcile repair step is not needed.
-5. The graph's `summarize` node marks every no-draft outcome completed. It
-   marks dependency and persistence failures failed, and leaves `busy` alone.
+5. The graph's `summarize` node calls `finalizeTournamentRun`, and Convex sets
+   the terminal status from the durable row rather than the worker's result.
+   A run that is no longer `running` is left alone, which keeps a committed
+   draft's `needs_review` even after a lost response. A saved no-draft result
+   completes the run. Without one, the run fails only if this attempt holds
+   the lease (which it releases) or no live lease exists. Another attempt's
+   live lease leaves the run untouched.
 
 Publication remains a human decision on the existing draft review path.
 
 ## Provenance
 
 The worker never asserts provenance. Convex re-reads every evidence claim on
-each archive write and at submission, and requires an active claim with the
+each archive write, including terminal completion, and at submission, and requires an active claim with the
 same text, source and extraction. Payload source and extraction ids must come
 from that evidence. A correspondence id must be the candidate's own
 correspondence seed. At submission the winner also needs at least two claims,
@@ -72,9 +77,11 @@ hypothesis and the sha256 of the embedded statement. The spec put them on
 `hypotheses`, but a separate table keeps vectors out of every hypothesis read.
 `findTournamentNeighbors` re-embeds hypotheses whose vector is missing or
 stale (32 at most) and embeds pending drafts at query time. It searches
-current hypothesis vectors and other runs' archived candidates. More than 32
-stale hypotheses, or more than 500 hypotheses in total, fail the run closed
-rather than skip a possible duplicate.
+current hypothesis vectors and other runs' archived candidates. Searches
+retrieve past the rows that hydration drops: 32 stale vectors plus 16 for
+hypotheses, and 8 same-run rows plus 16 for the archive. More than 32 stale
+hypotheses, or more than 500 hypotheses in total, fail the run closed rather
+than skip a possible duplicate.
 
 ## Model routing and metering
 
@@ -87,8 +94,14 @@ UTF-8 byte length of prompt and schema plus maximum output fits the remaining
 run budget. A call with fewer than 1,024 output tokens left is not made. Usage
 comes from the provider response. A response without usage, an abort or a
 network failure stops the run. An HTTP error counts as an unbilled missing
-attempt. Embedding tools make one OpenAI attempt each and report
-`usage.total_tokens`.
+attempt.
+
+Embeddings are metered the same way. Evidence search
+(`searchTournamentEvidence`), candidate vectors and neighbor re-embedding each
+make one OpenAI attempt and report `usage.total_tokens`. Each receives the
+remaining allowance and refuses without a provider call
+(`budgetExceeded: true`) when the UTF-8 byte length of its texts exceeds it.
+The worker treats that refusal as budget exhaustion.
 
 ## Prepared operator commands (not run)
 

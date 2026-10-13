@@ -88,7 +88,7 @@ function fixture(store = durableStore()) {
           : {}),
       },
     ]),
-    searchClaimsSemantic: vi.fn(async () => ["claim-1", "claim-2"]),
+    searchClaimsSemantic: vi.fn(async () => ok(["claim-1", "claim-2"])),
     hydrateClaims: vi.fn(async () =>
       [1, 2].map((n) => ({
         claimId: `claim-${n}`,
@@ -201,7 +201,8 @@ test("complete run preserves evidence, archives transitions, and submits one hum
       },
     ]),
   );
-  expect(r.budget.totalTokens).toBe(25);
+  // Includes one metered evidence search per candidate.
+  expect(r.budget.totalTokens).toBe(28);
   for (const req of f.requests)
     if (req.kind === "scoring") expect(req.candidate.scores).toEqual([]);
 });
@@ -251,7 +252,7 @@ test("malformed capacity fails closed and failed families are recorded", async (
 });
 test("repeated or unsearched hydrated IDs cannot satisfy two claims", async () => {
   const f = fixture();
-  f.d.searchClaimsSemantic = async () => ["claim-1", "claim-1"];
+  f.d.searchClaimsSemantic = async () => ok(["claim-1", "claim-1"]);
   const r = await f.run();
   expect(r.candidates.every((c) => c.outcome === "dropped_evidence")).toBe(
     true,

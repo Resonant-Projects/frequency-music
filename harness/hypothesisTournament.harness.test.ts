@@ -18,6 +18,7 @@ import {
   type TournamentResult,
 } from "../agent/src/graphs/hypothesis-tournament/index";
 import { createTournamentDependencies } from "../agent/src/graphs/hypothesis-tournament/adapters";
+import { createSummarizeNode } from "../agent/src/graphs/hypothesis-tournament/graph";
 import {
   enableTournamentEnv,
   setupTournament,
@@ -128,6 +129,16 @@ const leaseRow = () =>
       .unique(),
   );
 const agentRun = () => f.t.run((ctx) => ctx.db.get(runId));
+/** The graph's real summarize node, through the real agent tools. */
+const finalize = (result: TournamentResult, leaseToken?: string) =>
+  createSummarizeNode(f.callTool)({
+    agentRunId: runId,
+    seedHint: undefined,
+    traceUrl: undefined,
+    result,
+    leaseToken,
+    summary: undefined,
+  });
 
 describe("hypothesis tournament over durable Convex state", () => {
   test("submits one grounded human-review draft from production seeds and evidence", async () => {
@@ -196,6 +207,9 @@ describe("hypothesis tournament over durable Convex state", () => {
     const first = await run(scriptedModel().model, lossy);
     expect(first.reason).toBe("dependency_error");
     expect(first.draftId).toBeUndefined();
+    // The graph's terminal write cannot fail a run whose draft committed.
+    await finalize(first);
+    expect(await agentRun()).toMatchObject({ status: "needs_review" });
     const committed = await drafts();
     expect(committed).toHaveLength(1);
     // The terminal archive after the lost response could not overwrite the
@@ -238,6 +252,69 @@ describe("hypothesis tournament over durable Convex state", () => {
 
     const replay = await run(scriptedModel().model);
     expect(replay.reason).toBe("budget_exhausted");
+    await finalize(replay);
+    expect(await agentRun()).toMatchObject({ status: "completed" });
+  });
+
+  test("calls that cannot fit the remaining allowance are refused before any provider request", async () => {
+    const embeddings = stubEmbeddings();
+    // Generation leaves 5 tokens: less than the byte bound of any statement.
+    const m = scriptedModel((r) =>
+      r.kind === "generation"
+        ? {
+            ok: true,
+            totalTokens: 299_995,
+            value: {
+              title: "T",
+              question: "Q",
+              statement: "Statement 0",
+              rationale: "R",
+              whyThisMatters: "Changes the studio choice",
+            },
+          }
+        : undefined,
+    );
+    const result = await run(m.model);
+    expect(result.reason).toBe("budget_exhausted");
+    expect(result.budget.totalTokens).toBe(299_995);
+    expect(embeddings.calls).toHaveLength(0);
+    expect(m.model).toHaveBeenCalledTimes(1);
+  });
+
+  test("a stale attempt's finalization cannot fail or overwrite a newer attempt", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(1_000_000);
+    const begin = async () =>
+      (
+        (await f.callTool("beginTournamentRun", {
+          agentRunId: runId,
+          leaseDurationMs: 1_210_000,
+        })) as { lease: { token: string } }
+      ).lease.token;
+    const stale = await begin();
+    vi.setSystemTime(1_000_000 + 1_210_000);
+    const current = await begin();
+    const finalizeWith = (leaseToken?: string) =>
+      f.callTool("finalizeTournamentRun", {
+        agentRunId: runId,
+        ...(leaseToken ? { leaseToken } : {}),
+        summary: "hypothesis-tournament failed: dependency_error",
+      });
+    for (const token of [stale, undefined])
+      expect(await finalizeWith(token)).toMatchObject({ status: "untouched" });
+    expect(await agentRun()).toMatchObject({ status: "running" });
+    // The live attempt's own failure releases its lease and fails the run.
+    expect(await finalizeWith(current)).toMatchObject({ status: "failed" });
+    await expect(
+      f.callTool("recordHypothesisCandidates", {
+        agentRunId: runId,
+        leaseToken: current,
+        stage: "terminal",
+        candidates: [],
+        pairs: [],
+      }),
+    ).rejects.toThrow(/StaleTournamentLease/);
+    expect(await finalizeWith(current)).toMatchObject({ status: "untouched" });
   });
 
   test("a stale lease cannot write after another worker reclaims the run", async () => {

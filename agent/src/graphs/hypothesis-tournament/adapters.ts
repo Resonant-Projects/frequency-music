@@ -4,6 +4,7 @@
 // No model imports here: the model adapter lives in model.ts.
 import {
   evidenceClaimZ,
+  meteredClaimIdsZ,
   meteredEmbeddingZ,
   meteredNeighborsZ,
   tournamentBeginZ,
@@ -11,24 +12,44 @@ import {
   tournamentSubmitResultZ,
 } from "../../../../convex/shared/hypothesisTournament.js";
 import type { ToolCaller } from "../shared/audit.js";
-import type { TournamentDependencies } from "./types.js";
+import { BudgetExhausted } from "./budget.js";
+import type {
+  Metered,
+  TournamentDependencies,
+  TournamentLease,
+} from "./types.js";
+
+/** The backend refused before calling the provider: the strict input bound
+ * exceeded the remaining run allowance. That is budget exhaustion. */
+function withinBudget<T>(
+  response: Metered<T> & { budgetExceeded?: true },
+): Metered<T> {
+  if (!response.ok && response.budgetExceeded)
+    throw new BudgetExhausted("tokens");
+  const { budgetExceeded: _refused, ...metered } = response;
+  return metered as Metered<T>;
+}
 
 export function createTournamentDependencies(options: {
   callTool: ToolCaller;
   model: TournamentDependencies["model"];
   now?: () => number;
+  /** Receives the lease this attempt acquired, for terminal finalization. */
+  onLease?: (lease: TournamentLease) => void;
 }): TournamentDependencies {
   const { callTool } = options;
   return {
     ...(options.now ? { now: options.now } : {}),
     async beginRun({ runId, leaseDurationMs }, { signal }) {
-      return tournamentBeginZ.parse(
+      const begin = tournamentBeginZ.parse(
         await callTool(
           "beginTournamentRun",
           { agentRunId: runId, leaseDurationMs },
           signal,
         ),
       ) as Awaited<ReturnType<TournamentDependencies["beginRun"]>>;
+      if (begin.status === "acquired") options.onLease?.(begin.lease);
+      return begin;
     },
     async completeRun({ lease, result }, { signal }) {
       await callTool(
@@ -52,17 +73,15 @@ export function createTournamentDependencies(options: {
         .max(2)
         .parse(await callTool("listTournamentSeeds", { family }, signal));
     },
-    async searchClaimsSemantic(statement, { signal }) {
-      const matches = await callTool(
-        "searchClaimsSemantic",
-        { text: statement, limit: 10 },
-        signal,
-      );
-      if (!Array.isArray(matches)) throw new Error("Invalid claim search");
-      return matches.flatMap((match) =>
-        match && typeof match === "object" && "claimId" in match
-          ? [String((match as { claimId: unknown }).claimId)]
-          : [],
+    async searchClaimsSemantic(statement, { signal, maxTotalTokens }) {
+      return withinBudget(
+        meteredClaimIdsZ.parse(
+          await callTool(
+            "searchTournamentEvidence",
+            { text: statement, maxTotalTokens },
+            signal,
+          ),
+        ),
       );
     },
     async hydrateClaims(ids, { signal }) {
@@ -71,17 +90,28 @@ export function createTournamentDependencies(options: {
         .parse(await callTool("hydrateClaims", { claimIds: ids }, signal));
     },
     model: options.model,
-    async embed(statement, { signal }) {
-      return meteredEmbeddingZ.parse(
-        await callTool("embedTournamentStatement", { text: statement }, signal),
+    async embed(statement, { signal, maxTotalTokens }) {
+      return withinBudget(
+        meteredEmbeddingZ.parse(
+          await callTool(
+            "embedTournamentStatement",
+            { text: statement, maxTotalTokens },
+            signal,
+          ),
+        ),
       );
     },
-    async neighbors({ runId, statement, embedding }, { signal }) {
-      return meteredNeighborsZ.parse(
-        await callTool(
-          "findTournamentNeighbors",
-          { agentRunId: runId, statement, embedding },
-          signal,
+    async neighbors(
+      { runId, statement, embedding },
+      { signal, maxTotalTokens },
+    ) {
+      return withinBudget(
+        meteredNeighborsZ.parse(
+          await callTool(
+            "findTournamentNeighbors",
+            { agentRunId: runId, statement, embedding, maxTotalTokens },
+            signal,
+          ),
         ),
       );
     },

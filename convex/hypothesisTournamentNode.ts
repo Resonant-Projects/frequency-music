@@ -10,12 +10,18 @@ import { parseEmbeddingResponse } from "./embeddings";
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from "./shared/embeddingText";
 import type { z } from "zod";
 import {
+  DUPLICATE_REEMBED_LIMIT,
+  embeddingTokenBound,
+  meteredClaimIdsZ,
   meteredEmbeddingZ,
   meteredNeighborsZ,
   TOURNAMENT_DUPLICATE_THRESHOLD,
+  TOURNAMENT_MAX_CANDIDATES,
+  TOURNAMENT_MAX_EVIDENCE,
 } from "./shared/hypothesisTournament";
 
 type MeteredNeighbors = z.infer<typeof meteredNeighborsZ>;
+type MeteredClaimIds = z.infer<typeof meteredClaimIdsZ>;
 type Neighbor = { id: string; statement: string; similarity: number };
 type BackfillPage = {
   scanned: number;
@@ -27,7 +33,17 @@ type BackfillPage = {
 
 const OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
 const NEIGHBOR_RESULT_LIMIT = 10;
-const VECTOR_SEARCH_LIMIT = 24;
+const VALID_HITS = 16;
+// Stale hypothesis vectors (at most DUPLICATE_REEMBED_LIMIT) and this run's
+// own archive rows are dropped after search, so search past them.
+const HYPOTHESIS_SEARCH_LIMIT = DUPLICATE_REEMBED_LIMIT + VALID_HITS;
+const CANDIDATE_SEARCH_LIMIT = TOURNAMENT_MAX_CANDIDATES + VALID_HITS;
+const EVIDENCE_SEARCH_LIMIT = 10;
+const overBudget = {
+  ok: false as const,
+  totalTokens: 0,
+  budgetExceeded: true as const,
+};
 
 export type MeteredEmbeddings =
   | { ok: true; embeddings: number[][]; totalTokens: number }
@@ -88,10 +104,11 @@ function cosine(a: number[], b: number[]) {
 }
 
 export const embedStatement = internalAction({
-  args: { text: v.string() },
+  args: { text: v.string(), maxTotalTokens: v.number() },
   handler: async (_ctx, args): Promise<z.infer<typeof meteredEmbeddingZ>> => {
     const text = args.text.trim();
     if (!text) return { ok: false as const, totalTokens: 0 };
+    if (embeddingTokenBound([text]) > args.maxTotalTokens) return overBudget;
     const result = await fetchMeteredEmbeddings([text]);
     return meteredEmbeddingZ.parse(
       result.ok
@@ -113,6 +130,7 @@ export const findNeighbors = internalAction({
     agentRunId: v.string(),
     statement: v.string(),
     embedding: v.array(v.float64()),
+    maxTotalTokens: v.number(),
   },
   handler: async (ctx, args): Promise<MeteredNeighbors> => {
     if (args.embedding.length !== EMBEDDING_DIMENSIONS)
@@ -125,9 +143,9 @@ export const findNeighbors = internalAction({
       ...corpus.stale.map((row) => ({ ...row, kind: "hypothesis" })),
       ...corpus.drafts.map((row) => ({ ...row, kind: "draft" })),
     ];
-    const embedded = await fetchMeteredEmbeddings(
-      fresh.map((row) => row.statement),
-    );
+    const texts = fresh.map((row) => row.statement);
+    if (embeddingTokenBound(texts) > args.maxTotalTokens) return overBudget;
+    const embedded = await fetchMeteredEmbeddings(texts);
     if (!embedded.ok)
       return meteredNeighborsZ.parse({
         ok: false,
@@ -136,11 +154,11 @@ export const findNeighbors = internalAction({
     const [hypothesisHits, candidateHits] = await Promise.all([
       ctx.vectorSearch("hypothesisEmbeddings", "by_embedding", {
         vector: args.embedding,
-        limit: VECTOR_SEARCH_LIMIT,
+        limit: HYPOTHESIS_SEARCH_LIMIT,
       }),
       ctx.vectorSearch("hypothesisCandidates", "by_statementEmbedding", {
         vector: args.embedding,
-        limit: VECTOR_SEARCH_LIMIT,
+        limit: CANDIDATE_SEARCH_LIMIT,
       }),
     ]);
     const hydrated: Neighbor[] = await ctx.runQuery(
@@ -174,6 +192,40 @@ export const findNeighbors = internalAction({
     return meteredNeighborsZ.parse({
       ok: true,
       value: neighbors,
+      totalTokens: embedded.totalTokens,
+    });
+  },
+});
+
+/** Claim evidence for a statement, with the embedding usage the run budget
+ * needs. Same active-claim and embedding-model rules as searchClaimsSemantic. */
+export const searchEvidence = internalAction({
+  args: { text: v.string(), maxTotalTokens: v.number() },
+  handler: async (ctx, args): Promise<MeteredClaimIds> => {
+    const text = args.text.trim();
+    if (!text) return { ok: false, totalTokens: 0 };
+    if (embeddingTokenBound([text]) > args.maxTotalTokens) return overBudget;
+    const embedded = await fetchMeteredEmbeddings([text]);
+    if (!embedded.ok) return meteredClaimIdsZ.parse(embedded);
+    const matches = await ctx.vectorSearch("claims", "by_embedding", {
+      vector: embedded.embeddings[0]!,
+      limit: EVIDENCE_SEARCH_LIMIT,
+      filter: (q) => q.eq("status", "active"),
+    });
+    const hydrated: Array<{ claimId: string }> = await ctx.runQuery(
+      internal.correspondenceCandidates.hydrateClaimMatches,
+      {
+        matches: matches.map((match) => ({
+          claimId: match._id,
+          score: match._score,
+        })),
+      },
+    );
+    return meteredClaimIdsZ.parse({
+      ok: true,
+      value: hydrated
+        .map((match) => match.claimId)
+        .slice(0, TOURNAMENT_MAX_EVIDENCE),
       totalTokens: embedded.totalTokens,
     });
   },

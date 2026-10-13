@@ -9,9 +9,10 @@ import {
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { fetchMeteredEmbeddings } from "./hypothesisTournamentNode";
-import type {
-  TournamentCandidate,
-  TournamentResult,
+import {
+  statementHash,
+  type TournamentCandidate,
+  type TournamentResult,
 } from "./shared/hypothesisTournament";
 import {
   enableTournamentEnv,
@@ -306,6 +307,24 @@ describe("draft submission", () => {
     });
   });
 
+  test("completeRun verifies provenance before archiving terminal rows", async () => {
+    const forged = await candidate({ outcome: "lost" });
+    forged.evidence = [
+      { ...forged.evidence[0]!, text: "Forged text" },
+      forged.evidence[1]!,
+    ];
+    await expect(
+      f.callTool("completeTournamentRun", {
+        agentRunId: runId,
+        leaseToken: token,
+        result: result("no_eligible_candidates", [forged]),
+      }),
+    ).rejects.toThrow(/TournamentProvenanceRejected/);
+    expect(
+      await f.t.run((ctx) => ctx.db.query("hypothesisCandidates").collect()),
+    ).toHaveLength(0);
+  });
+
   test("completeRun refuses submitted results", async () => {
     await expect(
       f.callTool("completeTournamentRun", {
@@ -435,6 +454,86 @@ describe("metered embeddings", () => {
     ).rejects.toThrow(/usage missing/);
   });
 
+  test("embedding tools refuse without a provider call when the bound exceeds the allowance", async () => {
+    const embeddings = stubEmbeddings();
+    const refused = { ok: false, totalTokens: 0, budgetExceeded: true };
+    expect(
+      await f.callTool("embedTournamentStatement", {
+        text: "Statement",
+        maxTotalTokens: 8,
+      }),
+    ).toEqual(refused);
+    expect(
+      await f.callTool("searchTournamentEvidence", {
+        text: "Statement",
+        maxTotalTokens: 8,
+      }),
+    ).toEqual(refused);
+    // The fixture's unembedded contradicted hypothesis must be re-embedded.
+    expect(
+      await f.callTool("findTournamentNeighbors", {
+        agentRunId: runId,
+        statement: "Statement",
+        embedding: vectorFor("Statement"),
+        maxTotalTokens: 8,
+      }),
+    ).toEqual(refused);
+    expect(embeddings.calls).toHaveLength(0);
+    expect(
+      await f.callTool("searchTournamentEvidence", {
+        text: "Statement",
+        maxTotalTokens: 9,
+      }),
+    ).toMatchObject({ ok: true, totalTokens: 3 });
+  });
+
+  test("stale vectors ranked first cannot hide a current duplicate", async () => {
+    stubEmbeddings();
+    const query = vectorFor("Duplicate statement");
+    const currentId = await f.t.run(async (ctx) => {
+      const insert = (hypothesis: string) =>
+        ctx.db.insert("hypotheses", {
+          title: "H",
+          question: "Q",
+          hypothesis,
+          rationaleMd: "R",
+          sourceIds: [],
+          status: "active",
+          visibility: "private",
+          createdBy: "system",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+      // 30 stale vectors identical to the query outrank everything.
+      for (let i = 0; i < 30; i++)
+        await ctx.db.insert("hypothesisEmbeddings", {
+          hypothesisId: await insert(`Edited hypothesis ${i}`),
+          statementHash: "old",
+          embedding: query,
+          model: "text-embedding-3-small",
+          updatedAt: 1,
+        });
+      const current = await insert("Duplicate statement");
+      const nearly = query.map((x, i) => (i === 0 ? 0.1 : x));
+      await ctx.db.insert("hypothesisEmbeddings", {
+        hypothesisId: current,
+        statementHash: await statementHash("Duplicate statement"),
+        embedding: nearly,
+        model: "text-embedding-3-small",
+        updatedAt: 1,
+      });
+      return current;
+    });
+    const neighbors = (await f.callTool("findTournamentNeighbors", {
+      agentRunId: runId,
+      statement: "Duplicate statement",
+      embedding: query,
+      maxTotalTokens: 300_000,
+    })) as { ok: true; value: Array<{ id: string; similarity: number }> };
+    expect(neighbors.value[0]).toMatchObject({ id: `hypothesis:${currentId}` });
+    expect(neighbors.value[0]!.similarity).toBeGreaterThan(0.86);
+  });
+
   test("neighbor search excludes this run's archive and reports usage", async () => {
     stubEmbeddings();
     await record([
@@ -444,6 +543,7 @@ describe("metered embeddings", () => {
       agentRunId: runId,
       statement: "Statement",
       embedding: vectorFor("Statement"),
+      maxTotalTokens: 300_000,
     })) as { ok: boolean; value: Array<{ id: string }>; totalTokens: number };
     expect(neighbors.ok).toBe(true);
     // The contradicted fixture hypothesis has no vector: re-embedded (3 tokens).

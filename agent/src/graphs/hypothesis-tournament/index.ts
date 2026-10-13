@@ -373,16 +373,19 @@ async function runLeasedTournament(
         createdAt: now(),
       };
       candidates.push(candidate);
-      const ids = [
-        ...new Set(
-          await budget.call((context) =>
-            dependencies.searchClaimsSemantic(
-              candidate.payload.statement,
-              context,
-            ),
-          ),
-        ),
-      ].slice(0, 20);
+      const found = await budget.metered((context) =>
+        dependencies.searchClaimsSemantic(candidate.payload.statement, context),
+      );
+      if (found === undefined) {
+        events.push({
+          kind: "attempt_failed",
+          reason: "evidence_search",
+          batchIndex,
+        });
+        candidate.outcome = "dropped_evidence";
+        continue;
+      }
+      const ids = [...new Set(found)].slice(0, 20);
       candidate.evidence = readEvidence(
         ids,
         await budget.call((context) =>

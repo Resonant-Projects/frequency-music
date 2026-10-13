@@ -78,10 +78,12 @@ export type TournamentDependencies = {
     family: "correspondence" | "claim" | "inversion",
     context: CallContext,
   ): Promise<TournamentSeed[]>;
+  /** Embeds the statement to search claims, so it reports that usage. A
+   * failed search is a metered miss: the candidate lacks evidence. */
   searchClaimsSemantic(
     statement: string,
     context: CallContext,
-  ): Promise<string[]>;
+  ): Promise<Metered<string[]>>;
   hydrateClaims(ids: string[], context: CallContext): Promise<EvidenceClaim[]>;
   model(request: ModelRequest, context: CallContext): Promise<Metered<unknown>>;
   /** Use the claims embedding model. Report embedding provider token usage. */

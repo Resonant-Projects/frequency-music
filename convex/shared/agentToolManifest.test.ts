@@ -5,9 +5,9 @@ import { agentToolArgs } from "./agentToolArgs";
 import { AGENT_TOOL_MANIFEST, AGENT_TOOL_NAMES } from "./agentToolManifest";
 
 describe("agent tool manifest", () => {
-  test("covers all 60 current tools with unique names and schemas", () => {
-    expect(AGENT_TOOL_MANIFEST).toHaveLength(60);
-    expect(new Set(AGENT_TOOL_NAMES).size).toBe(60);
+  test("covers all 62 current tools with unique names and schemas", () => {
+    expect(AGENT_TOOL_MANIFEST).toHaveLength(62);
+    expect(new Set(AGENT_TOOL_NAMES).size).toBe(62);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
       expect(entry.context.length).toBeGreaterThan(10);
@@ -56,8 +56,10 @@ describe("agent tool manifest", () => {
       "submitTournamentDraft",
       "listTournamentSeeds",
       "hydrateClaims",
+      "searchTournamentEvidence",
       "embedTournamentStatement",
       "findTournamentNeighbors",
+      "finalizeTournamentRun",
       "requestTournamentRun",
     ]);
   });

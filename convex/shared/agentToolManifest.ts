@@ -473,11 +473,19 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     { langchain: false },
   ),
   entry(
+    "searchTournamentEvidence",
+    "read",
+    "internal.hypothesisTournamentNode:searchEvidence",
+    "Semantically search active claims for a tournament statement and report the embedding usage.",
+    "Tournament graph only. One provider attempt, refused without a call when its input bound exceeds maxTotalTokens.",
+    { langchain: false },
+  ),
+  entry(
     "embedTournamentStatement",
     "read",
     "internal.hypothesisTournamentNode:embedStatement",
     "Embed one statement with the claims embedding model and report provider token usage.",
-    "Tournament graph only. One provider attempt; spends embedding tokens.",
+    "Tournament graph only. One provider attempt, refused without a call when its input bound exceeds maxTotalTokens.",
     { langchain: false },
   ),
   entry(
@@ -485,7 +493,15 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "read",
     "internal.hypothesisTournamentNode:findNeighbors",
     "Return the nearest hypotheses, pending drafts and archived candidates of other runs for a statement, with embedding usage.",
-    "Tournament graph only. Missing or stale hypothesis vectors are re-embedded at query time; too many fail closed.",
+    "Tournament graph only. Missing or stale hypothesis vectors are re-embedded at query time; too many fail closed. Refused without a call when the re-embedding bound exceeds maxTotalTokens.",
+    { langchain: false },
+  ),
+  entry(
+    "finalizeTournamentRun",
+    "audit_write",
+    "internal.hypothesisTournament:finalizeRun",
+    "Set a tournament run's terminal status from its durable result and lease.",
+    "Tournament graph only. Never overwrites needs_review or another live attempt; a saved result completes, anything else fails.",
     { langchain: false },
   ),
   entry(

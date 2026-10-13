@@ -436,16 +436,32 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
     ctx.runQuery(internal.hypothesisTournament.hydrateClaims, {
       claimIds: args.claimIds as string[],
     }),
+  searchTournamentEvidence: (ctx, args) =>
+    ctx.runAction(internal.hypothesisTournamentNode.searchEvidence, {
+      text: args.text as string,
+      maxTotalTokens: args.maxTotalTokens as number,
+    }),
   embedTournamentStatement: (ctx, args) =>
     ctx.runAction(internal.hypothesisTournamentNode.embedStatement, {
       text: args.text as string,
+      maxTotalTokens: args.maxTotalTokens as number,
     }),
   findTournamentNeighbors: (ctx, args) =>
     ctx.runAction(internal.hypothesisTournamentNode.findNeighbors, {
       agentRunId: args.agentRunId as string,
       statement: args.statement as string,
       embedding: args.embedding as number[],
+      maxTotalTokens: args.maxTotalTokens as number,
     }),
+  finalizeTournamentRun: (ctx, args) =>
+    ctx.runMutation(
+      internal.hypothesisTournament.finalizeRun,
+      omitUndefined({
+        agentRunId: args.agentRunId as Id<"agentRuns">,
+        leaseToken: args.leaseToken as string | undefined,
+        summary: args.summary as string,
+      }),
+    ),
   requestTournamentRun: (ctx, args) =>
     ctx.runMutation(
       internal.hypothesisTournament.request,

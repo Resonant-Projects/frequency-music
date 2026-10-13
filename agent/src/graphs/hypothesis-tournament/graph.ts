@@ -1,25 +1,25 @@
 // Worker graph for the hypothesis tournament. The core runs as one bounded
-// node; summarize owns the terminal status for every outcome except a
-// submitted draft, whose run is marked needs_review inside the draft
-// transaction.
+// node; summarize asks Convex to set the terminal status from the durable
+// result and lease, never from this worker's view alone.
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import { callConvex } from "../../tools/convexTools.js";
 import { redactError } from "../../shared/redactError.js";
-import {
-  appendRemoteAuditEvent,
-  finalizeRunCompleted,
-  type ToolCaller,
-} from "../shared/audit.js";
+import { appendRemoteAuditEvent, type ToolCaller } from "../shared/audit.js";
 import { createTournamentDependencies } from "./adapters.js";
 import { runTournament } from "./index.js";
 import { createTournamentModel } from "./model.js";
-import type { TournamentDependencies, TournamentResult } from "./types.js";
+import type {
+  TournamentDependencies,
+  TournamentLease,
+  TournamentResult,
+} from "./types.js";
 
 export const HypothesisTournamentAnnotation = Annotation.Root({
   agentRunId: Annotation<string | undefined>,
   seedHint: Annotation<string | undefined>,
   traceUrl: Annotation<string | undefined>,
   result: Annotation<TournamentResult | undefined>,
+  leaseToken: Annotation<string | undefined>,
   summary: Annotation<string | undefined>,
 });
 type State = typeof HypothesisTournamentAnnotation.State;
@@ -47,23 +47,30 @@ export function summarizeResult(result: TournamentResult) {
 export function createRunTournamentNode(
   options: {
     callTool?: ToolCaller;
-    dependencies?: (callTool: ToolCaller) => TournamentDependencies;
+    dependencies?: (
+      callTool: ToolCaller,
+      onLease: (lease: TournamentLease) => void,
+    ) => TournamentDependencies;
   } = {},
 ) {
   const callTool = options.callTool ?? callConvex;
   const dependencies =
     options.dependencies ??
-    ((caller: ToolCaller) =>
+    ((caller: ToolCaller, onLease: (lease: TournamentLease) => void) =>
       createTournamentDependencies({
         callTool: caller,
         model: createTournamentModel(),
+        onLease,
       }));
   return async (state: State): Promise<Partial<State>> => {
     if (!state.agentRunId)
       throw new Error("hypothesis-tournament requires agentRunId");
+    let leaseToken: string | undefined;
     const result = await runTournament(
       { runId: state.agentRunId, seedHint: state.seedHint },
-      dependencies(callTool),
+      dependencies(callTool, (lease) => {
+        leaseToken = lease.token;
+      }),
     );
     await appendRemoteAuditEvent(
       callTool,
@@ -72,57 +79,30 @@ export function createRunTournamentNode(
       `Hypothesis tournament finished: ${result.reason}`,
       summarizeResult(result),
     );
-    return { result };
+    return { result, leaseToken };
   };
-}
-
-/** Persistence failures leave a non-terminal or unverified archive, so they
- * fail the run; every other no-draft outcome is a completed run. */
-export function terminalFor(result: TournamentResult) {
-  if (result.reason === "submitted") return "needs_review" as const;
-  if (result.reason === "busy") return "untouched" as const;
-  if (
-    result.reason === "dependency_error" ||
-    result.events.some((event) => event.reason === "run_persistence_failed")
-  )
-    return "failed" as const;
-  return "completed" as const;
 }
 
 export function createSummarizeNode(callTool: ToolCaller = callConvex) {
   return async (state: State): Promise<Partial<State>> => {
     const result = state.result;
     if (!state.agentRunId || !result) return {};
-    const terminal = terminalFor(result);
-    const summary =
-      terminal === "needs_review"
-        ? `hypothesis-tournament completed: draft ${result.draftId} awaits human review`
-        : `hypothesis-tournament completed: ${result.reason}, no draft`;
-    if (terminal === "completed")
-      await finalizeRunCompleted(
-        callTool,
-        state.agentRunId,
-        summary,
-        state.traceUrl,
+    try {
+      const finalized = (await callTool("finalizeTournamentRun", {
+        agentRunId: state.agentRunId,
+        ...(state.leaseToken ? { leaseToken: state.leaseToken } : {}),
+        summary: `hypothesis-tournament failed: ${result.reason}`,
+      })) as { status?: unknown; runStatus?: unknown };
+      return {
+        summary: `hypothesis-tournament ${String(finalized.status)}: ${result.reason}${result.draftId ? `, draft ${result.draftId} awaits human review` : ""}`,
+      };
+    } catch (error) {
+      // The stale-run sweep still terminates a run left running.
+      console.warn(
+        `[hypothesis-tournament] finalizeTournamentRun: ${redactError(error)}`,
       );
-    if (terminal === "failed") {
-      try {
-        await callTool("markAgentRunFailed", {
-          runId: state.agentRunId,
-          summary: `hypothesis-tournament failed: ${result.reason}`,
-          error: {
-            reason: result.reason,
-            events: result.events.filter((event) => event.kind === "stopped"),
-          },
-        });
-      } catch (error) {
-        // The runner's stale sweep still terminates the run.
-        console.warn(
-          `[hypothesis-tournament] markAgentRunFailed: ${redactError(error)}`,
-        );
-      }
+      return { summary: `hypothesis-tournament unfinalized: ${result.reason}` };
     }
-    return { summary };
   };
 }
 

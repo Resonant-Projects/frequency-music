@@ -5,7 +5,6 @@ import {
   buildTournamentGraph,
   createRunTournamentNode,
   createSummarizeNode,
-  terminalFor,
 } from "../../../src/graphs/hypothesis-tournament/graph.js";
 import {
   createTournamentModel,
@@ -173,63 +172,77 @@ function result(
 }
 
 describe("tournament graph terminal ownership", () => {
-  test("maps every outcome to exactly one terminal owner", () => {
-    expect(terminalFor(result("submitted"))).toBe("needs_review");
-    expect(terminalFor(result("busy"))).toBe("untouched");
-    expect(terminalFor(result("dependency_error"))).toBe("failed");
-    expect(
-      terminalFor(
-        result("budget_exhausted", [
-          { kind: "stopped", reason: "run_persistence_failed" },
-        ]),
-      ),
-    ).toBe("failed");
-    for (const reason of [
-      "capacity",
-      "insufficient_seeds",
-      "no_eligible_candidates",
-      "failed_self_check",
-      "duplicate_revision",
-      "budget_exhausted",
-    ] as const)
-      expect(terminalFor(result(reason))).toBe("completed");
-  });
-
-  test("submitted runs are not re-marked; failures and completions are", async () => {
-    for (const [reason, expected] of [
-      ["submitted", []],
-      ["busy", []],
-      ["capacity", ["markAgentRunCompleted"]],
-      ["dependency_error", ["markAgentRunFailed"]],
-    ] as const) {
-      const callTool = vi.fn(async () => null);
-      await createSummarizeNode(callTool)({
+  test("summarize delegates the terminal status to the fenced backend", async () => {
+    for (const leaseToken of ["1:lease", undefined]) {
+      const callTool = vi.fn(async () => ({ status: "failed" }));
+      const update = await createSummarizeNode(callTool)({
         agentRunId: "run-1",
         seedHint: undefined,
         traceUrl: undefined,
-        result: result(reason),
+        result: result("dependency_error"),
+        leaseToken,
         summary: undefined,
       });
-      expect(callTool.mock.calls.map((call) => call[0])).toEqual(expected);
+      expect(callTool.mock.calls).toEqual([
+        [
+          "finalizeTournamentRun",
+          {
+            agentRunId: "run-1",
+            ...(leaseToken ? { leaseToken } : {}),
+            summary: "hypothesis-tournament failed: dependency_error",
+          },
+        ],
+      ]);
+      expect(update.summary).toBe(
+        "hypothesis-tournament failed: dependency_error",
+      );
     }
   });
 
-  test("the compiled graph runs the core once and summarizes", async () => {
-    const callTool = vi.fn(async (name: string) =>
-      name === "beginTournamentRun"
-        ? { status: "replay", result: result("submitted") }
-        : null,
+  test("a finalization failure is reported, not thrown", async () => {
+    const callTool = vi.fn(async () => {
+      throw new Error("network");
+    });
+    const update = await createSummarizeNode(callTool)({
+      agentRunId: "run-1",
+      seedHint: undefined,
+      traceUrl: undefined,
+      result: result("submitted"),
+      leaseToken: undefined,
+      summary: undefined,
+    });
+    expect(update.summary).toBe("hypothesis-tournament unfinalized: submitted");
+  });
+
+  test("the compiled graph keeps the acquired lease for finalization", async () => {
+    const calls: Array<[string, Record<string, unknown>]> = [];
+    const callTool = vi.fn(
+      async (name: string, args: Record<string, unknown>) => {
+        calls.push([name, args]);
+        if (name === "beginTournamentRun")
+          return {
+            status: "acquired",
+            lease: { runId: "run-1", token: "7:t" },
+          };
+        if (name === "countPendingDrafts") return 3;
+        return { status: "completed" };
+      },
     );
     const graph = buildTournamentGraph({
       run: createRunTournamentNode({ callTool }),
       summarize: createSummarizeNode(callTool),
     });
     const state = await graph.invoke({ agentRunId: "run-1" });
-    expect(state.result?.reason).toBe("submitted");
-    expect(callTool.mock.calls.map((call) => call[0])).toEqual([
+    expect(state.result?.reason).toBe("capacity");
+    expect(state.leaseToken).toBe("7:t");
+    expect(calls.map(([name]) => name)).toEqual([
       "beginTournamentRun",
+      "countPendingDrafts",
+      "completeTournamentRun",
       "appendAgentRunEvent",
+      "finalizeTournamentRun",
     ]);
+    expect(calls.at(-1)![1]).toMatchObject({ leaseToken: "7:t" });
   });
 });
 

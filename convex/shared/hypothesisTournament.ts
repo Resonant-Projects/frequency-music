@@ -150,6 +150,9 @@ export const TOURNAMENT_MAX_CANDIDATES = 8;
 export const TOURNAMENT_MAX_PAIRS = 3;
 export const TOURNAMENT_MAX_EVIDENCE = 20;
 export const TOURNAMENT_DUPLICATE_THRESHOLD = 0.86;
+// Missing or stale hypothesis vectors re-embedded per neighbor query. More
+// than this fails closed until backfillHypothesisEmbeddings runs.
+export const DUPLICATE_REEMBED_LIMIT = 32;
 /** Upper bound on a requested lease: 20 min wall + 10 s cleanup, with slack. */
 export const TOURNAMENT_MAX_LEASE_MS = 30 * 60_000;
 /** sha256 hex of a statement; marks hypothesis vectors stale when text moves. */
@@ -335,31 +338,41 @@ export const tournamentNeighborZ = z
     similarity: z.number(),
   })
   .strict();
-/** Metered embedding-backed responses: usage is always reported. */
-export const meteredEmbeddingZ = z.discriminatedUnion("ok", [
+/** Metered embedding-backed responses: usage is always reported. A refusal
+ * with budgetExceeded made no provider call because the strict input bound
+ * (UTF-8 bytes) exceeded the caller's remaining allowance. */
+const meteredMissZ = z
+  .object({
+    ok: z.literal(false),
+    totalTokens: z.number().int().min(0),
+    budgetExceeded: z.literal(true).optional(),
+  })
+  .strict();
+const meteredHit = <T extends z.ZodType>(value: T) =>
   z
     .object({
       ok: z.literal(true),
-      value: z.array(z.number()),
+      value,
       totalTokens: z.number().int().min(0),
     })
-    .strict(),
-  z
-    .object({ ok: z.literal(false), totalTokens: z.number().int().min(0) })
-    .strict(),
+    .strict();
+export const meteredEmbeddingZ = z.discriminatedUnion("ok", [
+  meteredHit(z.array(z.number())),
+  meteredMissZ,
 ]);
 export const meteredNeighborsZ = z.discriminatedUnion("ok", [
-  z
-    .object({
-      ok: z.literal(true),
-      value: z.array(tournamentNeighborZ).max(20),
-      totalTokens: z.number().int().min(0),
-    })
-    .strict(),
-  z
-    .object({ ok: z.literal(false), totalTokens: z.number().int().min(0) })
-    .strict(),
+  meteredHit(z.array(tournamentNeighborZ).max(20)),
+  meteredMissZ,
 ]);
+export const meteredClaimIdsZ = z.discriminatedUnion("ok", [
+  meteredHit(z.array(id).max(TOURNAMENT_MAX_EVIDENCE)),
+  meteredMissZ,
+]);
+/** Embedding tokenizers emit at most one token per UTF-8 byte. */
+export function embeddingTokenBound(texts: readonly string[]) {
+  const encoder = new TextEncoder();
+  return texts.reduce((sum, text) => sum + encoder.encode(text).length, 0);
+}
 
 // Compile-time drift checks between the hand-written core types and schemas.
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;

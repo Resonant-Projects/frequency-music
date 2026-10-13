@@ -278,6 +278,12 @@ export const submitTournamentDraft = makeAgentToolAction(
 );
 export const listTournamentSeeds = makeAgentToolAction("listTournamentSeeds");
 export const hydrateClaims = makeAgentToolAction("hydrateClaims");
+export const searchTournamentEvidence = makeAgentToolAction(
+  "searchTournamentEvidence",
+);
+export const finalizeTournamentRun = makeAgentToolAction(
+  "finalizeTournamentRun",
+);
 export const embedTournamentStatement = makeAgentToolAction(
   "embedTournamentStatement",
 );

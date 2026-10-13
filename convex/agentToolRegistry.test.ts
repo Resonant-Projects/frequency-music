@@ -288,11 +288,24 @@ const FROZEN_ARGS: Record<string, string> = {
     ),
   }),
   hydrateClaims: frozenArgs({ claimIds: field(array(string)) }),
-  embedTournamentStatement: frozenArgs({ text: field(string) }),
+  searchTournamentEvidence: frozenArgs({
+    text: field(string),
+    maxTotalTokens: field(number),
+  }),
+  embedTournamentStatement: frozenArgs({
+    text: field(string),
+    maxTotalTokens: field(number),
+  }),
   findTournamentNeighbors: frozenArgs({
     agentRunId: runId,
     statement: field(string),
     embedding: field(array(number)),
+    maxTotalTokens: field(number),
+  }),
+  finalizeTournamentRun: frozenArgs({
+    agentRunId: runId,
+    leaseToken: field(string, true),
+    summary: field(string),
   }),
   requestTournamentRun: frozenArgs({ seedHint: field(string, true) }),
 };

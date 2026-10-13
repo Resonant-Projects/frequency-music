@@ -246,13 +246,24 @@ export const agentToolArgs = {
   hydrateClaims: z.object({
     claimIds: z.array(z.string().min(1).max(200)).max(TOURNAMENT_MAX_EVIDENCE),
   }),
+  searchTournamentEvidence: z.object({
+    text: z.string().trim().min(1).max(4_000),
+    maxTotalTokens: z.number().int().min(0),
+  }),
   embedTournamentStatement: z.object({
     text: z.string().trim().min(1).max(4_000),
+    maxTotalTokens: z.number().int().min(0),
   }),
   findTournamentNeighbors: z.object({
     agentRunId: zid("agentRuns"),
     statement: z.string().trim().min(1).max(4_000),
     embedding: z.array(z.number()).max(4_096),
+    maxTotalTokens: z.number().int().min(0),
+  }),
+  finalizeTournamentRun: z.object({
+    agentRunId: zid("agentRuns"),
+    leaseToken: z.string().min(1).max(200).optional(),
+    summary: z.string().min(1).max(2_000),
   }),
   requestTournamentRun: z.object({
     seedHint: z

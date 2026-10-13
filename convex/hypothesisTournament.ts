@@ -14,12 +14,18 @@ import {
   buildAgentReviewDraftInsert,
   countPendingDraftsByKind,
 } from "./agentDrafts";
-import { insertQueuedRun, safeReviewDraft } from "./agentRuns";
+import {
+  buildReviewedRunCompletionPatch,
+  buildStalePatch,
+  insertQueuedRun,
+  safeReviewDraft,
+} from "./agentRuns";
 import { markDocketStale } from "./docket";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { EMBEDDING_DIMENSIONS } from "./shared/embeddingText";
 import {
   archiveStageZ,
+  DUPLICATE_REEMBED_LIMIT,
   HYPOTHESIS_TOURNAMENT_GRAPH,
   hypothesisCandidateRowZ,
   TOURNAMENT_ENABLED_ENV,
@@ -45,9 +51,6 @@ export const CANDIDATE_RETENTION_MS = 180 * 24 * 60 * 60 * 1000;
 // Duplicate checks read every hypothesis statement; above this they fail
 // closed and ask for a larger bound rather than silently sampling.
 export const DUPLICATE_CORPUS_HYPOTHESIS_LIMIT = 500;
-// Missing or stale hypothesis vectors re-embedded per neighbor query. More
-// than this requires backfillHypothesisEmbeddings first.
-export const DUPLICATE_REEMBED_LIMIT = 32;
 const SEED_CONTEXT_MAX_CHARS = 6_000;
 const CLAIM_SEED_SCAN_LIMIT = 200;
 const STRONG_EVIDENCE_LEVELS = new Set([
@@ -350,9 +353,11 @@ export const completeRun = internalMutation({
     const candidates = parseCandidates(args.agentRunId, result.candidates);
     if (candidates.some((candidate) => candidate.outcome === "submitted"))
       fail("InvalidTournamentResult", "Unsubmitted run has a submitted row");
+    // Terminal archives feed later duplicate checks, so they get the same
+    // provenance checks as every other archive write.
+    for (const candidate of candidates)
+      await verifyCandidate(ctx, args.agentRunId, candidate);
     const now = Date.now();
-    // Terminal archives are best-effort evidence; provenance is enforced when
-    // it matters (draft submission). Unverifiable rows are still recorded.
     await materialize(ctx, candidates, now);
     await ctx.db.patch(row._id, {
       status: "completed",
@@ -500,6 +505,61 @@ export const submitDraft = internalMutation({
         createdAt: now,
       });
     return { status: "created" as const, result: stored };
+  },
+});
+
+/** The graph's only terminal write. The durable row, not the worker's view,
+ * decides: a saved draft keeps needs_review, a saved result completes, and a
+ * run fails only when this attempt holds the lease or no attempt does. A
+ * lost submission response therefore cannot fail a run with a pending draft,
+ * and an expired worker cannot overwrite a newer attempt. */
+export const finalizeRun = internalMutation({
+  args: {
+    agentRunId: v.id("agentRuns"),
+    leaseToken: v.optional(v.string()),
+    summary: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const run = await ctx.db.get(args.agentRunId);
+    if (!run || run.graphName !== HYPOTHESIS_TOURNAMENT_GRAPH)
+      fail("TournamentRunUnavailable", "Agent run is not a tournament");
+    if (run.status !== "running")
+      return { status: "untouched" as const, runStatus: run.status };
+    const row = await runRow(ctx, args.agentRunId);
+    const now = Date.now();
+    if (row?.status === "completed") {
+      if (row.draftId)
+        return { status: "untouched" as const, runStatus: run.status };
+      const result = tournamentResultZ.parse(row.result);
+      const summary = `hypothesis-tournament completed: ${result.reason}, no draft`;
+      await ctx.db.patch(args.agentRunId, {
+        ...buildReviewedRunCompletionPatch(now),
+        summary,
+      });
+      await ctx.db.insert("agentRunEvents", {
+        runId: args.agentRunId,
+        kind: "status",
+        message: "Agent run completed",
+        payload: { summary, reason: result.reason },
+        createdAt: now,
+      });
+      return { status: "completed" as const, runStatus: "completed" };
+    }
+    const ours = row !== null && row.leaseToken === args.leaseToken;
+    if (row && !ours && now < row.leaseExpiresAt)
+      return { status: "untouched" as const, runStatus: run.status };
+    // Release this attempt's lease so no write of it can land afterwards.
+    if (row && ours) await ctx.db.patch(row._id, { leaseExpiresAt: now });
+    const summary = args.summary.slice(0, 2_000);
+    await ctx.db.patch(args.agentRunId, { ...buildStalePatch(now), summary });
+    await ctx.db.insert("agentRunEvents", {
+      runId: args.agentRunId,
+      kind: "error",
+      message: summary,
+      payload: { reason: "tournament_not_completed" },
+      createdAt: now,
+    });
+    return { status: "failed" as const, runStatus: "failed" };
   },
 });
 
