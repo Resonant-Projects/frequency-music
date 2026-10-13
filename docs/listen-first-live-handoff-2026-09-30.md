@@ -225,6 +225,8 @@ Keep local TTS available until the voice choice is known. If a hosted voice wins
 
 ## Wave 2
 
+Update 2026-10-13: Wave 2 is implemented and merged (#138); this section is the September 30 record. Use the [rollout packet](wave2-rollout-packet.md) for deployment.
+
 [The docket and signed decisions plan](superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) is ready for implementation. Start with the text docket and shared decision contracts. Spoken cards depend on the chosen house voice. Verify that voice's actual OpenClaw provider support, including Cartesia if selected; a catalog mapping is not proof that the external integration exists.
 
 Platform decisions require separate signer bots and verified mappings to your account. The plan lists code tasks, tests, external prerequisites, staged deployment, and human acceptance. Wave 2 is not deployed by this handoff.

@@ -1,8 +1,11 @@
 # Wave 2 backend integration
 
-Integration worktree: `/home/keith/code/.frequency-wave2-20261012/integration`,
-branch `wave2/20261012-integration`, based on `5966c770`. No deployment or migration has
-been run. The additive schema keeps legacy revisions optional.
+Merged to `main` in PR #138 (`db8cb39`, merge `6c83e4d`) from branch
+`wave2/20261012-integration`, based on `5966c770`. As of 2026-10-13 no
+deployment or migration has run from this lane; production deployment state is
+unverified. The additive schema keeps legacy revisions optional. The staged
+deployment, backfill, signer configuration and acceptance steps are in the
+[rollout packet](wave2-rollout-packet.md).
 
 ## Shared contracts
 
@@ -163,7 +166,8 @@ never storage, and is not exposed in the MCP projection.
 ## Remaining work and constraints
 
 - Proposal, docket and receipt tools, web confirmation, and signer handlers are
-  integrated locally. Platform configuration and deployed acceptance remain.
+  merged. Platform configuration and deployed acceptance remain; see the
+  [rollout packet](wave2-rollout-packet.md).
   See `docs/wave2-signer-integration.md` and `web/docs/wave2-review-integration.md`.
 - Generated 60–90-word blurbs, guarded house-voice narration, stale/version
   checks, media-completion hooks and Thursday preparation are implemented.

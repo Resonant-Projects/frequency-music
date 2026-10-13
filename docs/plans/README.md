@@ -5,6 +5,7 @@
 > Last plan-status/archive audit: 2026-08-03 — implementation-complete loop plans 04–10, 12, and 14 archived.
 > Completed waves live in [docs/archive/](../archive/README.md). Decision history: [decision-log.md](../decision-log.md).
 > **Visual plan** (dependency graph + gate order, 2026-07-19): `plan-1511dbd302914c0a` on plans.rproj.art.
+> Listen-first status rows (§1c) reconciled 2026-10-13 against `main` at `6c83e4d` and the dated handoffs they cite.
 
 ## Where things stand
 
@@ -80,9 +81,9 @@ Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** un
 | # | Plan | Status |
 |---|------|--------|
 | W0 | [Wave 0 — substrate](../superpowers/plans/2026-09-28-listen-first-wave-0-substrate.md) (artifacts, media jobs, blind groups, media service, podcast feed) | ✅ Merged (#75) and deployed 2026-09-29; media worker live on ai-5090-02, probe and feed verified |
-| W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | Implementation deployed September 30, with Cartesia expansion in #87. Five-voice shootout completed, including male and female Cartesia voices and restored Gemini. ElevenLabs awaits a higher API-key allowance. The managed podcast route repair is deployed; private RSS and full/range audio downloads are verified. Human ratings, house-voice selection, and Pocket Casts/first-weekly-episode acceptance remain. See [live handoff](../listen-first-live-handoff-2026-09-30.md). |
-| W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Local integration on `wave2/20261012-integration` includes docket preparation/playback, signed decisions, MCP, signer delivery and web Listen sections. Disabled by default; deployment, platform acceptance, house-voice selection and remaining general-audio rating/deferral contracts are outstanding. See [backend integration](../wave2-backend-integration.md). |
-| W3–W4 | Render ladder and listen page; hypothesis tournament | Shared pitch contracts, an offline SuperCollider renderer, and the injected tournament core are implemented locally. Live render jobs, real SuperCollider/studio validation, production tournament persistence/model routing, and scheduling gates remain. |
+| W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | Implementation deployed September 30, with Cartesia expansion in #87. The managed podcast route repair is deployed; private RSS and full/range audio downloads are verified. Keith selected the house voice: live `houseVoiceId` read `inworld-max` (Inworld Max, Dennis) on October 5. His October 5 listening preferences were recorded without numeric ratings. Weekly narration ran for September 14, 21 and 28, and four audio editions were published on October 5. Playback on his devices and subjective fatigue remain his checks. See [live handoff](../listen-first-live-handoff-2026-09-30.md). |
+| W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Implementation merged to `main` in #138 (`6c83e4d`): docket preparation/playback, signed decisions, MCP, signer delivery and web Listen sections, all disabled by default. Production deployment is unverified; the revision backfill, MCP workload, signer bots and human signing acceptance are outstanding, as are general audio rating and recipe/audio deferral contracts. Follow the [rollout packet](../wave2-rollout-packet.md); see [backend integration](../wave2-backend-integration.md). |
+| W3–W4 | Render ladder and listen page; hypothesis tournament | Shared pitch contracts, an offline SuperCollider renderer, and the injected tournament core merged in #138. Live render jobs, real SuperCollider/studio validation, production tournament persistence/model routing, and scheduling gates remain. |
 
 ## 1d. Source backlog and operator extraction (completed 2026-10-11)
 
