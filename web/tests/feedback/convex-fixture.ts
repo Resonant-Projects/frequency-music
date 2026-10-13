@@ -17,6 +17,7 @@ export type MutationMode = "ok" | "stale" | "network" | "hold";
 export const [state, setState] = createSignal<FixtureState>("ready");
 export const [mode, setMode] = createSignal<MutationMode>("ok");
 export const [removed, setRemoved] = createSignal<string[]>([]);
+export const [renderHash, setRenderHash] = createSignal("render-hash");
 export const calls: { name: string; args: unknown }[] = [];
 let release: (() => void) | null = null;
 export function releaseHeld() {
@@ -33,7 +34,9 @@ const queueItems = [
     durationSecs: 42,
     engineName: "supercollider",
     validation: "unvalidated",
-    contentHash: "render-hash",
+    get contentHash() {
+      return renderHash();
+    },
     docketContentHash: "c".repeat(64),
     createdAt: Date.UTC(2026, 9, 12, 18),
   },
@@ -79,7 +82,7 @@ const cards = [
     title: "Litmus render: 7-limit triad drift",
     blurbMd: "Human audio rating is pending.",
     spokenBlurb: "",
-    pageUrl: "/listen",
+    pageUrl: "/listen?audio=render-one",
     decisions: ["rateAudio", "defer"],
     contentHash: "c".repeat(64),
     rank: 2,
@@ -89,11 +92,12 @@ const cards = [
 
 export function createQueryWithStatus<Q extends FunctionReference<"query">>(
   query: Q,
-  args: () => FunctionArgs<Q>,
+  args: () => FunctionArgs<Q> | "skip",
 ): QueryStatus<FunctionReturnType<Q>> {
   const name = getFunctionName(query);
   const data = createMemo(() => {
-    args();
+    const input = args();
+    if (input === "skip") return undefined;
     const current = state();
     const gone = new Set(removed());
     if (current === "loading" || current === "error") return undefined;
@@ -106,7 +110,23 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
       value =
         current === "empty"
           ? []
-          : queueItems.filter((row) => !gone.has(row.artifactId));
+          : queueItems
+              .filter((row) => !gone.has(row.artifactId))
+              .map((row) => ({ ...row }));
+    else if (name === "audioFeedback:item")
+      value =
+        (input as { artifactId: string }).artifactId === "old-episode" &&
+        !gone.has("old-episode")
+          ? {
+              artifactId: "old-episode",
+              kind: "episode",
+              title: "Older episode outside the queue",
+              durationSecs: 900,
+              contentHash: "old-hash",
+              docketContentHash: "e".repeat(64),
+              createdAt: Date.UTC(2026, 6, 1),
+            }
+          : null;
     else if (name === "audioArtifacts:playback")
       value = {
         url: "/synthetic-audio.mp3",

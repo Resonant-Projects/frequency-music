@@ -69,7 +69,8 @@ export function DocketPage() {
   const cards = createQueryWithStatus(api.docket.listWeb, () => ({}));
   const rows = createKeyedRows(
     () => cards.data(),
-    (row) => row.targetId,
+    // A content change remounts the card, so a deferral signs what was shown.
+    (row) => `${row.targetId}:${row.contentHash}`,
   );
   const load = describeLoad(cards, "the docket", () => true);
   const [done, setDone] = createSignal<string | null>(null);

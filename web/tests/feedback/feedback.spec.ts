@@ -179,7 +179,7 @@ test("docket lists cards, links their pages and defers with a stable event", asy
     page
       .getByRole("article", { name: /7-limit triad drift/ })
       .getByRole("link", { name: "Rate on Listen" }),
-  ).toHaveAttribute("href", "/listen");
+  ).toHaveAttribute("href", "/listen?audio=render-one");
   await fixture(page, "setMode", "network");
   await recipe.getByRole("button", { name: "Defer two weeks" }).click();
   await expect(recipe.getByText(/network|connection/i)).toBeVisible();
@@ -212,5 +212,43 @@ test("docket stale card, loading, empty and error states", async ({ page }) => {
   await fixture(page, "setState", "error");
   await expect(
     page.getByText("Unable to load the docket: Authentication required"),
+  ).toBeVisible();
+});
+
+test("a new content version discards the draft written for the old one", async ({
+  page,
+}) => {
+  await open(page, "/listen");
+  await render(page).getByLabel("Notes").fill("Heard the old mix");
+  await fixture(page, "setRenderHash", "render-hash-2");
+  await expect(render(page).getByLabel("Notes")).toHaveValue("");
+  await render(page).getByLabel("Overall").fill("2");
+  await render(page).getByRole("button", { name: "Save rating" }).click();
+  const [call] = await calls(page);
+  expect(call.args).toMatchObject({
+    contentHash: "render-hash-2",
+    payload: { scores: { overall: 2 } },
+  });
+  expect(call.args.payload.notes).toBeUndefined();
+});
+
+test("a docket link rates audio outside the queue window", async ({ page }) => {
+  await open(page, "/listen?audio=old-episode");
+  const linked = page.getByRole("listitem").filter({
+    has: page.getByRole("heading", { name: /Older episode outside the queue/ }),
+  });
+  await linked.getByLabel("Clarity").fill("4");
+  await linked.getByRole("button", { name: "Save rating" }).click();
+  await expect(
+    page.getByText("Saved your rating of “Older episode outside the queue”."),
+  ).toBeVisible();
+  await expect(linked).toHaveCount(0);
+  expect((await calls(page))[0].args).toMatchObject({
+    artifactId: "old-episode",
+    contentHash: "old-hash",
+  });
+  await open(page, "/listen?audio=hidden-artifact");
+  await expect(
+    page.getByText("The linked audio is not available for rating."),
   ).toBeVisible();
 });

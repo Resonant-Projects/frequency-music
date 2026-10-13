@@ -13,10 +13,16 @@ import "@fontsource/cormorant-garamond/400.css";
 import "@fontsource/jetbrains-mono/400.css";
 import { DocketPage } from "../../src/routes/docket";
 import { ListenPage } from "../../src/routes/listen";
-import { calls, releaseHeld, setMode, setState } from "./convex-fixture";
+import {
+  calls,
+  releaseHeld,
+  setMode,
+  setRenderHash,
+  setState,
+} from "./convex-fixture";
 
 Object.assign(window, {
-  feedbackFixture: { setState, setMode, releaseHeld, calls },
+  feedbackFixture: { setState, setMode, setRenderHash, releaseHeld, calls },
 });
 const root = createRootRoute({
   component: () => (

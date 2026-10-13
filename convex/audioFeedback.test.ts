@@ -165,6 +165,63 @@ describe("general audio feedback", () => {
     expect(JSON.stringify(queue)).not.toMatch(/Secret|Back-referenced|storage/);
   });
 
+  test("targeted lookup reaches audio outside the queue window, never hidden audio", async () => {
+    const { t, human, episodeId, hiddenId, backRefId } = await setup();
+    await t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob(["newer"]));
+      for (let index = 0; index < 205; index++) {
+        const id = await ctx.db.insert("audioArtifacts", {
+          kind: "episode",
+          role: "delivery",
+          metadataStripped: true,
+          status: "ready",
+          storageId,
+          encoding: { codec: "mp3", sampleRate: 48000, channels: 2 },
+          normalization: "applied",
+          access: "private",
+          refs: {},
+          title: `Rated ${index}`,
+          contentHash: `rated-${index}`,
+          createdBy: "system",
+          createdAt: 100 + index,
+          updatedAt: 100 + index,
+        });
+        const userId = await ctx.db.insert("users", {
+          clerkUserId: `rater-${index}`,
+          role: "collaborator",
+          createdAt: 1,
+          updatedAt: 1,
+        });
+        await ctx.db.insert("audioRatings", {
+          artifactId: id,
+          artifactKind: "episode",
+          artifactContentHash: `rated-${index}`,
+          scores: { overall: 3 },
+          createdBy: userId,
+          source: "web",
+          requestKey: `seed-${index}`,
+          createdAt: 1,
+        });
+      }
+    });
+    const queue = await human.query(api.audioFeedback.queue, {});
+    expect(queue.some((row) => row.artifactId === episodeId)).toBe(false);
+    expect(
+      await human.query(api.audioFeedback.item, { artifactId: episodeId }),
+    ).toMatchObject({ artifactId: episodeId, contentHash: "episode-v1" });
+    const card = (await t.query(internal.docket.currentState, {})).find(
+      (row) => row.targetId === episodeId,
+    );
+    expect(card?.pageUrl).toBe(`/listen?audio=${episodeId}`);
+    for (const artifactId of [hiddenId, backRefId, "not-an-id"])
+      expect(await human.query(api.audioFeedback.item, { artifactId })).toBe(
+        null,
+      );
+    await expect(
+      t.query(api.audioFeedback.item, { artifactId: episodeId }),
+    ).rejects.toThrow();
+  });
+
   test("zero is kept, absent stays absent, and machine analysis is never a rating", async () => {
     const { t, human, renderId } = await setup();
     const result = await human.mutation(api.audioFeedback.submit, {
@@ -453,6 +510,33 @@ describe("signed audio and recipe decisions", () => {
         eventId: "recipe-stale",
       }),
     ).toEqual({ status: "rejected", error: "Target changed: content" });
+    for (const [index, patch] of [
+      { parameters: [{ kind: "beat", value: "2 Hz" }] },
+      { dawChecklist: ["Bounce stems"] },
+      { updatedAt: 99 },
+    ].entries()) {
+      const pending = await defer();
+      await t.run((ctx) => ctx.db.patch(recipeId, patch as never));
+      expect(
+        await human.mutation(webApply, {
+          intentId: pending._id,
+          digest8: pending.payloadDigest.slice(0, 8),
+          eventId: `recipe-field-${index}`,
+        }),
+      ).toMatchObject(
+        index === 2
+          ? { status: "applied" }
+          : { status: "rejected", error: "Target changed: content" },
+      );
+      if (index === 2)
+        await t.run(async (ctx) => {
+          const card = await ctx.db
+            .query("docketCards")
+            .withIndex("by_targetId", (q) => q.eq("targetId", recipeId))
+            .unique();
+          await ctx.db.patch(card!._id, { deferredUntil: undefined });
+        });
+    }
     await t.mutation(internal.docket.list, {});
     const fresh = await defer();
     const before = await t.run((ctx) => ctx.db.get(recipeId));

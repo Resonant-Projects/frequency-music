@@ -82,16 +82,19 @@ async function targetState(
   }
 }
 
-/** Recipes have no revision counter; their decision staleness is content-based. */
+/** Recipes have no revision counter; their decision staleness is content-based.
+ * Every persisted field except identity and timestamps counts as content. */
 export async function recipeDecisionDigest(
   row: Doc<"recipes">,
 ): Promise<string> {
-  return await stableContentDigest({
-    title: row.title,
-    body: row.bodyMd,
-    protocol: row.protocol,
-    status: row.status,
-  });
+  const {
+    _id: _rowId,
+    _creationTime: _rowCreated,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    ...content
+  } = row;
+  return await stableContentDigest(content);
 }
 
 /** Null when the target still matches what the proposal described. */

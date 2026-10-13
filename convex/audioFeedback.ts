@@ -129,6 +129,34 @@ export async function createAudioRating(
   });
 }
 
+async function queueItem(row: Doc<"audioArtifacts">) {
+  if (!isAudioRatingKind(row.kind)) throw new Error("Unrateable kind");
+  return {
+    artifactId: row._id,
+    kind: row.kind,
+    title: row.title,
+    durationSecs: row.durationSecs,
+    engineName: row.engine?.name,
+    validation: row.validation,
+    contentHash: row.contentHash,
+    docketContentHash: await unratedAudioCardHash(row),
+    createdAt: row.createdAt,
+  };
+}
+
+/** One rateable artifact by ID, for docket links to audio outside the queue
+ * window. Null for anything not rateable, without saying why. */
+export const item = query({
+  args: { artifactId: v.string() },
+  returns: v.union(audioFeedbackQueueItemValidator, v.null()),
+  handler: async (ctx, args) => {
+    await requireHumanIdentity(ctx);
+    const id = ctx.db.normalizeId("audioArtifacts", args.artifactId);
+    const row = id ? await rateableArtifact(ctx, id) : null;
+    return row ? await queueItem(row) : null;
+  },
+});
+
 /** Ready, blind-safe, human-unrated and not deferred, newest first. */
 export const queue = query({
   args: {},
@@ -172,17 +200,7 @@ export const queue = query({
         .withIndex("by_targetId", (q) => q.eq("targetId", row._id))
         .unique();
       if ((card?.deferredUntil ?? 0) > now) continue;
-      items.push({
-        artifactId: row._id,
-        kind: row.kind,
-        title: row.title,
-        durationSecs: row.durationSecs,
-        engineName: row.engine?.name,
-        validation: row.validation,
-        contentHash: row.contentHash,
-        docketContentHash: await unratedAudioCardHash(row),
-        createdAt: row.createdAt,
-      });
+      items.push(await queueItem(row));
     }
     return items;
   },

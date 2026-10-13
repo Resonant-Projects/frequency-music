@@ -63,6 +63,10 @@ user through `requireDecisionUser`, as the decision APIs already do.
   for another artifact is rejected. A `contentHash` that no longer matches the
   artifact is rejected as stale. The web keeps one request ID across transport
   retries and replaces it after any server answer.
+- `audioFeedback.item({ artifactId })` returns the same projection for one
+  rateable artifact, whether or not it was rated, deferred or outside the
+  queue window, and `null` for anything else (including malformed IDs and
+  blind-hidden audio). Docket links use it through `/listen?audio=<id>`.
 - `audioFeedback.forArtifact({ artifactId })` returns up to 50 ratings for a
   rateable artifact, newest first, with `current` marking ratings of the
   present content. It returns an empty list for anything not rateable.
@@ -86,8 +90,9 @@ user through `requireDecisionUser`, as the decision APIs already do.
   `audioRatingPayloadZ`. It is appended last in `decisionCommandZ`, so service
   contracts that select earlier options by index are unchanged.
 - Intents gain optional `targetContentHash`. Recipes and audio artifacts have
-  no revision counter, so a proposal records the recipe digest (title, body,
-  protocol, status) or the artifact `contentHash`. Confirmation of a changed
+  no revision counter, so a proposal records the recipe digest (every
+  persisted recipe field except identity and timestamps) or the artifact
+  `contentHash`. Confirmation of a changed
   recipe or audio target, or of audio that became unrateable, rejects the
   intent terminally with `Target changed: content` or
   `Target changed: unavailable`.
@@ -106,27 +111,31 @@ was not given.
   `["rateAudio", "defer"]`. The MCP card projection allows `rateAudio`.
 - `unratedAudio` also clears when an `audioRatings` row exists for the
   artifact's current content hash. A content change brings the card back.
-- Reconciliation updates a stored card's `decisions` when the vocabulary
-  changes without a content change, so existing cards gain the new actions.
+- `unratedAudio` cards link to `/listen?audio=<artifactId>`.
+- Reconciliation updates a stored card's `decisions` and `pageUrl` when they
+  change without a content change, so existing cards gain the new actions.
 
 ## Web UI
 
 - `/listen` has a "Rate audio" section above the podcast feed. Each item plays
   through the Clerk-gated playback query and shows kind-specific optional
   scores, optional listening conditions (both or neither), notes, "Save rating"
-  and "Defer two weeks".
+  and "Defer two weeks". A `?audio=<id>` link pins that artifact first. Rows
+  are keyed by artifact and content hash, so new content under the same ID
+  discards an unsaved draft instead of submitting it against the new version.
 - `/docket` (new, in the main navigation) lists the web docket with a link to
   each card's page and "Defer two weeks" where the card allows it.
 - Intent review pages list `rateAudio` scores with "not given" for absent ones.
 
 ## Verification
 
-- `vp test convex/audioFeedback.test.ts`: 20 tests covering blind safety in
+- `vp test convex/audioFeedback.test.ts`: 21 tests covering blind safety in
   both membership directions, auth, zero versus absent, kind bounds, stale
   content, idempotency, docket clearing per content version, signed `rateAudio`,
-  terminal staleness, recipe deferral and `deferWeb` replay.
+  terminal staleness (including recipe parameters and checklist), the targeted
+  lookup beyond the queue window, recipe deferral and `deferWeb` replay.
 - `web/tests/feedback` is an isolated fixture (synthetic data, port 5192, no
   backend) over the real `/listen` and `/docket` routes:
   `vp exec playwright test --config tests/feedback/playwright.config.ts`.
-  It covers loading, empty, error, success, transport retry, stale and
-  double-click states. It is not production acceptance.
+  Its 10 tests cover loading, empty, error, success, transport retry, stale,
+  double-click, content-version remount and linked-audio states. It is not production acceptance.

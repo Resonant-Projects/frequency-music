@@ -177,7 +177,7 @@ async function eligible(
         row._id,
         row.title,
         "Human audio rating is pending.",
-        "/listen",
+        `/listen?audio=${row._id}`,
         ["rateAudio", "defer"],
         row.createdAt,
         unratedAudioSemantic(row),
@@ -232,11 +232,13 @@ export async function reconcileDocket(ctx: MutationCtx) {
         await markDocketStale(ctx);
       } else if (
         old.rank !== candidate.rank ||
+        old.pageUrl !== candidate.pageUrl ||
         old.decisions.join() !== candidate.decisions.join()
       ) {
-        // Decision vocabularies can grow without a semantic content change.
+        // Links and decision vocabularies can change without a semantic change.
         await ctx.db.patch(old._id, {
           rank: candidate.rank,
+          pageUrl: candidate.pageUrl,
           decisions: candidate.decisions,
         });
       }

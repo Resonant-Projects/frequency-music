@@ -7,6 +7,7 @@ import {
   onCleanup,
   Show,
 } from "solid-js";
+import { useSearch } from "@tanstack/solid-router";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
@@ -191,6 +192,12 @@ const FEED_NOT_CONFIGURED: Record<FeedNotConfiguredReason, string> = {
 };
 
 export function ListenPage() {
+  // Docket cards link here with ?audio=<artifactId>.
+  const search = useSearch({ strict: false }) as () => { audio?: unknown };
+  const focusAudio = () => {
+    const value = search().audio;
+    return typeof value === "string" && value ? value : undefined;
+  };
   onMount(() => {
     document.title = "Listen — Frequency Music";
   });
@@ -252,7 +259,7 @@ export function ListenPage() {
         <UINotice error={houseVoiceError()} />
       </UICard>
 
-      <AudioFeedbackQueue />
+      <AudioFeedbackQueue focusId={focusAudio()} />
 
       <Show
         when={(() => {

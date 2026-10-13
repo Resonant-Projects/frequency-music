@@ -1,5 +1,5 @@
 import type { FunctionReturnType } from "convex/server";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import { api } from "../../../convex/_generated/api";
 import {
   AUDIO_RATING_NOTES_MAX,
@@ -104,15 +104,38 @@ const actionsClass = css({
   gap: "3",
 });
 
-/** Ready, blind-safe audio that still needs a human ear. */
-export function AudioFeedbackQueue() {
+/** Ready, blind-safe audio that still needs a human ear. `focusId` (a docket
+ * link) pins one artifact first, even when it is outside the queue window. */
+export function AudioFeedbackQueue(props: { focusId?: string }) {
   const queue = createQueryWithStatus(api.audioFeedback.queue, () => ({}));
+  const focus = createQueryWithStatus(api.audioFeedback.item, () =>
+    props.focusId ? { artifactId: props.focusId } : "skip",
+  );
+  // Keyed by content version: new audio under the same ID remounts the form,
+  // so a draft written for the old version can never be saved against it.
   const rows = createKeyedRows(
-    () => queue.data(),
-    (row) => String(row.artifactId),
+    () =>
+      queue
+        .data()
+        ?.filter((row) => row.artifactId !== focus.data()?.artifactId),
+    (row) => `${row.artifactId}:${row.contentHash}`,
   );
   const load = describeLoad(queue, "audio to rate", () => true);
   const [done, setDone] = createSignal<string | null>(null);
+  const focusKey = createMemo(() => {
+    const row = focus.data();
+    return row ? `${row.artifactId}:${row.contentHash}` : null;
+  });
+  // A saved or deferred linked item stays rateable server-side; hide it here.
+  const [dismissed, setDismissed] = createSignal<string | null>(null);
+  const focusError = () => {
+    if (!props.focusId) return null;
+    if (focus.isError())
+      return `Unable to load the linked audio: ${focus.error()?.message}`;
+    return !focus.isLoading() && focus.data() === null
+      ? "The linked audio is not available for rating."
+      : null;
+  };
   return (
     <UICard>
       <h2 class={sectionTitleClass}>Rate audio</h2>
@@ -124,13 +147,30 @@ export function AudioFeedbackQueue() {
         status={
           load.status() ??
           done() ??
-          (queue.data()?.length === 0
+          (queue.data()?.length === 0 && !focus.data()
             ? "Nothing is waiting to be rated."
             : null)
         }
-        error={load.error()}
+        error={load.error() ?? focusError()}
       />
-      <Show when={!queue.isError() && (queue.data()?.length ?? 0) > 0}>
+      <Show when={focusKey() !== dismissed() && focusKey()} keyed>
+        {(key) => (
+          <Show when={focus.data()}>
+            {(item) => (
+              <UIList class={listClass}>
+                <AudioFeedbackItem
+                  item={item()}
+                  onDone={(message) => {
+                    setDismissed(key);
+                    setDone(message);
+                  }}
+                />
+              </UIList>
+            )}
+          </Show>
+        )}
+      </Show>
+      <Show when={!queue.isError() && (rows.ids().length ?? 0) > 0}>
         <UIList class={listClass}>
           <For each={rows.ids()}>
             {(id) => (
