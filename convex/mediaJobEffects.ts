@@ -479,43 +479,66 @@ async function applyLitmusRender(
       });
     }
   }
-  // Unvalidated renders create no compositions: they must stay out of
-  // evidence, docket composition debt, loop debt, and tournament fitness.
-  if (validation === "validated" && recipe) {
-    let baselineId: Id<"compositions"> | undefined;
-    for (const member of members) {
-      const variable = memberVariable(plan, member.member);
-      const compositionId: Id<"compositions"> = await ctx.db.insert(
-        "compositions",
-        {
-          title:
-            member.member === 0
-              ? `${recipeTitle} — litmus baseline`
-              : `${recipeTitle} — litmus variant ${member.member}`,
-          recipeId: input.recipeId,
-          artifactType: "microStudy",
-          projectNotesMd: `Litmus render (renderer ${input.rendererVersion}) of the recipe revision saved at ${new Date(input.recipeUpdatedAt).toISOString()}. ${variable}.`,
-          version: "m0.1",
-          ...(baselineId
-            ? { revisionParentId: baselineId, revisionVariable: variable }
-            : {}),
-          audioArtifactId: member.delivery.artifactId,
-          status: "rendered",
-          visibility: "private",
-          createdBy: "system",
-          createdAt: now,
-          updatedAt: now,
-        },
-      );
-      baselineId ??= compositionId;
-      await ctx.db.patch(member.delivery.artifactId, {
-        refs: {
-          mediaJobId: job._id,
-          recipeId: input.recipeId,
-          compositionId,
-        },
-      });
-    }
+  // A single render links now. A study family links at its first reveal
+  // (blindGroups.reveal): compositions are listed and offered on the docket
+  // with variant-identifying titles, so they must not exist while blind.
+  if (count === 1 && validation === "validated" && recipe) {
+    await createLitmusCompositions(ctx, input, members, recipe.title, now);
   }
   return ids;
+}
+
+/** One composition per member of a validated litmus render, baseline first,
+ * variants revising it. Unvalidated renders get none: they must stay out of
+ * evidence, docket composition debt, loop debt, and tournament fitness. The
+ * stamp is read from the delivery, as completion recorded it. */
+export async function createLitmusCompositions(
+  ctx: MutationCtx,
+  input: Extract<Doc<"mediaJobs">["input"], { kind: "litmusRender" }>,
+  members: Extract<MediaJobResult, { kind: "litmusRender" }>["members"],
+  recipeTitle: string,
+  now: number,
+): Promise<void> {
+  const plan = input.renderPlan;
+  const sorted = members.toSorted((a, b) => a.member - b.member);
+  const deliveries = [];
+  for (const member of sorted) {
+    const delivery = await ctx.db.get(member.delivery.artifactId);
+    // Every member shares one stamp; any gap means nothing to link.
+    if (delivery?.validation !== "validated" || delivery.refs.compositionId)
+      return;
+    deliveries.push(delivery);
+  }
+  let baselineId: Id<"compositions"> | undefined;
+  for (const [index, member] of sorted.entries()) {
+    const delivery = deliveries[index]!;
+    const variable = memberVariable(plan, member.member);
+    const compositionId: Id<"compositions"> = await ctx.db.insert(
+      "compositions",
+      {
+        title:
+          member.member === 0
+            ? `${recipeTitle} — litmus baseline`
+            : `${recipeTitle} — litmus variant ${member.member}`,
+        recipeId: input.recipeId,
+        artifactType: "microStudy",
+        projectNotesMd: `Litmus render (renderer ${input.rendererVersion}) of the recipe revision saved at ${new Date(input.recipeUpdatedAt).toISOString()}. ${variable}.`,
+        version: "m0.1",
+        ...(baselineId
+          ? { revisionParentId: baselineId, revisionVariable: variable }
+          : {}),
+        audioArtifactId: member.delivery.artifactId,
+        status: "rendered",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: now,
+        updatedAt: now,
+      },
+    );
+    baselineId ??= compositionId;
+    await ctx.db.patch(member.delivery.artifactId, {
+      refs: { ...delivery.refs, compositionId },
+      updatedAt: now,
+    });
+  }
 }

@@ -462,10 +462,27 @@ describe("litmus render completion", () => {
     });
     expect(projection.revealed).toBe(false);
     expect(projection.labels).toBeUndefined();
-    // Compositions: baseline first, the variant revises it.
+    // While blind there are no compositions, so the docket offers nothing
+    // that names a variant.
+    expect(
+      await t.run((ctx) => ctx.db.query("compositions").collect()),
+    ).toEqual([]);
+    const before = await t.query(internal.docket.currentState, {});
+    expect(
+      before.filter((card) => card.kind === "compositionNoListening"),
+    ).toEqual([]);
+    await t.mutation(internal.blindGroups.reveal, { groupId: group._id });
+    await t.mutation(internal.blindGroups.reveal, { groupId: group._id });
+    expect(
+      await t.query(internal.audioArtifacts.playbackInternal, {
+        artifactId: members[0]!.delivery.artifactId,
+      }),
+    ).not.toBeNull();
+    // Reveal links them once: baseline first, the variant revises it.
     const compositions = await t.run((ctx) =>
       ctx.db.query("compositions").collect(),
     );
+    expect(compositions).toHaveLength(2);
     const baseline = compositions.find(
       (row) => row.audioArtifactId === members[1]!.delivery.artifactId,
     );
@@ -477,12 +494,31 @@ describe("litmus render completion", () => {
       revisionParentId: baseline!._id,
       revisionVariable: "referenceHz: 440",
     });
+    expect(
+      (await t.run((ctx) => ctx.db.get(members[0]!.delivery.artifactId)))?.refs
+        .compositionId,
+    ).toBe(variant!._id);
+  });
+
+  test("an unvalidated family links no compositions at reveal", async () => {
+    const t = convexTest(schema, modules);
+    await setGate(t, "go");
+    const recipeId = await insertRecipe(t, familyPlan);
+    await t.mutation(internal.renders.requestInternal, { recipeId });
+    const job = await claim(t);
+    const members = [
+      await uploadMember(t, job, 0),
+      await uploadMember(t, job, 1),
+    ];
+    await setGate(t, "no-go");
+    await complete(t, job, members);
+    // Flipping the gate back before reveal does not certify these renders.
+    await setGate(t, "go");
+    const group = (await t.run((ctx) => ctx.db.query("blindGroups").first()))!;
     await t.mutation(internal.blindGroups.reveal, { groupId: group._id });
     expect(
-      await t.query(internal.audioArtifacts.playbackInternal, {
-        artifactId: members[0]!.delivery.artifactId,
-      }),
-    ).not.toBeNull();
+      await t.run((ctx) => ctx.db.query("compositions").collect()),
+    ).toEqual([]);
   });
 
   test("labels are not fixed to member order", async () => {

@@ -46,7 +46,10 @@ assigned at random (no X member yet); its masters carry the group id so
 playback hides them until reveal. Validated renders get one `compositions`
 row per member (`microStudy`, `m0.1`, `rendered`, private, system; variants
 revise the baseline with `revisionVariable`) whose `audioArtifactId` is the
-delivery. Unvalidated renders create no compositions, so they stay out of
+delivery: a single render at completion, a study family at its first
+`blindGroups.reveal`, because composition titles and the docket would
+otherwise name variants while the family is blind. The stamp used is the one
+recorded at completion. Unvalidated renders create no compositions, so they stay out of
 evidence, docket composition debt, and loop debt. Recipe and composition
 pages reach deliveries through `audioArtifacts.listReadyForTarget`.
 The `analyze` job (spec 3.4) is not implemented.
