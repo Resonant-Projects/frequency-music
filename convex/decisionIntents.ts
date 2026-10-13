@@ -15,6 +15,12 @@ import { requireDecisionUser, requireHumanIdentity } from "./decisionIdentity";
 import { applyDraftDecision } from "./agentDrafts";
 import { applyFeedProposal } from "./feeds";
 import { createSignedListeningSession } from "./listening";
+import {
+  AUDIO_RATING_UNAVAILABLE,
+  createAudioRating,
+  rateableArtifact,
+} from "./audioFeedback";
+import { reconcileDocket } from "./docket";
 import { feedProposalZ } from "./shared/feedProposals";
 import {
   DECISION_TTL_MS,
@@ -30,19 +36,24 @@ import {
   decisionResultValidator,
   decisionIntentReturnValidator,
   signerCardValidator,
+  stableContentDigest,
   type DecisionCommand,
   type DecisionEvent,
+  type DecisionTarget,
   type DecisionResult,
 } from "./shared/decisionIntents";
 
-async function targetRevision(ctx: MutationCtx, command: DecisionCommand) {
+async function targetState(
+  ctx: MutationCtx,
+  command: DecisionCommand,
+): Promise<{ targetRevision?: number; targetContentHash?: string }> {
   const target = command.target;
   switch (target.kind) {
     case "agentReviewDraft": {
       const row = await ctx.db.get(target.id);
       if (!row || row.status !== "pending_review")
         throw new ConvexError("Draft is not pending review");
-      return currentRevision(row);
+      return { targetRevision: currentRevision(row) };
     }
     case "feedProposal": {
       const row = await ctx.db.get(target.id);
@@ -52,12 +63,67 @@ async function targetRevision(ctx: MutationCtx, command: DecisionCommand) {
         !feedProposalZ.safeParse(row.metadata?.proposal).success
       )
         throw new ConvexError("Feed is not a disabled proposal");
-      return currentRevision(row);
+      return { targetRevision: currentRevision(row) };
     }
     case "composition":
       if (!(await ctx.db.get(target.id)))
         throw new ConvexError("Composition not found");
-      return undefined;
+      return {};
+    case "recipe": {
+      const row = await ctx.db.get(target.id);
+      if (!row) throw new ConvexError("Recipe not found");
+      return { targetContentHash: await recipeDecisionDigest(row) };
+    }
+    case "audioArtifact": {
+      const row = await rateableArtifact(ctx, target.id);
+      if (!row) throw new ConvexError(AUDIO_RATING_UNAVAILABLE);
+      return { targetContentHash: row.contentHash };
+    }
+  }
+}
+
+/** Recipes have no revision counter; their decision staleness is content-based. */
+export async function recipeDecisionDigest(
+  row: Doc<"recipes">,
+): Promise<string> {
+  return await stableContentDigest({
+    title: row.title,
+    body: row.bodyMd,
+    protocol: row.protocol,
+    status: row.status,
+  });
+}
+
+/** Null when the target still matches what the proposal described. */
+async function targetChange(
+  ctx: MutationCtx,
+  intent: Doc<"decisionIntents">,
+): Promise<string | null> {
+  const target = intent.target;
+  switch (target.kind) {
+    case "composition":
+      return null;
+    case "recipe": {
+      const row = await ctx.db.get(target.id);
+      if (!row) return "Target changed: missing";
+      return intent.targetContentHash !== undefined &&
+        (await recipeDecisionDigest(row)) === intent.targetContentHash
+        ? null
+        : "Target changed: content";
+    }
+    case "audioArtifact": {
+      const row = await rateableArtifact(ctx, target.id);
+      if (!row) return "Target changed: unavailable";
+      return row.contentHash === intent.targetContentHash
+        ? null
+        : "Target changed: content";
+    }
+    case "agentReviewDraft":
+    case "feedProposal": {
+      const row = await ctx.db.get(target.id);
+      if (row && currentRevision(row) === intent.targetRevision) return null;
+      return `Target changed: ${row && "status" in row ? row.status : row && "enabled" in row ? (row.enabled ? "enabled" : "disabled") : "missing"}`;
+    }
   }
 }
 
@@ -88,10 +154,12 @@ async function createProposal(
     command: DecisionCommand;
     proposal: z.infer<typeof decisionProposalZ>;
   },
+  // Web decisions are signed in the same request; they never reach a platform.
+  deliver = true,
 ) {
   const command = decisionCommandZ.parse(args.command);
   const proposal = decisionProposalZ.parse(args.proposal);
-  const revision = await targetRevision(ctx, command);
+  const state = await targetState(ctx, command);
   const now = Date.now();
   const counter = await ctx.db
     .query("settings")
@@ -115,7 +183,7 @@ async function createProposal(
     ...command,
     proposal,
     code: `D-${sequence}`,
-    targetRevision: revision,
+    ...state,
     payloadDigest: await decisionPayloadDigest(command.action, command.payload),
     status: "proposed",
     createdAt: now,
@@ -123,7 +191,7 @@ async function createProposal(
   });
   const intent = await ctx.db.get(id);
   if (!intent) throw new Error("Inserted intent missing");
-  await scheduleSignerDelivery(ctx, intent);
+  if (deliver) await scheduleSignerDelivery(ctx, intent);
   return intent;
 }
 
@@ -326,14 +394,8 @@ async function applyEvent(
   }
   if (event.digest8 !== intent.payloadDigest.slice(0, 8))
     return await reject("Payload digest mismatch");
-  if (intent.target.kind !== "composition") {
-    const target = await ctx.db.get(intent.target.id);
-    if (!target || currentRevision(target) !== intent.targetRevision)
-      return await reject(
-        `Target changed: ${target && "status" in target ? target.status : target && "enabled" in target ? (target.enabled ? "enabled" : "disabled") : "missing"}`,
-        true,
-      );
-  }
+  const changed = await targetChange(ctx, intent);
+  if (changed) return await reject(changed, true);
   // A nested mutation rolls back ALL domain writes on failure while retaining
   // the rejection receipt in this outer serializable transaction.
   let appliedRecordId: string;
@@ -443,6 +505,16 @@ async function applyDomainDecision(
         userId,
         intentId: intent._id,
       });
+    case "rateAudio":
+      return await createAudioRating(ctx, {
+        artifactId: command.target.id,
+        expectedContentHash: intent.targetContentHash ?? "",
+        payload: command.payload,
+        userId,
+        source,
+        requestKey: `intent:${intent._id}`,
+        decisionIntentId: intent._id,
+      });
     case "defer": {
       const card = await ctx.db
         .query("docketCards")
@@ -457,3 +529,114 @@ async function applyDomainDecision(
     }
   }
 }
+
+function docketTarget(
+  ctx: MutationCtx,
+  card: Doc<"docketCards">,
+): DecisionTarget | null {
+  const { db } = ctx;
+  let target: DecisionTarget | null = null;
+  switch (card.kind) {
+    case "pendingDraft": {
+      const id = db.normalizeId("agentReviewDrafts", card.targetId);
+      target = id && { kind: "agentReviewDraft", id };
+      break;
+    }
+    case "recipeNoComposition": {
+      const id = db.normalizeId("recipes", card.targetId);
+      target = id && { kind: "recipe", id };
+      break;
+    }
+    case "compositionNoListening": {
+      const id = db.normalizeId("compositions", card.targetId);
+      target = id && { kind: "composition", id };
+      break;
+    }
+    case "unratedAudio": {
+      const id = db.normalizeId("audioArtifacts", card.targetId);
+      target = id && { kind: "audioArtifact", id };
+      break;
+    }
+    case "feedProposal": {
+      const id = db.normalizeId("feeds", card.targetId);
+      target = id && { kind: "feedProposal", id };
+      break;
+    }
+  }
+  return target;
+}
+
+const webEventIdZ = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .regex(/^[A-Za-z0-9._:-]+$/);
+export const DOCKET_CARD_CHANGED =
+  "Docket card changed or is no longer eligible";
+
+/** The click is the human signature: a canonical defer intent is created and
+ * applied in one transaction, never delivered to a platform signer. */
+export const deferWeb = mutation({
+  args: {
+    targetId: v.string(),
+    contentHash: v.string(),
+    eventId: v.string(),
+    note: v.optional(v.string()),
+  },
+  returns: decisionResultValidator,
+  handler: async (ctx, args): Promise<DecisionResult> => {
+    const userId = await requireDecisionUser(ctx);
+    const eventId = webEventIdZ.safeParse(args.eventId);
+    if (!eventId.success) throw new ConvexError("Invalid event ID");
+    const replay = await ctx.db
+      .query("webhookEvents")
+      .withIndex("by_platform_eventId", (q) =>
+        q.eq("platform", "web").eq("eventId", `${userId}:${eventId.data}`),
+      )
+      .unique();
+    if (replay) return replay.result;
+    const card = (await reconcileDocket(ctx)).find(
+      (row) => row.targetId === args.targetId,
+    );
+    if (!card || card.contentHash !== args.contentHash)
+      throw new ConvexError(DOCKET_CARD_CHANGED);
+    const target = card.decisions.includes("defer")
+      ? docketTarget(ctx, card)
+      : null;
+    if (!target) throw new ConvexError("This docket card cannot be deferred");
+    const note = args.note?.trim() || undefined;
+    const command = decisionCommandZ.parse({
+      action: "defer",
+      target,
+      payload: note ? { note } : {},
+    });
+    const intent = await createProposal(
+      ctx,
+      {
+        command,
+        proposal: {
+          channel: "web",
+          conversationId: userId,
+          messageRef: card._id,
+          transcript: note ?? "Deferred for two weeks from the web docket.",
+        },
+      },
+      false,
+    );
+    return await applyEvent(
+      ctx,
+      {
+        intentId: intent._id,
+        eventId: eventId.data,
+        platform: "web",
+        signerId: userId,
+        verb: "confirm",
+        chatId: "web",
+        messageId: intent._id,
+        digest8: intent.payloadDigest.slice(0, 8),
+      },
+      userId,
+    );
+  },
+});

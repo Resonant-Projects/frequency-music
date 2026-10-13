@@ -33,6 +33,16 @@ import {
   type DocketCandidate,
 } from "./shared/docket";
 
+function unratedAudioSemantic(row: Doc<"audioArtifacts">) {
+  return { title: row.title, contentHash: row.contentHash };
+}
+/** The `unratedAudio` card content hash, so Listen can defer what it shows. */
+export async function unratedAudioCardHash(
+  row: Doc<"audioArtifacts">,
+): Promise<string> {
+  return await stableContentDigest(unratedAudioSemantic(row));
+}
+
 /** Text-only census: no age cutoff and no recipe-level collapse of listening debt. */
 async function eligible(
   ctx: QueryCtx | MutationCtx,
@@ -44,6 +54,7 @@ async function eligible(
     sessions,
     artifacts,
     ratings,
+    audioRatings,
     blindGroups,
     feeds,
   ] = await Promise.all([
@@ -59,6 +70,7 @@ async function eligible(
       .withIndex("by_status_createdAt", (q) => q.eq("status", "ready"))
       .collect(),
     ctx.db.query("voiceRatings").collect(),
+    ctx.db.query("audioRatings").collect(),
     ctx.db.query("blindGroups").collect(),
     ctx.db
       .query("feeds")
@@ -73,6 +85,10 @@ async function eligible(
     ratings
       .filter((row) => row.createdBy !== "system" && row.createdBy !== "agent")
       .map((row) => row.artifactId),
+  );
+  // General ratings count only for the content version that was heard.
+  const ratedVersions = new Set(
+    audioRatings.map((row) => `${row.artifactId}:${row.artifactContentHash}`),
   );
   // Check both membership directions so a missing artifact back-reference cannot leak.
   const hidden = new Set(
@@ -131,7 +147,7 @@ async function eligible(
         row.title,
         row.bodyMd,
         `/recipes/${row._id}`,
-        [],
+        ["defer"],
         row.createdAt,
         { title: row.title, body: row.bodyMd, protocol: row.protocol },
       );
@@ -151,6 +167,7 @@ async function eligible(
     if (
       (row.kind === "episode" || row.kind === "litmusRender") &&
       !rated.has(row._id) &&
+      !ratedVersions.has(`${row._id}:${row.contentHash}`) &&
       !hidden.has(row._id) &&
       (!row.blindGroupId ||
         groups.get(row.blindGroupId)?.revealedAt !== undefined)
@@ -161,9 +178,9 @@ async function eligible(
         row.title,
         "Human audio rating is pending.",
         "/listen",
-        [],
+        ["rateAudio", "defer"],
         row.createdAt,
-        { title: row.title, contentHash: row.contentHash },
+        unratedAudioSemantic(row),
       );
   for (const row of feeds) {
     const proposal = feedProposalZ.safeParse(row.metadata?.proposal);
@@ -195,8 +212,9 @@ export const currentState = internalQuery({
   handler: eligible,
 });
 
-/** Refresh text immediately; inference is admitted separately and never blocks reads. */
-async function reconcile(ctx: MutationCtx) {
+/** Refresh text immediately; inference is admitted separately and never blocks reads.
+ * Returns the eligible, currently undeferred cards. */
+export async function reconcileDocket(ctx: MutationCtx) {
   const candidates = await eligible(ctx);
   const existing = await ctx.db.query("docketCards").collect();
   const byTarget = new Map(existing.map((card) => [card.targetId, card]));
@@ -212,8 +230,15 @@ async function reconcile(ctx: MutationCtx) {
           updatedAt: now,
         });
         await markDocketStale(ctx);
-      } else if (old.rank !== candidate.rank) {
-        await ctx.db.patch(old._id, { rank: candidate.rank });
+      } else if (
+        old.rank !== candidate.rank ||
+        old.decisions.join() !== candidate.decisions.join()
+      ) {
+        // Decision vocabularies can grow without a semantic content change.
+        await ctx.db.patch(old._id, {
+          rank: candidate.rank,
+          decisions: candidate.decisions,
+        });
       }
       const card = await ctx.db.get(old._id);
       if (card) cards.push(card);
@@ -238,7 +263,7 @@ export const list = internalMutation({
   args: { weekly: v.optional(v.boolean()) },
   returns: v.array(docketCardReturnValidator),
   handler: async (ctx, args) => {
-    const cards = await reconcile(ctx);
+    const cards = await reconcileDocket(ctx);
     await admitRebuild(ctx);
     return await Promise.all(
       cards
@@ -442,7 +467,7 @@ export const prepare = internalMutation({
   args: {},
   returns: v.boolean(),
   handler: async (ctx) => {
-    await reconcile(ctx);
+    await reconcileDocket(ctx);
     return await admitRebuild(ctx);
   },
 });

@@ -11,6 +11,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { css, cx } from "../../styled-system/css";
 import { createKeyedRows } from "../lib/keyed-rows";
+import { AudioFeedbackQueue } from "../components/audio-feedback";
 import { AudioPlayer } from "../components/audio-player";
 import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
@@ -250,6 +251,8 @@ export function ListenPage() {
         <p class={bannerClass}>House voice: {houseVoiceLabel()}</p>
         <UINotice error={houseVoiceError()} />
       </UICard>
+
+      <AudioFeedbackQueue />
 
       <Show
         when={(() => {
