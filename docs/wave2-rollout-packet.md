@@ -163,7 +163,7 @@ Acceptance: an unauthenticated `POST /mcp` is rejected; an authenticated
 `docket.list`, `docket.card`, `decision.propose`, `listening.propose` and
 `delivery.record`, plus `render.request` and `tournament.request`.
 `render.request` is an explicit Wave 3 unavailable stub that enqueues nothing.
-On `main`, `tournament.request` is the same kind of stub. With PR #142 it calls
+On `main`, `tournament.request` now calls
 the gated `requestTournamentRun` agent tool. While
 `HYPOTHESIS_TOURNAMENT_ENABLED` is not `true`, that call is refused and no run
 is queued. Do not call `tournament.request` as part of this acceptance.
@@ -263,12 +263,21 @@ five pass, Wave 2 stays "deployed, acceptance pending".
 
 ## Listen-first next tracks
 
-Four follow-up PRs build on this packet. As of 2026-10-13 all four are open
-and none is merged or deployed: #139 (this rollout tooling), #141 (general
-audio feedback and recipe/audio deferral), #140 (litmus render jobs) and #142
-(hypothesis tournament persistence and worker). The recommended landing order
-is #139, #141, #140, #142. They were assembled together locally and tested as
-one candidate. That is test evidence, not production
+Four follow-up PRs build on this packet. All four merged to `main` on
+2026-10-13:
+
+| PR | Implementation | Merge commit |
+| --- | --- | --- |
+| #139 | Rollout tooling | `52b7664` |
+| #140 | Litmus render jobs | `1a368d1` |
+| #141 | General audio feedback and recipe/audio deferral | `6e33381` |
+| #142 | Hypothesis tournament persistence and worker | `0cc0592` |
+
+The actual landing order was #139, #140, #141, #142. #140 landed before
+#141, so both must be included in the Convex deployment before requesting
+renders. These records do not establish production deployment. The four
+branches were assembled together locally and tested as one candidate. That
+is test evidence, not production
 acceptance. Every step below contacts production or a live host and needs
 coordinator approval of the exact target first.
 
@@ -301,12 +310,12 @@ Deployment order, from the current contracts:
    - signer and docket gates per Stages 4 and 5;
    - the hypothesis embedding backfill and then `HYPOTHESIS_TOURNAMENT_ENABLED=true`
      (paid embeddings and Anthropic inference), per
-     `docs/hypothesis-tournament-integration.md` (added by #142);
+     [the tournament integration](hypothesis-tournament-integration.md);
    - `renderValidation=go`, only after the human studio comparison and go/no-go
      in the render ladder plan. A human rating of a render does not validate it.
 
 Integration evidence (fixtures only): `convex/listenNextIntegration.test.ts`
-needs all four PRs, so it lands in a small integration PR after them. It
+contains eight tests added after all four PRs landed. It
 drives a real render completion into the feedback queue, the docket and
 signed ratings. It checks that a master and its delivery project once, as the
 delivery; that a study family stays hidden until reveal; that a signed rating
