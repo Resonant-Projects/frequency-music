@@ -163,6 +163,10 @@ describe("hypothesis tournament over durable Convex state", () => {
     expect(new Set(payload.sourceIds)).toEqual(new Set(f.ids.sourceIds));
     expect(new Set(winner.evidenceClaimIds)).toEqual(new Set(f.ids.claimIds));
     expect(await agentRun()).toMatchObject({ status: "needs_review" });
+    // The summary reports the durable run status, not the no-op outcome.
+    expect((await finalize(result)).summary).toBe(
+      `hypothesis-tournament needs_review: submitted, draft ${result.draftId} awaits human review`,
+    );
     const archived = await archive();
     expect(archived.map((row) => row.outcome).toSorted()).toEqual(
       result.candidates.map((c) => c.outcome).toSorted(),
@@ -201,7 +205,9 @@ describe("hypothesis tournament over durable Convex state", () => {
     expect(first.reason).toBe("dependency_error");
     expect(first.draftId).toBeUndefined();
     // The graph's terminal write cannot fail a run whose draft committed.
-    await finalize(first);
+    expect((await finalize(first)).summary).toBe(
+      "hypothesis-tournament needs_review: dependency_error",
+    );
     expect(await agentRun()).toMatchObject({ status: "needs_review" });
     const committed = await drafts();
     expect(committed).toHaveLength(1);
@@ -213,6 +219,9 @@ describe("hypothesis tournament over durable Convex state", () => {
     expect(retry.reason).toBe("submitted");
     expect(retry.draftId).toBe(committed[0]!._id);
     expect(await drafts()).toHaveLength(1);
+    expect((await finalize(retry)).summary).toBe(
+      `hypothesis-tournament needs_review: submitted, draft ${retry.draftId} awaits human review`,
+    );
   });
 
   test("budget exhaustion archives every candidate and persists a replayable no-draft result", async () => {
@@ -245,7 +254,9 @@ describe("hypothesis tournament over durable Convex state", () => {
 
     const replay = await run(scriptedModel().model);
     expect(replay.reason).toBe("budget_exhausted");
-    await finalize(replay);
+    expect((await finalize(replay)).summary).toBe(
+      "hypothesis-tournament completed: budget_exhausted",
+    );
     expect(await agentRun()).toMatchObject({ status: "completed" });
   });
 
@@ -556,6 +567,10 @@ describe("hypothesis tournament over durable Convex state", () => {
     expect(blocked.reason).toBe("dependency_error");
     expect(m.model).not.toHaveBeenCalled();
     expect(await leaseRow()).toBeNull();
+    expect((await finalize(blocked)).summary).toBe(
+      "hypothesis-tournament failed: dependency_error",
+    );
+    expect(await agentRun()).toMatchObject({ status: "failed" });
     await expect(f.callTool("requestTournamentRun", {})).rejects.toThrow(
       /TournamentDisabled/,
     );

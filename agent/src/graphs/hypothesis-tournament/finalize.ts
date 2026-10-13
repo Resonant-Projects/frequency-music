@@ -49,8 +49,10 @@ export function createFinalizeNode(callTool: ToolCaller) {
         },
         AbortSignal.timeout(FINALIZE_TIMEOUT_MS),
       )) as { status?: unknown; runStatus?: unknown };
+      // runStatus is the durable run status; status is only this call's
+      // effect, "untouched" whenever the run was already terminal.
       return {
-        summary: `hypothesis-tournament ${String(finalized.status)}: ${result.reason}${result.draftId ? `, draft ${result.draftId} awaits human review` : ""}`,
+        summary: `hypothesis-tournament ${String(finalized.runStatus)}: ${result.reason}${result.draftId ? `, draft ${result.draftId} awaits human review` : ""}`,
       };
     } catch (error) {
       // The stale-run sweep still terminates a run left running.

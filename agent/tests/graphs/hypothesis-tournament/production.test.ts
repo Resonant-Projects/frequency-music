@@ -174,7 +174,10 @@ function result(
 describe("tournament graph terminal ownership", () => {
   test("summarize delegates the terminal status to the fenced backend", async () => {
     for (const leaseToken of ["1:lease", undefined]) {
-      const callTool = vi.fn(async () => ({ status: "failed" }));
+      const callTool = vi.fn(async () => ({
+        status: "failed",
+        runStatus: "failed",
+      }));
       const update = await createSummarizeNode(callTool)({
         agentRunId: "run-1",
         seedHint: undefined,
@@ -197,6 +200,29 @@ describe("tournament graph terminal ownership", () => {
       expect(update.summary).toBe(
         "hypothesis-tournament failed: dependency_error",
       );
+    }
+  });
+
+  test("summarize reports the durable run status, not the call's effect", async () => {
+    for (const [finalized, expected] of [
+      [
+        { status: "untouched", runStatus: "needs_review" },
+        "hypothesis-tournament needs_review: submitted, draft draft-1 awaits human review",
+      ],
+      [
+        { status: "completed", runStatus: "completed" },
+        "hypothesis-tournament completed: submitted, draft draft-1 awaits human review",
+      ],
+    ] as const) {
+      const update = await createSummarizeNode(vi.fn(async () => finalized))({
+        agentRunId: "run-1",
+        seedHint: undefined,
+        traceUrl: undefined,
+        result: { ...result("submitted"), draftId: "draft-1" },
+        leaseToken: undefined,
+        summary: undefined,
+      });
+      expect(update.summary).toBe(expected);
     }
   });
 
