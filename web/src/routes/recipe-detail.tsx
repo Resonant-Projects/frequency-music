@@ -37,7 +37,7 @@ const paramType = css({
   color: "zodiac.gold",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   mb: "1",
   textTransform: "uppercase",
 });
@@ -106,7 +106,7 @@ const protocolColumnTitle = css({
   color: "zodiac.gold",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   mb: "2",
   textTransform: "uppercase",
 });

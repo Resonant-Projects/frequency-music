@@ -171,7 +171,7 @@ const copyRowClass = css({
   flexWrap: "wrap",
   gap: "3",
   alignItems: "center",
-  "& > input": { flex: "1 1 16rem", minW: "0" },
+  "& > input": { flex: "[1 1 16rem]", minW: "0" },
 });
 
 // The house voice's first choice schedules a reconcile over this window.

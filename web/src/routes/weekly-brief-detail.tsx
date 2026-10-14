@@ -53,7 +53,7 @@ const loopSubheadingClass = css({
   fontFamily: "display",
   fontSize: "xl",
   fontWeight: "normal",
-  lineHeight: "1.35",
+  lineHeight: "display",
   mb: "2",
   mt: "5",
 });
@@ -62,7 +62,7 @@ const loopEyebrowClass = css({
   color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   textTransform: "uppercase",
 });
 

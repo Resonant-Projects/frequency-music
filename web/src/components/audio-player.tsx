@@ -10,9 +10,9 @@ import { css, cx } from "../../styled-system/css";
 import { focusRingClass, UINotice } from "./ui";
 
 const wrap = css({ display: "flex", flexDirection: "column", gap: "2" });
-const labelClass = css({ color: "zodiac.cream/82", fontWeight: "600" });
+const labelClass = css({ color: "zodiac.cream/82", fontWeight: "normal" });
 const durationClass = css({ color: "zodiac.cream/66", ml: "2" });
-const audioClass = css({ width: "100%" });
+const audioClass = css({ width: "full" });
 
 // Every mounted player, so starting one pauses the rest: two native players
 // talking over each other is never what the listener wants.

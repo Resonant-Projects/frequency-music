@@ -14,7 +14,7 @@ const base = css({
   fontSize: "xs",
   gap: "2",
   justifyContent: "center",
-  letterSpacing: "0.18em",
+  letterSpacing: "labelWide",
   minHeight: "9",
   px: "3",
   py: "2",
@@ -31,9 +31,9 @@ const base = css({
     opacity: "0.5",
   },
   _focusVisible: {
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
+    outlineOffset: "0.5",
   },
 });
 

@@ -94,13 +94,13 @@ const sessionBadgesClass = cx(badgeRowClass, css({ mb: "1" }));
 
 const sessionFeedbackClass = css({
   color: "zodiac.cream/70",
-  lineHeight: "1.7",
+  lineHeight: "prose",
 });
 
 const sessionNotesClass = css({
   color: "zodiac.cream/66",
   fontSize: "sm",
-  lineHeight: "1.7",
+  lineHeight: "dense",
 });
 
 const spacedBelowClass = css({ mb: "2" });
@@ -695,7 +695,7 @@ export function CompositionDetailPage() {
                 class={css({
                   color: "zodiac.cream/66",
                   fontSize: "sm",
-                  lineHeight: "1.7",
+                  lineHeight: "dense",
                 })}
               >
                 Depth {row().summary.depth} in revision branch

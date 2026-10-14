@@ -260,7 +260,7 @@ export function CorrespondenceDetailPage() {
 
             <hr class={goldDivider} />
             <h2 class={sectionLabel}>Rationale</h2>
-            <div class={css({ maxW: "72ch" })}>
+            <div class={css({ maxW: "measure" })}>
               <Markdown content={row().rationaleMd} />
             </div>
 

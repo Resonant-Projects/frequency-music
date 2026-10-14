@@ -28,8 +28,8 @@ const dekClass = css({
   color: "zodiac.cream/74",
   fontFamily: "display",
   fontSize: { base: "md", md: "lg" },
-  lineHeight: "1.8",
-  maxW: "44rem",
+  lineHeight: "prose",
+  maxW: "reading",
   mt: "4",
 });
 
@@ -39,7 +39,7 @@ const articleCard = css({
 });
 
 const articleBody = css({
-  maxW: "48rem",
+  maxW: "reading",
   marginInline: "auto",
 });
 

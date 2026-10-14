@@ -52,8 +52,8 @@ const eventHeaderClass = css({
 
 const eventMessageClass = css({
   color: "zodiac.cream",
-  lineHeight: "1.55",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 const timesListClass = css({

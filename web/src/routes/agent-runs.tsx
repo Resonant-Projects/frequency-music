@@ -100,8 +100,8 @@ const runRowClass = css({
   minW: "0",
   p: "4",
   textAlign: "left",
-  transition: "border-color 160ms ease, background 160ms ease",
-  width: "100%",
+  transition: "[border-color 160ms ease, background 160ms ease]",
+  width: "full",
   _hover: {
     bg: "zodiac.gold/6",
     borderColor: "zodiac.gold/42",
@@ -118,7 +118,7 @@ const runRowTriggerClass = css({
   gap: "3",
   minW: "0",
   textAlign: "left",
-  width: "100%",
+  width: "full",
 });
 
 const runHeaderClass = cx(
@@ -130,7 +130,7 @@ const runSummaryClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.35",
+  lineHeight: "display",
 });
 
 const runMetaClass = css({
@@ -142,7 +142,7 @@ const runMetaClass = css({
 
 const detailsCardClass = css({
   minW: "0",
-  scrollMarginTop: "calc(var(--app-header-height) + 1rem)",
+  scrollMarginTop: "[calc(var(--app-header-height) + 1rem)]",
 });
 
 const selectedRunRowClass = css({

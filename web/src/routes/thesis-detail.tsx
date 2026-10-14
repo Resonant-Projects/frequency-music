@@ -49,8 +49,8 @@ const statementClass = css({
   color: "zodiac.cream/82",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.7",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 const campaignRowClass = cx(
@@ -64,7 +64,7 @@ const campaignRowClass = cx(
   }),
 );
 
-const campaignTextClass = css({ minW: 0 });
+const campaignTextClass = css({ minW: "0" });
 
 const campaignTitleClass = css({ color: "zodiac.cream", mb: "1" });
 

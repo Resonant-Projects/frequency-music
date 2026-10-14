@@ -32,8 +32,8 @@ const rowTitleClass = css({ color: "zodiac.cream", fontSize: "xl", mb: "2" });
 
 const rowStatementClass = css({
   color: "zodiac.cream/66",
-  lineHeight: "1.7",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 export function ThesesPage() {

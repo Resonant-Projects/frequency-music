@@ -10,7 +10,7 @@ const components = {
         fontFamily: "display",
         fontSize: "2xl",
         fontWeight: "normal",
-        lineHeight: "1.3",
+        lineHeight: "display",
         mt: "6",
         mb: "3",
       })}
@@ -59,7 +59,7 @@ const components = {
         color: "zodiac.cream/82",
         fontFamily: "display",
         fontSize: "md",
-        lineHeight: "1.75",
+        lineHeight: "prose",
         mb: "3",
       })}
       {...props}
@@ -74,7 +74,7 @@ const components = {
         color: "zodiac.cream/74",
         fontFamily: "display",
         fontStyle: "italic",
-        lineHeight: "1.75",
+        lineHeight: "prose",
         my: "5",
         pl: "4",
       })}
@@ -113,7 +113,7 @@ const components = {
         color: "zodiac.cream/82",
         fontFamily: "display",
         fontSize: "md",
-        lineHeight: "1.75",
+        lineHeight: "prose",
       })}
       {...props}
     />
@@ -146,7 +146,7 @@ const components = {
         borderRadius: "l1",
         fontFamily: "mono",
         fontSize: "sm",
-        lineHeight: "1.6",
+        lineHeight: "dense",
         overflow: "auto",
         p: "3",
         mb: "3",
@@ -183,7 +183,7 @@ export function Markdown(props: { content: string }) {
   // Prose measure cap: the serif body face needs a short line. Consumers that
   // already cap narrower keep their own width; this is the floor for the rest.
   return (
-    <div class={css({ maxW: "72ch" })}>
+    <div class={css({ maxW: "measure" })}>
       <SolidMarkdown children={props.content} components={components} />
     </div>
   );

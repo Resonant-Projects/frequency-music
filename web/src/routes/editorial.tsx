@@ -36,7 +36,7 @@ const artifactTitleClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "xl",
-  lineHeight: "1.4",
+  lineHeight: "display",
   mb: "2",
 });
 const mutedClass = css({ color: "zodiac.cream/66" });
@@ -109,8 +109,8 @@ export function EditorialPage() {
             <p
               class={css({
                 color: "zodiac.cream/66",
-                lineHeight: "1.6",
-                maxWidth: "48rem",
+                lineHeight: "prose",
+                maxW: "reading",
               })}
             >
               Curate public-safe narrative artifacts here, then export only

@@ -24,7 +24,7 @@ const tileClass = css({
   p: "3",
 });
 
-const valueClass = css({ fontSize: "2xl", margin: 0 });
+const valueClass = css({ fontSize: "2xl", margin: "0" });
 
 const toneClass = {
   gold: css({ color: "zodiac.gold" }),
