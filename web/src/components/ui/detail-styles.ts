@@ -6,9 +6,9 @@ import { css } from "../../../styled-system/css";
  */
 export const focusRingStyle = {
   _focusVisible: {
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
+    outlineOffset: "0.5",
   },
 } as const;
 
@@ -29,7 +29,7 @@ export const backLink = css({
   fontFamily: "mono",
   fontSize: "xs",
   gap: "1.5",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   minH: "6",
   textDecoration: "none",
   textTransform: "uppercase",
@@ -45,7 +45,7 @@ export const detailTitleClass = css({
   fontFamily: "display",
   fontSize: { base: "2xl", md: "3xl" },
   fontWeight: "normal",
-  lineHeight: "1.3",
+  lineHeight: "display",
   mt: "3",
 });
 
@@ -54,7 +54,7 @@ export const sectionLabel = css({
   color: "zodiac.gold",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   mb: "3",
   textTransform: "uppercase",
 });
@@ -75,7 +75,7 @@ export const metaLabelClass = css({
   color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   overflowWrap: "anywhere",
   textTransform: "uppercase",
 });
@@ -104,7 +104,7 @@ export const jsonBlockClass = css({
   color: "zodiac.cream/72",
   fontFamily: "mono",
   fontSize: "xs",
-  maxH: "18rem",
+  maxH: "72",
   overflow: "auto",
   overflowWrap: "anywhere",
   p: "3",
@@ -123,7 +123,7 @@ export const inlineActionLink = css({
   fontFamily: "mono",
   fontSize: "xs",
   gap: "1.5",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   minH: "6",
   textDecoration: "none",
   textTransform: "uppercase",

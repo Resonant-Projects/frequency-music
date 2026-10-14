@@ -19,9 +19,9 @@ const inputClass = css({
   },
   _focusVisible: {
     borderColor: "zodiac.gold",
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "1px",
+    outlineOffset: "px",
   },
   _placeholder: {
     color: "zodiac.cream/50",

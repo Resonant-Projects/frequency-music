@@ -62,7 +62,7 @@ const rowTitleClass = css({ fontSize: "xl", marginBottom: "1" });
 const rowQuestionClass = css({
   color: "zodiac.cream/70",
   marginBottom: "1",
-  maxW: "72ch",
+  maxW: "measure",
 });
 
 const rowWhyClass = cx(helperClass, css({ marginTop: "2" }));

@@ -191,10 +191,10 @@ Both families are self-hosted through Fontsource; there is no CDN dependency. Co
 
 ### Hierarchy
 
-- **Display** (300, `clamp(1.5rem, 4vw, 1.875rem)`, 1.3): Page and detail-page titles; steps from 1.5rem to 1.875rem at the medium breakpoint. Essay cards push the same face larger (22–36px) with slightly negative tracking.
+- **Display** (300, `clamp(1.5rem, 4vw, 1.875rem)`, 1.3): Page and detail-page titles; steps from 1.5rem to 1.875rem at the medium breakpoint. Essay cards and the featured essay push the same face larger (20–36px) and the essay hero to 48–60px, all at the poster line height of 1.08 with −0.01em tracking.
 - **Headline** (400, 0.75rem, 0.14em, uppercase, gold): Section headings and dividers inside cards and detail pages. This is the mono face, not the serif — a heading in this system reads as an instrument legend.
 - **Title** (300, 34 / 24 / 22 / 18px, 1.15–1.3): The orrery sidebar's four-step title ladder — 34px for the selected sector, 24px for a domain, 22px for a sub-panel, 18px for an item row. Light weight throughout; gold from 24px down.
-- **Body** (400, 1rem / 1.75 in prose, 14px / 1.65 in dense panels): Markdown prose runs at 1rem with 1.75 line height and cream at 82%; sidebar and card body copy runs at 14px with 1.65 line height and cream at 66%. Prose measure is capped at 44–48rem (or 70–72ch on text-only pages).
+- **Body** (400, 1rem / 1.75 in prose, 14px / 1.65 in dense panels): Body copy at 1rem and above runs at 1.75 line height; below 1rem, including mono code and data blocks, it runs at 1.65. Markdown prose sits at cream 82%; sidebar and card body copy at 14px and cream 66%. Prose measure is capped at 48rem (or 72ch on text-only pages).
 - **Label** (400, 0.75rem, 0.14–0.20em, uppercase, mono): Field labels, back links, metadata lines, button faces (0.18em), badges (0.20em). Letter-spacing is what makes a label a label.
 - **Micro** (400, 10px, 0.30–0.40em, uppercase, gold at 78%): Eyebrows above titles and stat cells. This is the smallest type in the system and it is a hard floor.
 
@@ -204,11 +204,13 @@ Both families are self-hosted through Fontsource; there is no CDN dependency. Co
 
 **The Tracked Caps Rule.** Uppercase in this system is always mono and always tracked to at least 0.14em. Uppercase serif, or untracked uppercase, reads as a mistake rather than an instrument.
 
+**The Token Rule.** Every value in a Panda style is a token. `web/panda.config.ts` turns on `strictTokens` and `strictPropertyValues`, so a raw value fails the web typecheck. The typography tokens are the steps above: line heights `poster` 1.08, `display` 1.3, `label` 1.4, `dense` 1.65 and `prose` 1.75; tracking `display` −0.01em, `label` 0.14em, `labelWide` 0.18em, `labelWider` 0.2em and `micro` 0.3em; `fontSizes.micro` 10px; measures `sizes.measure` 72ch and `sizes.reading` 48rem; `sizes.container` 1200px; and the borders `hairline` (1px) and `focus` (2px). New type snaps to the nearest step for its role. A value that is not a design decision, such as a `calc()` offset or a gradient, uses Panda's `[...]` escape hatch, which keeps it easy to grep.
+
 ## Layout
 
 The shell uses a fixed header with a wordmark, grouped Ark UI Solid Navigation Menu, and global search. Its actual height is measured into `--app-header-height`, which reserves space on `main`. The navigation stays on one row: Home, Research, Compose, Library, and Operations. Below 851px, one Menu trigger opens a scrollable panel containing Home and the four groups; search remains beside it. Menus overlay the page without changing header height.
 
-Content pages use one container: a centred grid capped at 1200px, 1rem of padding on mobile and 1.5rem from the medium breakpoint up, with a 1.5rem gap between stacked sections. Reading surfaces narrow further — essay and correspondence bodies cap at 44–48rem or 70–72ch — because the serif body face needs a short measure.
+Content pages use one container: a centred grid capped at 1200px, 1rem of padding on mobile and 1.5rem from the medium breakpoint up, with a 1.5rem gap between stacked sections. Reading surfaces narrow further — essay and correspondence bodies cap at 48rem or 72ch — because the serif body face needs a short measure.
 
 Collections are responsive grids, not fixed columns: one column on mobile, two at the medium breakpoint, three at extra-large, with gaps stepping 1rem → 1.25rem → 1.5rem. The 3D home is the one split layout — below the large breakpoint the canvas takes 60vh above a full-width panel; at large and up it becomes a flexible canvas beside a fixed 355px sidebar with a gold hairline seam between them.
 
@@ -306,7 +308,7 @@ The 3D home's right-hand panel is the system's reference instrument face: a 355p
 - **Do** switch to Lifted Violet the moment violet text drops below heading size.
 - **Do** hold cream text at 0.66 alpha or above and gold labels at 0.78 or above, however faint the surrounding chrome is.
 - **Do** set uppercase in JetBrains Mono with at least 0.14em of tracking.
-- **Do** cap prose measure at 44–48rem (or 70–72ch) and run it at 1rem with 1.75 line height.
+- **Do** cap prose measure at 48rem (or 72ch) and run it at 1rem with 1.75 line height.
 - **Do** give every interactive element the same 2px gold focus outline.
 - **Do** guard hover lifts and the orrery's auto-rotation behind `prefers-reduced-motion`.
 - **Do** put status and error text in the always-mounted notice regions.

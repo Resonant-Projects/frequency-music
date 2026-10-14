@@ -80,11 +80,11 @@ const feedRowClass = css({
   display: "flex",
   gap: "2",
   justifyContent: "space-between",
-  minW: 0,
+  minW: "0",
   p: "3",
 });
 
-const feedTextClass = css({ flex: "1", minW: 0, overflow: "hidden" });
+const feedTextClass = css({ flex: "1", minW: "0", overflow: "hidden" });
 
 const feedMetaClass = cx(
   metaLine,
@@ -93,7 +93,7 @@ const feedMetaClass = cx(
 
 const feedToggleClass = css({ flexShrink: 0 });
 
-const sourceCardClass = css({ bg: "zodiac.void/38", minW: 0, p: "4" });
+const sourceCardClass = css({ bg: "zodiac.void/38", minW: "0", p: "4" });
 
 const sourceTitleClass = cx(sectionTitleClass, css({ mb: "1" }));
 

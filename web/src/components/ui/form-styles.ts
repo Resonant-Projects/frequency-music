@@ -6,7 +6,7 @@ export const pageClass = css({
   // `minmax(0, 1fr)` rather than the implicit `auto` column: an unbreakable
   // URL or error token would otherwise widen the page past a phone viewport.
   gridTemplateColumns: "minmax(0, 1fr)",
-  maxW: "1200px",
+  maxW: "container",
   marginInline: "auto",
   p: { base: "4", md: "6" },
   width: "full",
@@ -17,7 +17,7 @@ export const pageTitleClass = css({
   fontFamily: "display",
   fontSize: { base: "2xl", md: "3xl" },
   fontWeight: "normal",
-  lineHeight: "1.2",
+  lineHeight: "display",
   marginBottom: "3",
 });
 
@@ -25,7 +25,7 @@ export const sectionTitleClass = css({
   color: "zodiac.gold",
   fontFamily: "mono",
   fontSize: "sm",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   marginBottom: "3",
   textTransform: "uppercase",
 });
@@ -35,7 +35,7 @@ export const fieldLabelClass = css({
   display: "block",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   marginBottom: "1.5",
   marginTop: "4",
   textTransform: "uppercase",
@@ -46,8 +46,8 @@ export const proseClass = css({
   color: "zodiac.cream/82",
   fontFamily: "display",
   fontSize: "md",
-  lineHeight: "1.75",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 /** Secondary copy under a title or control: the 0.66 cream floor, 14px. */
@@ -55,16 +55,16 @@ export const helperClass = css({
   color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: "sm",
-  lineHeight: "1.6",
-  maxW: "72ch",
+  lineHeight: "dense",
+  maxW: "measure",
 });
 
 /** 10px wide-tracked mono eyebrow — the only sanctioned use of 10px text. */
 export const eyebrowClass = css({
   color: "zodiac.gold/78",
   fontFamily: "mono",
-  fontSize: "10px",
-  letterSpacing: "0.3em",
+  fontSize: "micro",
+  letterSpacing: "micro",
   textTransform: "uppercase",
 });
 

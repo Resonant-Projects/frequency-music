@@ -69,7 +69,7 @@ const claimClass = css({
 });
 const claimTextClass = css({
   color: "zodiac.cream/68",
-  maxW: "72ch",
+  maxW: "measure",
   fontSize: "sm",
   marginBottom: "2",
 });

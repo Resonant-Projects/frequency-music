@@ -34,9 +34,9 @@ export const entityCardLinkClass = css({
   _hover: { borderColor: "zodiac.gold/45" },
   "&:has(a:focus-visible)": {
     borderColor: "zodiac.gold/45",
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
+    outlineOffset: "0.5",
   },
 });
 
@@ -70,8 +70,8 @@ export const linkCardClass = css({
   transitionTimingFunction: "default",
   _hover: { borderColor: "zodiac.gold/45" },
   _focusVisible: {
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
+    outlineOffset: "0.5",
   },
 });

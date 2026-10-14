@@ -112,7 +112,7 @@ const sectionHeadingClass = css({
   fontFamily: "display",
   fontSize: "2xl",
   fontWeight: "normal",
-  lineHeight: "1.2",
+  lineHeight: "display",
   textWrap: "balance",
 });
 
@@ -409,8 +409,8 @@ export function VocabularyTriagePage() {
         <p
           class={css({
             color: "zodiac.cream/66",
-            lineHeight: "1.6",
-            maxW: "70ch",
+            lineHeight: "prose",
+            maxW: "measure",
           })}
         >
           Promote durable terms, merge near-synonyms into known registry rows,
@@ -434,7 +434,7 @@ export function VocabularyTriagePage() {
           </For>
         </div>
         <UINotice
-          class={css({ lineHeight: "1.6", mt: "4" })}
+          class={css({ lineHeight: "prose", mt: "4" })}
           status={board.isLoading() ? "Loading triage debt…" : announcement()}
           error={
             board.error()

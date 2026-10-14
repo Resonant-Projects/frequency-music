@@ -57,7 +57,7 @@ const rowLinkClass = css({
   },
 });
 
-const introClass = css({ color: "zodiac.cream/70", maxW: "72ch" });
+const introClass = css({ color: "zodiac.cream/70", maxW: "measure" });
 
 const sectionHeaderClass = css({
   alignItems: "baseline",
@@ -76,7 +76,7 @@ const statementClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.35",
+  lineHeight: "display",
 });
 
 export function CorrespondencesPage() {

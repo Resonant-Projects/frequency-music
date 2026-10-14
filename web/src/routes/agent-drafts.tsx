@@ -55,8 +55,8 @@ const leadClass = css({
   color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.6",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 /**
@@ -106,7 +106,7 @@ const queueStatementClass = css({
   fontFamily: "display",
   fontSize: "lg",
   lineClamp: "2",
-  lineHeight: "1.35",
+  lineHeight: "display",
 });
 
 const queueListClass = css({ display: "grid", gap: "3" });
@@ -124,7 +124,7 @@ const decideBarClass = css({
   gap: "3",
   p: { base: "3", md: "4" },
   position: { base: "static", md: "sticky" },
-  zIndex: "10",
+  zIndex: "docked",
 });
 
 type DraftId = Id<"agentReviewDrafts">;
@@ -459,8 +459,8 @@ function DecideBar(props: {
                   mt: "1",
                   p: "1",
                   position: "absolute",
-                  top: "full",
-                  zIndex: "20",
+                  top: "[100%]",
+                  zIndex: "[20]",
                 })}
               >
                 <UIButton
@@ -987,7 +987,7 @@ export function AgentDraftsPage() {
                 gap: "3",
                 // Up to 50 rows: cap the sticky column at the viewport and let
                 // it scroll on its own. The inset keeps focus rings unclipped.
-                maxH: { lg: "calc(100vh - var(--app-header-height) - 2rem)" },
+                maxH: { lg: "[calc(100vh - var(--app-header-height) - 2rem)]" },
                 mx: { lg: "-1" },
                 overflowY: { lg: "auto" },
                 p: { lg: "1" },

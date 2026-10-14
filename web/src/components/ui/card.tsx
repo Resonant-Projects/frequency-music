@@ -13,7 +13,7 @@ const cardClass = css({
 });
 
 const glassClass = css({
-  backdropFilter: "blur(8px)",
+  backdropFilter: "[blur(8px)]",
 });
 
 type UICardProps = JSX.HTMLAttributes<HTMLElement> & {

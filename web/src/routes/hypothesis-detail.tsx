@@ -38,8 +38,8 @@ const questionClass = css({
   color: "zodiac.cream/85",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.75",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 const sourceGrid = css({
@@ -57,7 +57,7 @@ const openQuestionsClass = css({
   color: "zodiac.cream/82",
   fontFamily: "display",
   listStyleType: "disc",
-  maxW: "72ch",
+  maxW: "measure",
   pl: "5",
 });
 

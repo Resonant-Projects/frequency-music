@@ -4,24 +4,13 @@ import { css, cx } from "../../../styled-system/css";
 // While empty, a region is visually hidden (sr-only) rather than display:none,
 // so it stays in the accessibility tree and the arrival of text is an update
 // to an existing live region, not the insertion of a new one.
-const emptyCollapse = {
-  _empty: {
-    position: "absolute",
-    width: "1px",
-    height: "1px",
-    margin: "-1px",
-    padding: "0",
-    overflow: "hidden",
-    clipPath: "inset(50%)",
-    whiteSpace: "nowrap",
-  },
-} as const;
+const emptyCollapse = { _empty: { srOnly: true } } as const;
 
 const statusClass = css({
   color: "zodiac.cream/75",
   fontFamily: "display",
   fontSize: "md",
-  lineHeight: "1.6",
+  lineHeight: "prose",
   overflowWrap: "anywhere",
   ...emptyCollapse,
 });
@@ -30,7 +19,7 @@ const alertClass = css({
   color: "zodiac.error",
   fontFamily: "display",
   fontSize: "md",
-  lineHeight: "1.6",
+  lineHeight: "prose",
   overflowWrap: "anywhere",
   ...emptyCollapse,
 });

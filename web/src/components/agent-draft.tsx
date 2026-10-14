@@ -85,13 +85,13 @@ const monoValueClass = css({
   color: "zodiac.cream/72",
   fontFamily: "mono",
   fontSize: "xs",
-  lineHeight: "1.5",
+  lineHeight: "dense",
 });
 
 const bodyValueClass = css({
   color: "zodiac.cream",
-  lineHeight: "1.6",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 function PayloadField(props: { label: string; children: JSX.Element }) {
@@ -264,7 +264,7 @@ const disclosureSummaryClass = css({
   cursor: "pointer",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.14em",
+  letterSpacing: "label",
   minHeight: "7",
   py: "2",
   textTransform: "uppercase",
@@ -359,15 +359,15 @@ const reviewHeadingClass = css({
   fontFamily: "display",
   fontSize: { base: "xl", md: "2xl" },
   fontWeight: "normal",
-  lineHeight: "1.2",
+  lineHeight: "display",
 });
 
 const reviewBodyClass = css({
   color: "zodiac.cream/82",
   fontFamily: "display",
   fontSize: "lg",
-  lineHeight: "1.65",
-  maxW: "72ch",
+  lineHeight: "prose",
+  maxW: "measure",
 });
 
 /** A disclosure's revealed paragraph, set off from its `<summary>`. */

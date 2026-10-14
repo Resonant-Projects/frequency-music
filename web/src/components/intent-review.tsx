@@ -46,9 +46,9 @@ const payloadClass = css({
   overflowWrap: "anywhere",
   fontFamily: "mono",
   fontSize: "sm",
-  lineHeight: "1.7",
+  lineHeight: "dense",
   color: "zodiac.cream/82",
-  maxInlineSize: "100%",
+  maxInlineSize: "full",
 });
 const actionsClass = css({ display: "flex", flexWrap: "wrap", gap: "2" });
 

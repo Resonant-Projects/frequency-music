@@ -48,55 +48,55 @@ const heroFeaturedZone = css({
   display: "grid",
   alignContent: "start",
   gap: "0",
-  minHeight: { base: "auto", lg: "100%" },
+  minHeight: { base: "auto", lg: "full" },
 });
 
-const heroTitle = css({ maxW: "12ch" });
+const heroTitle = css({ maxW: "[12ch]" });
 
 const heroBody = css({
   color: "zodiac.cream/66",
   fontFamily: "display",
-  fontSize: { base: "16px", md: "18px" },
-  fontWeight: "300",
-  lineHeight: "1.75",
-  maxW: "36rem",
-  mt: "16px",
+  fontSize: { base: "md", md: "lg" },
+  fontWeight: "light",
+  lineHeight: "prose",
+  maxW: "xl",
+  mt: "4",
 });
 
 const statRow = css({
   display: "flex",
   flexWrap: "wrap",
-  gap: "8px",
-  mt: "20px",
+  gap: "2",
+  mt: "5",
 });
 
 const featuredCard = css({
   display: "grid",
-  gap: "12px",
+  gap: "3",
   borderColor: "zodiac.cream/14",
   borderWidth: "1px",
   borderRadius: "l3",
-  p: { base: "18px", md: "22px 26px" },
+  p: "5",
   bg: "zodiac.void/45",
   alignSelf: "start",
 });
 
-const featuredEyebrow = css({ mb: "12px" });
+const featuredEyebrow = css({ mb: "3" });
 
 const featuredTitle = css({
   color: "zodiac.cream",
   fontFamily: "display",
-  fontSize: { base: "30px", md: "36px" },
+  fontSize: { base: "3xl", md: "4xl" },
   fontWeight: "normal",
-  lineHeight: "1.08",
-  letterSpacing: "-0.012em",
+  lineHeight: "poster",
+  letterSpacing: "display",
 });
 
 const featuredExcerpt = css({
   color: "zodiac.cream/66",
-  fontSize: "14px",
-  fontWeight: "400",
-  lineHeight: "1.65",
+  fontSize: "sm",
+  fontWeight: "normal",
+  lineHeight: "dense",
 });
 
 const archiveGrid = css({

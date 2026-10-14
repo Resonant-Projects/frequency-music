@@ -5,6 +5,11 @@ import slate from "@park-ui/panda-preset/colors/slate";
 
 export default defineConfig({
   preflight: true,
+  // Style values must be tokens or valid CSS keywords. A one-off value that
+  // DESIGN.md does not name goes through the `[...]` escape hatch so it
+  // stays greppable.
+  strictTokens: true,
+  strictPropertyValues: true,
   include: ["./src/**/*.{js,jsx,ts,tsx}"],
   exclude: [],
   outdir: "styled-system",
@@ -41,6 +46,49 @@ export default defineConfig({
           display: { value: "'Cormorant Garamond', Georgia, serif" },
           body: { value: "'Cormorant Garamond', Georgia, serif" },
           mono: { value: "'JetBrains Mono', monospace" },
+        },
+        // DESIGN.md Typography → Hierarchy. Snap new type to these steps
+        // rather than adding near-duplicates.
+        fontSizes: {
+          // The Ten Pixel Floor: eyebrows and stat labels only.
+          micro: { value: "10px" },
+        },
+        lineHeights: {
+          // Essay cards and the essay hero, set tight like a poster.
+          poster: { value: "1.08" },
+          display: { value: "1.3" },
+          label: { value: "1.4" },
+          // Body copy below 1rem: dense panels, cards, code and data blocks.
+          dense: { value: "1.65" },
+          // Body copy at 1rem and above.
+          prose: { value: "1.75" },
+        },
+        letterSpacings: {
+          // Slightly negative tracking on large serif titles.
+          display: { value: "-0.01em" },
+          // The Tracked Caps Rule floor: headlines, labels, metadata.
+          label: { value: "0.14em" },
+          // Button faces.
+          labelWide: { value: "0.18em" },
+          // Badges and other wide mono caps.
+          labelWider: { value: "0.2em" },
+          micro: { value: "0.3em" },
+        },
+        sizes: {
+          // Text-only reading measure.
+          measure: { value: "72ch" },
+          // Essay and correspondence bodies.
+          reading: { value: "48rem" },
+          container: { value: "1200px" },
+        },
+        spacing: {
+          // Field focus outlines sit 1px off the lit border.
+          px: { value: "1px" },
+        },
+        borders: {
+          hairline: { value: "1px solid" },
+          // DESIGN.md Buttons → Focus: every control's 2px outline.
+          focus: { value: "2px solid" },
         },
       },
       semanticTokens: {

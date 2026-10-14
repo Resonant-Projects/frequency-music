@@ -8,17 +8,17 @@ import { UIBadge } from "./ui";
 export const essayHeroClass = css({
   position: "relative",
   overflow: "hidden",
-  bg: "linear-gradient(135deg, {colors.zodiac.gold/16}, {colors.zodiac.void/88} 58%)",
+  bg: "[linear-gradient(135deg, {colors.zodiac.gold/16}, {colors.zodiac.void/88} 58%)]",
   _before: {
     content: '""',
     position: "absolute",
-    inset: "auto -10% -30% auto",
-    width: "18rem",
-    height: "18rem",
+    inset: "[auto -10% -30% auto]",
+    width: "72",
+    height: "72",
     borderRadius: "full",
     background:
-      "radial-gradient(circle, {colors.zodiac.gold/22}, transparent 68%)",
-    filter: "blur(14px)",
+      "[radial-gradient(circle, {colors.zodiac.gold/22}, transparent 68%)]",
+    filter: "[blur(14px)]",
     pointerEvents: "none",
   },
 });
@@ -27,10 +27,10 @@ export const essayHeroClass = css({
 export const essayDisplayTitleClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
-  fontSize: { base: "44px", md: "56px" },
+  fontSize: { base: "5xl", md: "6xl" },
   fontWeight: "normal",
-  lineHeight: "0.96",
-  letterSpacing: "-0.015em",
+  lineHeight: "poster",
+  letterSpacing: "display",
 });
 
 /** The badge row (date, read time, word count) above an essay title. */
@@ -50,7 +50,7 @@ export const essayMetaClass = css({
 export const essayCardLiftClass = css({
   position: "relative",
   transition:
-    "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+    "[transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease]",
   _hover: {
     transform: "translateY(-3px)",
     borderColor: "zodiac.gold/48",
@@ -59,9 +59,9 @@ export const essayCardLiftClass = css({
   },
   "&:has(a:focus-visible)": {
     borderColor: "zodiac.gold/48",
-    outline: "2px solid",
+    outline: "focus",
     outlineColor: "zodiac.gold",
-    outlineOffset: "2px",
+    outlineOffset: "0.5",
   },
 });
 
@@ -69,36 +69,36 @@ const essayCardClass = css({
   display: "grid",
   alignContent: "start",
   gap: "2",
-  minHeight: { base: "auto", md: "13.5rem" },
+  minHeight: { base: "auto", md: "[13.5rem]" },
   bg: "zodiac.void/92",
   borderColor: "zodiac.gold/22",
   borderRadius: "l3",
   borderWidth: "1px",
   color: "zodiac.cream",
-  p: "16px 18px",
+  p: "5",
 });
 
 const essayCardTitleClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
-  fontSize: { base: "22px", md: "24px" },
+  fontSize: { base: "xl", md: "2xl" },
   fontWeight: "normal",
-  lineHeight: "1.08",
-  letterSpacing: "-0.01em",
+  lineHeight: "poster",
+  letterSpacing: "display",
 });
 
 const essayCardExcerptClass = css({
   color: "zodiac.cream/68",
-  fontSize: "14px",
-  fontWeight: "400",
-  lineHeight: "1.65",
+  fontSize: "sm",
+  fontWeight: "normal",
+  lineHeight: "dense",
 });
 
 const essayCardFooterClass = css({
   color: "zodiac.cream/66",
   fontFamily: "mono",
   fontSize: "xs",
-  letterSpacing: "0.26em",
+  letterSpacing: "labelWider",
   textTransform: "uppercase",
   mt: "3",
 });

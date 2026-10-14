@@ -81,14 +81,14 @@ const reviewDraftTitleClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "2xl",
-  lineHeight: "1.2",
+  lineHeight: "display",
 });
 
 const persistedDraftTitleClass = css({
   color: "zodiac.cream",
   fontFamily: "display",
   fontSize: "xl",
-  lineHeight: "1.2",
+  lineHeight: "display",
 });
 
 /** Id of a persisted draft's title, the focus target once it is decided. */

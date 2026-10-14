@@ -82,15 +82,15 @@ const stack = css({ display: "grid", gap: "3", marginBlock: "3" });
 const formClass = css({
   display: "grid",
   gap: "3",
-  borderBlockStart: "1px solid",
+  borderBlockStart: "hairline",
   borderColor: "zodiac.gold/24",
   paddingBlockStart: "4",
   marginBlockStart: "3",
 });
 const reasonClass = css({
   color: "zodiac.cream/84",
-  maxInlineSize: "72ch",
-  lineHeight: "1.6",
+  maxInlineSize: "measure",
+  lineHeight: "prose",
 });
 const linkClass = css({
   color: "zodiac.gold",
@@ -116,7 +116,7 @@ const summaryClass = css({
 });
 const detailClass = css({
   color: "zodiac.cream/72",
-  maxInlineSize: "72ch",
+  maxInlineSize: "measure",
   whiteSpace: "pre-wrap",
   overflowWrap: "anywhere",
   marginBlockEnd: "3",

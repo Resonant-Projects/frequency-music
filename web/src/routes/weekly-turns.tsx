@@ -113,7 +113,7 @@ const campaignTitleClass = css({
   fontFamily: "display",
   fontSize: "xl",
   fontWeight: "normal",
-  lineHeight: "1.35",
+  lineHeight: "display",
   mb: "2",
 });
 
@@ -154,7 +154,7 @@ const emptyBriefsClass = css({
   color: "zodiac.cream/66",
   fontFamily: "display",
   fontSize: "md",
-  lineHeight: "1.6",
+  lineHeight: "prose",
   textAlign: "center",
   py: "8",
 });
@@ -168,7 +168,7 @@ const briefTitleClass = css({
   fontFamily: "display",
   fontSize: "lg",
   fontWeight: "normal",
-  lineHeight: "1.4",
+  lineHeight: "display",
   mb: "2",
 });
 
