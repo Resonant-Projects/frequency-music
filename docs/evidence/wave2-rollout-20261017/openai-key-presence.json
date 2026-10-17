@@ -1,0 +1,8 @@
+{
+  "target": "https://convex.resonantprojects.art",
+  "observedAt": "2026-10-17T03:26:23.339Z",
+  "name": "OPENAI_API_KEY",
+  "present": true,
+  "nonEmpty": true,
+  "method": "one _system/cli/queryEnvironmentVariables:get read with the inherited admin key under op run; an out-of-repo probe (sha256 6e9c67c9e336c2c3a2be9398f5f885cfacf9bcd54843ad2b4f303ea36627ffa3) printed only these booleans; no value and no other variable read or printed"
+}

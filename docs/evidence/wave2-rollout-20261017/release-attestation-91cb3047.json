@@ -1,0 +1,57 @@
+{
+  "observedAt": "2026-10-17T03:24Z",
+  "verifier": {
+    "gh": "2.102.0 (cli/cli release v2.102.0, user-local at ~/.local/share/gh-cli; tarball sha256 bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386 matched the release checksums file; its own build attestation verified to cli/cli deployment.yml at fc4b137c, the v2.102.0 tag commit)",
+    "configIsolation": "GH_CONFIG_DIR pointed at an empty private directory; GH_TOKEN supplied from the existing gh login in the environment, never printed"
+  },
+  "workflowRun": {
+    "id": 38998580987,
+    "url": "https://github.com/Resonant-Projects/frequency-music/actions/runs/38998580987",
+    "workflow": ".github/workflows/convex-provenance.yml",
+    "event": "workflow_dispatch",
+    "ref": "refs/heads/main",
+    "headSha": "91cb304701f5a96b06251bda3f34ff6e0407c37a",
+    "dispatchedAt": "2026-10-17T03:23:16Z",
+    "conclusion": "success",
+    "jobs": {
+      "artifact": "success",
+      "validate": "skipped"
+    }
+  },
+  "artifact": {
+    "id": 12087908946,
+    "name": "convex-root-modules-91cb304701f5a96b06251bda3f34ff6e0407c37a",
+    "zipDigest": "sha256:1667339822d2c6c2de0974fbc9a15f04ac22997d4ae56249e33cfc8515090f4a",
+    "file": "release-manifest-91cb3047.json",
+    "manifestSha256": "1f9dd07b8f8e0e3eb3d0ed346c7aed977f971322022071758e22573aa090ab7b",
+    "moduleCount": 249
+  },
+  "command": "gh attestation verify convex-root-modules.json --repo Resonant-Projects/frequency-music --signer-workflow Resonant-Projects/frequency-music/.github/workflows/convex-provenance.yml --source-digest 91cb304701f5a96b06251bda3f34ff6e0407c37a --source-ref refs/heads/main --deny-self-hosted-runners --format json",
+  "exitCode": 0,
+  "attestations": [
+    {
+      "subject": [
+        {
+          "name": "convex-root-modules.json",
+          "sha256": "1f9dd07b8f8e0e3eb3d0ed346c7aed977f971322022071758e22573aa090ab7b"
+        }
+      ],
+      "predicateType": "https://slsa.dev/provenance/v1",
+      "sourceRepositoryURI": "https://github.com/Resonant-Projects/frequency-music",
+      "sourceRepositoryRef": "refs/heads/main",
+      "sourceRepositoryDigest": "91cb304701f5a96b06251bda3f34ff6e0407c37a",
+      "buildSignerURI": "https://github.com/Resonant-Projects/frequency-music/.github/workflows/convex-provenance.yml@refs/heads/main",
+      "buildTrigger": "workflow_dispatch",
+      "runInvocationURI": "https://github.com/Resonant-Projects/frequency-music/actions/runs/38998580987/attempts/1",
+      "runnerEnvironment": "github-hosted",
+      "certificateIssuer": "https://token.actions.githubusercontent.com",
+      "transparencyLog": [
+        {
+          "type": "Tlog",
+          "uri": "https://rekor.sigstore.dev",
+          "timestamp": "2026-10-17T03:23:38Z"
+        }
+      ]
+    }
+  ]
+}

@@ -25,7 +25,7 @@ coordinator's approval of that step.
 
 | Item | State |
 | --- | --- |
-| Convex backend | Root modules byte-identical to the `81150337` release artifact (#135, 2026-10-11; provenance run 38195261921), 177 of 177. Precedes #118, so #118, #138, #140, #141, #142 and #153 are all absent, including `docket:listWeb`. No `rag` component. No schema change in progress. |
+| Convex backend | Root modules match the attested `81150337` release artifact (#135, 2026-10-11; provenance run 38195261921), 177 of 177. `scripts/convex-provenance-verify.ts` verified the attestation and the live match together at 03:25 UTC. Precedes #118, so #118, #138, #140, #141, #142 and #153 are all absent, including `docket:listWeb`. No `rag` component. No schema change in progress. |
 | Agent-run queue | 0 queued, 0 running, 3 needs_review; claims not paused |
 | Agent worker | Kubernetes `frequency-worker`, Argo CD, source revision `81150337`. Lacks the `failure-investigation` and `hypothesis-tournament` graphs. `AGENT_OUTBOX_DIR` unset; PVC mounted at `/data`. |
 | Media worker | ai-5090-02, image `sha-4f016f83` (2026-10-01), renderer 0.2.2, idle for 7 days |
@@ -33,14 +33,16 @@ coordinator's approval of that step.
 | Web | Vercel production at `91cb3047`; calls ten functions the backend lacks |
 | HTTP actions origin | `https://convex-http.resonantprojects.art` serves the HTTP router (`/health` 200, Cloudflare). `https://convex.resonantprojects.art` is the API origin and returns 404 for every HTTP route. |
 | Admin key | Readable through `op run` with a reference-only env file; the host's service account now lists `Country Manor Lab` |
+| `OPENAI_API_KEY` | Present and non-empty on the deployment (one names-only read, 03:26 UTC). After activation, `/agent-tools/searchSourcePassages` can embed a query with it (effect 3). Passage indexing stays off until its own activation. |
+| Restore receipt | None current. The last passing whole-container restore was 2026-08-05; see the [receipt work order](wave2-restore-receipt-work-order.md). |
 
 ### Pinned candidate
 
 | Artifact | Pin |
 | --- | --- |
-| Convex source | `main` at `91cb3047`. `convex/`, `package.json` and `bun.lock` are identical at `6f332386`, `57f7c90b` and `91cb3047`. No attested `convex-root-modules` artifact exists for any of them yet. |
-| Agent image | `registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d` (source `6f332386`; same digest on GHCR) |
-| Media image | `ghcr.io/resonant-projects/frequency-music-media@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d` (source `6f332386`, renderer 0.3.0). It replaces the earlier `sha-0cc0592…` pin: `media/` is unchanged since then, but the image also carries `convex/shared/`, which #153 changed. |
+| Convex source | `main` at `91cb3047`. `convex/`, `package.json` and `bun.lock` are identical at `6f332386`, `57f7c90b` and `91cb3047`. Attested manifest `convex-root-modules-91cb304701f5a96b06251bda3f34ff6e0407c37a` from provenance run [38998580987](https://github.com/Resonant-Projects/frequency-music/actions/runs/38998580987): 249 root modules, SHA-256 `1f9dd07b8f8e0e3eb3d0ed346c7aed977f971322022071758e22573aa090ab7b`, attestation verified with the strict flags (`release-attestation-91cb3047.json`). |
+| Agent image | `registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d` (source `6f332386`; same digest on GHCR; attestation verified, run 38995835502) |
+| Media image | `ghcr.io/resonant-projects/frequency-music-media@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d` (source `6f332386`, renderer 0.3.0; attestation verified, run 38995835619). It replaces the earlier `sha-0cc0592…` pin: `media/` is unchanged since then, but the image also carries `convex/shared/`, which #153 changed. |
 | Web | No change; production already runs the candidate's web source |
 
 The pin excludes the human studio comparison
@@ -113,20 +115,30 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 ### Order
 
 0. **Before the window (no production contact).**
-   - Dispatch `convex-provenance.yml` on `main` at the pinned commit, and verify
-     the artifact's attestation on a host whose `gh` has `attestation verify`.
-     `gh` 2.46.0 on the coordinator host lacks it.
+   - Done: `convex-provenance.yml` ran on `main` at `91cb3047` (run
+     38998580987), and its manifest's attestation verified with `gh` 2.102.0
+     (see Pinned candidate). Run `scripts/convex-provenance-verify.ts` with that
+     `gh` first in `PATH`, as in the evidence record; `gh` 2.46.0 lacks
+     `attestation`.
+   - Done: the `homelab-infra` change is prepared and not pushed (local commit
+     `42ff776d`, branch `prep/frequency-wave2-rollout-20261017`, patch in the
+     evidence record). It pins the agent digest, sets
+     `AGENT_OUTBOX_DIR=/data/outbox` on the existing `/data` PVC as
+     [pipeline recovery](pipeline-recovery.md#audit-delivery) requires for
+     Kubernetes, adds an init container that creates that directory (the
+     worker refuses a missing outbox root), and adds `litmusRender` to
+     `MEDIA_JOB_KINDS`. The media image tag is not repo-backed; step 7 sets it.
    - Approve the five effects above, including the legacy normalization.
    - Choose the rollback mechanism (below). The
      [supported procedure](frequency-supported-deployment-rollback.md) lists a
-     current isolated-restore receipt as a gate; none is on record.
-   - Prepare, without merging, the `homelab-infra` changes: the agent digest,
-     with `AGENT_OUTBOX_DIR=/data/outbox` on the existing `/data` PVC as
-     [pipeline recovery](pipeline-recovery.md#audit-delivery) requires for
-     Kubernetes; and the media digest, with `litmusRender` added to
-     `MEDIA_JOB_KINDS`.
-   - `scripts/convex-deploy.ts` requires an interactive terminal and a typed
-     `deploy`. A person runs steps 3 and 4.
+     current isolated-restore receipt as a gate; none is on record. The
+     [receipt work order](wave2-restore-receipt-work-order.md) defines what the
+     recovery owner must produce and when.
+   - `scripts/convex-deploy.ts` checks only that standard input is a terminal
+     and that the typed answer is exactly `deploy`. Anyone authorized can run
+     steps 3 and 4, including an agent driving a pseudo-terminal, once the
+     coordinator has approved that step. The prompt is a confirmation, not a
+     human-presence check. Keep it; do not bypass it.
 1. **Pause agent claims.** Set `FREQUENCY_WORKER_CLAIMS_PAUSED=true` on the
    Convex deployment. The deployed `81150337` backend reads it. Suspend
    manual and direct graph execution, which bypasses the pause. Rerun
@@ -146,15 +158,26 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    checkout: a checkout that contains the unmerged studio comparison
    candidate adds a seventh group, `studio-comparison`, which stays missing
    (exit 3) after this deploy.
-6. **Agent worker.** Merge the `homelab-infra` change and let Argo CD roll the
-   worker. Zero running rows do not prove the old process is idle: the stale
+6. **Agent worker.** Push the prepared `homelab-infra` branch, review it as a
+   PR against `main`, and merge it. The merge is the production authorization:
+   Argo CD syncs `kubernetes/infra/frequency-worker` automatically, and the
+   `Recreate` strategy stops the old pod before the new one runs its
+   `outbox-dir` init container. The same commit's `hosts/frequency-media`
+   change is inert until step 7 copies it. Zero running rows do not prove the old process is idle: the stale
    sweep can fail a row while its process continues, and a claim admitted
    before the pause can still be returning. Before the new pod starts
    claiming, confirm the old pod terminated after its SIGTERM drain (its log
    shows the poll settled), rerun the queue scan, and reconcile any row the
    sweep failed during the window
    ([handoff protocol](frequency-worker-handoff.md)).
-7. **Media worker.** Replace the image on ai-5090-02 and keep the
+7. **Media worker.** On ai-5090-02, in `/srv/frequency-media`, keep a dated
+   backup of `.env` and `compose.yaml`, like the existing `.env.backup-*`
+   files there. Then
+   change both before deploying: copy `compose.yaml` from the merged
+   `homelab-infra` `main`, and set `.env`'s single line to
+   `MEDIA_IMAGE_TAG=sha-6f332386d01089270b740ea009ee5088d8534a91@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d`.
+   The old image exits at start under the new job list. Run
+   `op-access run homelab-runtime -- ./deploy.sh`. Keep the
    `frequency-media_media-work` volume. Run the smoke command in the new
    container before requesting any render.
 8. **Resume claims.** Set `FREQUENCY_WORKER_CLAIMS_PAUSED` to `false` or
@@ -171,8 +194,11 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 
 - Leave every gate closed. That disables all new outbound or paid behavior
   except the five effects above.
-- Workers: point Argo CD and the media compose file at the previous digests,
-  using the same protocol as steps 1 and 6. Set
+- Workers: merge a `git revert` of the `homelab-infra` change for the agent.
+  For media, restore the backed-up `compose.yaml` and `.env` together
+  (`MEDIA_IMAGE_TAG=sha-4f016f83e4d3653e4ecad726d9648790d51cad54@sha256:a3144accbbba957bcec1587fa924b8ad5ff99e89655f4ed6b72600ba7be8286f`),
+  because the 0.2.2 image has no `litmusRender` handler. Use the same
+  protocol as steps 1 and 6. Set
   `FREQUENCY_WORKER_CLAIMS_PAUSED=true`, suspend direct execution, wait until
   the media worker holds no claimed job, confirm each old process terminated
   after its drain, rerun the queue scan and reconcile any swept row before the
@@ -192,6 +218,21 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
   [Stage 1](#stage-1-backend-deployment-with-everything-disabled).
 - Undoing the normalization's retired Claims, or any other data change,
   requires the separately approved backend restore with its write-loss window.
+
+### Open decision
+
+Preparation needs nothing more. Two choices remain with the user before
+step 1:
+
+1. Approve the five activation effects, including the irreversible legacy
+   normalization (#118), which retires superseded Claims within minutes.
+2. Choose the normalization's rollback: either hold the deploy until the
+   recovery owner delivers the [restore receipt](wave2-restore-receipt-work-order.md)
+   (parts A and B), or accept fix-forward as its only rollback and deploy
+   without a receipt.
+
+Every live step after that (claims pause, dry run, deploy, `homelab-infra`
+merge, media replacement, resume, backfill) still needs its own approval.
 
 ### Acceptance checklist
 
