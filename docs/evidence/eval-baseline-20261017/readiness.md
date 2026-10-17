@@ -125,8 +125,9 @@ bill up to $20.39 in the unlikely case where every call is billed three
 times. STOP 6, after extraction run 1, is the only spending checkpoint. Stage 2
 gets its own approval once briefs are curated.
 
-**Not priced: LangSmith.** Stage 1 creates 75 traced target runs plus their
-feedback. The cost depends on the LangSmith plan, so it is unknown here.
+**Not priced: LangSmith.** Stage 1 creates 72 traced target runs (18
+extraction and 6 hypothesis rows, three runs each) plus their feedback. The
+cost depends on the LangSmith plan, so it is unknown here.
 
 STOP 6 check: after extraction run 1, the Anthropic console usage for that run
 should be at most about $1.52. If it is higher, pause before run 2.
