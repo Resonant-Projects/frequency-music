@@ -1,0 +1,38 @@
+{
+  "componentsEqual": true,
+  "modulesEqual": true,
+  "schemasEqual": true,
+  "componentPathsLive": [
+    "",
+    "actionCache",
+    "aggregate",
+    "aggregate/batchWorker",
+    "workflow",
+    "workflow/workpool",
+    "workflow/workpool/batchWorker"
+  ],
+  "componentPathsGuest": [
+    "",
+    "actionCache",
+    "aggregate",
+    "aggregate/batchWorker",
+    "workflow",
+    "workflow/workpool",
+    "workflow/workpool/batchWorker"
+  ],
+  "componentStatesGuest": ["active"],
+  "moduleCountsGuest": {
+    "None": 103,
+    "m02av2ahmh2jdg978d6qgxxr8h81e14x": 10,
+    "m027j0hcjpahm3930aeerjzxr181fe20": 14,
+    "m0236h4kwc2mdhcsrfcabrkfq981fv3v": 8,
+    "m02e4r51fj02j1dnynq626pem181e6fh": 5,
+    "m02d1ts5bbkfbysbw8m08gaqa98g4aqw": 9,
+    "m02b758nh71xnaxpddrnk9jtg58g54bj": 9
+  },
+  "functionCountGuest": 538,
+  "functionCountLive": 538,
+  "cronCountGuest": 17,
+  "cronCountLive": 17,
+  "inProgressSchemasGuest": 0
+}

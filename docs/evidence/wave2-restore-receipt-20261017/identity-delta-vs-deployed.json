@@ -1,0 +1,13 @@
+{
+  "leftSha256": "9066c3a4224fa944fb623221aff48fe1af3a145f916ab2e628eaa4436833ec79",
+  "rightSha256": "e53eae3477db255727b8988aacdb5ff09f6a5e93a754c968bac624d5b8d1e8b6",
+  "scope": "root-module-identities-only",
+  "provenanceEstablished": false,
+  "leftCount": 177,
+  "rightCount": 177,
+  "unchangedCount": 177,
+  "identical": true,
+  "onlyLeft": [],
+  "onlyRight": [],
+  "changed": []
+}
