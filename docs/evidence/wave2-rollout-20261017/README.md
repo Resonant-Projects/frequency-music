@@ -29,7 +29,7 @@ access was changed.
 | 02:57:46 | `scripts/convex-module-identities.ts https://convex.resonantprojects.art` (`POST /api/get_config_hashes`) | exit 0; 177 root module identities | `deployed-module-identities.json` |
 | 03:01 | `scripts/convex-provenance-verify.ts` against the `81150337` release | exit 1 before any comparison: `gh` 2.46.0 has no `attestation` command | none |
 | offline | `scripts/convex-module-delta.ts <81150337 release manifest> deployed-module-identities.json` | 177 of 177 unchanged, 0 added, 0 removed, 0 changed | `root-delta-vs-81150337-release.json` |
-| offline | `scripts/wave2-deployment-coverage.ts deployment-inspection.json` (with this branch's groups) | exit 3; every requirement of all six groups missing; 10 of 114 web calls missing | `coverage.json` |
+| offline | `scripts/wave2-deployment-coverage.ts deployment-inspection.json` (with the six groups of the `91cb3047` pin; the later `studio-comparison` group is not in this file) | exit 3; every requirement of all six groups missing; 10 of 114 web calls missing | `coverage.json` |
 | 03:04 | Anonymous `GET /health` on both origins | `https://convex-http.resonantprojects.art` 200 `{"ok":true}` via Cloudflare; `https://convex.resonantprojects.art` 404 | none |
 
 ### Deployed Convex revision

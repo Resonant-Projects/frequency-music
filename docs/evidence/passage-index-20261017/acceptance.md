@@ -81,6 +81,11 @@ None of these writes data or calls OpenAI.
    vpx convex env list | cut -d= -f1 | grep -qx OPENAI_API_KEY && echo present || echo absent
    ```
 
+   A pre-deploy read at 03:26 UTC on 2026-10-17 found it present and
+   non-empty, printing booleans only
+   ([record](../wave2-rollout-20261017/openai-key-presence.json)). Repeat the
+   check here, after G-deploy.
+
 3. Dry run. Effect: one `backfillBatch` action per ten sources reads each
    source and looks up its entry by content hash. Pass: exit 0, `indexing=disabled`,
    `scope=full`, `indexed=0 failed=0`.
