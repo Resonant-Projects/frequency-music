@@ -14,7 +14,7 @@
 
 ## Status
 
-- **Execution status**: READY — golden datasets ratified in `d2487c1`; live API credentials and spend authorization remain runtime preconditions
+- **Execution status**: BLOCKED — 2026-10-17 preflight hit STOP 1 (worker cannot resolve `OPENROUTER_API_KEY`/`LANGSMITH_API_KEY`) and STOP 4 (hypothesis 4 and weekly-brief 2 golden rows). No scores recorded. Blockers, runner findings, cost estimate and prepared commands: [`docs/evidence/eval-baseline-20261017/preflight.md`](../docs/evidence/eval-baseline-20261017/preflight.md)
 - **Priority**: P2
 - **Effort**: S–M (mostly wall-clock waiting on eval runs)
 - **Risk**: LOW (writes numbers into a doc; no runtime behavior changes until someone runs a promotion)

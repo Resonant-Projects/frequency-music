@@ -86,7 +86,7 @@ trivial merge. 011/012/013 touch disjoint files and parallelize freely.
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
 | 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
-| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | TODO |
+| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | BLOCKED 2026-10-17 — preflight STOP 1 (keys unresolvable in worker env) and STOP 4 (hypothesis 4 / brief 2 rows); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) |
 | 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | DONE — [Open questions](../docs/recipe-export-v1-design.md#6-open-questions) |
 | 010 | Spike: autonomous ingest design + URL-fetch prototype | P3 | M | — (see its STOP 1 re: arch plan 06) | DONE — see `docs/autonomous-ingest-design.md` §7 build slices |
 
