@@ -169,6 +169,45 @@ function inferStatus(
   return knownSet.has(name) ? "known" : "provisional";
 }
 
+/** Registry key of an extraction parameter, as `ensureParameterKind` saw it. */
+function compositionParameterKindKey(parameter: {
+  kind?: string;
+  type?: string;
+}) {
+  return normalizeParameterKindKey(
+    parameter.kind?.trim() || parameter.type || "",
+  );
+}
+
+const MAX_PARAMETER_KIND_MERGE_HOPS = 8;
+
+/**
+ * Follows `mergedInto` from a merged parameter kind to the entry that now
+ * stands for it. A rejected row (deprecated without `mergedInto`) resolves to
+ * itself. A dangling link, a cycle, or a chain longer than the hop bound
+ * leaves the original row unresolved rather than guessing.
+ */
+async function resolveMergedParameterKind(
+  ctx: MutationCtx,
+  entry: Doc<"parameterKinds">,
+): Promise<{ entry: Doc<"parameterKinds">; merged: boolean }> {
+  let current = entry;
+  const visited = new Set<string>([String(entry._id)]);
+  for (let hop = 0; ; hop++) {
+    if (current.status !== "deprecated" || !current.mergedInto) {
+      return { entry: current, merged: current._id !== entry._id };
+    }
+    if (hop === MAX_PARAMETER_KIND_MERGE_HOPS) break;
+    if (visited.has(current.mergedInto)) break;
+    visited.add(current.mergedInto);
+    const targetId = ctx.db.normalizeId("parameterKinds", current.mergedInto);
+    const target = targetId ? await ctx.db.get(targetId) : null;
+    if (!target) break;
+    current = target;
+  }
+  return { entry, merged: false };
+}
+
 export const ensureParameterKind = internalMutation({
   args: {
     name: v.string(),
@@ -176,17 +215,28 @@ export const ensureParameterKind = internalMutation({
   },
   returns: v.object({
     status: registryStatusValidator,
+    // Registry name that stands for `args.name`: the merge target when the
+    // matching row was merged, else the row's own name.
+    name: v.optional(v.string()),
+    merged: v.boolean(),
   }),
   handler: async (ctx, args) => {
     const lookupKey = normalizeParameterKindKey(args.name);
-    if (!lookupKey) return { status: PROVISIONAL_STATUS };
+    if (!lookupKey) return { status: PROVISIONAL_STATUS, merged: false };
     const name = CANONICAL_PARAMETER_KIND_NAMES.get(lookupKey) ?? lookupKey;
 
     const existing = await ctx.db
       .query("parameterKinds")
       .withIndex("by_name", (q) => q.eq("name", name))
       .first();
-    if (existing) return { status: existing.status };
+    if (existing) {
+      const resolved = await resolveMergedParameterKind(ctx, existing);
+      return {
+        status: resolved.entry.status,
+        name: resolved.entry.name,
+        merged: resolved.merged,
+      };
+    }
 
     const now = Date.now();
     const status = CANONICAL_PARAMETER_KIND_NAMES.has(lookupKey)
@@ -200,7 +250,7 @@ export const ensureParameterKind = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
-    return { status };
+    return { status, name, merged: false };
   },
 });
 
@@ -894,13 +944,15 @@ export const mergeVocabularyReferenceBatch = mutation({
       const page = await ctx.db
         .query("extractions")
         .paginate({ cursor: args.cursor, numItems: batchSize });
+      // Extractions keep the model's spelling (`chordType`, `chord type`), so
+      // match on the registry key `ensureParameterKind` derived from it.
+      const sourceKey = normalizeParameterKindKey(source.name);
+      const referencesSource = (
+        parameter: Doc<"extractions">["compositionParameters"][number],
+      ) => compositionParameterKindKey(parameter) === sourceKey;
       let remapped = 0;
       for (const extraction of page.page) {
-        if (
-          !extraction.compositionParameters.some(
-            (parameter) => parameter.kind === source.name,
-          )
-        ) {
+        if (!extraction.compositionParameters.some(referencesSource)) {
           continue;
         }
         remapped++;
@@ -908,8 +960,13 @@ export const mergeVocabularyReferenceBatch = mutation({
         await ctx.db.patch("extractions", extraction._id, {
           compositionParameters: extraction.compositionParameters.map(
             (parameter) =>
-              parameter.kind === source.name
-                ? { ...parameter, kind: target.name }
+              referencesSource(parameter)
+                ? {
+                    ...parameter,
+                    kind: target.name,
+                    canonicalKind: target.name,
+                    registryStatus: target.status,
+                  }
                 : parameter,
           ),
         });
