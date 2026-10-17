@@ -72,10 +72,18 @@ Effects that start at activation without any flag:
    model call. No flag stops it, and a code rollback does not undo it. Approve
    it explicitly as part of the deploy.
 2. **Operational Failure recovery (#118).** It is idle until a failure row
-   exists. After that it can queue `failure-investigation` runs (one Anthropic
-   call each, at most 4,096 output tokens) and `source-scout` capture
-   recoveries. The running agent worker fails `failure-investigation` as an
-   unknown graph, which leaves the failure in `needsReview`.
+   exists. New code records failures from extraction, capture and media work.
+   Recovery then acts without any flag or agent claim: an extraction failure
+   gets two automatic retries (extraction resumption, which can repeat the
+   model call when no output was retained), a retained result replays
+   completion, and a supported media failure requeues its job for one more
+   leased execution. Exhausted retries queue `failure-investigation` runs (one
+   Anthropic call each, at most 4,096 output tokens), and capture failures
+   queue `source-scout` recoveries. The running agent worker fails
+   `failure-investigation` as an unknown graph, which leaves the failure in
+   `needsReview`. `FREQUENCY_WORKER_CLAIMS_PAUSED` stops only agent claims,
+   so an empty agent queue does not show that extraction or media recovery is
+   quiet.
 3. **Passage hooks (#153).** Every source text write schedules
    `passages:indexSource`. While the `passageIndexing` row is absent, the call
    returns `disabled` without an embedding request. Cleared or deleted text
@@ -112,7 +120,8 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    - `scripts/convex-deploy.ts` requires an interactive terminal and a typed
      `deploy`. A person runs steps 3 and 4.
 1. **Pause agent claims.** Set `FREQUENCY_WORKER_CLAIMS_PAUSED=true` on the
-   Convex deployment. The deployed `81150337` backend reads it. Rerun
+   Convex deployment. The deployed `81150337` backend reads it. Suspend
+   manual and direct graph execution, which bypasses the pause. Rerun
    `scripts/frequency-queue-evidence.ts` until it shows `claimsPaused: true`,
    0 running and a complete scan. Confirm the media worker has no claimed job.
 2. **Read the deployed state again.** Rerun the inspection and
@@ -127,7 +136,13 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    all six groups deployed, `rag` active, no in-progress schema, and the root
    modules equal to the attested artifact.
 6. **Agent worker.** Merge the `homelab-infra` change and let Argo CD roll the
-   worker. With claims paused, the old pod has nothing to drain.
+   worker. Zero running rows do not prove the old process is idle: the stale
+   sweep can fail a row while its process continues, and a claim admitted
+   before the pause can still be returning. Before the new pod starts
+   claiming, confirm the old pod terminated after its SIGTERM drain (its log
+   shows the poll settled), rerun the queue scan, and reconcile any row the
+   sweep failed during the window
+   ([handoff protocol](frequency-worker-handoff.md)).
 7. **Media worker.** Replace the image on ai-5090-02 and keep the
    `frequency-media_media-work` volume. Run the smoke command in the new
    container before requesting any render.
@@ -148,7 +163,10 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 - Workers: point Argo CD and the media compose file at the previous digests.
   The old agent worker fails new-graph runs, and the old media worker claims no
   0.3.0 job. Use this only as a short holding state while the new backend
-  stays deployed.
+  stays deployed. The old agent image predates the `.spool` outbox and cannot
+  replay it ([pipeline recovery](pipeline-recovery.md#audit-delivery)):
+  before reverting the agent, confirm `/data/outbox` holds no active record,
+  or keep the new worker running until it drains.
 - Convex code: within minutes of activation the normalization writes
   `extractions.historical`, which the `81150337` schema does not declare. After
   that, redeploying `81150337` as-is fails schema validation. Fix forward, or
@@ -175,7 +193,12 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 - [ ] The revision backfill exits 0 with `verified: true` for both tables.
 - [ ] No Extraction with an unset `historical` remains, checked in the Convex
       dashboard data view.
-- [ ] Gates read closed. Check environment variable names only, never values.
+- [ ] Gates read closed. Read the values of the non-secret gate variables
+      (`DECISION_SIGNERS_ENABLED`, `DOCKET_PREPARATION_ENABLED`,
+      `HYPOTHESIS_TOURNAMENT_ENABLED`, `FREQUENCY_WORKER_CLAIMS_PAUSED`) one by
+      one; each must be unset or exactly `false`. Never list values in bulk, which would print
+      credentials. In the `settings` table, `renderValidation` must be absent
+      or not `go`, and `passageIndexing` absent or not `enabled`.
 
 Human acceptance stays as in [Stage 6](#stage-6-human-acceptance).
 
