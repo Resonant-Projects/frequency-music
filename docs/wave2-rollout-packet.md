@@ -14,6 +14,13 @@ Read with [backend integration](wave2-backend-integration.md),
 
 ## Combined rollout work order, 2026-10-17
 
+**Executed 2026-10-17, 18:24 to 19:49 UTC, steps 1 to 9.** Production runs
+`6fb562b2` with agent image `sha256:000c8219…` and media image
+`sha256:714a58dd…`; the revision backfill exited 0 with `verified: true` for
+both tables, and every gate stays closed. The step log, deviations and open
+checks are in the [window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md).
+The observed state below is the pre-rollout baseline.
+
 Prepared from read-only observations taken at 02:55 to 03:08 UTC; the reads,
 results and file digests are in the
 [evidence record](evidence/wave2-rollout-20261017/README.md). Nothing here
