@@ -20,6 +20,13 @@ import {
   validateExperimentRows,
 } from "./run-guard";
 
+/**
+ * Deadline for one target model call. An Opus high-effort or Sonnet medium-effort
+ * call at the production output cap fits well inside it; a stalled request
+ * aborts and fails its row instead of holding `evaluate()` open forever.
+ */
+export const EVAL_TARGET_TIMEOUT_MS = 300_000;
+
 export interface EvalPrompt {
   system: string;
   user: (input: Record<string, unknown>) => string;
@@ -273,6 +280,7 @@ export async function runEval(
               system: prompt.system,
               prompt: prompt.user(input),
               maxOutputTokens: config.maxOutputTokens,
+              abortSignal: AbortSignal.timeout(EVAL_TARGET_TIMEOUT_MS),
             },
             deps.generate,
           );

@@ -82,3 +82,15 @@ the completion-line acceptance rule, and an offline parse check in place of a
 `promote.ts` run. The sweep stays BLOCKED on credentials, upload approval,
 STOP 4 and a fresh cost estimate. Plan 008's rule against editing
 `scripts/langsmith/` still applies to the sweep; this repair does not widen it.
+
+## Follow-up: target deadline
+
+A late review of PR #152 found that the target call had no deadline while the
+judge had 120 s. A stalled Anthropic request never settled, so `evaluate()`,
+the run and a `promote.ts` child all waited forever with no completion line
+and no failed exit. Each target call now carries
+`AbortSignal.timeout(EVAL_TARGET_TIMEOUT_MS)`, 300 s. On the deadline the
+request aborts, the row records a `TimeoutError` and the run exits 1 without
+`EVAL_RUN_COMPLETE`. A fake-clock test proves this and fails if the signal is
+removed. Models, caps, effort, the judge deadline and the acceptance rule are
+unchanged.
