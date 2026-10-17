@@ -14,6 +14,13 @@ Read with [backend integration](wave2-backend-integration.md),
 
 ## Combined rollout work order, 2026-10-17
 
+**Executed 2026-10-17, 18:24 to 19:49 UTC, steps 1 to 9.** Production runs
+`6fb562b2` with agent image `sha256:000c8219…` and media image
+`sha256:714a58dd…`; the revision backfill exited 0 with `verified: true` for
+both tables, and every gate stays closed. The step log, deviations and open
+checks are in the [window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md).
+The observed state below is the pre-rollout baseline.
+
 Prepared from read-only observations taken at 02:55 to 03:08 UTC; the reads,
 results and file digests are in the
 [evidence record](evidence/wave2-rollout-20261017/README.md). Nothing here
@@ -37,6 +44,17 @@ coordinator's approval of that step.
 | Restore receipt | Part A passed on 2026-10-17 (third run, 18:07 to 18:11Z): the on-demand archive `vzdump-lxc-113-2026_10_17-12_15_58` (captured 16:15:58Z, SHA-256 `b07db9d4…`) restored in an isolated CT913 with the reviewed helper change. Items 1 to 7 and 9 pass, and item 8 is recorded (restore 105 to 151 s, boot to backend ready 44 s). See the [part A record](evidence/wave2-restore-receipt-20261017/README.md). Part B and an approved rollback decision are still required. |
 
 ### Pinned candidate
+
+**Superseded 2026-10-17 by `6fb562b2`.** `main` now carries #155, and Vercel
+production already serves its web code, so the rollout pins
+`6fb562b270176c94372962ed921dbca9e21ef208` with agent image
+`sha256:000c8219…` and media image `sha256:714a58dd…` (both built from
+`13e0c22c`). Pins, attestations, the byte-identical rebuild and the full
+comparison are in the [candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md).
+Where the steps below name `91cb3047`, `6f332386` or their digests, use those
+pins instead; the coverage check from the `6fb562b2` checkout expects all seven
+groups, including `studio-comparison`, and exit 0. The table below is the
+earlier pin, kept as the record.
 
 | Artifact | Pin |
 | --- | --- |
@@ -157,12 +175,9 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    unexpected component change or an authentication prompt.
 4. **Deploy.** Run `vp run convex:deploy` from the same checkout.
 5. **Verify the backend.** Run the inspection again, then run coverage from
-   the pinned `91cb3047` checkout. Only that checkout expects exit 0 with all
-   six groups deployed. Also expect `rag` active, no in-progress schema, and
-   the root modules equal to the attested artifact. Current source includes
-   the studio comparison, so its coverage adds a seventh group,
-   `studio-comparison`, and reports exit 3 until a studio backend release is
-   deployed. That exit 3 does not verify this deploy.
+   the pinned `6fb562b2` checkout. Expect exit 0 with all seven groups
+   deployed, including `studio-comparison`. Also expect `rag` active, no
+   in-progress schema, and the root modules equal to the attested artifact.
 6. **Agent worker.** Push the prepared `homelab-infra` branch, review it as a
    PR against `main`, and merge it. The merge is the production authorization:
    Argo CD syncs `kubernetes/infra/frequency-worker` automatically, and the
@@ -180,7 +195,7 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    files there. Then
    change both before deploying: copy `compose.yaml` from the merged
    `homelab-infra` `main`, and set `.env`'s single line to
-   `MEDIA_IMAGE_TAG=sha-6f332386d01089270b740ea009ee5088d8534a91@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d`.
+   `MEDIA_IMAGE_TAG=sha-13e0c22c8d00200c98c5769998c3f56f46d3f3d6@sha256:714a58dd8bf521eb8f5d7b5d39a2db74035b4a888ee2bdbdced43eb96cc9048f`.
    The old image exits at start under the new job list. Run
    `op-access run homelab-runtime -- ./deploy.sh`. Keep the
    `frequency-media_media-work` volume. Run the smoke command in the new
@@ -233,11 +248,11 @@ holds. This work order adds no exception to it.
 
 | Approval packet item | Status |
 | --- | --- |
-| 1. Release binding | Candidate named: `91cb304701f5a96b06251bda3f34ff6e0407c37a`, run 38998580987, artifact 12087908946, manifest SHA-256 `1f9dd07b…`, attestation verified. A clean detached checkout at that commit (Node 24.22.0, Convex CLI 1.46.0, frozen lockfile) rebuilt the manifest offline byte-identical to the attested artifact. Open: preserve the candidate's full schemas, component definitions and bundles for review, beyond the root-only attestation. |
-| 2. Protected current-to-candidate comparison | Partial: root module delta, offline `schema.export()` comparison, the six coverage groups and the new crons are recorded above. Open: the complete comparison of validators, visibility, HTTP routes, authentication, component definitions, arguments and state, Node runtime and dependencies, and every root and component cron schedule. |
-| 3. Rollback receipt and backend identity | Open. Part A of the [restore receipt](wave2-restore-receipt-work-order.md) passed on 2026-10-17 ([part A record](evidence/wave2-restore-receipt-20261017/README.md)): the restored backend runs `d715e9ec…`; its root modules match `81150337` (0 added, 0 removed, 0 changed); its components, schemas and function inventory equal the live inspection; and one query per component executed. Part B (the pre-activation capture, which needs no second restore if taken on the same image and layout by 2026-10-24) and the coordinator's approval of restore as the rollback mechanism remain. Backend identity is observed: CT113 `app-convex-backend-1` runs `sha256:d715e9ec…` in production and in the restored guest; `/version` returns `unknown`. |
-| 4. Maintenance protocol | Open: step 1 pauses agent claims and direct execution only. The deployed `81150337` crons, workpool recovery and scheduled work keep running, and after activation so do effects 1, 2 and 4. The backend coordinator must supply verified controls, or an approved protocol for producers, scheduled execution and active work, before step 3. |
-| 5. Named approval | Open: operator, target, candidate, maintenance interval, rollback criteria and the approved rollback mechanism (restore). Approve schema preparation (step 3) and activation (step 4) separately, or approve one ordinary deploy that explicitly covers both phases. Include approval of the five activation effects, among them the irreversible #118 normalization. |
+| 1. Release binding | **Held for `6fb562b2`** (2026-10-17): attestation verified, clean rebuild byte-identical, full schemas, component definitions and bundles preserved by hash ([candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md#item-1-release-binding)). Superseded: the `91cb3047` pin (run 38998580987, manifest SHA-256 `1f9dd07b…`). |
+| 2. Protected current-to-candidate comparison | **Complete for `6fb562b2`** (2026-10-17): function specs, HTTP routes, authentication, schemas, components with arguments, crons and dependencies compared against live production through an isolated replica; nothing removed, no required argument or field added ([candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md#item-2-protected-current-to-candidate-comparison)). Route handler authorization is outside that comparison; all 22 new agent-tool routes returned 403 without `AGENT_TOOL_SECRET` after the deploy, and both signer routes 404 with their gates closed. |
+| 3. Rollback receipt and backend identity | **Held** (2026-10-17). Part A of the [restore receipt](wave2-restore-receipt-work-order.md) passed on 2026-10-17 ([part A record](evidence/wave2-restore-receipt-20261017/README.md)): the restored backend runs `d715e9ec…`; its root modules match `81150337` (0 added, 0 removed, 0 changed); its components, schemas and function inventory equal the live inspection; and one query per component executed. Part B was captured in step 1 at 18:24:38 on the same image and layout (`vzdump-lxc-113-2026_10_17-14_24_38.tar.zst`, SHA-256 `a9a4cede…`, `zstd -t` OK; [window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)), and Keith approved restore as the rollback mechanism ([approval](evidence/wave2-rollout-20261017/candidate-6fb562b2/approval.md)). Backend identity is observed: CT113 `app-convex-backend-1` runs `sha256:d715e9ec…` in production and in the restored guest; `/version` returns `unknown`. |
+| 4. Maintenance protocol | **Held** (2026-10-17): Keith accepted the protocol in which agent claims pause and backend crons, workpool and workflow resumptions keep running; their writes after the part B capture are inside the write-loss window ([approval](evidence/wave2-rollout-20261017/candidate-6fb562b2/approval.md)). |
+| 5. Named approval | **Held** (2026-10-17): Keith approved one ordinary deploy covering schema preparation and activation, steps 1 to 9, all five activation effects including the #118 normalization, the window and the rollback criteria with restore as the mechanism ([approval](evidence/wave2-rollout-20261017/candidate-6fb562b2/approval.md)). Executed the same day ([window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)). |
 
 Every live step after that (claims pause, dry run, deploy, `homelab-infra`
 merge, media replacement, resume, backfill) still needs its own approval.
