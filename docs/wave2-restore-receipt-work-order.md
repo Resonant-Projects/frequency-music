@@ -17,13 +17,14 @@ superseded Claims and writes `extractions.historical`
 No code rollback undoes that. The
 [supported rollback procedure](frequency-supported-deployment-rollback.md#recoverable-rollback-acceptance-owned-by-mac)
 makes "a current isolated restore receipt with an approved rollback decision"
-a gate. Until one exists, the only rollback for that data is fix-forward.
+a gate. Until one exists, with an approved rollback decision, the deploy is
+not ready to execute.
 
 ## Facts on record
 
 | Item | State | Source |
 | --- | --- | --- |
-| Current receipt | None. The last passing whole-container restore was CT914 on 2026-08-05. Its own record says it "does not establish current rollback". The first CT913 rehearsal with the current tooling, on 2026-09-17, refused before first boot on the `graphical.target` default, and no database or backend started. No later run is recorded in either repository or the handoff responses. | [recovery preparation](frequency-backend-recovery-preparation-20260913.md) |
+| Current receipt | None. The last passing whole-container restore was CT914 on 2026-08-05. Its own record says it "does not establish current rollback". The first CT913 rehearsal, on 2026-09-17, refused before first boot on the archive's vendor `graphical.target` default, and no database or backend started. The helper was corrected the same day (`cb9de4dc`, `8e181f2d`): it now overrides only that vendor default to `multi-user.target` inside the disposable guest. No rehearsal with the corrected helper is recorded in either repository or the handoff responses. | [recovery preparation](frequency-backend-recovery-preparation-20260913.md) |
 | Live root modules | `81150337`, attested and verified against the live backend on 2026-10-17, 177 of 177 | `evidence/wave2-rollout-20261017/live-provenance-81150337.json` |
 | Live components | `workflow`, `workflow/workpool`, `workflow/workpool/batchWorker`, `aggregate`, `aggregate/batchWorker`, `actionCache`; all active | `deployment-inspection.json` |
 | Backend image | `homelab-infra` declares `ghcr.io/get-convex/convex-backend:latest@sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4` (`precompiled-2026-09-28-5c7cb5b`) in `services/convex-hatchet/service.json`. The recovery tooling and every documented archive predate it and carry `sha256:1f2044e3…`. `GET /version` returns `unknown`, so the running image is declared, not observed. | `homelab-infra` `origin/main` `550c4dd5` |
@@ -31,8 +32,8 @@ a gate. Until one exists, the only rollback for that data is fix-forward.
 | Database dumps | Nightly 02:45Z `pg_dump` of `self_hosted_convex`, `convex_features` and `hatchet_lite`, with 14-day retention. Restore validation runs on the first Sunday of each month only, into the production PostgreSQL runtime. A dump alone does not carry the file store or module store. | `services/convex-hatchet/service.json` |
 | Tooling | `scripts/recovery/isolated-restore-guest.sh` (disposable CTIDs 911 to 913 on `ceph-vm`, no network, masked units, stripped credentials), `guest-module-identities.py` (root modules only), `guest-queue-counts.py` | `scripts/recovery/` |
 
-Known tooling gaps: the unit allow-list and masks assume the September guest
-layout, and the 2026-09-17 refusal is unresolved. The identity reader proves
+Known tooling gaps: the unit allow-list and masks were written for the
+September guest layout and have not run against a current archive. The identity reader proves
 root module equality only. Nothing checks component state, applied schemas,
 crons, scheduled or workpool work, environment variable names, or file-store
 blobs.
@@ -84,10 +85,10 @@ raw data, credentials, function source, environment values or job payloads.
 
 ## Two parts, in order
 
-**A. Method rehearsal (any time before the deploy).** Update the tooling for
-the current guest layout and for the `graphical.target` refusal, under its own
-review. Then rehearse items 1 to 7 and 9 on the newest weekly archive that
-meets item 1. The next scheduled one is Sunday 2026-10-18 at 05:00Z, unless an
+**A. Method rehearsal (any time before the deploy).** Rehearse items 1 to 7
+and 9 with the corrected helper on the newest weekly archive that meets item 1.
+If the helper's preflight or offline audit refuses the current guest layout,
+stop. Change the helper under its own review, then rerun. The next scheduled one is Sunday 2026-10-18 at 05:00Z, unless an
 earlier on-demand archive is approved. Record item 8. This proves the method
 works on the current image and layout.
 
@@ -105,8 +106,9 @@ same image and layout within the previous seven days.
   coordinator has approved restore as the selected rollback mechanism, with
   its write-loss window.
 - **Not ready:** any item fails or is unobserved, the image or layout changed
-  after part A, or part B is missing. The deploy then proceeds only on an
-  explicit decision to accept fix-forward as the only rollback for the
-  normalization's data changes.
+  after part A, or part B is missing. The deploy stays blocked, as the
+  supported procedure requires. Removing or changing that gate would be an
+  amendment to `frequency-supported-deployment-rollback.md` and is outside
+  this work order.
 
 Neither outcome is approved by this document.

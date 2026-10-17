@@ -144,6 +144,9 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    manual and direct graph execution, which bypasses the pause. Rerun
    `scripts/frequency-queue-evidence.ts` until it shows `claimsPaused: true`,
    0 running and a complete scan. Confirm the media worker has no claimed job.
+   Then the recovery owner takes the receipt's part B archive
+   ([work order](wave2-restore-receipt-work-order.md#two-parts-in-order)) and
+   records it before step 3.
 2. **Read the deployed state again.** Rerun the inspection and
    `scripts/convex-module-identities.ts`. Any difference from the evidence
    record means someone has deployed since; stop and reconcile.
@@ -221,15 +224,18 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 
 ### Open decision
 
-Preparation needs nothing more. Two choices remain with the user before
-step 1:
+Repository-side preparation is complete. The deploy stays blocked by the
+[supported procedure](frequency-supported-deployment-rollback.md)'s gate
+until both of these hold:
 
-1. Approve the five activation effects, including the irreversible legacy
-   normalization (#118), which retires superseded Claims within minutes.
-2. Choose the normalization's rollback: either hold the deploy until the
-   recovery owner delivers the [restore receipt](wave2-restore-receipt-work-order.md)
-   (parts A and B), or accept fix-forward as its only rollback and deploy
-   without a receipt.
+1. The user approves the five activation effects, including the
+   irreversible legacy normalization (#118), which retires superseded Claims
+   within minutes.
+2. The recovery owner delivers the [restore receipt](wave2-restore-receipt-work-order.md)
+   and the coordinator approves restore as the rollback mechanism, with its
+   write-loss window. Part A, a disposable-guest rehearsal, and part B, an
+   on-demand archive in the window, each write infrastructure and need their
+   own approval first.
 
 Every live step after that (claims pause, dry run, deploy, `homelab-infra`
 merge, media replacement, resume, backfill) still needs its own approval.
