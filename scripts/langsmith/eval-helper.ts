@@ -1,5 +1,6 @@
 #!/usr/bin/env -S vpx tsx
 import "varlock/auto-load";
+import { appendFileSync } from "node:fs";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import { Client, type Example } from "langsmith";
@@ -122,7 +123,62 @@ export interface ModelTextCall {
 
 export type GenerateTextFn = (
   args: Parameters<typeof generateText>[0],
-) => Promise<{ text: string; finishReason: string }>;
+) => Promise<{ text: string; finishReason: string; usage?: unknown }>;
+
+/** Path of the opt-in usage log; unset means no usage is written. */
+export const EVAL_USAGE_LOG_ENV = "EVAL_USAGE_LOG";
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * The token counts from an AI SDK `usage` object, and nothing else. Every
+ * field is a finite number or null, so the line can carry no prompt,
+ * response or secret text whatever the SDK returns.
+ */
+export function usageLogLine(model: string, usage: unknown): string {
+  const u = (usage ?? {}) as {
+    inputTokens?: unknown;
+    outputTokens?: unknown;
+    totalTokens?: unknown;
+    inputTokenDetails?: {
+      cacheReadTokens?: unknown;
+      cacheWriteTokens?: unknown;
+    };
+    outputTokenDetails?: { reasoningTokens?: unknown };
+  };
+  return JSON.stringify({
+    model,
+    inputTokens: finiteNumber(u.inputTokens),
+    outputTokens: finiteNumber(u.outputTokens),
+    totalTokens: finiteNumber(u.totalTokens),
+    reasoningTokens: finiteNumber(u.outputTokenDetails?.reasoningTokens),
+    cacheReadTokens: finiteNumber(u.inputTokenDetails?.cacheReadTokens),
+    cacheWriteTokens: finiteNumber(u.inputTokenDetails?.cacheWriteTokens),
+  });
+}
+
+/**
+ * Append one usage line per model response when `EVAL_USAGE_LOG` names a
+ * file. Logging only: the request and the response handling are unchanged.
+ * A failed write fails the call, so a measured run never silently loses a
+ * line it was asked to keep.
+ */
+function appendUsageLog(
+  path: string | undefined,
+  model: string,
+  usage: unknown,
+) {
+  if (!path) return;
+  try {
+    appendFileSync(path, `${usageLogLine(model, usage)}\n`, { mode: 0o600 });
+  } catch (error) {
+    throw new EvalInfrastructureError(
+      `usage log write failed: ${describeFailure(error)}`,
+    );
+  }
+}
 
 /**
  * One direct Anthropic text call that fails closed: a transport error, an
@@ -133,13 +189,14 @@ export type GenerateTextFn = (
 export async function generateModelText(
   call: ModelTextCall,
   generate: GenerateTextFn = generateText as unknown as GenerateTextFn,
+  usageLogPath: string | undefined = process.env[EVAL_USAGE_LOG_ENV],
 ): Promise<string> {
   if (!isDirectAnthropicModel(call.model)) {
     throw new EvalInfrastructureError(
       `${call.model} is not a direct Anthropic model`,
     );
   }
-  let result: { text: string; finishReason: string };
+  let result: Awaited<ReturnType<GenerateTextFn>>;
   try {
     result = await generate({
       model: createAnthropic({ apiKey: call.apiKey })(
@@ -156,6 +213,8 @@ export async function generateModelText(
       `${call.model} request failed: ${describeFailure(error)}`,
     );
   }
+  // Before the finish checks: a truncated or empty response is still billed.
+  appendUsageLog(usageLogPath, call.model, result.usage);
   if (result.finishReason === "length") {
     throw new EvalInfrastructureError(
       `${call.model} response truncated at ${call.maxOutputTokens} output tokens`,
@@ -283,6 +342,7 @@ export async function runEval(
               abortSignal: AbortSignal.timeout(EVAL_TARGET_TIMEOUT_MS),
             },
             deps.generate,
+            deps.env[EVAL_USAGE_LOG_ENV],
           );
           const parsed = parseJsonObjectFromText(text);
           if (!parsed) {
