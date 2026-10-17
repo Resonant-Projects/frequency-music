@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 
 // Declared before the module under test is imported: `eval-helper` pulls in
 // `varlock/auto-load`, which would otherwise resolve secrets from
@@ -8,6 +8,7 @@ vi.mock("varlock/auto-load", () => ({}));
 import type { Example, Run } from "langsmith";
 import { ANTHROPIC_MODELS } from "../../convex/shared/llmPolicy";
 import {
+  EVAL_TARGET_TIMEOUT_MS,
   type EvalPrompt,
   evalInferenceConfig,
   generateModelText,
@@ -238,13 +239,21 @@ const scoreField = (run: Run) => {
 
 function harness(opts: {
   respond?: (args: GenerateArgs) => { text: string; finishReason: string };
+  generate?: GenerateTextFn;
   evaluators?: Array<(run: Run, example?: Example) => unknown>;
   examples?: Example[];
   dropFeedbackFor?: string;
 }) {
-  const { generate, calls } = fakeGenerate(
+  const fake = fakeGenerate(
     opts.respond ?? (() => ({ text: '{"quality": 1}', finishReason: "stop" })),
   );
+  const calls = fake.calls;
+  const generate: GenerateTextFn = opts.generate
+    ? async (args) => {
+        calls.push(args);
+        return opts.generate!(args);
+      }
+    : fake.generate;
   const { evaluate, logged } = fakeEvaluate({
     dropFeedbackFor: opts.dropFeedbackFor,
   });
@@ -486,5 +495,107 @@ describe("runEval full-run outcome", () => {
       },
     );
     expect(code).toBe(1);
+  });
+});
+
+describe("runEval target deadline", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  // `AbortSignal.timeout` runs on Node's internal timers, which fake timers do
+  // not control. This stand-in aborts on the faked clock with the same reason.
+  function fakeTimeoutSignals() {
+    const requested: number[] = [];
+    const signals: AbortSignal[] = [];
+    vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+      const controller = new AbortController();
+      setTimeout(
+        () =>
+          controller.abort(
+            new DOMException(
+              "The operation was aborted due to timeout",
+              "TimeoutError",
+            ),
+          ),
+        ms,
+      );
+      requested.push(ms);
+      signals.push(controller.signal);
+      return controller.signal;
+    });
+    return { requested, signals };
+  }
+
+  // Like the AI SDK, a request that never answers settles only when its abort
+  // signal fires, rejecting with the signal's reason.
+  function stall(args: GenerateArgs) {
+    return new Promise<never>((_resolve, reject) => {
+      args.abortSignal?.addEventListener(
+        "abort",
+        () => reject(args.abortSignal!.reason),
+        { once: true },
+      );
+    });
+  }
+
+  test("a stalled target aborts at the deadline and fails the run", async () => {
+    vi.useFakeTimers();
+    const timeouts = fakeTimeoutSignals();
+    let n = 0;
+    const h = harness({
+      generate: async (args) =>
+        n++ === 0
+          ? stall(args)
+          : { text: '{"quality": 1}', finishReason: "stop" },
+    });
+
+    let settled = false;
+    const outcome = h.run().then((code) => {
+      settled = true;
+      return code;
+    });
+    await vi.advanceTimersByTimeAsync(EVAL_TARGET_TIMEOUT_MS - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(settled).toBe(true);
+    await expect(outcome).resolves.toBe(1);
+
+    expect(timeouts.requested).toEqual([
+      EVAL_TARGET_TIMEOUT_MS,
+      EVAL_TARGET_TIMEOUT_MS,
+    ]);
+    expect(h.calls).toHaveLength(2);
+    h.calls.forEach((args, i) => {
+      expect(args.abortSignal).toBe(timeouts.signals[i]);
+    });
+    expect(timeouts.signals[0]!.aborted).toBe(true);
+    expect(h.out.join("\n")).not.toContain(COMPLETION_MARKER);
+    expect(h.logged.join("\n")).toContain("Error running target function");
+    const errors = h.err.join("\n");
+    expect(errors).toContain("EVAL RUN FAILED");
+    expect(errors).toContain("ex-1");
+    expect(errors).toContain("TimeoutError");
+    expect(errors).not.toContain("ex-2");
+    const everything = [...h.err, ...h.logged, ...h.out].join("\n");
+    expect(everything).not.toContain(PRIVATE_SOURCE);
+  });
+
+  test("targets that answer before the deadline still pass", async () => {
+    vi.useFakeTimers();
+    const timeouts = fakeTimeoutSignals();
+    const h = harness({});
+    await expect(h.run()).resolves.toBe(0);
+    expect(h.out.join("\n")).toContain(COMPLETION_MARKER);
+    expect(timeouts.requested).toEqual([
+      EVAL_TARGET_TIMEOUT_MS,
+      EVAL_TARGET_TIMEOUT_MS,
+    ]);
+    expect(h.calls).toHaveLength(2);
+    h.calls.forEach((args, i) => {
+      expect(args.abortSignal).toBe(timeouts.signals[i]);
+    });
+    expect(timeouts.signals.some((signal) => signal.aborted)).toBe(false);
   });
 });
