@@ -54,6 +54,40 @@ function scalaHz(scl: string, kbm: string, key: number): number {
   );
 }
 
+/** Pair note-ons with note-offs from a kit's degree MIDI, in ticks. */
+function decodeKitMidi(kit: ReturnType<typeof buildStudioKit>) {
+  const bytes = file(kit, "seed-degree.mid");
+  if (typeof bytes === "string") throw new Error("MIDI must be binary");
+  const midi = parseMidi(bytes);
+  expect(midi.header.ticksPerBeat).toBe(STUDIO_TICKS_PER_BEAT);
+  let tick = 0;
+  const open = new Map<number, number>();
+  const decoded: {
+    key: number;
+    start: number;
+    end: number;
+    velocity: number;
+  }[] = [];
+  const velocities = new Map<number, number>();
+  let tempo = 0;
+  for (const event of midi.tracks[0]!) {
+    tick += event.deltaTime;
+    if (event.type === "setTempo") tempo = event.microsecondsPerBeat;
+    if (event.type === "noteOn" && event.velocity > 0) {
+      open.set(event.noteNumber, tick);
+      velocities.set(event.noteNumber, event.velocity);
+    } else if (event.type === "noteOff") {
+      decoded.push({
+        key: event.noteNumber,
+        start: open.get(event.noteNumber)!,
+        end: tick,
+        velocity: velocities.get(event.noteNumber)!,
+      });
+      open.delete(event.noteNumber);
+    }
+  }
+  return { decoded, open, tempo, tick };
+}
 describe("plan 11 studio validation kits", () => {
   test("the default packet is three admitted 30-second kits", () => {
     const packet = buildStudioPacket();
@@ -122,36 +156,7 @@ describe("plan 11 studio validation kits", () => {
     "$name MIDI carries every note at its exact key and beat",
     (definition) => {
       const kit = buildStudioKit(definition);
-      const bytes = file(kit, "seed-degree.mid");
-      if (typeof bytes === "string") throw new Error("MIDI must be binary");
-      const midi = parseMidi(bytes);
-      expect(midi.header.ticksPerBeat).toBe(STUDIO_TICKS_PER_BEAT);
-      let tick = 0;
-      const open = new Map<number, number>();
-      const decoded: {
-        key: number;
-        start: number;
-        end: number;
-        velocity: number;
-      }[] = [];
-      const velocities = new Map<number, number>();
-      let tempo = 0;
-      for (const event of midi.tracks[0]!) {
-        tick += event.deltaTime;
-        if (event.type === "setTempo") tempo = event.microsecondsPerBeat;
-        if (event.type === "noteOn" && event.velocity > 0) {
-          open.set(event.noteNumber, tick);
-          velocities.set(event.noteNumber, event.velocity);
-        } else if (event.type === "noteOff") {
-          decoded.push({
-            key: event.noteNumber,
-            start: open.get(event.noteNumber)!,
-            end: tick,
-            velocity: velocities.get(event.noteNumber)!,
-          });
-          open.delete(event.noteNumber);
-        }
-      }
+      const { decoded, open, tempo, tick } = decodeKitMidi(kit);
       expect(open.size).toBe(0);
       expect(tempo).toBe(60_000_000 / definition.tempoBpm);
       expect(tick).toBe(
@@ -169,6 +174,37 @@ describe("plan 11 studio validation kits", () => {
       );
     },
   );
+
+  test("matches the renderer where reused beat seconds round differently", () => {
+    // 60 / 104 * beats lands a rounding error under 30 s; the renderer's
+    // (beats * 60) / 104 lands on 30 s and drops the note.
+    const plan = studioRenderPlan({
+      ...DEFAULT_STUDIO_KITS[2]!,
+      tempoBpm: 104,
+    });
+    const [score] = buildScores(plan);
+    const notes = expandStudioNotes(plan);
+    expect(notes.map((note) => [note.startSecs, note.endSecs])).toEqual(
+      score!.notes.map((note) => [note.start, note.end]),
+    );
+  });
+
+  test("a boundary note shorter than one tick still pairs in the MIDI", () => {
+    const definition = {
+      ...DEFAULT_STUDIO_KITS[0]!,
+      tempoBpm: 100,
+      durationSecs: 60,
+    };
+    const kit = buildStudioKit(definition);
+    const [score] = buildScores(kit.plan);
+    const last = kit.notes.at(-1)!;
+    expect(kit.notes).toHaveLength(score!.notes.length);
+    expect(definition.durationSecs - last.startSecs).toBeLessThan(1e-9);
+    const { decoded, open } = decodeKitMidi(kit);
+    expect(open.size).toBe(0);
+    expect(decoded).toHaveLength(kit.notes.length);
+    expect(decoded.every((note) => note.end >= note.start)).toBe(true);
+  });
 
   test("the card states the reference pitch and fixed constraints", () => {
     const kit = buildStudioKit(DEFAULT_STUDIO_KITS[0]!);

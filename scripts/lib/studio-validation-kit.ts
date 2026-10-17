@@ -122,17 +122,22 @@ export function expandStudioNotes(plan: RenderPlanSnapshot): StudioNote[] {
   const hz = prepareDegreeToHz(plan.tuning, plan.referenceHz);
   const degreeCount = octaveDegreeCents(plan.tuning).length;
   const secsPerBeat = 60 / plan.tempoBpm;
+  // Second values use buildScores' exact expressions: `x * (60 / bpm)` rounds
+  // differently and can admit or drop a note at the duration boundary.
   const cycleSecs = Math.max(
-    ...plan.seed.map((event) => (event.startBeat + event.beats) * secsPerBeat),
+    ...plan.seed.map(
+      (event) => ((event.startBeat + event.beats) * 60) / plan.tempoBpm,
+    ),
   );
   const cycleBeats = cycleSecs / secsPerBeat;
   const notes: StudioNote[] = [];
   for (let loop = 0; loop < Math.ceil(plan.durationSecs / cycleSecs); loop++) {
     for (const event of plan.seed) {
-      const startSecs = loop * cycleSecs + event.startBeat * secsPerBeat;
+      const startSecs =
+        loop * cycleSecs + (event.startBeat * 60) / plan.tempoBpm;
       if (startSecs >= plan.durationSecs) continue;
       const endSecs = Math.min(
-        startSecs + event.beats * secsPerBeat,
+        startSecs + (event.beats * 60) / plan.tempoBpm,
         plan.durationSecs,
       );
       const key = STUDIO_MIDDLE_KEY + event.octave * degreeCount + event.degree;
@@ -205,13 +210,19 @@ export function studioMidi(
     }
     byKey.set(note.key, note);
   }
+  // At one tick: earlier notes release, then attacks, then the release of a
+  // note shorter than one tick (the renderer keeps a boundary note that
+  // starts a rounding error before the duration), so every attack pairs.
   const timeline = notes
-    .flatMap((note) => [
-      { tick: ticks(note.startBeat), on: true, note },
-      { tick: ticks(note.endBeat), on: false, note },
-    ])
-    // Release before attack at the same tick so a repeated key re-sounds.
-    .toSorted((a, b) => a.tick - b.tick || Number(a.on) - Number(b.on));
+    .flatMap((note) => {
+      const start = ticks(note.startBeat);
+      const end = ticks(note.endBeat);
+      return [
+        { tick: start, order: 1, on: true, note },
+        { tick: end, order: end === start ? 2 : 0, on: false, note },
+      ];
+    })
+    .toSorted((a, b) => a.tick - b.tick || a.order - b.order);
   const events: MidiEvent[] = [
     { deltaTime: 0, meta: true, type: "trackName", text: name },
     {
