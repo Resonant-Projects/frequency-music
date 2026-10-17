@@ -1,0 +1,152 @@
+step scp 2026-10-17T16:26:32Z
+step preflight 2026-10-17T16:26:32Z
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3674902784 mem_avail_kib=34626176
+step restore start 2026-10-17T16:26:34Z epoch=1792254394
+Running as unit: isolated-restore-913-20261017T162632Z.service
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3674902784 mem_avail_kib=34455808
+recovering backed-up configuration from 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+/dev/rbd10
+Creating filesystem with 8388608 4k blocks and 2097152 inodes
+Filesystem UUID: 2bd4871d-4a9c-475a-8954-794f238aa86b
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624
+/dev/rbd11
+Creating filesystem with 16777216 4k blocks and 4194304 inodes
+Filesystem UUID: 5cc1a3c1-05cc-4940-b675-16469d1d3589
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424
+restoring 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst' now..
+extracting archive '/mnt/pve/nas-docker/dump/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+Total bytes read: 47469772800 (45GiB, 342MiB/s)
+merging backed-up and given configuration..
+restored ctid=913 (stopped, no network) record=/root/isolated-restore-runs/913.record
+ctid=913
+node=prox4
+archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst
+created_at=2026-10-17T16:29:05Z
+hostname=convex-hatchet-restore-913
+rootfs=ceph-vm:vm-913-disk-0
+mp0=ceph-vm:vm-913-disk-1
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 2min 30.644s
+CPU time consumed: 2min 585ms
+Memory peak: 11.6G (swap: 0B)
+step restore end 2026-10-17T16:29:05Z epoch=1792254545
+step prepare 2026-10-17T16:29:05Z
+unexpected enabled unit: /lib/systemd/system/getty.target.wants/getty-static.service
+unexpected enabled unit: /lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+unexpected enabled unit: /lib/systemd/system/initrd.target.wants/systemd-bsod.service
+unexpected enabled unit: /lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+unexpected enabled unit: /lib/systemd/system/local-fs.target.wants/tmp.mount
+unexpected enabled unit: /lib/systemd/system/multi-user.target.wants/dbus.service
+unexpected enabled unit: /lib/systemd/system/multi-user.target.wants/getty.target
+unexpected enabled unit: /lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+unexpected enabled unit: /lib/systemd/system/multi-user.target.wants/systemd-logind.service
+unexpected enabled unit: /lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/dbus.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-creds.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-journald.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+unexpected enabled unit: /lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/ldconfig.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-journald.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+unexpected enabled unit: /lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+unexpected enabled unit: /lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+unexpected enabled unit: /usr/lib/systemd/system/getty.target.wants/getty-static.service
+unexpected enabled unit: /usr/lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+unexpected enabled unit: /usr/lib/systemd/system/initrd.target.wants/systemd-bsod.service
+unexpected enabled unit: /usr/lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+unexpected enabled unit: /usr/lib/systemd/system/local-fs.target.wants/tmp.mount
+unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/dbus.service
+unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/getty.target
+unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/systemd-logind.service
+unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/dbus.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-creds.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-journald.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+unexpected enabled unit: /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/ldconfig.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-journald.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+unexpected enabled unit: /usr/lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+unexpected enabled unit: /usr/lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+isolated-restore: offline rootfs has enabled units outside the allow-list
+rehearsal step failed
+rehearsal step failed; purging CT 913
+Removing image: 100% complete...done.
+Removing image: 100% complete...done.
+purging CT 913 from related configurations..
+destroyed ctid=913 volumes=[ceph-vm:vm-913-disk-0 ceph-vm:vm-913-disk-1] confirmed absent; record archived
+exit=1

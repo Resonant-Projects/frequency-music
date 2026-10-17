@@ -244,6 +244,88 @@ reset_state; seed_record; make_rootfs
 mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target.wants"
 ln -s /usr/lib/systemd/system/vendor-producer.service "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target.wants/vendor-producer.service"
 expect 1 "prepare rejects a vendor-enabled unit under /usr/lib" --msg "outside the allow-list" prepare 913
+# Vendor enablement links exactly as shipped in the 2026-10-17 CT113 archive
+# (Debian 13, merged /usr: lib -> usr/lib). Listed here independently of the
+# helper so a change to its allow-list cannot make this case pass by itself.
+OBSERVED_VENDOR_LINKS='getty.target.wants/getty-static.service
+initrd.target.wants/systemd-battery-check.service initrd.target.wants/systemd-bsod.service
+initrd.target.wants/systemd-pcrphase-initrd.service local-fs.target.wants/run-lock.mount
+local-fs.target.wants/tmp.mount multi-user.target.wants/dbus.service multi-user.target.wants/getty.target
+multi-user.target.wants/systemd-ask-password-wall.path multi-user.target.wants/systemd-logind.service
+multi-user.target.wants/systemd-user-sessions.service sockets.target.wants/dbus.socket
+sockets.target.wants/systemd-creds.socket sockets.target.wants/systemd-hostnamed.socket
+sockets.target.wants/systemd-initctl.socket sockets.target.wants/systemd-journald-dev-log.socket
+sockets.target.wants/systemd-journald.socket sockets.target.wants/systemd-pcrextend.socket
+sockets.target.wants/systemd-pcrlock.socket sockets.target.wants/systemd-sysext.socket
+sockets.target.wants/systemd-udevd-control.socket sockets.target.wants/systemd-udevd-kernel.socket
+sysinit.target.wants/dev-hugepages.mount sysinit.target.wants/dev-mqueue.mount
+sysinit.target.wants/kmod-static-nodes.service sysinit.target.wants/ldconfig.service
+sysinit.target.wants/proc-sys-fs-binfmt_misc.automount sysinit.target.wants/sys-fs-fuse-connections.mount
+sysinit.target.wants/sys-kernel-config.mount sysinit.target.wants/sys-kernel-debug.mount
+sysinit.target.wants/sys-kernel-tracing.mount sysinit.target.wants/systemd-ask-password-console.path
+sysinit.target.wants/systemd-binfmt.service sysinit.target.wants/systemd-firstboot.service
+sysinit.target.wants/systemd-hibernate-clear.service sysinit.target.wants/systemd-hwdb-update.service
+sysinit.target.wants/systemd-journal-catalog-update.service sysinit.target.wants/systemd-journal-flush.service
+sysinit.target.wants/systemd-journald.service sysinit.target.wants/systemd-machine-id-commit.service
+sysinit.target.wants/systemd-modules-load.service sysinit.target.wants/systemd-pcrmachine.service
+sysinit.target.wants/systemd-pcrphase-sysinit.service sysinit.target.wants/systemd-pcrphase.service
+sysinit.target.wants/systemd-random-seed.service sysinit.target.wants/systemd-sysctl.service
+sysinit.target.wants/systemd-sysusers.service sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+sysinit.target.wants/systemd-tmpfiles-setup-dev.service sysinit.target.wants/systemd-tmpfiles-setup.service
+sysinit.target.wants/systemd-tpm2-setup-early.service sysinit.target.wants/systemd-tpm2-setup.service
+sysinit.target.wants/systemd-udev-trigger.service sysinit.target.wants/systemd-udevd.service
+sysinit.target.wants/systemd-update-done.service timers.target.wants/systemd-tmpfiles-clean.timer'
+make_vendor_core() {  # the observed vendor set, plus the vendor dependencies the archive declares
+  local r="$work/lxc/913/rootfs" v pair
+  v="$r/usr/lib/systemd/system"; mkdir -p "$v"; ln -s usr/lib "$r/lib"
+  for pair in $OBSERVED_VENDOR_LINKS; do
+    mkdir -p "$v/${pair%/*}"; : > "$v/${pair##*/}"; ln -s "../${pair##*/}" "$v/$pair"
+  done
+  printf '[Unit]\nRequires=basic.target\n' > "$v/multi-user.target"
+  printf '[Unit]\nRequires=sysinit.target\nWants=sockets.target timers.target paths.target slices.target\nWants=tmp.mount\n' > "$v/basic.target"
+  printf '[Unit]\nWants=user.slice modprobe@drm.service\n' > "$v/systemd-logind.service"
+  printf '[Unit]\nOnFailure=emergency.target\n' > "$v/local-fs.target"
+}
+reset_state; seed_record; make_rootfs; make_vendor_core
+expect 0 "prepare accepts the observed vendor core links" prepare 913
+[ "$(grep -c '^  /usr/lib/systemd/system/.*\.wants/' "$work/last.out")" = 56 ] || { echo "FAIL vendor links not listed as surviving evidence"; failn=$((failn+1)); }
+for unit in docker.service docker.socket containerd.service ssh.service ssh.socket networking.service systemd-networkd.service e2scrub_all.timer frequency-producer.service; do
+  reset_state; seed_record; make_rootfs; make_vendor_core
+  v="$work/lxc/913/rootfs/usr/lib/systemd/system"; : > "$v/$unit"; ln -s "../$unit" "$v/multi-user.target.wants/$unit"
+  expect 1 "prepare rejects a vendor link to off-list $unit" --msg "outside the allow-list" prepare 913
+  grep -q "unexpected enabled unit: /usr/lib/systemd/system/multi-user.target.wants/$unit" "$work/last.out" || { echo "FAIL off-list vendor link not named"; failn=$((failn+1)); }
+done
+reset_state; seed_record; make_rootfs; make_vendor_core
+ln -s ../dbus.service "$work/lxc/913/rootfs/usr/lib/systemd/system/timers.target.wants/dbus.service"
+expect 1 "prepare rejects a listed vendor unit in an unlisted directory" --msg "outside the allow-list" prepare 913
+reset_state; seed_record; make_rootfs; make_vendor_core
+ln -sf /etc/systemd/system/evil-producer.service "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target.wants/dbus.service"
+expect 1 "prepare rejects a listed vendor link that points at another unit" --msg "outside the allow-list" prepare 913
+reset_state; seed_record; make_rootfs; make_vendor_core
+v="$work/lxc/913/rootfs/usr/lib/systemd/system"; rm "$v/dbus.service"; ln -s /etc/systemd/system/evil-producer.service "$v/dbus.service"
+expect 1 "prepare rejects a listed vendor link whose unit file is a symlink" --msg "outside the allow-list" prepare 913
+reset_state; seed_record; make_rootfs; make_vendor_core
+rm "$work/lxc/913/rootfs/usr/lib/systemd/system/dbus.service"
+expect 1 "prepare rejects a listed vendor link without its unit file" --msg "outside the allow-list" prepare 913
+reset_state; seed_record; make_rootfs; make_vendor_core
+mkdir -p "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target.wants/nested"
+ln -s ../../dbus.service "$work/lxc/913/rootfs/usr/lib/systemd/system/multi-user.target.wants/nested/dbus.service"
+expect 1 "prepare rejects a nested vendor link" --msg "outside the allow-list" prepare 913
+# /etc and /usr/local keep the ALLOWED_ENABLED check: vendor-only core units refuse there.
+for base in etc/systemd/system usr/local/lib/systemd/system; do
+  reset_state; seed_record; make_rootfs; make_vendor_core
+  mkdir -p "$work/lxc/913/rootfs/$base/multi-user.target.wants"
+  ln -s /usr/lib/systemd/system/dbus.service "$work/lxc/913/rootfs/$base/multi-user.target.wants/dbus.service"
+  expect 1 "prepare keeps strict /$base for a vendor core unit" --msg "outside the allow-list" prepare 913
+done
+reset_state; seed_record; make_rootfs; make_vendor_core
+printf '[Unit]\nWants=unapproved-producer.service\n' > "$work/lxc/913/rootfs/usr/lib/systemd/system/dbus.service"
+expect 1 "prepare rejects an unapproved dependency of a vendor core unit" --msg "boot dependency audit failed" prepare 913
+reset_state; seed_record; make_rootfs; make_vendor_core
+mkdir -p "$work/lxc/913/rootfs/etc/systemd/system/systemd-logind.service.d"
+printf '[Unit]\nWants=unapproved-producer.service\n' > "$work/lxc/913/rootfs/etc/systemd/system/systemd-logind.service.d/override.conf"
+expect 1 "prepare rejects an /etc drop-in adding a dependency to a vendor core unit" --msg "boot dependency audit failed" prepare 913
+
 reset_state; seed_record; make_rootfs
 printf '#!/bin/sh\nexit 0\n' > "$work/lxc/913/rootfs/etc/rc.local"; chmod +x "$work/lxc/913/rootfs/etc/rc.local"
 expect 0 "prepare removes an executable rc.local" prepare 913
@@ -567,6 +649,29 @@ cp "$work/bin/pct.real" "$work/bin/pct"
 grep -q 'stop 913' "$SHIM_STATE/calls.log" && grep -q 'destroy 913 --purge' "$SHIM_STATE/calls.log" || { echo "FAIL destroy sequence"; failn=$((failn+1)); }
 [ ! -f "$work/runs/913.record" ] && ls "$work/runs"/913.record.destroyed-* >/dev/null 2>&1 || { echo "FAIL record not archived"; failn=$((failn+1)); }
 expect 1 "destroy refuses a second time (record archived, guest gone)" destroy 913
+
+# Execute the helper's actual interface gate against a fake /sys/class/net.
+if python3 - "$helper" "$work" <<'PYNET'
+import pathlib, subprocess, sys
+helper, work = map(pathlib.Path, sys.argv[1:])
+net = work / "fake-sys-class-net"; devices = work / "fake-devices"
+for name in ("lo", "eth0", "docker0", "veth1", "decoy"):
+    (devices / name).mkdir(parents=True)
+(devices / "docker0" / "bridge").mkdir(); (devices / "veth1" / "master").touch()
+net.mkdir()
+for name in ("lo", "eth0", "docker0", "veth1"):
+    (net / name).symlink_to(devices / name)
+(net / "bonding_masters").write_text("")
+(net / "stray").write_text("")
+(net / "bonding_masters2").symlink_to(devices / "decoy")
+line = next(l for l in helper.read_text().splitlines() if "for i in /sys/class/net/*" in l)
+snippet = line.split("sh -c '", 1)[1].rsplit("'", 1)[0].replace("/sys/class/net", str(net))
+out = subprocess.run(["sh", "-c", snippet], capture_output=True, text=True, check=True).stdout.split()
+assert out == ["bonding_masters2", "eth0", "stray"], out
+(net / "eth0").unlink(); (net / "stray").unlink(); (net / "bonding_masters2").unlink()
+assert subprocess.run(["sh", "-c", snippet], capture_output=True, text=True, check=True).stdout == ""
+PYNET
+then echo "ok   interface gate skips only the bonding control file"; pass=$((pass+1)); else echo "FAIL interface gate snippet"; failn=$((failn+1)); fi
 
 # Execute the actual guest shell against linked key files, using inert commands.
 python3 - "$helper" "$work" <<'PYKEY'

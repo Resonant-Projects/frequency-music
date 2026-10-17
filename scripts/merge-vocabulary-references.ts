@@ -10,6 +10,13 @@
  * references before the registry merge is finalized. Parameter-kind references
  * are rewritten after merge finalization; relationship-kind batches also run
  * before finalization.
+ *
+ * Parameter-kind batches match `compositionParameters[].kind` (or `type`) by
+ * registry key, so `chordType`, `chord type`, and `chord_type` all match the
+ * `chordtype` entry. Each match takes `kind`, `canonicalKind`, and
+ * `registryStatus` from the target. `mergeEntry` is a no-op for a recorded
+ * merge, so rerunning with `--apply` backfills references that an earlier
+ * exact-match pass missed.
  */
 // oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
 import "varlock/auto-load";

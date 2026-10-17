@@ -1,0 +1,9 @@
+{
+  "target": "https://convex.resonantprojects.art",
+  "observedAt": "2026-10-17T18:37:35.783Z",
+  "rootModuleArtifactMatches": true,
+  "moduleCount": 256,
+  "attestedSourceSha": "6fb562b270176c94372962ed921dbca9e21ef208",
+  "manifestSha256": "d8dffbfcfc89ed8695c544fbfb3aa207d59240fd9d8c309f6156e5f720359d69",
+  "scope": "stored-root-module-identities-only; excludes applied schema state, component instances, environment and worker image"
+}

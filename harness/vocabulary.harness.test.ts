@@ -66,7 +66,7 @@ describe("parameter kind normalization", () => {
         await t.mutation(internal.vocabulary.ensureParameterKind, {
           name: variant,
         }),
-      ).toEqual({ status: "known" });
+      ).toEqual({ status: "known", name: "tuningSystem", merged: false });
     }
 
     const rows = await t.run((ctx) => ctx.db.query("parameterKinds").collect());
@@ -81,7 +81,7 @@ describe("parameter kind normalization", () => {
       await t.mutation(internal.vocabulary.ensureParameterKind, {
         name: "Custom Thing",
       }),
-    ).toEqual({ status: "provisional" });
+    ).toEqual({ status: "provisional", name: "customthing", merged: false });
 
     // Same kind, different casing/separator — must update the existing row
     // rather than insert a second `parameterKinds` entry.
@@ -187,7 +187,11 @@ describe("parameter kind normalization", () => {
       await t.mutation(internal.vocabulary.ensureParameterKind, {
         name: "Drive-Frequency",
       }),
-    ).toEqual({ status: "provisional" });
+    ).toEqual({
+      status: "provisional",
+      name: "drivefrequency",
+      merged: false,
+    });
     expect(
       await t.run((ctx) => ctx.db.query("parameterKinds").collect()),
     ).toHaveLength(rows.length);
