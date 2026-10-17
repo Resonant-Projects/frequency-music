@@ -108,9 +108,16 @@ retains the earlier capture history and unresolved capture issues.
 
 Small; several are gate-specific, and item 1 must finish before plan 13 starts.
 
-1. **Eval baseline — NEXT, operator-gated.** Golden datasets were ratified in
-   `d2487c1`, so [`plans/008`](../../plans/008-eval-baseline-sweep.md) is ready
-   when live API access and spend authorization are available. Record that
+1. **Eval baseline — NEXT, operator-gated, BLOCKED.**
+   [`plans/008`](../../plans/008-eval-baseline-sweep.md) stopped at its
+   2026-10-17 [preflight](../evidence/eval-baseline-20261017/preflight.md)
+   with no scores recorded. The runner defects it found were
+   [repaired](../evidence/eval-baseline-20261017/runner-repair.md) the same
+   day: failed or incomplete runs now exit 1, and the runners call Anthropic
+   directly on the production route. Still needed from Keith: credentials that
+   let Varlock resolve `ANTHROPIC_API_KEY` and `LANGSMITH_API_KEY`, approval to
+   upload the golden datasets, a STOP 4 decision on the hypothesis (4) and
+   weekly-brief (2) rows, and approval of a fresh cost estimate. Record that
    baseline before starting plan 13 so its generator changes remain measurable.
 2. **Domain triage** — now carded as
    [plan 12](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md): the packet is decided
@@ -158,7 +165,7 @@ audit found several items further along than the roadmap assumes:
 ## Ledgers & references
 
 - Improvement backlog + session ledgers: [improvements-2026-07-10.md](../improvements-2026-07-10.md)
-- Improve-skill wave ledger (008 ready, still open): [`plans/README.md`](../../plans/README.md)
+- Improve-skill wave ledger (008 blocked, still open): [`plans/README.md`](../../plans/README.md)
 - Living operating docs (not plans): vision-and-meaning, loop-spec-v1.1,
   cadence-and-operating-rules, schema, agent-tool-surface, eval-baselines,
   langsmith-runbook, parameter-extraction, metrics-and-dissonance.

@@ -5,8 +5,10 @@
 > before any baseline was recorded. The runners now call Anthropic directly,
 > so they need `ANTHROPIC_API_KEY` rather than `OPENROUTER_API_KEY`. The cost
 > estimate and the manual failure checks in step 2 below describe the
-> pre-repair runner. See [`runner-repair.md`](runner-repair.md). This file is
-> otherwise kept as recorded.
+> pre-repair runner. The cost estimate is historical, not a current budget;
+> compute and approve a new bounded estimate before any paid run. See
+> [`runner-repair.md`](runner-repair.md). This file is otherwise kept as
+> recorded.
 
 Preflight for [plan 008](../../../plans/008-eval-baseline-sweep.md) at base
 `ec04c7c`. **No eval ran and no score was recorded.** No dataset was uploaded,

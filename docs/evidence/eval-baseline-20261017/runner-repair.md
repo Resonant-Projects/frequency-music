@@ -73,10 +73,12 @@ Commands, all gated on the decisions above:
 3. Record the three-run means as `docs/eval-baselines.md` describes, then
    check the parse and run `vp test scripts/langsmith/`.
 
-## Index reconciliation for the coordinator
+## Operator docs
 
-This repair does not edit `plans/` or `docs/plans/README.md`. Plan 008's
-header still names `OPENROUTER_API_KEY`, and its status row and the
-`plans/README.md` entry still describe the pre-repair runner. Their owner
-should point them here and change the key to `ANTHROPIC_API_KEY`.
-`data/eval/README.md` still shows a `bun` upload command.
+Plan 008, its entries in `plans/README.md` and `docs/plans/README.md`, and
+the `data/eval/README.md` commands now match the repaired runner: `ANTHROPIC_API_KEY`
+and `LANGSMITH_API_KEY` through Varlock, `vpx tsx` and `vp test` commands,
+the completion-line acceptance rule, and an offline parse check in place of a
+`promote.ts` run. The sweep stays BLOCKED on credentials, upload approval,
+STOP 4 and a fresh cost estimate. Plan 008's rule against editing
+`scripts/langsmith/` still applies to the sweep; this repair does not widen it.
