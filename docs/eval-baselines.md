@@ -27,6 +27,9 @@ is a **shared contract**:
 > [`evidence/eval-baseline-20261017/runner-repair.md`](evidence/eval-baseline-20261017/runner-repair.md).
 > The current gates, cost estimate and runbook are in
 > [`evidence/eval-baseline-20261017/readiness.md`](evidence/eval-baseline-20261017/readiness.md).
+> The approved stage 1 sweep stopped at STOP 6 after one extraction run, so
+> no mean is recorded; see
+> [`evidence/eval-baseline-20261017/sweep-stage1.md`](evidence/eval-baseline-20261017/sweep-stage1.md).
 
 **How to record a baseline** (per target): run its `eval-*.ts` runner 3× against
 the current prompt version, then fill the mean per evaluator below along with the
