@@ -2,6 +2,11 @@
 // Sources (r=160), Extractions (r=128), Hypotheses (r=92), Recipes (r=58).
 
 import * as THREE from "three";
+import {
+  type ConceptSectors,
+  itemSector,
+  sourceTopicNames,
+} from "./item-sectors";
 import { COLORS, R, SECTORS, STATUS_COLORS } from "./zodiac-data";
 import type { ItemRelation, PipelineItems } from "./zodiac-types";
 
@@ -9,7 +14,7 @@ export interface OrbitalItem {
   id: string;
   title: string;
   status: string;
-  sectorId?: string; // inferred from topics/concepts
+  sectorId?: string; // from classified concepts, else topic keywords
 }
 
 /** The orbiting bodies, one list per ring, keyed like `PipelineItems`. */
@@ -46,43 +51,6 @@ function hashUnit(id: string): number {
     h = Math.imul(h, 0x01000193);
   }
   return (h >>> 0) / 0x100000000;
-}
-
-// Infer which sector an item belongs to from its topics
-function inferSectorFromTopics(topics: string[]): string {
-  const joined = topics.join(" ").toLowerCase();
-  if (
-    joined.includes("math") ||
-    joined.includes("ratio") ||
-    joined.includes("topolog")
-  )
-    return "math";
-  if (
-    joined.includes("wave") ||
-    joined.includes("frequency") ||
-    joined.includes("reson") ||
-    joined.includes("acoust")
-  )
-    return "wave";
-  if (
-    joined.includes("psycho") ||
-    joined.includes("perception") ||
-    joined.includes("consonan")
-  )
-    return "psycho";
-  if (
-    joined.includes("geometr") ||
-    joined.includes("tonnetz") ||
-    joined.includes("symmetry")
-  )
-    return "geometry";
-  if (
-    joined.includes("synth") ||
-    joined.includes("timbre") ||
-    joined.includes("production")
-  )
-    return "synthesis";
-  return "music";
 }
 
 function getSectorAngleRange(sectorId: string): { start: number; end: number } {
@@ -165,25 +133,27 @@ function buildOrbitalRing(
  *  the same lists so its keyboard path names exactly what the scene draws. */
 export function buildOrbitalItemGroups(
   items: PipelineItems,
+  conceptSectors: ConceptSectors = new Map(),
 ): OrbitalItemGroups {
+  const sourceTopics = sourceTopicNames(items.extractions);
   return {
     sources: items.sources.map((s) => ({
       id: s._id,
       title: s.title ?? "Untitled",
       status: s.status,
-      sectorId: inferSectorFromTopics(s.topics ?? []),
+      sectorId: itemSector(sourceTopics(s), conceptSectors),
     })),
     extractions: items.extractions.map((e) => ({
       id: e._id,
       title: `Extraction (${e.topics.slice(0, 2).join(", ")})`,
       status: e.confidence > 0.7 ? "extracted" : "review_needed",
-      sectorId: inferSectorFromTopics(e.topics),
+      sectorId: itemSector(e.topics, conceptSectors),
     })),
     hypotheses: items.hypotheses.map((h) => ({
       id: h._id,
       title: h.title,
       status: h.status,
-      sectorId: inferSectorFromTopics(h.concepts ?? []),
+      sectorId: itemSector(h.concepts, conceptSectors),
     })),
     recipes: items.recipes.map((r) => ({
       id: r._id,

@@ -9,7 +9,11 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { resolveDomainsForSector } from "./domainMappings";
+import {
+  MAX_CONCEPT_SECTOR_NAMES,
+  resolveDomainSector,
+  resolveDomainsForSector,
+} from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
@@ -586,6 +590,70 @@ export const pipelineItems = query({
         status: r.status,
       })),
     };
+  },
+});
+
+/**
+ * Display sectors for the named concepts, so the atlas can place pipeline
+ * items by their classified concepts. Only an accepted classification counts:
+ * the classifier writes `missionRelevance` "on" or "off" with the domains it
+ * assigns, and marks a rejected proposal "unreviewed" while leaving the old
+ * domain in place. Unclassified concepts and the "general" default are
+ * omitted too; they carry no domain signal, and the caller falls back for them.
+ */
+export const conceptSectors = query({
+  args: { names: v.array(v.string()) },
+  returns: v.array(v.object({ name: v.string(), sector: v.string() })),
+  handler: async (ctx, args) => {
+    const names = [
+      ...new Set(
+        args.names.map((name) => name.toLowerCase().trim()).filter(Boolean),
+      ),
+    ];
+    if (names.length > MAX_CONCEPT_SECTOR_NAMES) {
+      throw new Error(
+        `conceptSectors accepts at most ${MAX_CONCEPT_SECTOR_NAMES} names; received ${names.length}`,
+      );
+    }
+    const concepts = (
+      await Promise.all(
+        names.map((name) =>
+          ctx.db
+            .query("concepts")
+            .withIndex("by_name", (q) => q.eq("name", name))
+            .first(),
+        ),
+      )
+    ).filter(
+      (concept): concept is Doc<"concepts"> =>
+        concept !== null &&
+        concept.classifiedAt !== undefined &&
+        (concept.missionRelevance === "on" ||
+          concept.missionRelevance === "off") &&
+        concept.domain !== "general",
+    );
+    // Point-read only the requested domains' registry rows, so a curated
+    // sectorMapping is found however many provisional rows the registry holds.
+    // At most one read per concept keeps the query within its index budget.
+    const domains = [
+      ...new Set(
+        concepts.map((concept) => concept.domain.toLowerCase().trim()),
+      ),
+    ];
+    const registry = (
+      await Promise.all(
+        domains.map((name) =>
+          ctx.db
+            .query("conceptDomains")
+            .withIndex("by_name", (q) => q.eq("name", name))
+            .first(),
+        ),
+      )
+    ).filter((entry) => entry !== null);
+    return concepts.map((concept) => ({
+      name: concept.name,
+      sector: resolveDomainSector(concept.domain, registry),
+    }));
   },
 });
 
