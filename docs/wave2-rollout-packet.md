@@ -188,7 +188,7 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    remove it. Rerun the queue evidence.
 9. **Revision backfill.** [Stage 2](#stage-2-revision-backfill).
 10. **Passage activation.** This is separate work, per
-    [plan 15](plans/2026-08-01-15-passage-index.md#operator-runbook-each-step-contacts-production).
+    [plan 15](plans/2026-08-01-15-passage-index.md#operator-runbook).
     `scripts/convex-deploy.ts` passes `--codegen disable`, so the deploy does
     not regenerate `convex/_generated`; the hand-written `components.rag` and
     `passages` types stay as committed. The runtime resolves both through
