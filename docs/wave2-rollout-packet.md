@@ -156,12 +156,13 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
    schema and index preparation. Stop on any removal, required-field change,
    unexpected component change or an authentication prompt.
 4. **Deploy.** Run `vp run convex:deploy` from the same checkout.
-5. **Verify the backend.** Run the inspection and coverage again. Expect exit 0,
-   all six groups deployed, `rag` active, no in-progress schema, and the root
-   modules equal to the attested artifact. Run coverage from the pinned
-   checkout: a checkout that contains the unmerged studio comparison
-   candidate adds a seventh group, `studio-comparison`, which stays missing
-   (exit 3) after this deploy.
+5. **Verify the backend.** Run the inspection again, then run coverage from
+   the pinned `91cb3047` checkout. Only that checkout expects exit 0 with all
+   six groups deployed. Also expect `rag` active, no in-progress schema, and
+   the root modules equal to the attested artifact. Current source includes
+   the studio comparison, so its coverage adds a seventh group,
+   `studio-comparison`, and reports exit 3 until a studio backend release is
+   deployed. That exit 3 does not verify this deploy.
 6. **Agent worker.** Push the prepared `homelab-infra` branch, review it as a
    PR against `main`, and merge it. The merge is the production authorization:
    Argo CD syncs `kubernetes/infra/frequency-worker` automatically, and the

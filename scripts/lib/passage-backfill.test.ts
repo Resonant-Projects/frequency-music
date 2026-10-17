@@ -149,6 +149,46 @@ describe("runBackfill", () => {
     );
   });
 
+  test("a failure before any page returns reports the gate as unknown", async () => {
+    const failure = new Error("fetch failed");
+    const { callBatch } = pages(failure);
+    const run = await runBackfill(callBatch, DRY, noSleep);
+    expect(run).toMatchObject({ enabled: null, batches: 0, error: failure });
+    const report = backfillReport(run, DRY);
+    expect(report).toContain("indexing=unknown");
+    expect(report).toContain("scope=partial batches=0 (stopped by an error)");
+    expect(backfillExitCode(run, DRY)).toBe(1);
+  });
+
+  test.each([
+    [true, "indexing=enabled"],
+    [false, "indexing=disabled"],
+  ])(
+    "a returned page reports the server's gate (%s)",
+    async (enabled, line) => {
+      const { callBatch } = pages(page({ enabled, isDone: true }));
+      const run = await runBackfill(callBatch, DRY, noSleep);
+      expect(run.enabled).toBe(enabled);
+      expect(backfillReport(run, DRY)).toContain(line);
+    },
+  );
+
+  test.each([
+    [true, "indexing=enabled"],
+    [false, "indexing=disabled"],
+  ])(
+    "a later failure keeps the last gate a page returned (%s)",
+    async (enabled, line) => {
+      const failure = new Error("fetch failed");
+      const { callBatch } = pages(page({ enabled }), failure);
+      const run = await runBackfill(callBatch, DRY, noSleep);
+      expect(run).toMatchObject({ enabled, batches: 1, error: failure });
+      expect(run.totals.scanned).toBe(10);
+      expect(backfillReport(run, DRY)).toContain(line);
+      expect(backfillExitCode(run, DRY)).toBe(1);
+    },
+  );
+
   test("apply pauses between batches and a dry run does not", async () => {
     const sleep = vi.fn(async () => {});
     await runBackfill(twoPages(), APPLY, { sleep });

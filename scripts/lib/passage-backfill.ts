@@ -87,7 +87,9 @@ const TOTAL_KEYS = [
 ] as const satisfies readonly (keyof BackfillTotals)[];
 
 export type BackfillRun = {
-  enabled: boolean;
+  // The server's indexing gate from the last page returned; null until a page
+  // returns, so a run that fails on its first call does not guess.
+  enabled: boolean | null;
   batches: number;
   // True only when the last page reported isDone: every source was scanned.
   complete: boolean;
@@ -115,7 +117,7 @@ export async function runBackfill(
     ((milliseconds: number) =>
       new Promise<void>((resolve) => setTimeout(resolve, milliseconds)));
   const run: BackfillRun = {
-    enabled: false,
+    enabled: null,
     batches: 0,
     complete: false,
     canaryStopped: false,
@@ -192,7 +194,7 @@ export function backfillReport(
     : `scope=partial batches=${run.batches} (${run.error === undefined ? "canary stopped at the first page with pending work" : "stopped by an error"})`;
   const lines = [
     options.apply ? "APPLIED" : "DRY RUN (use --apply to execute)",
-    `indexing=${run.enabled ? "enabled" : "disabled"}`,
+    `indexing=${run.enabled === null ? "unknown" : run.enabled ? "enabled" : "disabled"}`,
     scope,
     `sources: scanned=${totals.scanned} textBearing=${totals.textBearing} pending=${totals.pending} indexed=${totals.indexed} failed=${totals.failed}`,
     `estimate: chars=${totals.pendingChars} tokens≈${estimate.tokens} cost≈$${estimate.usd.toFixed(4)} at $${PASSAGE_USD_PER_MILLION_TOKENS}/1M tokens (${PASSAGE_EMBEDDING_MODEL})`,

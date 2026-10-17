@@ -6,7 +6,9 @@
 // bytes untouched.
 // oxlint-disable-next-line import/no-unassigned-import -- Loads .env.local before Convex URL resolution.
 import "varlock/auto-load";
-import { writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { open, rename, rm } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import {
   createEvalQuery,
@@ -189,9 +191,34 @@ function productionQuery(): EvalQuery {
 }
 
 /**
+ * Writes `text` completely to a new file beside `path` and returns its name.
+ * The random name is created exclusively, so it never follows or reuses an
+ * existing entry; a failed write removes only the file this call created.
+ */
+async function stage(path: string, text: string): Promise<string> {
+  const temporary = join(
+    dirname(path),
+    `.${basename(path)}.${randomUUID()}.tmp`,
+  );
+  const handle = await open(temporary, "wx");
+  try {
+    await handle.writeFile(text);
+    await handle.sync();
+    await handle.close();
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await rm(temporary, { force: true }).catch(() => {});
+    throw error;
+  }
+  return temporary;
+}
+
+/**
  * Arguments are checked before any client exists, and every selected dataset is
  * read before the first write, so a bad argument or a failed read rewrites
- * nothing.
+ * nothing. Every selected file is staged before any is replaced, so a failed
+ * staging write leaves every golden file as it was. Each replacement is an
+ * atomic rename; a failed rename can still leave earlier files replaced.
  */
 export async function main(argv: readonly string[] = process.argv.slice(2)) {
   let names: DatasetName[];
@@ -210,12 +237,25 @@ export async function main(argv: readonly string[] = process.argv.slice(2)) {
     const rows = await Promise.all(ids.map((id) => materialize(query, id)));
     outputs.push({ path, rows });
   }
-  for (const { path, rows } of outputs) {
-    await writeFile(
-      path,
-      rows.map((row) => JSON.stringify(row)).join("\n") + "\n",
+  // Temporary files not yet renamed into place; removed on any failure.
+  const pending = new Set<string>();
+  try {
+    const staged: { path: string; temporary: string; count: number }[] = [];
+    for (const { path, rows } of outputs) {
+      const text = rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
+      const temporary = await stage(path, text);
+      pending.add(temporary);
+      staged.push({ path, temporary, count: rows.length });
+    }
+    for (const { path, temporary, count } of staged) {
+      await rename(temporary, path);
+      pending.delete(temporary);
+      console.log(`wrote ${count} rows to ${path}`);
+    }
+  } finally {
+    await Promise.allSettled(
+      [...pending].map((temporary) => rm(temporary, { force: true })),
     );
-    console.log(`wrote ${rows.length} rows to ${path}`);
   }
   return 0;
 }

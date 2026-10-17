@@ -964,7 +964,9 @@ export default defineSchema({
     requiredRatings: v.array(v.string()),
     revealedAt: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_revealedAt", ["revealedAt"]),
+  })
+    .index("by_revealedAt", ["revealedAt"])
+    .index("by_purpose", ["purpose"]),
 
   mediaJobs: defineTable({
     kind: v.string(),

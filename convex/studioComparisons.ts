@@ -800,8 +800,10 @@ export const list = query({
     await requireHumanIdentity(ctx);
     const groups = await ctx.db
       .query("blindGroups")
+      .withIndex("by_purpose", (q) =>
+        q.eq("purpose", STUDIO_COMPARISON_PURPOSE),
+      )
       .order("desc")
-      .filter((q) => q.eq(q.field("purpose"), STUDIO_COMPARISON_PURPOSE))
       .take(LIST_LIMIT);
     const rows = [];
     for (const group of groups) {

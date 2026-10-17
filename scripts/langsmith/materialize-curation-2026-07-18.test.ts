@@ -9,15 +9,62 @@ import {
 } from "vite-plus/test";
 
 // Every side effect is mocked: Varlock resolves nothing, the Convex client
-// answers from memory and records each query, and no golden file is written.
-const { clients, calls, missing, writeFile } = vi.hoisted(() => ({
-  clients: [] as string[],
-  missing: new Set<string>(),
-  calls: [] as { name: string; args: Record<string, any> }[],
-  writeFile: vi.fn(async (_path: string, _text: string) => {}),
-}));
+// answers from memory and records each query, and the file system is an
+// in-memory map, so no golden file is written.
+const { clients, calls, missing, disk, faults, open, rename, rm } = vi.hoisted(
+  () => {
+    const memory = new Map<string, string>();
+    // A path substring whose open, write, close or rename fails.
+    const injected: {
+      open?: string;
+      write?: string;
+      close?: string;
+      rename?: string;
+    } = {};
+    return {
+      clients: [] as string[],
+      missing: new Set<string>(),
+      calls: [] as { name: string; args: Record<string, any> }[],
+      disk: memory,
+      faults: injected,
+      open: vi.fn(async (path: string, flags: string) => {
+        if (flags !== "wx") throw new Error(`unexpected flags ${flags}`);
+        if (injected.open && path.includes(injected.open)) {
+          // Someone else's entry already holds the name.
+          memory.set(path, "foreign");
+          throw Object.assign(new Error("EEXIST"), { code: "EEXIST" });
+        }
+        if (memory.has(path)) throw new Error(`EEXIST ${path}`);
+        memory.set(path, "");
+        return {
+          writeFile: async (text: string) => {
+            if (injected.write && path.includes(injected.write)) {
+              memory.set(path, text.slice(0, 3));
+              throw new Error("ENOSPC");
+            }
+            memory.set(path, text);
+          },
+          sync: async () => {},
+          close: async () => {
+            if (injected.close && path.includes(injected.close))
+              throw new Error("EIO");
+          },
+        };
+      }),
+      rename: vi.fn(async (from: string, to: string) => {
+        if (injected.rename && to.includes(injected.rename))
+          throw new Error("EXDEV");
+        memory.set(to, memory.get(from)!);
+        memory.delete(from);
+      }),
+      rm: vi.fn(async (path: string, _options: unknown) => {
+        memory.delete(path);
+      }),
+    };
+  },
+);
 vi.mock("varlock/auto-load", () => ({}));
-vi.mock("node:fs/promises", () => ({ writeFile }));
+vi.mock("node:fs/promises", () => ({ open, rename, rm }));
 vi.mock("convex/browser", () => ({
   ConvexHttpClient: class {
     constructor(url: string) {
@@ -86,17 +133,25 @@ function answer(name: string, args: Record<string, any>) {
   }
 }
 
+const GOLDEN_PATHS = Object.values(DATASETS).map((dataset) => dataset.path);
+const ORIGINALS = new Map(GOLDEN_PATHS.map((path) => [path, `old ${path}`]));
+
 const queried = () => new Set(calls.map((call) => call.name));
+/** Golden files replaced by a rename, in rename order. */
 const written = () =>
-  writeFile.mock.calls.map(([path, text]) => ({
+  rename.mock.calls.map(([, path]) => ({
     path,
-    rows: text
+    rows: disk
+      .get(path)!
       .trimEnd()
       .split("\n")
       .map((line) => JSON.parse(line)),
   }));
+const temporaries = () =>
+  [...disk.keys()].filter((path) => !ORIGINALS.has(path));
 
 beforeEach(() => {
+  for (const [path, text] of ORIGINALS) disk.set(path, text);
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -105,7 +160,12 @@ afterEach(() => {
   clients.length = 0;
   calls.length = 0;
   missing.clear();
-  writeFile.mockClear();
+  disk.clear();
+  for (const key of ["open", "write", "close", "rename"] as const)
+    delete faults[key];
+  open.mockClear();
+  rename.mockClear();
+  rm.mockClear();
 });
 
 describe("parseDatasetArgs", () => {
@@ -154,7 +214,8 @@ describe("main", () => {
     ).resolves.toBe(1);
     expect(clients).toEqual([]);
     expect(calls).toEqual([]);
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+    expect(disk).toEqual(ORIGINALS);
   });
 
   test("--dataset hypotheses reads and rewrites only the hypothesis file", async () => {
@@ -166,6 +227,12 @@ describe("main", () => {
     expect(written().map((file) => file.path)).toEqual([
       DATASETS.hypotheses.path,
     ]);
+    expect(open).toHaveBeenCalledTimes(1);
+    for (const path of [
+      DATASETS.extractions.path,
+      DATASETS["weekly-briefs"].path,
+    ])
+      expect(disk.get(path)).toBe(ORIGINALS.get(path));
     const rows = written()[0]!.rows;
     expect(rows.map((row) => row._id)).toEqual(HYPOTHESIS_IDS);
     expect(rows.find((row) => row._id === H4)).toBeUndefined();
@@ -202,6 +269,80 @@ describe("main", () => {
 
     await expect(main([])).rejects.toThrow("weeklyBrief did not return");
     expect(queried().has("extractions:get")).toBe(true);
-    expect(writeFile).not.toHaveBeenCalled();
+    expect(open).not.toHaveBeenCalled();
+    expect(disk).toEqual(ORIGINALS);
+  });
+});
+
+describe("main file replacement", () => {
+  test("each file is written whole to a fresh name beside it, then renamed over it", async () => {
+    await expect(main([])).resolves.toBe(0);
+
+    expect(open).toHaveBeenCalledTimes(3);
+    const staged = open.mock.calls.map(([path]) => path);
+    expect(new Set(staged).size).toBe(3);
+    // Every file is staged before the first is replaced.
+    expect(Math.max(...open.mock.invocationCallOrder)).toBeLessThan(
+      Math.min(...rename.mock.invocationCallOrder),
+    );
+    expect(rename.mock.calls).toEqual(
+      GOLDEN_PATHS.map((path, i) => [staged[i], path]),
+    );
+    for (const [i, path] of GOLDEN_PATHS.entries()) {
+      expect(staged[i]).toMatch(
+        new RegExp(
+          `^data/eval/\\.${path.split("/").pop()!.replaceAll(".", "\\.")}\\.[0-9a-f-]{36}\\.tmp$`,
+        ),
+      );
+    }
+    expect(temporaries()).toEqual([]);
+    expect(rm).not.toHaveBeenCalled();
+  });
+
+  test("a failed staging write replaces no file and removes every staged file", async () => {
+    faults.write = "weekly-briefs";
+
+    await expect(main([])).rejects.toThrow("ENOSPC");
+    expect(open).toHaveBeenCalledTimes(3);
+    expect(rename).not.toHaveBeenCalled();
+    expect(disk).toEqual(ORIGINALS);
+  });
+
+  test("a failed close removes that staged file and replaces nothing", async () => {
+    faults.close = "extractions";
+
+    await expect(main([])).rejects.toThrow("EIO");
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(rename).not.toHaveBeenCalled();
+    expect(disk).toEqual(ORIGINALS);
+  });
+
+  test("a name it could not create exclusively is left alone", async () => {
+    faults.open = "hypotheses";
+
+    await expect(main([])).rejects.toThrow("EEXIST");
+    expect(rename).not.toHaveBeenCalled();
+    const [foreign] = temporaries();
+    expect(foreign).toContain("hypotheses-golden.jsonl");
+    expect(disk.get(foreign!)).toBe("foreign");
+    expect(rm.mock.calls.map(([path]) => path)).not.toContain(foreign);
+    expect(disk.size).toBe(ORIGINALS.size + 1);
+  });
+
+  test("a failed rename keeps that file and the rest, and removes what is left staged", async () => {
+    faults.rename = "hypotheses";
+
+    await expect(main([])).rejects.toThrow("EXDEV");
+    // Not a transaction: the file renamed before the failure stays replaced.
+    expect(disk.get(DATASETS.extractions.path)).not.toBe(
+      ORIGINALS.get(DATASETS.extractions.path),
+    );
+    expect(disk.get(DATASETS.hypotheses.path)).toBe(
+      ORIGINALS.get(DATASETS.hypotheses.path),
+    );
+    expect(disk.get(DATASETS["weekly-briefs"].path)).toBe(
+      ORIGINALS.get(DATASETS["weekly-briefs"].path),
+    );
+    expect(temporaries()).toEqual([]);
   });
 });

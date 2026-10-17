@@ -759,6 +759,35 @@ describe("studio upload admission", () => {
       },
     ]);
   });
+
+  test("the list holds the newest 50 comparisons and no other blind group", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (let i = 1; i <= 51; i++) {
+        await ctx.db.insert("blindGroups", {
+          purpose: "studioComparison",
+          members: [],
+          requiredRatings: [],
+          createdAt: i,
+        });
+        // Interleaved, so a newer group of another purpose would displace a
+        // comparison if the purpose were not part of the scan.
+        await ctx.db.insert("blindGroups", {
+          purpose: i % 2 ? "voiceShootout" : "studyFamily",
+          members: [],
+          requiredRatings: [],
+          createdAt: 1000 + i,
+        });
+      }
+    });
+    const rows = await keith(t).query(api.studioComparisons.list, {});
+    expect(rows.map((row) => row.createdAt)).toEqual(
+      Array.from({ length: 50 }, (_, i) => 51 - i),
+    );
+    expect(new Set(rows.map((row) => row.recipeTitle))).toEqual(
+      new Set(["Incomplete comparison"]),
+    );
+  });
 });
 
 describe("studio upload content", () => {
