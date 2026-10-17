@@ -5,7 +5,8 @@ import { zodToConvexFields } from "convex-helpers/server/zod4";
 import { v } from "convex/values";
 import { action, internalQuery } from "./_generated/server";
 import { agentToolByName } from "./agentToolRegistry";
-import { requireAgentToolSecret } from "./auth";
+import { requireAgentToolSecretInAction } from "./auth";
+import { agentToolSurface } from "./shared/authFailures";
 import type { AgentToolName } from "./shared/agentToolArgs";
 
 export function makeAgentToolAction(name: AgentToolName) {
@@ -19,7 +20,10 @@ export function makeAgentToolAction(name: AgentToolName) {
       const { agentSecret, ...rest } = args as Record<string, unknown> & {
         agentSecret: string;
       };
-      requireAgentToolSecret(agentSecret);
+      await requireAgentToolSecretInAction(ctx, agentSecret, {
+        surface: agentToolSurface(name),
+        operation: `action:${name}`,
+      });
       return await definition.run(ctx, rest);
     },
   });

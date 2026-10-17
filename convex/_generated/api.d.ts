@@ -26,6 +26,7 @@ import type * as aggregates from "../aggregates.js";
 import type * as audioArtifacts from "../audioArtifacts.js";
 import type * as audioFeedback from "../audioFeedback.js";
 import type * as auth from "../auth.js";
+import type * as authFailures from "../authFailures.js";
 import type * as blindGroups from "../blindGroups.js";
 import type * as campaigns from "../campaigns.js";
 import type * as claims from "../claims.js";
@@ -139,6 +140,7 @@ declare const fullApi: ApiFromModules<{
   audioArtifacts: typeof audioArtifacts;
   audioFeedback: typeof audioFeedback;
   auth: typeof auth;
+  authFailures: typeof authFailures;
   blindGroups: typeof blindGroups;
   campaigns: typeof campaigns;
   claims: typeof claims;

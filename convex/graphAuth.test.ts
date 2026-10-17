@@ -12,11 +12,18 @@ describe("concept graph write authorization", () => {
 });
 
 describe("agent-tool HTTP authorization", () => {
-  test("uses constant-time secret comparison", async () => {
+  test("uses the shared constant-time secret check", async () => {
     const source = await readFile("convex/agentToolsHttp.ts", "utf8");
 
-    expect(source).toContain("constantTimeEqual");
-    expect(source).not.toContain("!== process.env.AGENT_TOOL_SECRET");
+    expect(source).toContain("agentToolSecretRejection(");
+    expect(source).not.toContain("process.env.AGENT_TOOL_SECRET");
+    const auth = await readFile("convex/auth.ts", "utf8");
+    const check = auth.slice(
+      auth.indexOf("export function agentToolSecretRejection"),
+    );
+    expect(check.slice(0, check.indexOf("\n}\n"))).toContain(
+      "constantTimeEqual(provided, expected)",
+    );
   });
 });
 

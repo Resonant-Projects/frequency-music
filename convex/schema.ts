@@ -8,6 +8,10 @@ import {
   recoveryTargetValidator,
   failureStatusValidator,
 } from "./shared/operationRecovery";
+import {
+  AUTH_FAILURE_REASONS,
+  AUTH_FAILURE_SURFACES,
+} from "./shared/authFailures";
 import { defineSchema, defineTable } from "convex/server";
 import { literals } from "convex-helpers/validators";
 import { v } from "convex/values";
@@ -290,6 +294,19 @@ export default defineSchema({
     .index("by_investigation", ["investigationRunId"])
     .index("by_agent_run", ["agentRunId"])
     .index("by_recovery_run", ["recoveryRunId"]),
+  // Hourly counters of rejected service-identity calls (convex/authFailures.ts).
+  // Bounded labels only: no presented secret, hash of one, or full headers.
+  // Stores no _storage ids, so mediaSweeper needs no reference check.
+  authFailureCounters: defineTable({
+    windowStart: v.number(),
+    surface: literals(...AUTH_FAILURE_SURFACES),
+    reason: literals(...AUTH_FAILURE_REASONS),
+    operation: v.string(),
+    count: v.number(),
+    firstAt: v.number(),
+    lastAt: v.number(),
+    lastUserAgent: v.optional(v.string()),
+  }).index("by_key", ["windowStart", "surface", "reason", "operation"]),
   // ==========================================================================
   // USERS
   // ==========================================================================

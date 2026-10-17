@@ -89,3 +89,7 @@ of `AUTH_BYPASS_SECRET` at rotation time, (b) add Convex-side alerting on
 repeated auth failures to one function (turns a 5-minute log buffer into a
 signal), (c) longer-term, give the worker/scripts a real service identity
 instead of the shared bypass secret. Filed in the improvements ledger.
+(a) and (b) landed 2026-10-17 in `docs/service-identity-inventory.md`. Because
+`sources:updateText` is a mutation, the burst appears as `[auth-failure]
+surface=bypass reason=secret_mismatch … persisted=false` log lines, which give
+the hunt a stable string to grep.
