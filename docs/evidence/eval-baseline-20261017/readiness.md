@@ -227,23 +227,43 @@ vpx tsx scripts/langsmith/upload-datasets.ts > "$RUN_DIR/upload-2.log" 2>&1; ech
 
 # 2. One run at a time: run_eval <target> <runner> <i>. A run whose log already
 #    passes is skipped, so the step can be repeated after an interruption.
-#    After extraction 1, check its cost in the Anthropic console (STOP 6).
-#    If a run fails, rename its log to <target>-<i>.fail1.log and run it again.
-#    A second failure is STOP 5: report the error lines and stop.
+#    run_eval returns non-zero when the runner fails, and the chain below
+#    stops at the first failure. If a run fails, rename its log
+#    to <target>-<i>.fail1.log and rerun that step. A second failure of the same
+#    run is STOP 5: run_eval says so; report the error lines and stop.
 run_eval() {
-  local log="$RUN_DIR/$1-$3.log"
+  local log="$RUN_DIR/$1-$3.log" rc
   if [ -f "$log" ] && grep -qx 'exit=0' "$log" && grep -q '^EVAL_RUN_COMPLETE ' "$log"; then
     echo "skip $log (passed)"; return 0
   fi
-  vpx tsx "scripts/langsmith/$2" > "$log" 2>&1; echo "exit=$?" >> "$log"
+  vpx tsx "scripts/langsmith/$2" > "$log" 2>&1; rc=$?
+  echo "exit=$rc" >> "$log"
   tail -n 3 "$log"
+  if [ "$rc" -ne 0 ] || ! grep -q '^EVAL_RUN_COMPLETE ' "$log"; then
+    if [ -f "$RUN_DIR/$1-$3.fail1.log" ]; then
+      echo "STOP 5: $1 run $3 failed twice; report the error lines and stop" >&2
+    else
+      echo "FAILED $log: rename it to $1-$3.fail1.log and rerun this step once" >&2
+    fi
+    return 1
+  fi
 }
-run_eval extraction eval-extraction.ts 1      # then check its cost (STOP 6)
-run_eval extraction eval-extraction.ts 2
-run_eval extraction eval-extraction.ts 3
-for i in 1 2 3; do run_eval hypothesis eval-hypothesis.ts "$i"; done
+run_eval extraction eval-extraction.ts 1
+# STOP 6: check run 1's cost in the Anthropic console. Only when it is within
+# the limit, record that with `touch "$RUN_DIR/stop6-ok"`. The chain below
+# refuses to start without that file and stops at its first failure.
+[ -f "$RUN_DIR/stop6-ok" ] &&
+  run_eval extraction eval-extraction.ts 2 && run_eval extraction eval-extraction.ts 3 &&
+  run_eval hypothesis eval-hypothesis.ts 1 && run_eval hypothesis eval-hypothesis.ts 2 &&
+  run_eval hypothesis eval-hypothesis.ts 3
 # eval-weekly-brief.ts only after briefs reach >= 5 rows and stage 2 is approved.
 ```
+
+`run_eval` and the chain were exercised offline with stubbed runners, so no
+eval ran. Without `stop6-ok`, only extraction 1 runs. When every run passes,
+all six run. When hypothesis 1 fails, the chain stops there. An exit-0 log
+without a completion marker counts as a failure. A second failure after a
+`.fail1.log` prints STOP 5.
 
 Step 3 reads the means. This reader is read-only against LangSmith. It
 refuses a log without `exit=0` or a completion line, or one that contains
