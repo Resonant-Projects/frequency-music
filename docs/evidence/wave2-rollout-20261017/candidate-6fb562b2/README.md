@@ -77,7 +77,7 @@ not only against Git.
 | --- | --- |
 | Functions | 442 to 610: 168 added, 0 removed, 45 changed. No added argument is required. Four arguments change by widening a union only (`flac`, `studioComparison`, `litmusRender` and the pitch-plan literals). The rest of the changes are optional arguments and return shapes that gain schema fields. |
 | HTTP routes | 24 added (22 agent-tool routes, `/discord/interactions`, `/telegram/webhook/*`), 0 removed |
-| Authentication | `convex/auth.config.ts` unchanged |
+| Authentication | `convex/auth.config.ts` unchanged. This compares the authentication configuration only, not the authorization inside HTTP handlers; see the post-deploy route probe in the [window record](window.md) |
 | Root schema | 29 to 40 tables (11 added), 0 tables, fields or indexes removed, no field becomes required, 14 indexes added on existing tables |
 | Components | `rag`, `rag/workpool`, `rag/workpool/batchWorker` added; the existing six unchanged in definition and schema |
 | Crons | 17 to 22: `normalize-legacy-extraction-history`, `reconcile-extraction-attempts`, `reconcile-operation-recovery` (300 s each), `rebuild-docket` (Thu 16:30Z) and `passage-index-sweep` (Sun 15:30Z) added; 0 removed or changed |
