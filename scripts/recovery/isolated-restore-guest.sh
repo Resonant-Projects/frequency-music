@@ -60,6 +60,71 @@ ALLOWED_ENABLED=(
   'systemd-udev-load-credentials.service'
   'dpkg-db-backup.timer' 'e2scrub_all.timer' 'fstrim.timer' 'logrotate.timer' 'man-db.timer'
 )
+# Vendor-shipped enablement links (under /usr/lib/systemd/system and its /lib
+# alias) are accepted only as these exact <directory>/<unit> pairs, and only
+# when the link points at the same-named regular unit file in that directory.
+# They are the Debian 13 systemd/dbus/util-linux core links observed in the
+# 2026-10-17 CT113 archive; none starts Docker, a network, a remote login,
+# cron or application work. Links under /etc and /usr/local keep the
+# ALLOWED_ENABLED check above; any other vendor link refuses.
+VENDOR_CORE_LINKS=(
+  getty.target.wants/getty-static.service
+  initrd.target.wants/systemd-battery-check.service
+  initrd.target.wants/systemd-bsod.service
+  initrd.target.wants/systemd-pcrphase-initrd.service
+  local-fs.target.wants/run-lock.mount
+  local-fs.target.wants/tmp.mount
+  multi-user.target.wants/dbus.service
+  multi-user.target.wants/getty.target
+  multi-user.target.wants/systemd-ask-password-wall.path
+  multi-user.target.wants/systemd-logind.service
+  multi-user.target.wants/systemd-user-sessions.service
+  sockets.target.wants/dbus.socket
+  sockets.target.wants/systemd-creds.socket
+  sockets.target.wants/systemd-hostnamed.socket
+  sockets.target.wants/systemd-initctl.socket
+  sockets.target.wants/systemd-journald-dev-log.socket
+  sockets.target.wants/systemd-journald.socket
+  sockets.target.wants/systemd-pcrextend.socket
+  sockets.target.wants/systemd-pcrlock.socket
+  sockets.target.wants/systemd-sysext.socket
+  sockets.target.wants/systemd-udevd-control.socket
+  sockets.target.wants/systemd-udevd-kernel.socket
+  sysinit.target.wants/dev-hugepages.mount
+  sysinit.target.wants/dev-mqueue.mount
+  sysinit.target.wants/kmod-static-nodes.service
+  sysinit.target.wants/ldconfig.service
+  sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+  sysinit.target.wants/sys-fs-fuse-connections.mount
+  sysinit.target.wants/sys-kernel-config.mount
+  sysinit.target.wants/sys-kernel-debug.mount
+  sysinit.target.wants/sys-kernel-tracing.mount
+  sysinit.target.wants/systemd-ask-password-console.path
+  sysinit.target.wants/systemd-binfmt.service
+  sysinit.target.wants/systemd-firstboot.service
+  sysinit.target.wants/systemd-hibernate-clear.service
+  sysinit.target.wants/systemd-hwdb-update.service
+  sysinit.target.wants/systemd-journal-catalog-update.service
+  sysinit.target.wants/systemd-journal-flush.service
+  sysinit.target.wants/systemd-journald.service
+  sysinit.target.wants/systemd-machine-id-commit.service
+  sysinit.target.wants/systemd-modules-load.service
+  sysinit.target.wants/systemd-pcrmachine.service
+  sysinit.target.wants/systemd-pcrphase-sysinit.service
+  sysinit.target.wants/systemd-pcrphase.service
+  sysinit.target.wants/systemd-random-seed.service
+  sysinit.target.wants/systemd-sysctl.service
+  sysinit.target.wants/systemd-sysusers.service
+  sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+  sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+  sysinit.target.wants/systemd-tmpfiles-setup.service
+  sysinit.target.wants/systemd-tpm2-setup-early.service
+  sysinit.target.wants/systemd-tpm2-setup.service
+  sysinit.target.wants/systemd-udev-trigger.service
+  sysinit.target.wants/systemd-udevd.service
+  sysinit.target.wants/systemd-update-done.service
+  timers.target.wants/systemd-tmpfiles-clean.timer
+)
 UNITS_TO_MASK=(
   app-compose.service
   lab-guest-patch.timer lab-guest-patch.service
@@ -264,6 +329,22 @@ allowed_enabled() {
   return 1
 }
 
+# vendor_core_link <vendor-dir> <link>: the link's path below <dir> must equal
+# one VENDOR_CORE_LINKS entry exactly, and the link must point at the
+# same-named regular unit file in <dir>.
+vendor_core_link() {
+  local dir=$1 link=$2 rel name target entry
+  rel=${link#"$dir"/}; name=${rel##*/}
+  for entry in "${VENDOR_CORE_LINKS[@]}"; do
+    [ "$rel" = "$entry" ] || continue
+    target=$(readlink "$link") || return 1
+    case "$target" in "../$name"|"/usr/lib/systemd/system/$name"|"/lib/systemd/system/$name") ;; *) return 1 ;; esac
+    [ -f "$dir/$name" ] && [ ! -L "$dir/$name" ] || return 1
+    return 0
+  done
+  return 1
+}
+
 cmd_prepare() {
   local ctid=$1
   require_ctid "$ctid"
@@ -361,10 +442,16 @@ PYTARGET
     printf 'symlinked enablement directory: %s\n' "${symlinked_dirs[@]}" >&2
     die "offline rootfs has symlinked enablement directories; units inside them cannot be enumerated"
   fi
-  while IFS= read -r link; do
-    unit=${link##*/}
-    allowed_enabled "$unit" || unexpected+=("${link#"$root"}")
-  done < <(find "${enablement_dirs[@]}" -type l \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) | sort)
+  for dir in "${enablement_dirs[@]}"; do
+    while IFS= read -r link; do
+      unit=${link##*/}
+      case "$dir" in
+        "$root/usr/lib/systemd/system"|"$root/lib/systemd/system")
+          vendor_core_link "$dir" "$link" || unexpected+=("${link#"$root"}") ;;
+        *) allowed_enabled "$unit" || unexpected+=("${link#"$root"}") ;;
+      esac
+    done < <(find "$dir" -type l \( -path '*.wants/*' -o -path '*.requires/*' -o -path '*.upholds/*' \) | sort)
+  done
   # SysV runlevel links become boot dependencies through systemd-sysv-generator
   # unless a native unit of the same name shadows the script. Anything that is
   # not shadowed and not on the allow-list is an unexpected enabled unit.
@@ -386,7 +473,7 @@ PYTARGET
     die "offline rootfs has enabled units outside the allow-list"
   fi
   # Follow dependencies declared in unit files and drop-ins, not just links.
-  python3 - "$root" "${ALLOWED_ENABLED[@]}" <<'PYDEPS' || die "boot dependency audit failed"
+  python3 - "$root" "${ALLOWED_ENABLED[@]}" "${VENDOR_CORE_LINKS[@]##*/}" <<'PYDEPS' || die "boot dependency audit failed"
 import fnmatch, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 patterns = sys.argv[2:] + [
@@ -397,6 +484,10 @@ patterns = sys.argv[2:] + [
     "systemd-tmpfiles-setup.service", "systemd-tmpfiles-setup-dev.service",
     "systemd-sysctl.service", "systemd-modules-load.service", "systemd-udevd.service",
     "systemd-udevd-control.socket", "systemd-udevd-kernel.socket", "systemd-udev-trigger.service",
+    # Dependencies of the vendor core links, observed in the 2026-10-17 archive.
+    "-.slice", "system.slice", "user.slice", "slices.target",
+    "emergency.target", "emergency.service", "first-boot-complete.target", "time-set.target",
+    "modprobe@drm.service", "modprobe@efi_pstore.service", "modprobe@fuse.service",
 ]
 dirs = [root / p for p in ("etc/systemd/system", "usr/local/lib/systemd/system", "usr/lib/systemd/system", "lib/systemd/system")]
 keys = {"Wants", "Requires", "Requisite", "BindsTo", "Upholds", "OnSuccess", "OnFailure"}
@@ -548,8 +639,10 @@ assert_guest_isolated() {
   # Only lo, bridges (dockerd creates docker0 and compose bridges at daemon
   # start) and bridge-enslaved ports are acceptable. A pct-provided interface
   # has no master and is not a bridge.
+  # /sys/class/net/bonding_masters is the bonding driver's control file, a
+  # regular file and not an interface; every real interface is a symlink.
   local bad
-  bad=$(guest_exec "$ctid" -- sh -c 'for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = lo ] && continue; [ -d "$i/bridge" ] && continue; [ -e "$i/master" ] && continue; echo "$n"; done')
+  bad=$(guest_exec "$ctid" -- sh -c 'for i in /sys/class/net/*; do n=${i##*/}; [ "$n" = bonding_masters ] && [ -f "$i" ] && [ ! -L "$i" ] && continue; [ "$n" = lo ] && continue; [ -d "$i/bridge" ] && continue; [ -e "$i/master" ] && continue; echo "$n"; done')
   [ -z "$bad" ] || die "unexpected interfaces in guest: $bad"
   local state
   state=$(guest_exec "$ctid" -- systemctl is-system-running 2>/dev/null || true)

@@ -94,6 +94,8 @@ Tooling in this repository:
 | --- | --- | --- |
 | `scripts/recovery/isolated-restore-guest.sh` | Proxmox node, root | one subcommand per step; every subcommand exits non-zero on any failed check. `restore` repeats preflight, restores a stopped guest, strips the archive's production `net0`, asserts the guest's own `ceph-vm` volumes, and writes a per-run record naming the exact rootfs and data volumes. `prepare`, `start`, `wait-boot`, `verify`, `start-db`, `start-backend`, `read-identities` and `destroy` all refuse unless the live config matches that record; `start` re-asserts the full stopped config immediately before `pct start`; `destroy` checks the record’s CTID and node before stopping a running guest, then checks live configuration drift before purging. Every `pct exec`, `push`, `pull` and `start` runs under a host-side deadline; `pct restore`, `mount` and `unmount` do not, which is why the operator's own step ceilings in the block above matter |
 | `scripts/recovery/guest-module-identities.py` | inside the guest | bounded read of `/api/get_config_hashes` from a loopback-only origin (any other host is refused before a request is built): key from a 0600 file, hard 30 s wall-clock deadline over connect, headers and body enforced by a watchdog that terminates the process, 4 MiB cap, no redirects, proxy variables ignored; raw body parsed in memory and discarded; writes only sorted `{path, environment, hash}` to a new 0600 file and refuses to overwrite |
+| `scripts/recovery/host-receipt-reads.sh` | Proxmox node, root | the restore receipt's items 2, 3, 4 and 5 to 7, run after `read-identities`: repeats the live isolation gate and record match, refuses unless exactly `app-postgres-1` and `app-convex-backend-1` run, prints interface kinds, running service names, the backend image ID and RepoDigests, and fixed PostgreSQL recovery log lines since the container started, then pushes the guest reader and runs it under the same admin-key trap as `read-identities`; it pulls the result into the run directory, never overwriting it, and every guest call carries a host-side deadline |
+| `scripts/recovery/guest-receipt-reads.py` | inside the guest | numeric-loopback only, key from a private regular file, process watchdog: the `convex-deployment-inspect.ts` metadata in the same output shape (its `metadataHash` port is pinned to the TS digest of a fixture), one fixed read-only query per expected component, presence (never values) of seven environment names, allowlisted document counts, and a bounded `audioArtifacts` blob sample checked against `_storage` size and SHA-256 without sending the key; writes a new 0600 file of allowlisted shapes only |
 | `scripts/recovery/tests/test-isolated-restore-guest.sh` | Mac and Linux, offline | 103 shim-based cases, each requiring the exact exit code and, where stated, the exact failure message: wrong node, occupied CTID, bad archive, low space or memory, net0 that cannot be removed, rootfs on another storage, `mp0` of another guest or at another mount point, `unused` volume entries, privileged guest, pre-existing volumes for the CTID, live volumes drifting from the record, missing record, units outside the allow-list under `.wants` and `.requires` in `/etc` and `/usr/lib`, SysV runlevel links not shadowed by a native unit, executable `rc.local`, a run record that cannot be written after restore, networking or a hookscript attached between `prepare` and `start`, `start` on a guest that is not stopped, symlinked systemd directories and Docker data roots that escape the rootfs, missing container config, systemd never settling, stray interface, running container, unmasked unit, readiness timeouts, guest calls without a host-side deadline, evidence overwrite, record mismatch, an unsafe running guest at `destroy` (stopped, then refused), a guest that does not stop, leftover volume, and the happy paths |
 | `scripts/recovery/tests/smoke-guest-module-identities.sh` with `fake-backend.py` | Mac and Linux, offline | success without configuration leakage, overflow, HTTP error, malformed identity, redirect refusal, loose key permissions, rerun refusal, and three deadline reproductions (one incomplete chunk held open, no headers ever, and a drip that never trips the per-socket timeout) each asserted to finish within 5 s under a 2 s deadline with a sanitized failure and no output file |
 | `scripts/recovery/tests/test-rehearsal-block.sh` | Mac and Linux, offline | 27 cases over the rehearsal block extracted verbatim from this document and run against fake `ssh`, `scp` and `vpx`: every connection carries both the SSH options and a wall-clock ceiling, the `ERR` trap exists and is reachable because no connection is wrapped in a function, a clean run reaches `destroy` without the trap, a failed step and a stalled connection both stop the sequence and purge, and an evidence pull that produces nothing fails closed |
@@ -215,3 +217,24 @@ Its compressed size is 18,261,050,784 bytes; decompressed size is
 rootfs and `/srv/app-data`. These are archive-integrity facts, not a passed
 application restore or acceptance of its September 13 recovery point for a
 current production rollback.
+
+## October 17 vendor enablement links
+
+The first part A rehearsal of the [Wave 2 receipt](evidence/wave2-restore-receipt-20261017/README.md)
+restored the 2026-10-17 archive, then `prepare` refused 53 vendor `.wants`
+links that the Debian 13 systemd, dbus and util-linux packages ship under
+`/usr/lib/systemd/system` (each also seen through the merged-`/usr` `/lib`
+alias). No link under `/etc` was refused. The offline audit now accepts a
+vendor link only as one of the exact `<target>.wants/<unit>` pairs in
+`VENDOR_CORE_LINKS` (the 56 shipped in that archive, including the three the
+old allow-list already passed) and only when it points at the same-named
+regular unit file in that directory. Links under `/etc` and `/usr/local` keep
+the `ALLOWED_ENABLED` check, so a vendor-only core unit enabled there still
+refuses, and a vendor link to Docker, containerd, SSH, networking or any other
+unit refuses. The boot dependency audit additionally approves, by exact name,
+the 11 core units those vendor units declare (`-.slice`, `system.slice`,
+`user.slice`, `slices.target`, `emergency.target`, `emergency.service`,
+`first-boot-complete.target`, `time-set.target`, and `modprobe@` for `drm`,
+`efi_pstore` and `fuse`). The masks are unchanged. Run against the systemd
+trees extracted from that archive with `pct` shimmed, `prepare` passes and
+audits a closure of 111 units.
