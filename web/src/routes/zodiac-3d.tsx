@@ -10,6 +10,7 @@ import {
 } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { api } from "../../../convex/_generated/api";
+import { MAX_CONCEPT_SECTOR_NAMES } from "../../../convex/shared/domainMappings";
 import { createQueryWithStatus } from "../integrations/convex";
 import { COLORS, SECTORS } from "../lib/zodiac-data";
 import { prefersReducedMotion, watchReducedMotion } from "../lib/zodiac-camera";
@@ -28,6 +29,10 @@ import {
   createAtlasScene,
   type AtlasScene,
 } from "../lib/knowledge-atlas-scene";
+import {
+  type ConceptSectors,
+  conceptSectorLookupNames,
+} from "../lib/item-sectors";
 import type { ConstellationConcept } from "../lib/zodiac-types";
 import { useSpaceNavigation } from "../lib/space-navigation";
 import "./knowledge-atlas.css";
@@ -111,6 +116,29 @@ export function Zodiac3D() {
       : "skip",
   );
   const itemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
+  const conceptSectorsQ = createQueryWithStatus(
+    api.dashboard.conceptSectors,
+    () => {
+      const items = itemsQ.data();
+      const names = items
+        ? conceptSectorLookupNames(
+            [
+              ...items.sources.map((source) => source.topics),
+              ...items.extractions.map((extraction) => extraction.topics),
+              ...items.hypotheses.map((hypothesis) => hypothesis.concepts),
+            ],
+            MAX_CONCEPT_SECTOR_NAMES,
+          )
+        : [];
+      return names.length ? { names } : "skip";
+    },
+  );
+  // Keep the last result while a refreshed item list re-subscribes, so items
+  // do not drop to their keyword fallback sector between results.
+  const conceptSectors = createMemo<ConceptSectors>((previous) => {
+    const rows = conceptSectorsQ.data();
+    return rows ? new Map(rows.map((row) => [row.name, row.sector])) : previous;
+  }, new Map());
   const [selected, setSelected] = createSignal<AtlasNode | null>(null);
   const [history, setHistory] = createSignal<AtlasNode[]>([]);
   const navigation = useSpaceNavigation();
@@ -140,7 +168,12 @@ export function Zodiac3D() {
       : "skip";
   });
   const baseGraph = createMemo(() =>
-    buildAtlas(concepts(), edgesQ.data() ?? [], itemsQ.data()),
+    buildAtlas(
+      concepts(),
+      edgesQ.data() ?? [],
+      itemsQ.data(),
+      conceptSectors(),
+    ),
   );
   // Keep previously visited records so Back remains meaningful outside the initial sample.
   const [discovered, setDiscovered] = createSignal<AtlasNode[]>([]);
@@ -636,22 +669,26 @@ export function Zodiac3D() {
                   >
                     <div class="atlas-relations">
                       <div class="atlas-section-title">
-                        <h3>Concepts in this domain</h3>
+                        <h3>In this domain</h3>
                         <span>{matchingNodes().length}</span>
                       </div>
                       <For each={matchingNodes()}>
-                        {(concept) => (
+                        {(item) => (
                           <button
                             type="button"
                             class="atlas-relation"
-                            onClick={() => select(concept)}
+                            onClick={() => select(item)}
                           >
-                            <AtlasMark kind="concept" />
+                            <AtlasMark kind={item.kind} />
                             <span class="atlas-relation-body">
                               <span class="atlas-relation-title">
-                                {concept.title}
+                                {item.title}
                               </span>
-                              <small>{concept.mentions} mentions</small>
+                              <small>
+                                {item.kind === "concept"
+                                  ? `${item.mentions} mentions`
+                                  : item.kind}
+                              </small>
                             </span>
                           </button>
                         )}
@@ -659,8 +696,8 @@ export function Zodiac3D() {
                       <Show when={!matchingNodes().length}>
                         <p class="atlas-message">
                           {loading()
-                            ? "Loading concepts…"
-                            : "No concepts in the current sample. Check the Concepts layer or explore another domain."}
+                            ? "Loading research…"
+                            : "Nothing in this domain in the current sample. Check the layers or explore another domain."}
                         </p>
                       </Show>
                     </div>

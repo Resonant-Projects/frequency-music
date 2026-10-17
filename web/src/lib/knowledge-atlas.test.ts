@@ -197,3 +197,26 @@ it("honors the domain query's registered display-sector mapping", () => {
     "synthesis",
   );
 });
+it("places pipeline items in the domain of their classified concepts", () => {
+  const graph = buildAtlas(
+    [],
+    [],
+    pipeline,
+    new Map([["resonance", "geometry"]]),
+  );
+  const domainOf = (id: string) =>
+    graph.nodes.find((node) => node.id === id)?.domain;
+  expect(domainOf("source:s1")).toBe("geometry");
+  expect(domainOf("hypothesis:h1")).toBe("geometry");
+  // No topics and no classified concept: the keyword fallback's default.
+  expect(domainOf("extraction:e1")).toBe("music");
+  // Recipes carry no topics and stay outside the domain sectors.
+  expect(domainOf("recipe:r1")).toBeUndefined();
+  expect(connectedIds(graph, "domain:geometry").has("source:s1")).toBe(true);
+});
+it("falls back to topic keywords for items without classified concepts", () => {
+  const graph = buildAtlas([], [], pipeline);
+  expect(graph.nodes.find((node) => node.id === "source:s1")?.domain).toBe(
+    "wave",
+  );
+});

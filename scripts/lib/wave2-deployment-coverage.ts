@@ -165,6 +165,15 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     crons: [],
     components: [],
   },
+  {
+    id: "zodiac-domain-sectors",
+    description:
+      "Atlas items placed by their classified concepts' domains (plan Phase E; unmerged candidate)",
+    functions: fn("dashboard", "conceptSectors"),
+    httpRoutes: [],
+    crons: [],
+    components: [],
+  },
 ]);
 
 const API_REFERENCE = /\bapi\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\b/g;

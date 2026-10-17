@@ -9,7 +9,11 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { resolveDomainsForSector } from "./domainMappings";
+import {
+  MAX_CONCEPT_SECTOR_NAMES,
+  resolveDomainSector,
+  resolveDomainsForSector,
+} from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
@@ -586,6 +590,54 @@ export const pipelineItems = query({
         status: r.status,
       })),
     };
+  },
+});
+
+const MAX_CONCEPT_DOMAIN_REGISTRY_ROWS = 500;
+
+/**
+ * Display sectors for the named concepts, so the atlas can place pipeline
+ * items by their classified concepts. Unclassified concepts, and the
+ * "general" default an unclassified concept keeps, are omitted: they carry no
+ * domain signal, and the caller falls back for them.
+ */
+export const conceptSectors = query({
+  args: { names: v.array(v.string()) },
+  returns: v.array(v.object({ name: v.string(), sector: v.string() })),
+  handler: async (ctx, args) => {
+    const names = [
+      ...new Set(
+        args.names.map((name) => name.toLowerCase().trim()).filter(Boolean),
+      ),
+    ];
+    if (names.length > MAX_CONCEPT_SECTOR_NAMES) {
+      throw new Error(
+        `conceptSectors accepts at most ${MAX_CONCEPT_SECTOR_NAMES} names; received ${names.length}`,
+      );
+    }
+    const [registry, concepts] = await Promise.all([
+      ctx.db.query("conceptDomains").take(MAX_CONCEPT_DOMAIN_REGISTRY_ROWS),
+      Promise.all(
+        names.map((name) =>
+          ctx.db
+            .query("concepts")
+            .withIndex("by_name", (q) => q.eq("name", name))
+            .first(),
+        ),
+      ),
+    ]);
+    return concepts.flatMap((concept) =>
+      concept &&
+      concept.classifiedAt !== undefined &&
+      concept.domain !== "general"
+        ? [
+            {
+              name: concept.name,
+              sector: resolveDomainSector(concept.domain, registry),
+            },
+          ]
+        : [],
+    );
   },
 });
 

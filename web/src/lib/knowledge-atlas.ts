@@ -1,4 +1,6 @@
-import { conceptDomainToSector, SECTORS } from "./zodiac-data";
+import { inferDisplaySectorFromDomain } from "../../../convex/shared/domainMappings";
+import { type ConceptSectors, itemSector } from "./item-sectors";
+import { SECTORS } from "./zodiac-data";
 import type {
   ConstellationConcept,
   OrbitalSource,
@@ -65,6 +67,7 @@ export function buildAtlas(
   concepts: Array<ConstellationConcept & { sector?: string }>,
   conceptEdges: Array<{ fromId: string; toId: string; relationship: string }>,
   pipeline?: AtlasPipeline,
+  conceptSectors: ConceptSectors = new Map(),
 ): AtlasGraph {
   const nodes = new Map<string, AtlasNode>();
   const edges: AtlasEdge[] = [];
@@ -87,7 +90,7 @@ export function buildAtlas(
       recordId: concept._id,
       title: concept.displayName,
       kind: "concept",
-      domain: concept.sector ?? conceptDomainToSector(concept.domain),
+      domain: concept.sector ?? inferDisplaySectorFromDomain(concept.domain),
       mentions: concept.mentionCount,
     });
   }
@@ -109,6 +112,7 @@ export function buildAtlas(
       recordId: source._id,
       title: source.title || "Untitled source",
       kind: "source",
+      domain: itemSector(source.topics, conceptSectors),
       status: source.status,
     });
     tags(id, source.topics, "tagged with");
@@ -121,6 +125,7 @@ export function buildAtlas(
       recordId: extraction._id,
       title: `Extraction: ${source?.title ?? (extraction.topics.slice(0, 2).join(", ") || "research claims")}`,
       kind: "extraction",
+      domain: itemSector(extraction.topics, conceptSectors),
     });
     edges.push({
       from: atlasId("source", extraction.sourceId),
@@ -136,6 +141,7 @@ export function buildAtlas(
       recordId: hypothesis._id,
       title: hypothesis.title,
       kind: "hypothesis",
+      domain: itemSector(hypothesis.concepts, conceptSectors),
       status: hypothesis.status,
     });
     tags(id, hypothesis.concepts, "investigates");

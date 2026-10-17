@@ -493,3 +493,63 @@ describe("dashboard editorial signals", () => {
     ]);
   });
 });
+
+describe("dashboard concept sectors", () => {
+  const concept = (name: string, domain: string, classifiedAt?: number) => ({
+    name,
+    displayName: name,
+    aliases: [],
+    domain,
+    classifiedAt,
+    mentionCount: 1,
+    hypothesisCount: 0,
+    createdAt: 1,
+    updatedAt: 1,
+  });
+
+  test("returns the display sector of each classified concept by name", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("concepts", concept("tonnetz", "sacred-geometry", 5));
+      await ctx.db.insert("concepts", concept("chladni plate", "cymatics", 5));
+      await ctx.db.insert("concepts", concept("timbre", "music-production", 5));
+      await ctx.db.insert("concepts", concept("beating", "acoustics"));
+      await ctx.db.insert("concepts", concept("misc", "general", 5));
+      await ctx.db.insert("conceptDomains", {
+        name: "cymatics",
+        status: "known",
+        introducedBy: "system",
+        sectorMapping: "wave",
+        createdAt: 1,
+        updatedAt: 1,
+      });
+    });
+
+    const result = await t.query(api.dashboard.conceptSectors, {
+      names: [
+        " Tonnetz ",
+        "chladni plate",
+        "timbre",
+        "beating",
+        "misc",
+        "absent",
+      ],
+    });
+
+    // Unclassified concepts and the unclassified "general" default carry no
+    // domain signal, so they are left to the caller's fallback.
+    expect(result).toEqual([
+      { name: "tonnetz", sector: "geometry" },
+      { name: "chladni plate", sector: "wave" },
+      { name: "timbre", sector: "synthesis" },
+    ]);
+  });
+
+  test("rejects a lookup larger than its bound", async () => {
+    const t = convexTest(schema, modules);
+    const names = Array.from({ length: 501 }, (_, i) => `concept ${i}`);
+    await expect(
+      t.query(api.dashboard.conceptSectors, { names }),
+    ).rejects.toThrow(/at most 500/);
+  });
+});
