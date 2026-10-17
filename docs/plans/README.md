@@ -117,11 +117,12 @@ Small; several are gate-specific, and item 1 must finish before plan 13 starts.
    day. Credentials now resolve through Varlock on `devbox` (STOP 1 clear
    there). Keith ratified 6 hypothesis rows (H1–H3, H5–H7, H4 dropped) on
    2026-10-17 ([curation sheet](../../data/eval/curation-2026-10-17.md)).
-   Applying it found production drift in 9 golden extraction rows and the
-   briefs' embedded source metadata, so the golden files are not regenerated
-   yet. Weekly briefs stay at 2 rows under STOP 4, because production has no
-   thesis rows. Still needed from Keith: the drift choice, upload approval by
-   hash, and a budget. $11 is proposed as a stage-1 estimate, not a cap
+   They are materialized in `hypotheses-golden.jsonl`, clearing the
+   hypothesis floor. The extraction and brief files keep their approved
+   bytes, so the production drift found in them is not committed. Weekly
+   briefs stay at 2 rows under STOP 4, because production has no thesis rows.
+   Still needed from Keith: upload approval by hash (the upload sends all
+   three files) and a budget. $11 is proposed as a stage-1 estimate, not a cap
    ($6.80 single-attempt worst case, $20.39 retry ceiling); no budget is
    approved ([readiness](../evidence/eval-baseline-20261017/readiness.md)).
    Record that baseline before starting plan 13 so its generator changes

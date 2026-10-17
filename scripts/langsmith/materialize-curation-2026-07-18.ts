@@ -1,5 +1,9 @@
 #!/usr/bin/env -S vpx tsx
 
+// Regenerates the golden files from production through read-only Convex
+// queries. With no arguments it rewrites all three; `--dataset <name>`
+// (repeatable) queries and rewrites only the named files and leaves the others'
+// bytes untouched.
 // oxlint-disable-next-line import/no-unassigned-import -- Loads .env.local before Convex URL resolution.
 import "varlock/auto-load";
 import { writeFile } from "node:fs/promises";
@@ -10,6 +14,7 @@ import {
   getSource,
   requireRow,
   withPlaceholderTheses,
+  type EvalQuery,
   type Row,
 } from "../lib/eval-dataset-helpers";
 
@@ -74,14 +79,9 @@ const HYPOTHESIS_EXTRACTION_REPOINTS: Record<string, readonly string[]> = {
   jh7d82hc6s34cdww0k25sb4gd18aafhv: ["j97f14ww3grvkgbgx82zppkj5x86hmsg"],
 };
 
-const convexUrl =
-  process.env.CONVEX_URL ??
-  process.env.CONVEX_SELF_HOSTED_URL ??
-  "https://convex.resonantprojects.art";
-const client = new ConvexHttpClient(convexUrl);
-const query = createEvalQuery(client);
+type Materialize = (query: EvalQuery, id: string) => Promise<Row>;
 
-async function materializeExtraction(id: string) {
+async function materializeExtraction(query: EvalQuery, id: string) {
   const extraction = await requireRow(query, "extraction", id);
   const source = await getSource(query, extraction.sourceId);
   return {
@@ -92,19 +92,19 @@ async function materializeExtraction(id: string) {
   };
 }
 
-async function materializeHypothesis(id: string) {
+async function materializeHypothesis(query: EvalQuery, id: string) {
   const hypothesis = await requireRow(query, "hypothesis", id);
   const repointed = HYPOTHESIS_EXTRACTION_REPOINTS[id];
   if (repointed) hypothesis.extractionIds = [...repointed];
   return await enrichHypothesis(query, hypothesis, "throw");
 }
 
-async function materializeBrief(id: string) {
+async function materializeBrief(query: EvalQuery, id: string) {
   const brief = await requireRow(query, "weeklyBrief", id);
   const [hypotheses, recipes, storedTheses, failures] = await Promise.all([
     Promise.all(
       (brief.recommendedHypothesisIds ?? []).map((hypothesisId: string) =>
-        materializeHypothesis(hypothesisId),
+        materializeHypothesis(query, hypothesisId),
       ),
     ),
     Promise.all(
@@ -125,23 +125,106 @@ async function materializeBrief(id: string) {
   };
 }
 
-async function writeJsonl(path: string, rows: Row[]) {
-  await writeFile(
-    path,
-    rows.map((row) => JSON.stringify(row)).join("\n") + "\n",
-  );
-  console.log(`wrote ${rows.length} rows to ${path}`);
+/** Golden files in write order. The keys are the `--dataset` names. */
+export const DATASETS = {
+  extractions: {
+    path: "data/eval/extractions-golden.jsonl",
+    ids: EXTRACTION_IDS,
+    materialize: materializeExtraction,
+  },
+  hypotheses: {
+    path: "data/eval/hypotheses-golden.jsonl",
+    ids: HYPOTHESIS_IDS,
+    materialize: materializeHypothesis,
+  },
+  "weekly-briefs": {
+    path: "data/eval/weekly-briefs-golden.jsonl",
+    ids: WEEKLY_BRIEF_IDS,
+    materialize: materializeBrief,
+  },
+} satisfies Record<
+  string,
+  { path: string; ids: readonly string[]; materialize: Materialize }
+>;
+
+export type DatasetName = keyof typeof DATASETS;
+const DATASET_NAMES = Object.keys(DATASETS) as DatasetName[];
+
+const USAGE = `Usage: materialize-curation-2026-07-18.ts [--dataset <name>]...
+  <name>: ${DATASET_NAMES.join(", ")}. Repeatable. Default: all three.`;
+
+function isDatasetName(name: string): name is DatasetName {
+  return Object.hasOwn(DATASETS, name);
 }
 
-await writeJsonl(
-  "data/eval/extractions-golden.jsonl",
-  await Promise.all(EXTRACTION_IDS.map(materializeExtraction)),
-);
-await writeJsonl(
-  "data/eval/hypotheses-golden.jsonl",
-  await Promise.all(HYPOTHESIS_IDS.map(materializeHypothesis)),
-);
-await writeJsonl(
-  "data/eval/weekly-briefs-golden.jsonl",
-  await Promise.all(WEEKLY_BRIEF_IDS.map(materializeBrief)),
-);
+/**
+ * The datasets to materialize, in write order. Throws on anything it does not
+ * recognize, so a typo never falls back to rewriting every file.
+ */
+export function parseDatasetArgs(argv: readonly string[]): DatasetName[] {
+  if (argv.length === 0) return DATASET_NAMES;
+  const selected = new Set<DatasetName>();
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] !== "--dataset") {
+      throw new Error(`unknown argument ${JSON.stringify(argv[i])}`);
+    }
+    const name = argv[++i];
+    if (name === undefined || name === "" || name.startsWith("-")) {
+      throw new Error("--dataset needs a dataset name");
+    }
+    if (!isDatasetName(name)) {
+      throw new Error(`unknown dataset ${JSON.stringify(name)}`);
+    }
+    selected.add(name);
+  }
+  return DATASET_NAMES.filter((name) => selected.has(name));
+}
+
+function productionQuery(): EvalQuery {
+  const convexUrl =
+    process.env.CONVEX_URL ??
+    process.env.CONVEX_SELF_HOSTED_URL ??
+    "https://convex.resonantprojects.art";
+  return createEvalQuery(new ConvexHttpClient(convexUrl));
+}
+
+/**
+ * Arguments are checked before any client exists, and every selected dataset is
+ * read before the first write, so a bad argument or a failed read rewrites
+ * nothing.
+ */
+export async function main(argv: readonly string[] = process.argv.slice(2)) {
+  let names: DatasetName[];
+  try {
+    names = parseDatasetArgs(argv);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`${message}\n${USAGE}`);
+    return 1;
+  }
+
+  const query = productionQuery();
+  const outputs: { path: string; rows: Row[] }[] = [];
+  for (const name of names) {
+    const { path, ids, materialize } = DATASETS[name];
+    const rows = await Promise.all(ids.map((id) => materialize(query, id)));
+    outputs.push({ path, rows });
+  }
+  for (const { path, rows } of outputs) {
+    await writeFile(
+      path,
+      rows.map((row) => JSON.stringify(row)).join("\n") + "\n",
+    );
+    console.log(`wrote ${rows.length} rows to ${path}`);
+  }
+  return 0;
+}
+
+if (import.meta.main) {
+  main()
+    .then((code) => process.exit(code))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

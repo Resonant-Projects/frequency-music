@@ -2,17 +2,19 @@
 
 This package follows the [preflight](preflight.md) and the
 [runner repair](runner-repair.md), both from the same day, at base `57f7c90`.
-**No eval ran, no dataset was uploaded, no paid call was made, no Convex
-command ran and no score was recorded.** `docs/eval-baselines.md` keeps every
+**No eval ran, no dataset was uploaded, no paid call was made, nothing was
+written to Convex and no score was recorded.** The only production access was
+read-only Convex queries. `docs/eval-baselines.md` keeps every
 `—`.
 
-**Verdict: BLOCKED on three human decisions, otherwise ready.** Credentials
+**Verdict: BLOCKED on two human decisions, otherwise ready.** Credentials
 now resolve, and the tooling self-tests pass. Keith ratified the six
-recommended hypotheses on 2026-10-17, so that decision is closed. Applying it
-found production drift outside the approved delta (see
-[Ratification applied](#ratification-applied-2026-10-17)), so the golden files
-are not yet regenerated. Once Keith decides the items in
-[Decisions](#decisions), extraction and hypotheses can be baselined with the
+recommended hypotheses on 2026-10-17, and they are now materialized in
+`hypotheses-golden.jsonl` (see
+[Materialized hypotheses](#materialized-hypotheses-2026-10-17)). That clears
+the hypothesis floor. The extraction and brief files keep their approved
+snapshot bytes. Once Keith approves the upload and a budget
+([Decisions](#decisions)), extraction and hypotheses can be baselined with the
 [runbook](#runbook). Weekly briefs remain under STOP 4: a read-only production
 export the same day found no further eligible brief, because production holds
 no thesis rows (see the
@@ -27,7 +29,7 @@ no thesis rows (see the
 | STOP 2 | `vp test scripts/langsmith/` | 12 files, 123 tests, all passing, with no network. |
 | STOP 3 | `upload-datasets.ts` and `buildMissingExamples` | Unchanged and still idempotent: an example whose inputs and outputs already exist is skipped. The upload never deletes, so a row removed locally after upload stays in LangSmith. Ratify before uploading. |
 | STOP 4, extraction | `data/eval/extractions-golden.jsonl` | 18 rows. Clear. |
-| STOP 4, hypothesis | `data/eval/hypotheses-golden.jsonl` | **Ratified at 6 rows** (H1–H3, H5–H7; H4 dropped), over the floor. The materializer lists them. The tracked file still holds the 4-row snapshot until the [drift decision](#ratification-applied-2026-10-17); the regenerated 6-row file matches the approved snapshot on every upload key. |
+| STOP 4, hypothesis | `data/eval/hypotheses-golden.jsonl` | **6 rows, ratified and materialized** (H1–H3, H5–H7; H4 dropped). Clear. Every upload key equals the approved snapshot ([Materialized hypotheses](#materialized-hypotheses-2026-10-17)). |
 | STOP 4, weekly brief | `data/eval/weekly-briefs-golden.jsonl` | 2 rows. **Blocked.** The 2026-10-17T03:12Z read-only export read all 18 production briefs. Only the ratified 2026-07-06 pair passes the export filter, and none of the other 16 references an active thesis, because production has 0 thesis rows. |
 | Recipe | — | No runner and no golden file. The section stays `—`. |
 
@@ -35,19 +37,21 @@ no thesis rows (see the
 
 `upload-datasets.ts` uploads all three golden files in one run, and it has no
 per-dataset flag. Stage 1 scores only extraction and hypotheses, but an
-approved upload also sends the 2 brief rows. Nothing is uploaded yet, and no
-upload is approved.
+approved upload also sends the 2 brief rows. The materializer's `--dataset`
+selector does not change this. Nothing is uploaded yet, and no upload is
+approved.
 
-These are the tracked files, which are still the approved snapshot. The
-regenerated set and its hashes are in
-[Ratification applied](#ratification-applied-2026-10-17). The upload is
-approved by the hashes of whichever set Keith's drift decision commits.
+These are the tracked files, and the upload candidate. Approve the upload by
+these hashes.
 
 | File | Rows | sha256 (tracked) | Private text sent by the upload |
 | --- | --- | --- | --- |
-| `extractions-golden.jsonl` | 18 | `006f94985c364c5263fead819af22343fa66930a811e9fbfdc655bb73bd93c3a` | Yes: each row's source `rawText` (input key) |
-| `hypotheses-golden.jsonl`, 4-row snapshot | 4 | `69e28a4079da1edf6f9afa37792c797ca94464269d63fe3f05674a5c7e2ab82e` | No. The file's `sources` hold `rawText`, but the upload does not read `sources` |
-| `weekly-briefs-golden.jsonl` | 2 | `9f836cd476cd79ae5c90a82c00104bca892d5644ad9e0d11125c9391c6c8a5f6` | Yes: each embedded hypothesis carries `sources` with `rawText`, and the upload sends the whole `hypotheses` array |
+| `extractions-golden.jsonl` | 18 | `006f94985c364c5263fead819af22343fa66930a811e9fbfdc655bb73bd93c3a` (approved snapshot) | Yes: each row's source `rawText` (input key) |
+| `hypotheses-golden.jsonl` | 6 | `1090976e9ca2a44c5fb21a433136bbbfc24ca270d05eb40e1274653fcbd5aaaa` (materialized 2026-10-17) | No. The file's `sources` hold `rawText`, but the upload does not read `sources` |
+| `weekly-briefs-golden.jsonl` | 2 | `9f836cd476cd79ae5c90a82c00104bca892d5644ad9e0d11125c9391c6c8a5f6` (approved snapshot) | Yes: each embedded hypothesis carries `sources` with `rawText`, and the upload sends the whole `hypotheses` array |
+
+The 4-row hypothesis snapshot it replaced had sha256
+`69e28a4079da1edf6f9afa37792c797ca94464269d63fe3f05674a5c7e2ab82e`.
 
 An earlier version of this table said the brief file had no `rawText`. That
 was wrong: the brief upload sends the embedded H4's source text, in the
@@ -113,10 +117,9 @@ brief row adds at most $0.33. The added-row figures use the largest existing
 row.
 
 The 6-row figure was rendered from the regenerated hypothesis rows at
-2026-10-17T14:19Z, with the same method. Their upload keys equal the approved
-snapshot, so the figure holds under either drift choice. Neither choice
-changes extraction inputs (`rawText` is unchanged), and output is priced at
-the caps.
+2026-10-17T14:19Z, with the same method. The committed file is byte-identical
+to those rows, and the extraction file is the snapshot the 18-row figure was
+rendered from, so the stage 1 figures hold.
 
 **Proposed budget request: $11 for stage 1, not approved.** It is an
 estimate, not an enforced cap. Nothing in the runners stops spending at $11.
@@ -139,25 +142,41 @@ hypotheses (H1–H3, H5–H7), dropped H4, and left weekly briefs at `—` under
 STOP 4. The materializer edit that applies it is done. See the
 [curation sheet](../../../data/eval/curation-2026-10-17.md).
 
-Three decisions remain, all Keith's:
+**Closed: drift.** The drift found while applying the ratification is closed
+as option (b): only the hypothesis file was regenerated, and the extraction
+and brief files keep their approved bytes. Keith's ratification approved no
+other content change. See
+[Materialized hypotheses](#materialized-hypotheses-2026-10-17).
 
-1. **Drift (new).** Production changed 9 golden extraction rows, and the
-   embedded H4 source metadata in both briefs, since the approved snapshot.
-   Choose (a) accept the current production content, or (b) keep the July
-   content and commit only the regenerated hypothesis file. Details:
-   [Ratification applied](#ratification-applied-2026-10-17).
-2. **Upload approval.** Approve the exact bytes, by the hashes of the files
-   committed after decision 1. This includes the private extraction `rawText`
-   and the source `rawText` embedded in both brief rows.
-3. **Budget.** Approve stage 1 at the proposed $11, an estimate rather than
+Two decisions remain, both Keith's:
+
+1. **Upload approval.** Approve the exact bytes, by the three hashes in
+   [Upload content](#upload-content). The upload sends all three files, even
+   though stage 1 scores only two. It includes the private extraction
+   `rawText` and the source `rawText` nested in both brief rows'
+   `hypotheses[].sources[]`.
+2. **Budget.** Approve stage 1 at the proposed $11, an estimate rather than
    an enforced cap. Stage 2 is approved later.
 
 ## Ratification and drift check
 
-After the materializer regenerates the golden files, run this from the
+Regenerate only the dataset a curation decision changes, for example:
+
+```bash
+vpx tsx scripts/langsmith/materialize-curation-2026-07-18.ts --dataset hypotheses
+```
+
+`--dataset` is repeatable (`extractions`, `hypotheses`, `weekly-briefs`). A run
+without it rewrites all three files. Today that would pull the production
+drift in [Ratification applied](#ratification-applied-2026-10-17) into the
+extraction and brief files. The selector rejects an unknown or empty argument
+before it contacts Convex, and it writes nothing if any read fails.
+
+After the materializer regenerates a golden file, run this from the
 repository root. It needs no secrets and makes no network call. It compares
-every upload key of every regenerated row with the approved snapshot: the
-golden files at `57f7c90` plus the proposed hypothesis file. It ignores a
+every upload key of every row in all three files with the approved snapshot:
+the golden files at `57f7c90` plus the proposed hypothesis file. A file that
+still holds its approved bytes matches by construction. It ignores a
 row's top-level `sources` and `thesis` fields, which the upload does not read.
 The copies nested in a brief's embedded hypotheses are compared, because the
 upload sends them. A changed row,
@@ -279,11 +298,40 @@ the repository with mode 600, because it holds `rawText`:
 | `hypotheses-golden.jsonl` | 6 | `1090976e9ca2a44c5fb21a433136bbbfc24ca270d05eb40e1274653fcbd5aaaa` |
 | `weekly-briefs-golden.jsonl` | 2 | `a547a6f20e7702c85129b4cd48b28e0b70d4815690d861fc34f78666c8ab5a3d` |
 
-Under choice (a), these hashes are the upload candidate. Under choice (b), the
-upload candidate is this hypothesis file with the two tracked files. The
-production rows may change again, so rerun the materializer and the drift
-check just before committing either set, and approve by the hashes of the
-files committed.
+This section asked Keith to choose (a) these hashes as the upload candidate,
+or (b) this hypothesis file with the two tracked files. Option (b) was taken,
+as recorded in [Materialized hypotheses](#materialized-hypotheses-2026-10-17).
+The extraction and brief hashes above are historical, not upload candidates.
+
+## Materialized hypotheses 2026-10-17
+
+Following [Ratification applied](#ratification-applied-2026-10-17), only the
+hypothesis file was regenerated. The materializer gained a `--dataset`
+selector for that. At 2026-10-17T14:38Z Varlock resolved the target to exactly
+`https://convex.resonantprojects.art`. Only the URL and secret-presence
+booleans were printed. At 14:39Z,
+`materialize-curation-2026-07-18.ts --dataset hypotheses` exited 0. It called
+only `hypotheses.get`, `sources.get` and `extractions.get`, all Convex
+queries, and wrote only `hypotheses-golden.jsonl`. Nothing was written to
+Convex, no model was called, and nothing was uploaded.
+
+- The file has the 6 ratified ids in order, and H4 is absent. Its sha256 is
+  `1090976e9ca2a44c5fb21a433136bbbfc24ca270d05eb40e1274653fcbd5aaaa`,
+  byte-identical to the 14:19Z regeneration.
+- H1–H3 equal the `57f7c90` rows, and H5–H7 equal the proposed file, on every
+  upload key. All six are still `draft`, with unchanged `updatedAt`.
+- H2 keeps its repoint to `j97d7hq5d3kndbx5sq26qppqwn8afr0d`.
+- The extraction and brief files are byte-identical to the approved snapshot
+  (`006f9498…` and `9f836cd4…`). The drift check prints `MATCH`.
+- `vp test scripts/langsmith/` passes: 13 files, 139 tests, with no network.
+  The new `materialize-curation-2026-07-18.test.ts` covers the selector,
+  including untouched files and invalid arguments.
+
+Two side effects follow from keeping those files. First, the embedded H4 in
+the tracked brief file still has no `extractionIds`. The H4 pin stays in the
+materializer, so a later brief regeneration keeps H4's content. Second, a run
+without `--dataset` reproduces the drift above, so the drift check stays
+the guard against committing it unreviewed.
 
 ## Runbook
 
@@ -298,7 +346,7 @@ export N_HYP=6
 export RUN_DIR="$HOME/.local/state/frequency-eval/plan008-$(date -u +%Y%m%d)"
 mkdir -p "$RUN_DIR"
 vp test scripts/langsmith/                     # all pass, or STOP 2
-sha256sum data/eval/*-golden.jsonl             # must equal the approved hashes
+sha256sum data/eval/*-golden.jsonl             # must equal the approved hashes (Upload content)
 wc -l data/eval/hypotheses-golden.jsonl        # must equal N_HYP and be >= 5
 
 # 1. Upload, then upload again. The second run must say "already has all N local
