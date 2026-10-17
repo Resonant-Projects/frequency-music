@@ -6,12 +6,14 @@ This package follows the [preflight](preflight.md) and the
 command ran and no score was recorded.** `docs/eval-baselines.md` keeps every
 `—`.
 
-**Verdict: BLOCKED on four operator decisions, otherwise ready.** Credentials
+**Verdict: BLOCKED on three human decisions, otherwise ready.** Credentials
 now resolve, and the tooling self-tests pass. Once Keith decides the items in
 [Decisions](#decisions) and the ratified rows are materialized and pass the
 [drift check](#ratification-and-drift-check), extraction and hypotheses can be
-baselined with the [runbook](#runbook). Weekly briefs remain under STOP 4 until more briefs are
-curated.
+baselined with the [runbook](#runbook). Weekly briefs remain under STOP 4:
+a read-only production export later that day found no further eligible brief,
+because production holds no thesis rows (see the
+[curation sheet](../../../data/eval/curation-2026-10-17.md#weekly-briefs--none-eligible)).
 
 ## Checks
 
@@ -22,8 +24,8 @@ curated.
 | STOP 2 | `vp test scripts/langsmith/` | 12 files, 123 tests, all passing, with no network. |
 | STOP 3 | `upload-datasets.ts` and `buildMissingExamples` | Unchanged and still idempotent: an example whose inputs and outputs already exist is skipped. The upload never deletes, so a row removed locally after upload stays in LangSmith. Ratify before uploading. |
 | STOP 4, extraction | `data/eval/extractions-golden.jsonl` | 18 rows. Clear. |
-| STOP 4, hypothesis | `data/eval/hypotheses-golden.jsonl` | 4 rows. **Blocked** until Keith ratifies at least one of the three rows proposed in [`curation-2026-10-17.md`](../../../data/eval/curation-2026-10-17.md). Accepting all three gives 7. |
-| STOP 4, weekly brief | `data/eval/weekly-briefs-golden.jsonl` | 2 rows. **Blocked.** No other weekly brief exists in a committed file. More need a read-only production export, which this lane may not run. |
+| STOP 4, hypothesis | `data/eval/hypotheses-golden.jsonl` | 4 rows. **Blocked** until Keith ratifies rows proposed in [`curation-2026-10-17.md`](../../../data/eval/curation-2026-10-17.md). The recommendation (H5–H7 kept, H4 dropped) gives 6; keeping H4 gives 7. A fresh read-only check found no drift in H5–H7. |
+| STOP 4, weekly brief | `data/eval/weekly-briefs-golden.jsonl` | 2 rows. **Blocked.** The 2026-10-17T03:12Z read-only export read all 18 production briefs. Only the ratified 2026-07-06 pair passes the export filter, and none of the other 16 references an active thesis, because production has 0 thesis rows. |
 | Recipe | — | No runner and no golden file. The section stays `—`. |
 
 ## Upload content
@@ -100,8 +102,9 @@ Every added hypothesis row adds at most $0.38 (Opus, three runs). Every added
 brief row adds at most $0.33. The added-row figures use the largest existing
 row.
 
-**Proposed budget request: $11 for stage 1.** Stage 2 gets its own approval
-once briefs are curated.
+**Proposed budget request: $11 for stage 1.** It covers the recommended 6
+hypothesis rows and the 7-row case alike. Stage 2 gets its own approval once
+briefs are curated.
 
 **Not priced: LangSmith.** Stage 1 creates 75 traced target runs plus their
 feedback. The cost depends on the LangSmith plan, so it is unknown here.
@@ -111,19 +114,21 @@ should be at most about $1.52. If it is higher, pause before run 2.
 
 ## Decisions
 
-1. **Hypothesis ratification (Keith).** Accept or reject each of the three
-   proposed rows, and make the H4 Claim 4 call, in
+Only three decisions need a human. The mechanical work that applies the first
+one is already authorized by the parent task and needs no separate approval:
+the materializer edit (`HYPOTHESIS_IDS`, plus the H4 extraction pin), its
+read-only production run, and the [drift check](#ratification-and-drift-check).
+Read-only exports are authorized the same way.
+
+1. **Ratification (Keith).** Accept or reject H5, H6 and H7, and choose H4
+   (a) keep or (b) drop, in
    [`curation-2026-10-17.md`](../../../data/eval/curation-2026-10-17.md).
-   Applying the decision needs two further authorizations: an edit to the
-   materializer's `HYPOTHESIS_IDS` in `scripts/langsmith/`, and a read-only
-   production run of the materializer. Then the
-   [drift check](#ratification-and-drift-check) runs.
-2. **Upload approval.** Approve the exact bytes by hash, including the private
-   extraction `rawText`.
+   The sheet recommends keeping all three and dropping H4. For weekly briefs,
+   either leave the section `—` (recommended), or amend the brief criterion
+   that requires an active thesis. No brief in production meets it.
+2. **Upload approval.** Approve the exact bytes by the regenerated files'
+   hashes, including the private extraction `rawText`.
 3. **Budget.** Approve stage 1 at $11. Stage 2 is approved later.
-4. **Weekly-brief path.** Either authorize a read-only production export,
-   `vp run eval:export`, followed by curation of at least 3 briefs from
-   different weeks, or leave the weekly-brief section `—` for now.
 
 ## Ratification and drift check
 
@@ -136,7 +141,10 @@ or a row outside the snapshot, prints `DRIFT`, and those rows go back to Keith
 before any upload. With `MATCH`, record the new `sha256sum` values as the
 upload approval. If any row size changed, recompute the cost estimate.
 
-The check was tested offline. Against the current files it prints `MATCH`. A
+The check was tested offline. Against the current files it prints `MATCH`.
+A read-only simulation of the materializer's enrichment on 2026-10-17 found
+that, without the H4 extraction pin, this check would print `DRIFT` for H4 and
+both weekly-brief rows (see the curation sheet). Add the pin with the ratification edit. A
 temporary copy with all proposed rows appended, and one `rationaleMd` edited,
 reports `DRIFT` on that row and ignores an added `sources` field.
 
