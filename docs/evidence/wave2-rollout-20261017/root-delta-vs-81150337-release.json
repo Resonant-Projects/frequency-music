@@ -1,0 +1,12 @@
+{
+  "releaseManifestSha256": "8961e78e41a9d148f8b43a24098b4a0374e2c9957d114e25adbc07c56328f2fb",
+  "deployedIdentitiesSha256": "9066c3a4224fa944fb623221aff48fe1af3a145f916ab2e628eaa4436833ec79",
+  "scope": "root-module-identities-only",
+  "deploymentAuthorized": false,
+  "deployedCount": 177,
+  "releaseCount": 177,
+  "unchangedCount": 177,
+  "added": [],
+  "removed": [],
+  "changed": []
+}

@@ -1,0 +1,892 @@
+{
+  "target": "https://convex.resonantprojects.art",
+  "startedAt": "2026-10-17T02:57:45.987Z",
+  "observedAt": "2026-10-17T02:57:46.110Z",
+  "moduleHashes": [
+    {
+      "path": "_deps/2EFXKRSH.js",
+      "environment": "isolate",
+      "hash": "028f92bbc29109360021f9a2a6869e8a3f1653f8047c13482ef08faaafe9bdd1"
+    },
+    {
+      "path": "_deps/2XM4WE6X.js",
+      "environment": "isolate",
+      "hash": "931b0a58a0d223a51e08885409702651da52281e0b84fa8b83661c41e76b8691"
+    },
+    {
+      "path": "_deps/2XQQKWG5.js",
+      "environment": "isolate",
+      "hash": "177bcef3776087802e7a6b8f37050c77a32c933c39eb7bee7ebd5fed4756f2d7"
+    },
+    {
+      "path": "_deps/462T26Y5.js",
+      "environment": "isolate",
+      "hash": "ae79becba3743ac2995564698867d69013a22aec9d4cf3836b44e87f9edd5960"
+    },
+    {
+      "path": "_deps/5CVGENEU.js",
+      "environment": "isolate",
+      "hash": "9095a884e2ba1e1486911cca8c13cbd48e0188a034a8c740975face632a18b0f"
+    },
+    {
+      "path": "_deps/67WZ7LB5.js",
+      "environment": "isolate",
+      "hash": "e8758c77d525351b79657ce56c77746aa34862b80d4af39a77002bb0dec503f4"
+    },
+    {
+      "path": "_deps/6EBNBKFQ.js",
+      "environment": "isolate",
+      "hash": "b8e3efb0c666ca94a9f23b21ff67ec94ad079b56d1617f6e1948084320b5adc5"
+    },
+    {
+      "path": "_deps/6PATKJGL.js",
+      "environment": "isolate",
+      "hash": "a379d977a31c7797046d24ef2366e68ff033dfed3b634eb8a69e8eed0f0aff9e"
+    },
+    {
+      "path": "_deps/76QHMB4M.js",
+      "environment": "isolate",
+      "hash": "eacb3ad61344b8cd3a1724dee1b8d7813419bbf0753e6963512d02c1619c1af1"
+    },
+    {
+      "path": "_deps/7CSAGHKK.js",
+      "environment": "isolate",
+      "hash": "90b11a1549127599d31303066d082f14d228e9dab6e45f0dcba0becff744431d"
+    },
+    {
+      "path": "_deps/7CUH2UYX.js",
+      "environment": "isolate",
+      "hash": "44bd950cb2ded53a9729d07db8002706429e139479748e34e4d3bc46153a15e3"
+    },
+    {
+      "path": "_deps/7ZEWP4Z6.js",
+      "environment": "isolate",
+      "hash": "8494a6c8ca36bd4b36dc2930a7bd1ea880550c2c50e706af08a4232e9a256aad"
+    },
+    {
+      "path": "_deps/AGBY4SLT.js",
+      "environment": "isolate",
+      "hash": "c0f6bd7a269cc71e0650522da5377aec2273dc7eb1d678c3e61b4720c15f8417"
+    },
+    {
+      "path": "_deps/AHJZSPY5.js",
+      "environment": "isolate",
+      "hash": "3770cc6437653d3aa339aaf2241bf750d0bdac547c02573ec42db2bb7c659bde"
+    },
+    {
+      "path": "_deps/ALPZTAN6.js",
+      "environment": "isolate",
+      "hash": "091adca70af0377cfcb09e1fd9fafd20aaf278ed0edc0e1668c5349d4015c467"
+    },
+    {
+      "path": "_deps/BCRLU6BL.js",
+      "environment": "isolate",
+      "hash": "9350e9fefccbe021cdf72517bc1093af8408f42f659a9bd6894ac0a98fb35af0"
+    },
+    {
+      "path": "_deps/CNEIIGKZ.js",
+      "environment": "isolate",
+      "hash": "ebc72e00d5a54c79465a05533645b97b2b24aaf262627aad03b97f71c9f25537"
+    },
+    {
+      "path": "_deps/CUNNTWE4.js",
+      "environment": "isolate",
+      "hash": "9c1b5687a6622bcdc5b04d7eb7e94bc4bb0217ec9ff0781934ef098f5db08e3b"
+    },
+    {
+      "path": "_deps/DOG4N2IU.js",
+      "environment": "isolate",
+      "hash": "ab36fffa8e9568f7d1b03041f6458bb653611c7eaaab804f0a03990f81b443d0"
+    },
+    {
+      "path": "_deps/EAD77IPQ.js",
+      "environment": "isolate",
+      "hash": "24629e9008ab9e474b35d138e98e12b4d5fe5a83a919eb14180a1641d6ad88cf"
+    },
+    {
+      "path": "_deps/EFHEZJOY.js",
+      "environment": "isolate",
+      "hash": "ac0b9e3c1255749e8cd3600b5c5f46ecf88ae57e1806044744dfeccfa080130c"
+    },
+    {
+      "path": "_deps/EJ7MJI6K.js",
+      "environment": "isolate",
+      "hash": "7405ebf55fd90f12ece2fdbd294fc84f4d8584f387d115ee9dc4f774ee991d5a"
+    },
+    {
+      "path": "_deps/EMQHCBTM.js",
+      "environment": "isolate",
+      "hash": "e1e2bf02a19271840d23d9a96ef28f93a7ac6d9f3681a1053e62981bd6a61c5d"
+    },
+    {
+      "path": "_deps/ESCHBEYF.js",
+      "environment": "isolate",
+      "hash": "242c7027a54f5412a3daff3b6591b74698180585c39275e6609800556ba4fe3e"
+    },
+    {
+      "path": "_deps/ETEDXLZI.js",
+      "environment": "isolate",
+      "hash": "803d46c106c32e3c18ebf6cb579094e7c048a626f6f1398ee81b13c677deaf53"
+    },
+    {
+      "path": "_deps/F55NYDY7.js",
+      "environment": "isolate",
+      "hash": "4fb6a99c785c0d0b738e70de36d40fd04889a16a9ee5b9046460abf5c7f64509"
+    },
+    {
+      "path": "_deps/F6GVCDG2.js",
+      "environment": "isolate",
+      "hash": "fe5cf7cde1b0d54fd6084a49bd5774bb242e9c2efb7af92d683dd41728c8ed55"
+    },
+    {
+      "path": "_deps/FHOAQ7BV.js",
+      "environment": "isolate",
+      "hash": "70fc0c0530ad018e4f8d028a276916002d9381710e63e85e2630d18ea80976d5"
+    },
+    {
+      "path": "_deps/GJWHZKUA.js",
+      "environment": "isolate",
+      "hash": "1b4325a4a5cafd139b8e00a585e238b0e9143b893d8c817f1d69f484836ec030"
+    },
+    {
+      "path": "_deps/H4KVCNW5.js",
+      "environment": "isolate",
+      "hash": "3ac6edb5d0164a8755f15ee02ef6497bedb2cd1b8c1af776317c570a704c988d"
+    },
+    {
+      "path": "_deps/HWQZ4KVP.js",
+      "environment": "isolate",
+      "hash": "f5fa115b2e50b92697ea4428caefdcf07ef6a6ecf8e3317c56547b984bbc206d"
+    },
+    {
+      "path": "_deps/JA5LBPZZ.js",
+      "environment": "isolate",
+      "hash": "b29724d0f5dee318ace3c69510990c06ff35cfc7cd0be519f83d1d1122ecaf52"
+    },
+    {
+      "path": "_deps/JLVTQE26.js",
+      "environment": "isolate",
+      "hash": "c62af0aa5bcc221c3ceeea94ff03ec55ca7e976b3b08b9126b6fa2f298a8604f"
+    },
+    {
+      "path": "_deps/L6AWDP7J.js",
+      "environment": "isolate",
+      "hash": "40f9ecffea97a0a72c2894f132df7f79f789070893f4f6d2c247ae6c87776eb9"
+    },
+    {
+      "path": "_deps/LB5MAYRZ.js",
+      "environment": "isolate",
+      "hash": "d031d7a9e44f283c3e167b532c9945e570a752441a53af05617ff33150bbdb01"
+    },
+    {
+      "path": "_deps/LKN6OTTO.js",
+      "environment": "isolate",
+      "hash": "6a32c35391ff602b34f8c5c834e016f4d1dd9b96aaa81e64863686ab39fe2008"
+    },
+    {
+      "path": "_deps/MFFMX745.js",
+      "environment": "isolate",
+      "hash": "42467cae8c8dea8eadaa3a93eb70696f6665311cb4e9713db8a7d4f50dd4afb7"
+    },
+    {
+      "path": "_deps/MIQ4OXRT.js",
+      "environment": "isolate",
+      "hash": "249fc8f292ff2d9897e01cb7fa12bb84cbe86d092d40bb8733d7ba9822b6930b"
+    },
+    {
+      "path": "_deps/MWEWORGM.js",
+      "environment": "isolate",
+      "hash": "bef97190006eb191a4d86ba9a2883883ba13087b5604c5c5a63b5610129093c1"
+    },
+    {
+      "path": "_deps/N7AU5T2S.js",
+      "environment": "isolate",
+      "hash": "9ed2a92fb3a609e66461b274510574dfd1d844e993cebeff72fcc4fb369e7d45"
+    },
+    {
+      "path": "_deps/NCGYNRIS.js",
+      "environment": "isolate",
+      "hash": "f19a8271c163395d573f652c431bd783b31d52ac058f70c4229987abf3c11107"
+    },
+    {
+      "path": "_deps/OBFFGNWL.js",
+      "environment": "isolate",
+      "hash": "ac05663508ed077807b59565fe11b9e61dc3332f7431749e92bfa3a19438e29b"
+    },
+    {
+      "path": "_deps/OFEJSTNK.js",
+      "environment": "isolate",
+      "hash": "95d46a009e5b6092d0b9730c5d25fec77301be767d479d75e97697f1ddc30863"
+    },
+    {
+      "path": "_deps/P63HPRSF.js",
+      "environment": "isolate",
+      "hash": "df047c483c88afacc08b92f8872e5c5a4e8897e723fbe0441d01e6b23593ddeb"
+    },
+    {
+      "path": "_deps/Q3EJ5K45.js",
+      "environment": "isolate",
+      "hash": "cfaab9ccd23a7a95d0687578db02b77f8be11f25f3eb3c97a79ace371c12f79a"
+    },
+    {
+      "path": "_deps/QM6BRWRS.js",
+      "environment": "isolate",
+      "hash": "06286146a1d6e4d758b455b7c1aee4dee5c11259af8d3b8ef9a01d1e44dcfa7f"
+    },
+    {
+      "path": "_deps/REQ37DMC.js",
+      "environment": "isolate",
+      "hash": "dada90c6d86e9dd66e81f1189689bfe8860859e558bf1f86c3d17c8bc2926f47"
+    },
+    {
+      "path": "_deps/SFYVXAZN.js",
+      "environment": "isolate",
+      "hash": "f9a71dad7111834b0e932e7590499a84e66fda043f9748482b7e736ed69afd84"
+    },
+    {
+      "path": "_deps/SPH4RH6Y.js",
+      "environment": "isolate",
+      "hash": "813ef843a0ba30daf883c023cd6a3781ec313a6672759dbd368264ecad1fb83c"
+    },
+    {
+      "path": "_deps/STW5XOUG.js",
+      "environment": "isolate",
+      "hash": "9401121b6d9d0925eb2c59b34dc572c838fb549f12ef7788bfefaf7de459ffc2"
+    },
+    {
+      "path": "_deps/TP4CXOHE.js",
+      "environment": "isolate",
+      "hash": "1619a7b2bc00974fdf69473a31b191dea6ff3d09f04542b2685d857556058133"
+    },
+    {
+      "path": "_deps/U6GH6ZJX.js",
+      "environment": "isolate",
+      "hash": "941e7717ddc2cbdefc4e6bbcc367abe148d4c63e4f1e13b7862022902e8bd2da"
+    },
+    {
+      "path": "_deps/UPVRDKPF.js",
+      "environment": "isolate",
+      "hash": "7010e07264af59e982bbc061ef3cc60b2bff52c0660c8f300965ff57b0d18c60"
+    },
+    {
+      "path": "_deps/UWL6USL3.js",
+      "environment": "isolate",
+      "hash": "d65b06601e0ef1f9447b7bbc4abcd7c22a9e98801c5cc5fb40bf65b51c97e62b"
+    },
+    {
+      "path": "_deps/XIG5A75V.js",
+      "environment": "isolate",
+      "hash": "91e5a878f35f2c169d6e95224481026e4e7b4d2106440a7ef06c091cd3d1a637"
+    },
+    {
+      "path": "_deps/XJDCJUDZ.js",
+      "environment": "isolate",
+      "hash": "e9fffc4930f0d7a47bf55b583717d1dd18ea825e58e213ed31a679ab7c88a38f"
+    },
+    {
+      "path": "_deps/YH2UGTKO.js",
+      "environment": "isolate",
+      "hash": "2e35b36881122b1a9a264860c75dce9e91f6a36674012e7294541a8b9e845ee4"
+    },
+    {
+      "path": "_deps/YICD2P4X.js",
+      "environment": "isolate",
+      "hash": "4e92757069ed9c5cade85cf29874e26b0e4d321866d4d626b9718728a2b25f70"
+    },
+    {
+      "path": "_deps/YPU33Q3S.js",
+      "environment": "isolate",
+      "hash": "61582b8185f5df26981031fbad997dddb2b731f6b08224d0600fd198db9f7005"
+    },
+    {
+      "path": "_deps/ZL2JA7EZ.js",
+      "environment": "isolate",
+      "hash": "4deec274bfa7a9050451718f1ad270f16011d8ae9024eafacbe68cac28c5e502"
+    },
+    {
+      "path": "_deps/node/3WXCNOM3.js",
+      "environment": "node",
+      "hash": "e2bb2ad3a9fb389b0d2962365eb00b534e35c9c652d21b95849c417b51414aff"
+    },
+    {
+      "path": "_deps/node/5OYMT4NO.js",
+      "environment": "node",
+      "hash": "b1d2ddc67336b4370c24d65074251f57f260dcef493e1602a167b8e28319ab0f"
+    },
+    {
+      "path": "_deps/node/6JHCEXRQ.js",
+      "environment": "node",
+      "hash": "de763efd923f6849b1d8e92c88b403277ccb2391a1341f10c46bc9cd87874684"
+    },
+    {
+      "path": "_deps/node/6XVX2WKA.js",
+      "environment": "node",
+      "hash": "be12202b14255afecdecf6bad4f1bb47b101ed674ffe573a75f60b19351b5da8"
+    },
+    {
+      "path": "_deps/node/AR55YQVD.js",
+      "environment": "node",
+      "hash": "08f724aedb5031637b21906f68a8243b0a8a77432e5994c0fabbbb25111e2704"
+    },
+    {
+      "path": "_deps/node/F6XMJEBK.js",
+      "environment": "node",
+      "hash": "0ce80c7392dad3aea0f38093b8b712e1ec8998f8e0b3a0740b0705221d9176e4"
+    },
+    {
+      "path": "_deps/node/HY43ZVAX.js",
+      "environment": "node",
+      "hash": "62507086ccfbf31e573f5f1c66e57c9c393d663c8c52f9c2675a574cd78ad4fb"
+    },
+    {
+      "path": "_deps/node/OADGYGAS.js",
+      "environment": "node",
+      "hash": "f8b6ee4010ed53d67bbebb0bce8d24c5e80af47ef526bc87f54d9020234a71a8"
+    },
+    {
+      "path": "_deps/node/OGHTT2ZI.js",
+      "environment": "node",
+      "hash": "1f627dbb1cec474bc6b5fd5043b25b62d29b4db158415ea8e0f267ba276da64f"
+    },
+    {
+      "path": "_deps/node/PL2L65U2.js",
+      "environment": "node",
+      "hash": "2d52ec986fe119e2972185f5f60c98affa9efef9ef1e7b1b91c9a6a6299d1e6b"
+    },
+    {
+      "path": "_deps/node/QB7AWJN5.js",
+      "environment": "node",
+      "hash": "b4aca226c8e8146eb082a025515aa9e944181e93709d7647957e4a4243952b4c"
+    },
+    {
+      "path": "_deps/node/QRCQOV4L.js",
+      "environment": "node",
+      "hash": "a966f0bd84c5f6fb2d8625b93a7528fa1f335d072c03f168e9d99b101bde982f"
+    },
+    {
+      "path": "_deps/node/TWPTYOM7.js",
+      "environment": "node",
+      "hash": "fa8ae8f0b61dcc15aa3607f87b7695e8c30fc0a0cb57ca8aa0fe282d00a4bf70"
+    },
+    {
+      "path": "_deps/node/ZWWIAI5O.js",
+      "environment": "node",
+      "hash": "0ba144c4bf1fe375024e21c33edf1a920e18a09f3392a9aede8ede2fe1d5238e"
+    },
+    {
+      "path": "admin.js",
+      "environment": "isolate",
+      "hash": "83dcb4b030686d9921bb0366405195fbbfeb21d66aa008f378ac06198cfc7d07"
+    },
+    {
+      "path": "agentDraftPromotion.js",
+      "environment": "isolate",
+      "hash": "14c587511163b6861cc3371905c5066192d7deb6227bfc9ea1aa66ebbfdc9c25"
+    },
+    {
+      "path": "agentDrafts.js",
+      "environment": "isolate",
+      "hash": "4f11ef7e1b6d57baee5fa026463a24304998b44f1e85f2a9f0ebee5173d14418"
+    },
+    {
+      "path": "agentRuns.js",
+      "environment": "isolate",
+      "hash": "fa0e803094cbce0b24acb79d1c4fa5de6d6f7c85c047148855ef67e2de871a09"
+    },
+    {
+      "path": "agentToolRegistry.js",
+      "environment": "isolate",
+      "hash": "671df9614916adde87b9c9bce6b8ac055fdc4be79812ce9c93a9d8ede9b9bacb"
+    },
+    {
+      "path": "agentTools.js",
+      "environment": "isolate",
+      "hash": "54dd1c52ee94ba7631b72d5e5234eba25061a0eca9f125d1f15f3800ec0e566f"
+    },
+    {
+      "path": "agentToolsHttp.js",
+      "environment": "isolate",
+      "hash": "7f03b25927b4f47e6a1a9db3940791329934e9abc78f1198e58c605c9d7977a6"
+    },
+    {
+      "path": "aggregates.js",
+      "environment": "isolate",
+      "hash": "06e35c619136906462bccff8eafe7bd51bcc98b57765a863ae032613a1076e88"
+    },
+    {
+      "path": "audioArtifacts.js",
+      "environment": "isolate",
+      "hash": "689d1bcbcfa381b8712f27ac351f3e86066fc03eaacb17edfffa76156567b613"
+    },
+    {
+      "path": "auth.config.js",
+      "environment": "isolate",
+      "hash": "23927172fd9b6253eca852ebb04d70e80b5921816a4b2d85f69f380aedbb628f"
+    },
+    {
+      "path": "auth.js",
+      "environment": "isolate",
+      "hash": "3e3bc2cb0420b0f591c79f252df304ff6e02ab8513f3a08523f45a1e7b9744f9"
+    },
+    {
+      "path": "blindGroups.js",
+      "environment": "isolate",
+      "hash": "de09ca4a2566509621ee56c2cd6c8de55e406ff160c0165e0e17a3c46a53c894"
+    },
+    {
+      "path": "campaigns.js",
+      "environment": "isolate",
+      "hash": "bf01a78f9907738980b66f07506bb6b4d582b5eab2a42ba0e2bfa8313ffb3b59"
+    },
+    {
+      "path": "claims.js",
+      "environment": "isolate",
+      "hash": "1091ababf411035862089f03d07dcbc3d1d359544f2d6984f39672586a9bd6a0"
+    },
+    {
+      "path": "components.js",
+      "environment": "isolate",
+      "hash": "7a54190a6c7c3ad7ade6325bd308935c5aa7b6b0c93581a6a7ef82f46c79a271"
+    },
+    {
+      "path": "compositions.js",
+      "environment": "isolate",
+      "hash": "feedbf899f5a4195e327f0275924beaebf73f8247810d95ee78f165c727da681"
+    },
+    {
+      "path": "conceptClassification.js",
+      "environment": "isolate",
+      "hash": "9b8efda7d2980fadd3a316dcbcf7fdbdf6613eb3cd17b5ac64abd12d295b03ae"
+    },
+    {
+      "path": "conceptClassifier.js",
+      "environment": "isolate",
+      "hash": "e83429ee8e453eaaa43e09efba5c6d365f612a87e56c6dec9dc111471da6b866"
+    },
+    {
+      "path": "conceptClassifierInternal.js",
+      "environment": "node",
+      "hash": "fe6f8f894aeed575e1ae64a311acc2d9d6525114fe53a96a2c10871731e8f007"
+    },
+    {
+      "path": "conceptDomainNormalization.js",
+      "environment": "isolate",
+      "hash": "38dbb71cb0d8fdb7983870d576225361e8f8fab7d98ed9fc7acc9a00de4ff1f6"
+    },
+    {
+      "path": "convex.config.js",
+      "environment": "isolate",
+      "hash": "6dd23d165b26445e388c391f410271527fabe037b546470773ee21ffb67abcd0"
+    },
+    {
+      "path": "correspondenceCandidates.js",
+      "environment": "isolate",
+      "hash": "a587b1a7406f6775c40631e640acf43327d93962e4f54f0a62de9ec3cae01c4d"
+    },
+    {
+      "path": "correspondences.js",
+      "environment": "isolate",
+      "hash": "b1b464558ddb282203801e32c9dbbe3c4aad54587ec12a119e95071d07a50583"
+    },
+    {
+      "path": "crons.js",
+      "environment": "isolate",
+      "hash": "d945e6d323e2bd75384e396ff6721dc7b428fbcbfe33e68c4a39f453892124f5"
+    },
+    {
+      "path": "dashboard.js",
+      "environment": "isolate",
+      "hash": "cbe7ce63500ae6efdec360553f9179ac2dd406ddecc4eaa18672089ddffcab48"
+    },
+    {
+      "path": "domainMappings.js",
+      "environment": "isolate",
+      "hash": "67f786292ab1794f4285b64f2b58ae93e8ee09000ac3331f0ac55ae7d8658da3"
+    },
+    {
+      "path": "editCaptures.js",
+      "environment": "isolate",
+      "hash": "277e2ec5177f1cfb641e1bc9f6d65590da6b12b6053ccd94b6131d66d7bc6189"
+    },
+    {
+      "path": "editorialArtifacts.js",
+      "environment": "isolate",
+      "hash": "fd6b04be370cf2f52c49e7b71cd1fdb2669987e48209121458440f61c0295c85"
+    },
+    {
+      "path": "editorialExports.js",
+      "environment": "node",
+      "hash": "36c26320429271b4a6f1a33a995f2cf5b4351dfb14019d64f7daeacc6469b2c0"
+    },
+    {
+      "path": "embeddings.js",
+      "environment": "node",
+      "hash": "cc5626e9022d2b94c06996a54dcde545622a4aef08cc02b037044d14a66eea3c"
+    },
+    {
+      "path": "embeddingsStore.js",
+      "environment": "isolate",
+      "hash": "d13be8a545e28825ea467a62f4bc744280c3bb5cd04838c6a6aff88e438d3b36"
+    },
+    {
+      "path": "episodes.js",
+      "environment": "isolate",
+      "hash": "b92f1f32bb95f054b726fae1fc785968e5f553abcd82f94e1871a6baa2363f1d"
+    },
+    {
+      "path": "extract.js",
+      "environment": "node",
+      "hash": "2c44ba49728de6995dd6309e002ee390d4474868666016d80069178b9b3e12a7"
+    },
+    {
+      "path": "extractInternal.js",
+      "environment": "isolate",
+      "hash": "27ffd5e2dabdf6790d40d9271d7dfc39af0081dc1d72b2dba9470de400847048"
+    },
+    {
+      "path": "extractions.js",
+      "environment": "isolate",
+      "hash": "c99ad3e37776cfad93fbc3a838db88a95092dee2ec0f67540eec52a75472fd36"
+    },
+    {
+      "path": "fabric.js",
+      "environment": "isolate",
+      "hash": "4640d11f49efbd366cb8c483ee03860a5b6cd7d50ca9bd1a496424705181553d"
+    },
+    {
+      "path": "failures.js",
+      "environment": "isolate",
+      "hash": "c2ffb5004e89e90a60d48917c5aae45eac7007acf44a4669dfb72f16d56fbed5"
+    },
+    {
+      "path": "feeds.js",
+      "environment": "isolate",
+      "hash": "2340716fa00d8773634f0726ef2a0c544b083160b9a7e78e6c26fbe09546e589"
+    },
+    {
+      "path": "graph.js",
+      "environment": "isolate",
+      "hash": "390e264816d3db3536acc4f3f07953ebe3fc5a14d17254d23695a334309c8200"
+    },
+    {
+      "path": "http.js",
+      "environment": "isolate",
+      "hash": "6ed4d723d351eb104cf0d79b6dbf52b11dd9f5812e29bb1641b828baccd75a41"
+    },
+    {
+      "path": "hypotheses.js",
+      "environment": "isolate",
+      "hash": "374e8d3ccc9064dbf98b1a55a77e9651a7c853b78ce2e5b6640fdc03cde1ce11"
+    },
+    {
+      "path": "hypothesesInternal.js",
+      "environment": "node",
+      "hash": "643c915bb57615892613b987e8a376479d2534b7ae2d98282f3f144c0e849584"
+    },
+    {
+      "path": "inbox.js",
+      "environment": "isolate",
+      "hash": "9aaffe8d6fd6cefe9bd7362a7896fcecd32c837543255539296ec6e1e9d608d4"
+    },
+    {
+      "path": "ingest.js",
+      "environment": "isolate",
+      "hash": "b5aad371dff7ef2ebe7dbca34050073386e66e12b7f05c9b0b8bfcbf109f2944"
+    },
+    {
+      "path": "listen.js",
+      "environment": "isolate",
+      "hash": "2daaa94f9f7166ece6889e35820eea4804516d6de0b2d3106f3a5762daeda7d3"
+    },
+    {
+      "path": "listening.js",
+      "environment": "isolate",
+      "hash": "cc805ef876d41b746ec46681a57dd33733d3504ca9c8cc340bbb943db8d390be"
+    },
+    {
+      "path": "llm.js",
+      "environment": "isolate",
+      "hash": "083ed195a9fb213224ade2a9caf7d6b4330eaeafa909b08a51c0d14db37419a5"
+    },
+    {
+      "path": "llmNode.js",
+      "environment": "node",
+      "hash": "38e670872e2e888fd6e4930e2f88371bdcc8da743883849713ab3dfce233471e"
+    },
+    {
+      "path": "maintenance.js",
+      "environment": "isolate",
+      "hash": "0d46e66360e79d9fdebde59f89a83c72b0c2e06e879d1b419b10d7a8a494594b"
+    },
+    {
+      "path": "mediaJobEffects.js",
+      "environment": "isolate",
+      "hash": "d20f101954cc2a27543f1f8235501645b35432bed0c5ccaef56aaf9d6f091163"
+    },
+    {
+      "path": "mediaJobs.js",
+      "environment": "isolate",
+      "hash": "9515ca2135506d8c9bc4e1f1d582f0922545501964a8293aa35de1ca3feab78a"
+    },
+    {
+      "path": "mediaSweeper.js",
+      "environment": "isolate",
+      "hash": "fa3f3dceb26facad0b2d84bc1c84d6140ef3461453063d52eb5ce1cd7cec5da3"
+    },
+    {
+      "path": "mediaToolsInternal.js",
+      "environment": "isolate",
+      "hash": "10857efef39ad24dc5cc82da5881568353f6d35c0941949d96e1d1b5942f5ca5"
+    },
+    {
+      "path": "narration.js",
+      "environment": "node",
+      "hash": "1945692926c0807cab7aad2893689216c2dfb247604f908d4fbd3473b08f2b0e"
+    },
+    {
+      "path": "narrationPrompt.js",
+      "environment": "isolate",
+      "hash": "cade5549dc4dcacea7a54e760e0300c55925f690f5db1df9d2a42ba2675e7e4a"
+    },
+    {
+      "path": "phase2.js",
+      "environment": "isolate",
+      "hash": "4afc66f2790d8529ceda3a5d447eb003d462f9970d878b47da68bfd8fa691d81"
+    },
+    {
+      "path": "podcast.js",
+      "environment": "isolate",
+      "hash": "1968c99641b239f609b034bbf790cc943da680e81f3468b0c4c9f078b616da22"
+    },
+    {
+      "path": "recipes.js",
+      "environment": "isolate",
+      "hash": "24bc7f51c903d3783563827806100687e1845445b412224929a7f4d36d8f1f2e"
+    },
+    {
+      "path": "recipesInternal.js",
+      "environment": "node",
+      "hash": "acfb027d2d01e6d2e9ae01f397bf19421b7acda3006dbf6065395d3cc151b923"
+    },
+    {
+      "path": "schema.js",
+      "environment": "isolate",
+      "hash": "95a76fed73216924d3471378ec97cccc2caf376f069f8d1b8bbaa798c4a64e6c"
+    },
+    {
+      "path": "settings.js",
+      "environment": "isolate",
+      "hash": "4026816a8d98e8cf72655199fb8d90cd8ee81360ec78496c923cf385be70c6d0"
+    },
+    {
+      "path": "shared/agentContract.js",
+      "environment": "isolate",
+      "hash": "a178dc45420e016385c3fead9574762eba551f7a43ec3d94d4f6ec1d22678a18"
+    },
+    {
+      "path": "shared/agentRunClaim.js",
+      "environment": "isolate",
+      "hash": "7204fec91fb8a7ce10ae9118292f044ae4946c88e75c08d0b3bbac3397bfb149"
+    },
+    {
+      "path": "shared/agentToolArgs.js",
+      "environment": "isolate",
+      "hash": "a6b6969a6c5ecd9beb27ab3356742539bf26d817b887f82677c0d25d71a15441"
+    },
+    {
+      "path": "shared/agentToolManifest.js",
+      "environment": "isolate",
+      "hash": "9e741bf63e3c59a5cf217668ad94d13f37258f69a45c12394405578bab230bc9"
+    },
+    {
+      "path": "shared/agentToolModelSchema.js",
+      "environment": "isolate",
+      "hash": "8e1220d59022182d69bcd8a3d41eeedf50c6a4cd387f6a3823db25c724ad8457"
+    },
+    {
+      "path": "shared/arxiv.js",
+      "environment": "isolate",
+      "hash": "a155708b5af2a56692750aebd3657a065bd1d61c36a5f4ad077e480aadb1f0c2"
+    },
+    {
+      "path": "shared/audioArtifacts.js",
+      "environment": "isolate",
+      "hash": "7fbd113f6db0ca810a7e91ae739897323c9c8a2ad27026d4d8bb42dec227ec12"
+    },
+    {
+      "path": "shared/claims.js",
+      "environment": "isolate",
+      "hash": "d6a232857255bf0289f4634aa9cd962d6687f581bc0277cd1838aef1e926df36"
+    },
+    {
+      "path": "shared/conceptProjection.js",
+      "environment": "isolate",
+      "hash": "c42a5020b18dcb24199a67686a617f1f7329e347a09fad91d7edd1729da50a68"
+    },
+    {
+      "path": "shared/correspondenceCandidates.js",
+      "environment": "isolate",
+      "hash": "27af6c7b468c6374eb82907dc31ea92bfb38d716f2f0d6cc3650e65bb93563f2"
+    },
+    {
+      "path": "shared/correspondenceKey.js",
+      "environment": "isolate",
+      "hash": "1a669fc492af829649fcfca45784866a47325d1f68f26dad5a7d802936e69aef"
+    },
+    {
+      "path": "shared/correspondences.js",
+      "environment": "isolate",
+      "hash": "db215f81b342d158325c725f76c3ac7cf65177d325253b6e6a821433d9ba5a84"
+    },
+    {
+      "path": "shared/doi.js",
+      "environment": "isolate",
+      "hash": "0a4bf167b1804dc43f23902bfd19f5b7070e2ec6d79c65045878d19a84e52a45"
+    },
+    {
+      "path": "shared/domainMappings.js",
+      "environment": "isolate",
+      "hash": "bba08a37dc3e8044649f51bf9cc90164f42b2f422d4f8528a95d50e04a5d7e23"
+    },
+    {
+      "path": "shared/draftPayloads.js",
+      "environment": "isolate",
+      "hash": "b287327c28f3da58b345bf373b983f7f8eefece3be32b8fe1d6b1c862d9ea6ec"
+    },
+    {
+      "path": "shared/embeddingText.js",
+      "environment": "isolate",
+      "hash": "262396819b534adcf15ed181b9ab991682ca37b96fae76399164824800b77b4b"
+    },
+    {
+      "path": "shared/extractionPrompt.js",
+      "environment": "isolate",
+      "hash": "4e852e09cd731daca61b91f084717c55c7472a3118611934a05ae9a843f8c62b"
+    },
+    {
+      "path": "shared/feedProposals.js",
+      "environment": "isolate",
+      "hash": "ef1fec4ee74642542065064b5e8da6afbc91fa418095ca78d3feaf9a067f6a4d"
+    },
+    {
+      "path": "shared/listeningPredicates.js",
+      "environment": "isolate",
+      "hash": "8861a8ed77b9eef3b14fb93a56d959e388fde0450395d4ffeded164131fc65ae"
+    },
+    {
+      "path": "shared/llmPolicy.js",
+      "environment": "isolate",
+      "hash": "490d8ecd044deb6b113cfbf6448027a2a69bbb5c35a23740f6df932dfa2208c6"
+    },
+    {
+      "path": "shared/mediaJobs.js",
+      "environment": "isolate",
+      "hash": "cb30c24ee8d1dab7ba6be6c83cadfa9951e22898e1b303205113b22c84150988"
+    },
+    {
+      "path": "shared/operatorExtraction.js",
+      "environment": "isolate",
+      "hash": "2fd7da232e458d8b624fbaca5167d093e0c8e5501c5940a8d7245b7356599b64"
+    },
+    {
+      "path": "shared/researchTopics.js",
+      "environment": "isolate",
+      "hash": "56ba04847317b3d945b23e5832a20ac2215b94182599e0375a5b1e8d50c8753e"
+    },
+    {
+      "path": "shared/sourceRecovery.js",
+      "environment": "isolate",
+      "hash": "36fd51b76cbc2170845c89525baa199bccfe3c678f80bdfa976f663cb3f348cf"
+    },
+    {
+      "path": "shared/sourceText.js",
+      "environment": "isolate",
+      "hash": "af8350bea6f976bbb28eddeaec51f9c693dc1e505472f36f9dea9de3dcdf3ddc"
+    },
+    {
+      "path": "shared/stableHash.js",
+      "environment": "isolate",
+      "hash": "52b620df72d40bfc3804ba98308b63bbed910655f0a38fba2b874af17cda05b7"
+    },
+    {
+      "path": "shared/statuses.js",
+      "environment": "isolate",
+      "hash": "cbc7d505da723264bcc136e6033641f6b8db19e13d9399eb3d963206de59de55"
+    },
+    {
+      "path": "shared/vocabularyTriage.js",
+      "environment": "isolate",
+      "hash": "74f581db314c70fa26f0d0edb349fcf57473cc5686babe4fe6318327a6899a88"
+    },
+    {
+      "path": "shared/voices.js",
+      "environment": "isolate",
+      "hash": "66953662df6014c4da85596fab75ef3627e679f599fd4598d29a587f86c618e6"
+    },
+    {
+      "path": "sourceUtils.js",
+      "environment": "isolate",
+      "hash": "35c64295d2a3ec84cb9270b495d001c40e5ef59580a3fbf86bfaf2546e75b2b4"
+    },
+    {
+      "path": "sources.js",
+      "environment": "isolate",
+      "hash": "9543357ce29a3a0b446121868362bd48f85aa4d234483bbdfd960c07408afdce"
+    },
+    {
+      "path": "testHelpers.js",
+      "environment": "isolate",
+      "hash": "c633512f57c8cf774f0fd5dd14b8cf4a2b06e4ad9628cab39adb7dfaebe02771"
+    },
+    {
+      "path": "testing.js",
+      "environment": "isolate",
+      "hash": "3cf46947bf6d9042295ecdf18b12456f0db411a6734b70e23e386b73ad8c0eca"
+    },
+    {
+      "path": "theses.js",
+      "environment": "isolate",
+      "hash": "de5b87de83c83423f34c3e2bda78d5f68c3b43ee10eae9963634f6170743586b"
+    },
+    {
+      "path": "tracing.js",
+      "environment": "node",
+      "hash": "39ba689dc677066a9a2e4fabe6edcf657a2b6044072f02e717dc1e5ddee376be"
+    },
+    {
+      "path": "transcriptCapture.js",
+      "environment": "isolate",
+      "hash": "897234433b698aad0ba72987bb2932f65c5704df6294d75ef15a23e5913fd813"
+    },
+    {
+      "path": "validators.js",
+      "environment": "isolate",
+      "hash": "14b9c250a40e7aeb60e57bbf744d66b6ee4f507dd3a8e2d4b29989f3bde614a6"
+    },
+    {
+      "path": "vocabulary.js",
+      "environment": "isolate",
+      "hash": "3ca9402f5b3c33dafcee511949ce16baec57abc64c7cf2cbb5d3cf55a1b78806"
+    },
+    {
+      "path": "voiceRatings.js",
+      "environment": "isolate",
+      "hash": "8111591efe02562753e3f427c04d765d2ac40b6915ff63f32461f72d9e977a8b"
+    },
+    {
+      "path": "weeklyBriefs.js",
+      "environment": "isolate",
+      "hash": "c13a69292adbb3a844d651077f7bda7497b686d24ed44ab478e00a5939d66e5f"
+    },
+    {
+      "path": "weeklyBriefsInternal.js",
+      "environment": "node",
+      "hash": "aeb695ef93a8176e03d38aeb21a0d9cd9cd519ac5d8207aa4c67d6d3f67868ea"
+    },
+    {
+      "path": "workflows.js",
+      "environment": "isolate",
+      "hash": "228ccf6c14ac988db03e3851e42b13164b122ee24799e7b7b456a80bf875b554"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "inspectedAt": "2026-10-17T02:55:43.001Z",
+  "groups": [
+    {
+      "id": "recovery-118",
+      "description": "Pipeline recovery and legacy extraction history (#118)",
+      "deployed": false,
+      "missing": [
+        "operationFailures:listForRun",
+        "operationFailures:reconcile",
+        "operationFailures:dispatch",
+        "recoveryWorkflows:start",
+        "extractInternal:reconcileAttempts",
+        "extractions:normalizeLegacyHistory",
+        "route POST /agent-tools/reportCaptureFailure",
+        "route POST /agent-tools/getCaptureRecovery",
+        "route POST /agent-tools/finishCaptureRecovery",
+        "route POST /agent-tools/getFailureInvestigation",
+        "route POST /agent-tools/submitFailureDiagnosis",
+        "cron normalize-legacy-extraction-history",
+        "cron reconcile-extraction-attempts",
+        "cron reconcile-operation-recovery"
+      ]
+    },
+    {
+      "id": "wave2-138",
+      "description": "Wave 2 docket, signed decisions and revision backfill (#138)",
+      "deployed": false,
+      "missing": [
+        "docket:listWeb",
+        "docket:prepare",
+        "decisionIntents:get",
+        "decisionIntents:applyWeb",
+        "decisionIntents:deferWeb",
+        "decisionIntents:cancelWeb",
+        "decisionIntentsMigrations:backfillRevisions",
+        "route POST /discord/interactions",
+        "route POST /telegram/webhook/*",
+        "route POST /agent-tools/listDocket",
+        "route POST /agent-tools/getDocketCard",
+        "route POST /agent-tools/proposeDecision",
+        "route POST /agent-tools/proposeListening",
+        "route POST /agent-tools/recordDocketDelivery",
+        "cron rebuild-docket"
+      ]
+    },
+    {
+      "id": "audio-feedback-141",
+      "description": "General audio ratings and signed deferral (#141)",
+      "deployed": false,
+      "missing": [
+        "audioFeedback:queue",
+        "audioFeedback:item",
+        "audioFeedback:submit",
+        "audioArtifacts:listReadyForTarget"
+      ]
+    },
+    {
+      "id": "rendering-140",
+      "description": "Litmus render jobs (#140)",
+      "deployed": false,
+      "missing": [
+        "renders:request",
+        "renders:setPlan",
+        "renders:validationGate"
+      ]
+    },
+    {
+      "id": "tournament-142",
+      "description": "Hypothesis tournament persistence (#142)",
+      "deployed": false,
+      "missing": [
+        "hypothesisTournament:beginRun",
+        "hypothesisTournament:recordCandidates",
+        "hypothesisTournament:completeRun",
+        "hypothesisTournament:submitDraft",
+        "hypothesisTournament:finalizeRun",
+        "route POST /agent-tools/requestTournamentRun",
+        "route POST /agent-tools/listTournamentSeeds",
+        "route POST /agent-tools/hydrateClaims",
+        "route POST /agent-tools/beginTournamentRun",
+        "route POST /agent-tools/embedTournamentStatement",
+        "route POST /agent-tools/findTournamentNeighbors",
+        "route POST /agent-tools/searchTournamentEvidence",
+        "route POST /agent-tools/recordHypothesisCandidates",
+        "route POST /agent-tools/completeTournamentRun",
+        "route POST /agent-tools/submitTournamentDraft",
+        "route POST /agent-tools/finalizeTournamentRun"
+      ]
+    },
+    {
+      "id": "passages-153",
+      "description": "Passage index, RAG component and searchSourcePassages (#153)",
+      "deployed": false,
+      "missing": [
+        "passages:indexSource",
+        "passages:removeSource",
+        "passages:sweep",
+        "passages:searchForAgent",
+        "passages:setIndexingEnabled",
+        "passages:backfillBatch",
+        "passages:probe",
+        "route POST /agent-tools/searchSourcePassages",
+        "cron passage-index-sweep",
+        "component rag"
+      ]
+    }
+  ],
+  "webCalls": {
+    "checked": 114,
+    "missing": [
+      "audioArtifacts:listReadyForTarget",
+      "audioFeedback:item",
+      "audioFeedback:queue",
+      "audioFeedback:submit",
+      "decisionIntents:applyWeb",
+      "decisionIntents:cancelWeb",
+      "decisionIntents:deferWeb",
+      "decisionIntents:get",
+      "docket:listWeb",
+      "operationFailures:listForRun"
+    ]
+  },
+  "complete": false
+}

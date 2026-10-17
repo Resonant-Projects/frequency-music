@@ -2,8 +2,9 @@ import { z } from "zod";
 
 /**
  * Offline reading of a saved `scripts/convex-deployment-inspect.ts` result.
- * Answers which Listen-first capabilities the deployed root component carries
- * and which functions the current web source calls that it lacks. Reads no
+ * Answers which capabilities merged since the 2026-10-11 deployment (#118
+ * onward) the deployed root component and its component mounts carry, and
+ * which functions the current web source calls that it lacks. Reads no
  * credential and contacts nothing; the inspection itself is the live read.
  */
 
@@ -18,13 +19,42 @@ export interface CoverageGroup {
   functions: RequiredFunction[];
   httpRoutes: string[];
   crons: string[];
+  /** Mounted component paths, which must be active. */
+  components: string[];
 }
 
 const fn = (module: string, ...names: string[]): RequiredFunction[] =>
   names.map((name) => ({ module, name }));
 
+// convex/http.ts registers one POST route per agent tool name.
+const agentToolRoutes = (...names: string[]): string[] =>
+  names.map((name) => `POST /agent-tools/${name}`);
+
 /** Backend capabilities each merged PR adds, in deployment order. */
 export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
+  {
+    id: "recovery-118",
+    description: "Pipeline recovery and legacy extraction history (#118)",
+    functions: [
+      ...fn("operationFailures", "listForRun", "reconcile", "dispatch"),
+      ...fn("recoveryWorkflows", "start"),
+      ...fn("extractInternal", "reconcileAttempts"),
+      ...fn("extractions", "normalizeLegacyHistory"),
+    ],
+    httpRoutes: agentToolRoutes(
+      "reportCaptureFailure",
+      "getCaptureRecovery",
+      "finishCaptureRecovery",
+      "getFailureInvestigation",
+      "submitFailureDiagnosis",
+    ),
+    crons: [
+      "normalize-legacy-extraction-history",
+      "reconcile-extraction-attempts",
+      "reconcile-operation-recovery",
+    ],
+    components: [],
+  },
   {
     id: "wave2-138",
     description: "Wave 2 docket, signed decisions and revision backfill (#138)",
@@ -33,8 +63,19 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
       ...fn("decisionIntents", "get", "applyWeb", "deferWeb", "cancelWeb"),
       ...fn("decisionIntentsMigrations", "backfillRevisions"),
     ],
-    httpRoutes: ["POST /discord/interactions", "POST /telegram/webhook/*"],
+    httpRoutes: [
+      "POST /discord/interactions",
+      "POST /telegram/webhook/*",
+      ...agentToolRoutes(
+        "listDocket",
+        "getDocketCard",
+        "proposeDecision",
+        "proposeListening",
+        "recordDocketDelivery",
+      ),
+    ],
     crons: ["rebuild-docket"],
+    components: [],
   },
   {
     id: "audio-feedback-141",
@@ -45,6 +86,7 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     ],
     httpRoutes: [],
     crons: [],
+    components: [],
   },
   {
     id: "rendering-140",
@@ -52,6 +94,7 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     functions: fn("renders", "request", "setPlan", "validationGate"),
     httpRoutes: [],
     crons: [],
+    components: [],
   },
   {
     id: "tournament-142",
@@ -64,8 +107,38 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
       "submitDraft",
       "finalizeRun",
     ),
-    httpRoutes: [],
+    httpRoutes: agentToolRoutes(
+      "requestTournamentRun",
+      "listTournamentSeeds",
+      "hydrateClaims",
+      "beginTournamentRun",
+      "embedTournamentStatement",
+      "findTournamentNeighbors",
+      "searchTournamentEvidence",
+      "recordHypothesisCandidates",
+      "completeTournamentRun",
+      "submitTournamentDraft",
+      "finalizeTournamentRun",
+    ),
     crons: [],
+    components: [],
+  },
+  {
+    id: "passages-153",
+    description: "Passage index, RAG component and searchSourcePassages (#153)",
+    functions: fn(
+      "passages",
+      "indexSource",
+      "removeSource",
+      "sweep",
+      "searchForAgent",
+      "setIndexingEnabled",
+      "backfillBatch",
+      "probe",
+    ),
+    httpRoutes: agentToolRoutes("searchSourcePassages"),
+    crons: ["passage-index-sweep"],
+    components: ["rag"],
   },
 ]);
 
@@ -92,6 +165,7 @@ export function webApiReferences(
 const inspectionZ = z.object({
   format: z.literal("frequency-deployment-inspection-v1"),
   finishedAt: z.string(),
+  components: z.array(z.object({ path: z.string(), state: z.string() })),
   modules: z.array(
     z.object({
       componentId: z.string().nullable(),
@@ -158,6 +232,12 @@ export function coverageReport(
   // `<prefix>*` (convex/src/server/router.ts getRoutes), so match exactly:
   // a longer path never stands in for the required one.
   const hasRoute = (route: string) => routes.has(route);
+  // The root component lists with an empty path; a mount counts once active.
+  const activeComponents = new Set(
+    parsed.components
+      .filter((component) => component.state === "active")
+      .map((component) => component.path),
+  );
 
   const groups = COVERAGE_GROUPS.map((group) => {
     const missing = [
@@ -170,6 +250,9 @@ export function coverageReport(
       ...group.crons
         .filter((cron) => !crons.has(cron))
         .map((cron) => `cron ${cron}`),
+      ...group.components
+        .filter((component) => !activeComponents.has(component))
+        .map((component) => `component ${component}`),
     ];
     return {
       id: group.id,

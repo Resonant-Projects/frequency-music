@@ -31,6 +31,7 @@ describe("wave 2 deployment coverage CLI", () => {
       JSON.stringify({
         format: "frequency-deployment-inspection-v1",
         finishedAt: "2026-10-17T00:00:00.000Z",
+        components: [{ path: "", state: "active" }],
         modules: [
           {
             componentId: null,

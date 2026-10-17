@@ -12,7 +12,177 @@ Read with [backend integration](wave2-backend-integration.md),
 [MCP integration](../agent/src/mcp/README.md), and the
 [Wave 2 plan](superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md).
 
+## Combined rollout work order, 2026-10-17
+
+Prepared from read-only observations taken at 02:55 to 03:08 UTC; the reads,
+results and file digests are in the
+[evidence record](evidence/wave2-rollout-20261017/README.md). Nothing here
+has run against production. Each numbered step that contacts production,
+changes an environment value or replaces a running image needs the
+coordinator's approval of that step.
+
+### Observed state
+
+| Item | State |
+| --- | --- |
+| Convex backend | Root modules byte-identical to the `81150337` release artifact (#135, 2026-10-11; provenance run 38195261921), 177 of 177. Precedes #118, so #118, #138, #140, #141, #142 and #153 are all absent, including `docket:listWeb`. No `rag` component. No schema change in progress. |
+| Agent-run queue | 0 queued, 0 running, 3 needs_review; claims not paused |
+| Agent worker | Kubernetes `frequency-worker`, Argo CD, source revision `81150337`. Lacks the `failure-investigation` and `hypothesis-tournament` graphs. `AGENT_OUTBOX_DIR` unset; PVC mounted at `/data`. |
+| Media worker | ai-5090-02, image `sha-4f016f83` (2026-10-01), renderer 0.2.2, idle for 7 days |
+| MCP workload | Not deployed |
+| Web | Vercel production at `91cb3047`; calls ten functions the backend lacks |
+| HTTP actions origin | `https://convex-http.resonantprojects.art` serves the HTTP router (`/health` 200, Cloudflare). `https://convex.resonantprojects.art` is the API origin and returns 404 for every HTTP route. |
+| Admin key | Readable through `op run` with a reference-only env file; the host's service account now lists `Country Manor Lab` |
+
+### Pinned candidate
+
+| Artifact | Pin |
+| --- | --- |
+| Convex source | `main` at `91cb3047`. `convex/`, `package.json` and `bun.lock` are identical at `6f332386`, `57f7c90b` and `91cb3047`. No attested `convex-root-modules` artifact exists for any of them yet. |
+| Agent image | `registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d` (source `6f332386`; same digest on GHCR) |
+| Media image | `ghcr.io/resonant-projects/frequency-music-media@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d` (source `6f332386`, renderer 0.3.0). It replaces the earlier `sha-0cc0592…` pin: `media/` is unchanged since then, but the image also carries `convex/shared/`, which #153 changed. |
+| Web | No change; production already runs the candidate's web source |
+
+### What the Convex deploy changes (`81150337` to `main`)
+
+- **Schema.** 11 new tables, 16 new optional fields, 3 widened unions and 15
+  new indexes on `claims`, `edges`, `extractions`, `agentRunEvents`,
+  `agentReviewDrafts`, `audioArtifacts` and `mediaJobs`. Index backfills on
+  `claims`, `edges` and `extractions` run during the push. An offline
+  comparison of both commits' `schema.export()` found no removal and no field
+  that became required; the dry-run diff is the authority.
+- **Components.** Mounts `rag` (#153) and its nested workpool. A later
+  deploy of source without `app.use(rag)` would change that mount. Read the
+  dry-run output before any rollback.
+- **Crons.** Adds `normalize-legacy-extraction-history`,
+  `reconcile-extraction-attempts` and `reconcile-operation-recovery` (every five
+  minutes, ungated); `rebuild-docket` (gated by `DOCKET_PREPARATION_ENABLED`);
+  and `passage-index-sweep` (Sunday 15:30 UTC, gated by the `passageIndexing`
+  settings row).
+- **HTTP.** Adds the two signer routes, which return 404 while
+  `DECISION_SIGNERS_ENABLED` is off, and 22 agent-tool routes.
+
+Effects that start at activation without any flag:
+
+1. **Legacy extraction normalization (#118).** It processes every existing
+   Extraction one transaction at a time and reschedules itself while it makes
+   progress. Superseded readings become `historical`, their active Claims are
+   retired (up to three per transaction), and concept reconciliation withdraws
+   obsolete automatic concept edges and decrements mention counts. It makes no
+   model call. No flag stops it, and a code rollback does not undo it. Approve
+   it explicitly as part of the deploy.
+2. **Operational Failure recovery (#118).** It is idle until a failure row
+   exists. After that it can queue `failure-investigation` runs (one Anthropic
+   call each, at most 4,096 output tokens) and `source-scout` capture
+   recoveries. The running agent worker fails `failure-investigation` as an
+   unknown graph, which leaves the failure in `needsReview`.
+3. **Passage hooks (#153).** Every source text write schedules
+   `passages:indexSource`. While the `passageIndexing` row is absent, the call
+   returns `disabled` without an embedding request. Cleared or deleted text
+   runs a removal against the empty index. `/agent-tools/searchSourcePassages`
+   embeds its query with OpenAI even while indexing is off; no graph calls it.
+4. **Renderer version (#140).** Every media job enqueued after activation
+   requires renderer 0.3.0. The 0.2.2 worker claims none of them, and the
+   sweep parks queued mismatches after ten minutes.
+5. **Docket reconciliation (#141 and #140).** Each recipe card's hash changes
+   once, and render masters stop listing (see
+   [Listen-first next tracks](#listen-first-next-tracks)).
+
+Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
+`DOCKET_PREPARATION_ENABLED` and `HYPOTHESIS_TOURNAMENT_ENABLED` unset or
+`false`; `renderValidation` unset; no `passages:setIndexingEnabled` call; no
+`MCP_SHARED_SECRET` or MCP workload; Weekly Turn narration and the
+`reconcile-episodes` cron stay off (neither commit registers that cron).
+
+### Order
+
+0. **Before the window (no production contact).**
+   - Dispatch `convex-provenance.yml` on `main` at the pinned commit, and verify
+     the artifact's attestation on a host whose `gh` has `attestation verify`.
+     `gh` 2.46.0 on the coordinator host lacks it.
+   - Approve the five effects above, including the legacy normalization.
+   - Choose the rollback mechanism (below). The
+     [supported procedure](frequency-supported-deployment-rollback.md) lists a
+     current isolated-restore receipt as a gate; none is on record.
+   - Prepare, without merging, the `homelab-infra` changes: the agent digest,
+     with `AGENT_OUTBOX_DIR=/data/outbox` on the existing `/data` PVC as
+     [pipeline recovery](pipeline-recovery.md#audit-delivery) requires for
+     Kubernetes; and the media digest, with `litmusRender` added to
+     `MEDIA_JOB_KINDS`.
+   - `scripts/convex-deploy.ts` requires an interactive terminal and a typed
+     `deploy`. A person runs steps 3 and 4.
+1. **Pause agent claims.** Set `FREQUENCY_WORKER_CLAIMS_PAUSED=true` on the
+   Convex deployment. The deployed `81150337` backend reads it. Rerun
+   `scripts/frequency-queue-evidence.ts` until it shows `claimsPaused: true`,
+   0 running and a complete scan. Confirm the media worker has no claimed job.
+2. **Read the deployed state again.** Rerun the inspection and
+   `scripts/convex-module-identities.ts`. Any difference from the evidence
+   record means someone has deployed since; stop and reconcile.
+3. **Dry run.** `vp run convex:deploy:dry-run` from a clean checkout of the
+   pinned commit (no `.env` or `.env.local`). This uploads bundles and starts
+   schema and index preparation. Stop on any removal, required-field change,
+   unexpected component change or an authentication prompt.
+4. **Deploy.** Run `vp run convex:deploy` from the same checkout.
+5. **Verify the backend.** Run the inspection and coverage again. Expect exit 0,
+   all six groups deployed, `rag` active, no in-progress schema, and the root
+   modules equal to the attested artifact.
+6. **Agent worker.** Merge the `homelab-infra` change and let Argo CD roll the
+   worker. With claims paused, the old pod has nothing to drain.
+7. **Media worker.** Replace the image on ai-5090-02 and keep the
+   `frequency-media_media-work` volume. Run the smoke command in the new
+   container before requesting any render.
+8. **Resume claims.** Set `FREQUENCY_WORKER_CLAIMS_PAUSED` to `false` or
+   remove it. Rerun the queue evidence.
+9. **Revision backfill.** [Stage 2](#stage-2-revision-backfill).
+10. **Passage activation.** This is separate work, per
+    [plan 15](plans/2026-08-01-15-passage-index.md#operator-runbook-each-step-contacts-production).
+    `scripts/convex-deploy.ts` passes `--codegen disable`, so the deploy does
+    not regenerate `convex/_generated`; the hand-written `components.rag` and
+    `passages` types stay as committed. The runtime resolves both through
+    `anyApi` and `componentsGeneric()`.
+
+### Rollback
+
+- Leave every gate closed. That disables all new outbound or paid behavior
+  except the five effects above.
+- Workers: point Argo CD and the media compose file at the previous digests.
+  The old agent worker fails new-graph runs, and the old media worker claims no
+  0.3.0 job. Use this only as a short holding state while the new backend
+  stays deployed.
+- Convex code: within minutes of activation the normalization writes
+  `extractions.historical`, which the `81150337` schema does not declare. After
+  that, redeploying `81150337` as-is fails schema validation. Fix forward, or
+  deploy older functions with the current `convex/schema.ts`,
+  `convex/validators.ts`, `convex/shared/` and `convex/convex.config.ts`, as in
+  [Stage 1](#stage-1-backend-deployment-with-everything-disabled).
+- Undoing the normalization's retired Claims, or any other data change,
+  requires the separately approved backend restore with its write-loss window.
+
+### Acceptance checklist
+
+- [ ] Coverage exit 0 against a post-deploy inspection; `rag` active.
+- [ ] Root modules equal the attested release artifact for the pinned commit.
+- [ ] `GET https://convex-http.resonantprojects.art/health` returns 200. A
+      `POST` with an empty body to `/discord/interactions` and to
+      `/telegram/webhook/x` on the same origin returns 404.
+- [ ] Signed in as Keith: `/listen` and the feed return the existing episodes;
+      the docket page, intent review, audio feedback and Agent Run failure
+      panel load without a missing-function error.
+- [ ] Agent and media pods run the pinned digests. The media smoke passes in
+      the container, and a probe job completes.
+- [ ] After claims resume, one scheduled agent run completes on the new
+      worker, and the queue scan is complete.
+- [ ] The revision backfill exits 0 with `verified: true` for both tables.
+- [ ] No Extraction with an unset `historical` remains, checked in the Convex
+      dashboard data view.
+- [ ] Gates read closed. Check environment variable names only, never values.
+
+Human acceptance stays as in [Stage 6](#stage-6-human-acceptance).
+
 ## Current status, 2026-10-17
+
+Superseded by the work order above for the backend revision and admin-key
+access. Kept as the record of the anonymous `docket:listWeb` query.
 
 Read-only facts gathered on 2026-10-17. The table rows date from 00:13 to
 00:20 UTC; the anonymous docket query came later the same day. Only that query
@@ -106,21 +276,26 @@ target. Neither mutates anything.
 
 1. Inspect the deployment with the inherited admin key, delivered by the
    operator's existing credential broker (never argv, shell history or a
-   file), then read the saved result offline:
+   file holding the value), then read the saved result offline. On the
+   coordinator host, `op run` with a mode-0600 env file that holds only the
+   `op://` reference from `.env.schema` is such a broker:
 
    ```sh
    mkdir -p out
-   vpx tsx scripts/convex-deployment-inspect.ts https://convex.resonantprojects.art \
+   op run --env-file=<reference-only env file> -- \
+     vpx tsx scripts/convex-deployment-inspect.ts https://convex.resonantprojects.art \
      > out/inspection-$(date -u +%Y%m%dT%H%MZ).json
    vpx tsx scripts/wave2-deployment-coverage.ts out/inspection-<stamp>.json
    ```
 
-   The coverage report lists, per merged PR (#138, #141, #140, #142), the
-   functions, HTTP routes and crons the deployed root component lacks, and
-   every `api.*` function the current web source calls that is missing or not
-   public. Exit 0 means everything is deployed, 3 means something is missing,
-   2 means the file is not an inspection. The inspection prints module paths,
-   function names, cron schedules and schema hashes, not secrets.
+   The coverage report lists, per merged PR (#118, #138, #141, #140, #142,
+   #153), the functions, HTTP routes (including agent-tool routes), crons and
+   active component mounts the deployment lacks, and every `api.*` function
+   the current web source calls that is missing or not public. Exit 0 means
+   everything is deployed, 3 means something is missing, 2 means the file is
+   not an inspection. The inspection prints module paths, function names,
+   cron schedules and schema hashes, not secrets. The 2026-10-17 result is in
+   the [evidence record](evidence/wave2-rollout-20261017/README.md).
 2. Without the admin key, one anonymous query answers the web-skew question
    alone. `docket.listWeb` checks for a signed-in human before reading any
    table, so the call reads nothing:
@@ -167,9 +342,12 @@ Post-deployment checks:
    the feed returns HTTP 200 with the existing episodes.
 2. `/agent-drafts` still lists pending drafts. Approve or reject nothing for
    the purpose of testing.
-3. `POST https://convex.resonantprojects.art/discord/interactions` with an
-   empty body returns 404. A missing route also returns 404, so this shows
-   only that no signer handler answers.
+3. `POST https://convex-http.resonantprojects.art/discord/interactions` with
+   an empty body returns 404, while `GET /health` on the same origin returns
+   200. HTTP actions are served on that site origin; the API origin
+   `https://convex.resonantprojects.art` returns 404 for every HTTP route,
+   so a check there proves nothing. A missing route also returns 404, so this
+   shows only that no signer handler answers.
 4. Media worker probe jobs still complete.
 
 Rollback: keep the Wave 2 schema. Convex validates existing documents against
@@ -193,7 +371,9 @@ only where it is absent. It never changes an existing revision.
 
 ```sh
 # Inherited admin key only. The tool loads no .env and never prints the key.
-CONVEX_SELF_HOSTED_ADMIN_KEY=... vpx tsx scripts/wave2-revision-backfill.ts \
+# The env file holds only the op:// reference, never the value.
+op run --env-file=<reference-only env file> -- \
+  vpx tsx scripts/wave2-revision-backfill.ts \
   --execute --origin https://convex.resonantprojects.art \
   --state out/wave2-backfill-state.json --batch-size 50
 ```
@@ -292,10 +472,14 @@ External prerequisites, each still open:
 - A separate Telegram signer bot that Keith has opened, with its webhook set
   to `<site origin>/telegram/webhook/<path secret>` and the header secret as
   `secret_token`.
-- A site origin that Discord and Telegram can reach over public HTTPS. The
-  agent worker reaches HTTP actions at `https://convex.resonantprojects.art`
-  (`CONVEX_SITE_URL` in `agent/.env.schema`), but public reachability from
-  the platforms is unverified. The plan's alternative, `listen.rproj.art`,
+- A site origin that Discord and Telegram can reach over public HTTPS. On
+  2026-10-17 the HTTP router answered at
+  `https://convex-http.resonantprojects.art` through Cloudflare (the media
+  worker's `CONVEX_SITE_URL`). `agent/.env.schema` names
+  `https://convex.resonantprojects.art`, which is the API origin and returns
+  404 for HTTP routes; the running agent worker uses an internal
+  `http://convex.rproj.art:3211`. Reachability from the platforms, and whether
+  Cloudflare challenges their POSTs, is unverified. The plan's alternative, `listen.rproj.art`,
   forwards only podcast and storage paths today and would need a new route.
 - Keith's Discord and Telegram user IDs and his existing Convex `users` ID for
   `DECISION_SIGNERS`.
@@ -370,9 +554,13 @@ Deployment order, from the current contracts:
    changes each recipe card's hash once, and `unratedAudio` cards for render
    masters stop listing. If Convex is deployed before all three land, #141
    must be deployed before #140: without #141's delivery-only rule, the docket
-   lists each render's master as well as its delivery.
-2. **Media image 0.3.0 on ai-5090-02, promptly after Convex.** Use
-   `ghcr.io/resonant-projects/frequency-music-media:sha-0cc05921d05c53dd6a3076824b19aab68215a77a`. #140 raises
+   lists each render's master as well as its delivery. The deployed backend
+   is `81150337`, so one deploy of `main` also carries #118, #138 and #153;
+   the [work order](#what-the-convex-deploy-changes-81150337-to-main) lists
+   the combined effects.
+2. **Media image 0.3.0 on ai-5090-02, promptly after Convex.** Use the digest
+   pinned in the [work order](#pinned-candidate), which supersedes
+   `sha-0cc05921d05c53dd6a3076824b19aab68215a77a`. #140 raises
    `RENDERER_VERSION_FOR_JOBS` to `0.3.0`. Every media job enqueued after the
    Convex deploy carries that version, including narration and shootout jobs,
    not only renders. A 0.2.2 worker claims none of them, and the sweep parks
@@ -382,7 +570,9 @@ Deployment order, from the current contracts:
    requesting any render.
 3. **Agent worker image containing the `hypothesis-tournament` graph**, before
    the tournament gate opens. An older worker would claim a queued tournament
-   run and fail it as an unknown graph. The MCP workload (Stage 3) needs the
+   run and fail it as an unknown graph. The same holds for #118's
+   `failure-investigation` graph, which needs no gate, so roll the worker
+   promptly after Convex (pinned digest in the [work order](#pinned-candidate)). The MCP workload (Stage 3) needs the
    same agent build for `tournament.request` to reach the backend.
 4. **Gates, each one a separate approval:**
    - signer and docket gates per Stages 4 and 5;
