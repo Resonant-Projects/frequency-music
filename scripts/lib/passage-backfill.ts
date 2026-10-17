@@ -13,17 +13,18 @@ export const BACKFILL_MAX_BATCH_SIZE = 10;
 const BATCH_PAUSE_MS = 250;
 
 export const BACKFILL_USAGE = [
-  "Usage: vpx tsx scripts/backfill-passages.ts [--apply] [--batch-size N] [--max-batches N]",
+  "Usage: vpx tsx scripts/backfill-passages.ts [--apply] [--canary] [--batch-size N]",
   "Default is a read-only count, size and cost estimate over every source.",
   `--batch-size N   sources per backfillBatch action, 1-${BACKFILL_MAX_BATCH_SIZE} (default ${BACKFILL_MAX_BATCH_SIZE})`,
-  "--max-batches N  stop after N pages, for a canary apply; a rerun resumes",
-  "                 because sources with a ready entry are skipped",
+  "--canary         stop after the first page with pending work, so an apply",
+  "                 embeds at most one page; a rerun resumes because sources",
+  "                 with a ready entry are skipped",
 ];
 
 export type BackfillOptions = {
   apply: boolean;
   batchSize: number;
-  maxBatches: number | null;
+  canary: boolean;
 };
 
 function positiveInteger(flag: string, value: string | undefined): number {
@@ -40,7 +41,7 @@ export function parseBackfillArgs(
   const options: BackfillOptions = {
     apply: false,
     batchSize: BACKFILL_MAX_BATCH_SIZE,
-    maxBatches: null,
+    canary: false,
   };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
@@ -52,8 +53,7 @@ export function parseBackfillArgs(
         throw new Error(
           `--batch-size is at most ${BACKFILL_MAX_BATCH_SIZE}, the server's page cap`,
         );
-    } else if (arg === "--max-batches")
-      options.maxBatches = positiveInteger(arg, argv[++index]);
+    } else if (arg === "--canary") options.canary = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
   return options;
@@ -91,6 +91,8 @@ export type BackfillRun = {
   batches: number;
   // True only when the last page reported isDone: every source was scanned.
   complete: boolean;
+  // Set when --canary stopped the run at its first page with pending work.
+  canaryStopped: boolean;
   totals: BackfillTotals;
   // Set when a batch call threw; the totals cover the pages before it.
   error?: unknown;
@@ -116,6 +118,7 @@ export async function runBackfill(
     enabled: false,
     batches: 0,
     complete: false,
+    canaryStopped: false,
     totals: {
       scanned: 0,
       textBearing: 0,
@@ -127,7 +130,7 @@ export async function runBackfill(
   };
   let cursor: string | null = null;
   try {
-    while (options.maxBatches === null || run.batches < options.maxBatches) {
+    for (;;) {
       if (options.apply && run.batches > 0) await sleep(BATCH_PAUSE_MS);
       const result = await callBatch({
         cursor,
@@ -141,6 +144,11 @@ export async function runBackfill(
       cursor = result.continueCursor;
       if (result.isDone) {
         run.complete = true;
+        break;
+      }
+      // Earlier pages held no pending work, so they embedded nothing.
+      if (options.canary && result.pending > 0) {
+        run.canaryStopped = true;
         break;
       }
     }
@@ -164,6 +172,14 @@ export function embeddingCeiling(chars: number): {
   return { tokens, usd: (tokens / 1_000_000) * PASSAGE_USD_PER_MILLION_TOKENS };
 }
 
+/** Dollars at four decimals, rounded up so a printed ceiling stays a bound. */
+export function formatCeilingUsd(usd: number): string {
+  // Strip float noise before rounding up, so an exact $0.39 prints as 0.3900.
+  return (Math.ceil(Number((usd * 10_000).toPrecision(12))) / 10_000).toFixed(
+    4,
+  );
+}
+
 export function backfillReport(
   run: BackfillRun,
   options: BackfillOptions,
@@ -173,14 +189,14 @@ export function backfillReport(
   const ceiling = embeddingCeiling(totals.pendingChars);
   const scope = run.complete
     ? `scope=full batches=${run.batches}`
-    : `scope=partial batches=${run.batches} (${run.error === undefined ? "--max-batches reached" : "stopped by an error"})`;
+    : `scope=partial batches=${run.batches} (${run.error === undefined ? "canary stopped at the first page with pending work" : "stopped by an error"})`;
   const lines = [
     options.apply ? "APPLIED" : "DRY RUN (use --apply to execute)",
     `indexing=${run.enabled ? "enabled" : "disabled"}`,
     scope,
     `sources: scanned=${totals.scanned} textBearing=${totals.textBearing} pending=${totals.pending} indexed=${totals.indexed} failed=${totals.failed}`,
     `estimate: chars=${totals.pendingChars} tokens≈${estimate.tokens} cost≈$${estimate.usd.toFixed(4)} at $${PASSAGE_USD_PER_MILLION_TOKENS}/1M tokens (${PASSAGE_EMBEDDING_MODEL})`,
-    `ceiling: tokens≤${ceiling.tokens} cost≤$${ceiling.usd.toFixed(4)} (3 tokens per char, any script)`,
+    `ceiling: tokens≤${ceiling.tokens} cost≤$${formatCeilingUsd(ceiling.usd)} (3 tokens per char, any script)`,
   ];
   if (options.apply)
     lines.push("convergence=pending (rerun the dry run to confirm pending=0)");

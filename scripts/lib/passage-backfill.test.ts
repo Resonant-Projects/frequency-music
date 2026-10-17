@@ -5,11 +5,12 @@ import {
   backfillExitCode,
   backfillReport,
   embeddingCeiling,
+  formatCeilingUsd,
   parseBackfillArgs,
   runBackfill,
 } from "./passage-backfill";
 
-const DRY: BackfillOptions = { apply: false, batchSize: 10, maxBatches: null };
+const DRY: BackfillOptions = { apply: false, batchSize: 10, canary: false };
 const APPLY: BackfillOptions = { ...DRY, apply: true };
 
 const page = (
@@ -50,10 +51,10 @@ describe("parseBackfillArgs", () => {
     expect(parseBackfillArgs([])).toEqual(DRY);
   });
 
-  test("reads apply, batch size and a canary batch limit", () => {
+  test("reads apply, batch size and canary", () => {
     expect(
-      parseBackfillArgs(["--apply", "--batch-size", "3", "--max-batches", "1"]),
-    ).toEqual({ apply: true, batchSize: 3, maxBatches: 1 });
+      parseBackfillArgs(["--apply", "--batch-size", "3", "--canary"]),
+    ).toEqual({ apply: true, batchSize: 3, canary: true });
     expect(parseBackfillArgs(["--apply", "--help"])).toBe("help");
   });
 
@@ -64,7 +65,7 @@ describe("parseBackfillArgs", () => {
     [["--batch-size", "0"], /positive integer/],
     [["--batch-size", "2.5"], /positive integer/],
     [["--batch-size", "11"], /at most 10/],
-    [["--max-batches", "-1"], /positive integer/],
+    [["--max-batches", "1"], /Unknown argument: --max-batches/],
   ])("rejects %j", (argv, message) => {
     expect(() => parseBackfillArgs(argv)).toThrow(message);
   });
@@ -85,6 +86,7 @@ describe("runBackfill", () => {
       enabled: true,
       batches: 2,
       complete: true,
+      canaryStopped: false,
       totals: {
         scanned: 20,
         textBearing: 16,
@@ -96,19 +98,43 @@ describe("runBackfill", () => {
     });
   });
 
-  test("a canary stops after --max-batches without claiming a full scan", async () => {
+  test("a canary skips pages with no pending work and stops after the first with some", async () => {
     const { callBatch, calls } = pages(
-      page({ indexed: 2 }),
+      page({ pending: 0, pendingChars: 0, continueCursor: "a" }),
+      page({ pending: 2, indexed: 2, continueCursor: "b" }),
       page({ isDone: true }),
     );
     const run = await runBackfill(
       callBatch,
-      { ...APPLY, batchSize: 4, maxBatches: 1 },
+      { ...APPLY, batchSize: 4, canary: true },
       noSleep,
     );
-    expect(calls).toEqual([{ cursor: null, batchSize: 4, apply: true }]);
-    expect(run).toMatchObject({ batches: 1, complete: false });
-    expect(run.totals.indexed).toBe(2);
+    expect(calls).toEqual([
+      { cursor: null, batchSize: 4, apply: true },
+      { cursor: "a", batchSize: 4, apply: true },
+    ]);
+    expect(run).toMatchObject({
+      batches: 2,
+      complete: false,
+      canaryStopped: true,
+    });
+    expect(run.totals).toMatchObject({ pending: 2, indexed: 2, failed: 0 });
+    expect(backfillReport(run, { ...APPLY, canary: true })).toContain(
+      "scope=partial batches=2 (canary stopped at the first page with pending work)",
+    );
+  });
+
+  test("a canary over a corpus with nothing pending scans everything", async () => {
+    const { callBatch } = pages(
+      page({ pending: 0 }),
+      page({ pending: 0, isDone: true }),
+    );
+    const run = await runBackfill(
+      callBatch,
+      { ...APPLY, canary: true },
+      noSleep,
+    );
+    expect(run).toMatchObject({ complete: true, canaryStopped: false });
   });
 
   test("a failing batch call keeps the totals of the pages before it", async () => {
@@ -129,6 +155,16 @@ describe("runBackfill", () => {
     expect(sleep).toHaveBeenCalledTimes(1);
     await runBackfill(twoPages(), DRY, { sleep });
     expect(sleep).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("formatCeilingUsd", () => {
+  test("rounds up, so a tiny paid ceiling never prints as zero", () => {
+    // 100 chars → 300 tokens → $0.000039.
+    expect(formatCeilingUsd(embeddingCeiling(100).usd)).toBe("0.0001");
+    expect(formatCeilingUsd(0.39)).toBe("0.3900");
+    expect(formatCeilingUsd(0.156)).toBe("0.1560");
+    expect(formatCeilingUsd(0)).toBe("0.0000");
   });
 });
 
@@ -154,6 +190,7 @@ const complete = (
   enabled,
   batches: 3,
   complete: true,
+  canaryStopped: false,
   totals: {
     scanned: 25,
     textBearing: 20,
@@ -182,8 +219,8 @@ describe("backfillReport", () => {
   });
 
   test("a partial dry run never claims convergence", () => {
-    const partial = { ...complete({}), complete: false };
-    expect(backfillReport(partial, { ...DRY, maxBatches: 3 })).toContain(
+    const partial = { ...complete({}), complete: false, canaryStopped: true };
+    expect(backfillReport(partial, { ...DRY, canary: true })).toContain(
       "converged=unknown (partial scan)",
     );
   });

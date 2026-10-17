@@ -14,7 +14,7 @@ Remaining evidence, in order:
 2. Read-only checks: the gate reads `false` and `OPENAI_API_KEY` is present in the deployment environment.
 3. A full dry run: `textBearing`, `pending`, chars, the estimate and the ceiling.
 4. Keith's budget cap, at or above the dry run's ceiling.
-5. Gate enabled, then a one-page canary apply with `failed=0`.
+5. Gate enabled, then a canary apply (`--canary`, at most one page of pending work) with `indexed` equal to its `pending`, at least 1, and `failed=0`.
 6. A full apply with `failed=0`, and a convergence dry run with `scope=full pending=0 converged=yes`.
 7. Probes within bounds (1–8 passages, at most 12,000 chars, none archived), with a by-eye verdict that a cross-domain phrase returns both article prose and a transcript passage.
 8. No `Passage indexing skipped for` or `Passage removal failed for` line in the Convex logs for the window.
@@ -35,7 +35,7 @@ Found-state adaptations:
 
 ### Operator runbook
 
-The [acceptance sequence](../evidence/passage-index-20261017/acceptance.md) supersedes the earlier seven-step runbook here. It corrects two steps: the supported deploy runs with `--codegen disable`, so it does not regenerate `_generated`, and enabling the gate also starts the weekly sweep and the write hooks spending. It adds the read-only gate check, a canary apply (`--max-batches 1`), a hard cost ceiling in the dry-run report, and machine-checkable pass criteria for each step. Rollback is `passages:setIndexingEnabled '{"enabled": false}'`. Search keeps serving whatever is already indexed, and no generator prompt reads it.
+The [acceptance sequence](../evidence/passage-index-20261017/acceptance.md) supersedes the earlier seven-step runbook here. It corrects two steps: the supported deploy runs with `--codegen disable`, so it does not regenerate `_generated`, and enabling the gate also starts the weekly sweep and the write hooks spending. It adds the read-only gate check, a canary apply (`--canary`, which embeds only the first page holding pending work), a hard cost ceiling in the dry-run report, and machine-checkable pass criteria for each step. Rollback is `passages:setIndexingEnabled '{"enabled": false}'`. Search keeps serving whatever is already indexed, and no generator prompt reads it.
 
 **Goal:** Make source prose retrievable. Chunk-index every text-bearing source's full text (`rawText`/`transcript`) into a `@convex-dev/rag` passage index, and expose one bounded agent tool, `searchSourcePassages`, so agents can semantically query the corpus and get back what sources actually *say* — with provenance — instead of only claim assertions.
 

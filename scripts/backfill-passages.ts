@@ -5,7 +5,7 @@
  * Dry run:
  *   vpx tsx scripts/backfill-passages.ts
  * Canary, then full apply (after `passages:setIndexingEnabled {"enabled": true}`):
- *   vpx tsx scripts/backfill-passages.ts --apply --max-batches 1
+ *   vpx tsx scripts/backfill-passages.ts --apply --canary
  *   vpx tsx scripts/backfill-passages.ts --apply
  *
  * Operator-gated: both modes contact the deployed Convex backend. Apply makes

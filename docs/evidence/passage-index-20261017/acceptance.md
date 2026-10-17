@@ -113,14 +113,20 @@ the weekly sweep indexes any source without a ready entry.
 
 ### Stage 3. Canary
 
+Skip Stages 2–4 if the Stage 1 dry run reported `pending=0`.
+
 ```sh
-vpx tsx scripts/backfill-passages.ts --apply --max-batches 1
+vpx tsx scripts/backfill-passages.ts --apply --canary
 vpx tsx scripts/backfill-passages.ts
 ```
 
-Pass: the apply exits 0 with `scope=partial batches=1` and `failed=0`, and the
-dry run's `pending` has dropped by that apply's `indexed` count (allow for
-sources written in between). A failure here usually means a missing or invalid
+`--canary` walks pages that hold no pending work, which embed nothing, and
+stops after the first page that does, so it embeds at most one page of up to
+ten sources. Pass: the apply exits 0 with `failed=0` and `indexed` equal to its
+`pending`, which must be at least 1; its scope reads `scope=partial … (canary
+stopped at the first page with pending work)`, or `scope=full` when that page
+was the last. The dry run's `pending` has then dropped by that `indexed` count
+(allow for sources written in between). A failure here usually means a missing or invalid
 `OPENAI_API_KEY` or a component fault: roll back (below) and read the Convex
 logs for `Passage indexing skipped for <sourceId>`.
 
@@ -177,7 +183,8 @@ Acceptance holds only when all of these are recorded:
 1. Stage 1 printed `false` and `present`, and the dry run exited 0 with
    `indexed=0 failed=0`.
 2. The approved cap is at or above the Stage 1 ceiling.
-3. Every apply exited 0 with `failed=0`.
+3. Every apply exited 0 with `failed=0`, and the canary indexed at least one
+   source.
 4. The Stage 5 dry run reported `scope=full`, `pending=0` and `converged=yes`.
 5. Every Stage 6 probe met the mechanical bounds and the by-eye check passed.
 6. The Convex logs for the window hold no `Passage indexing skipped for` or
