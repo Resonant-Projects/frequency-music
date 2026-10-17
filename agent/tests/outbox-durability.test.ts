@@ -2,6 +2,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, test, vi } from "vite-plus/test";
+import { SCOUTED_TEXT_MAX_CHARS } from "../../convex/shared/agentContract";
 import { DurableOutbox } from "../src/shared/outbox.js";
 import { ConvexToolHttpError } from "../src/tools/convexTools.js";
 
@@ -231,4 +232,46 @@ describe("outbox storage failures", () => {
       }
     },
   );
+});
+
+describe("outbox record size", () => {
+  test("spools the largest capture intake accepts, even fully JSON-escaped", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "outbox-record-size-"));
+    try {
+      // JSON writes a control character as \u00XX: six bytes per character.
+      const escaped = (length: number) => "\u0001".repeat(length);
+      const args = {
+        agentRunId: "run",
+        input: {
+          url: `https://example.org/${"a".repeat(2_000)}`,
+          title: escaped(1_000),
+          query: escaped(4_000),
+          rationale: escaped(4_000),
+          rawText: escaped(SCOUTED_TEXT_MAX_CHARS),
+          contentProvider: "crawl4ai",
+        },
+        stage: "intake",
+        diagnostic: escaped(1_000),
+      };
+      const outbox = new DurableOutbox(dir);
+      await outbox.enqueue({ tool: "reportCaptureFailure", args });
+      const deliver = vi.fn(async () => undefined);
+      await outbox.flush(deliver);
+      expect(deliver).toHaveBeenCalledWith("reportCaptureFailure", args);
+      await expect(
+        outbox.enqueue({
+          tool: "reportCaptureFailure",
+          args: {
+            ...args,
+            input: {
+              ...args.input,
+              rawText: escaped(2 * SCOUTED_TEXT_MAX_CHARS),
+            },
+          },
+        }),
+      ).rejects.toThrow("Recovery outbox record exceeds limit");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });
