@@ -113,7 +113,10 @@ the weekly sweep indexes any source without a ready entry.
 
 ### Stage 3. Canary
 
-Skip Stages 2–4 if the Stage 1 dry run reported `pending=0`.
+If the Stage 1 dry run reported `pending=0` with `textBearing` above zero,
+the index is already current, which is only possible after an earlier
+activation: the gate is off by default and nothing indexes while it is off.
+Follow the zero-pending path in the acceptance criteria instead of Stages 2–4.
 
 ```sh
 vpx tsx scripts/backfill-passages.ts --apply --canary
@@ -184,7 +187,10 @@ Acceptance holds only when all of these are recorded:
    `indexed=0 failed=0`.
 2. The approved cap is at or above the Stage 1 ceiling.
 3. Every apply exited 0 with `failed=0`, and the canary indexed at least one
-   source.
+   source. **Zero-pending path:** when Stage 1 reported `pending=0` and
+   Stages 2–4 were skipped, this criterion is met instead by citing the earlier
+   activation's recorded canary and apply evidence. Without that record, the
+   index's provenance is unknown: stop and report instead of accepting.
 4. The Stage 5 dry run reported `scope=full`, `pending=0` and `converged=yes`.
 5. Every Stage 6 probe met the mechanical bounds and the by-eye check passed.
 6. The Convex logs for the window hold no `Passage indexing skipped for` or
