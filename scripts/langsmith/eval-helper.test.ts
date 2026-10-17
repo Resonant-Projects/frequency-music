@@ -1,4 +1,20 @@
-import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 
 // Declared before the module under test is imported: `eval-helper` pulls in
 // `varlock/auto-load`, which would otherwise resolve secrets from
@@ -18,6 +34,7 @@ import {
   runEval,
   type RunEvalDeps,
   selectPromptVersion,
+  usageLogLine,
 } from "./eval-helper";
 import { makeJudgeEvaluator } from "./evaluators/judge";
 import { COMPLETION_MARKER, parseCompletionMarker } from "./run-guard";
@@ -96,7 +113,11 @@ describe("shared inference policy", () => {
 type GenerateArgs = Parameters<GenerateTextFn>[0];
 
 function fakeGenerate(
-  respond: (args: GenerateArgs) => { text: string; finishReason: string },
+  respond: (args: GenerateArgs) => {
+    text: string;
+    finishReason: string;
+    usage?: unknown;
+  },
 ) {
   const calls: GenerateArgs[] = [];
   const generate: GenerateTextFn = async (args) => {
@@ -238,11 +259,16 @@ const scoreField = (run: Run) => {
 };
 
 function harness(opts: {
-  respond?: (args: GenerateArgs) => { text: string; finishReason: string };
+  respond?: (args: GenerateArgs) => {
+    text: string;
+    finishReason: string;
+    usage?: unknown;
+  };
   generate?: GenerateTextFn;
   evaluators?: Array<(run: Run, example?: Example) => unknown>;
   examples?: Example[];
   dropFeedbackFor?: string;
+  env?: Record<string, string | undefined>;
 }) {
   const fake = fakeGenerate(
     opts.respond ?? (() => ({ text: '{"quality": 1}', finishReason: "stop" })),
@@ -260,7 +286,7 @@ function harness(opts: {
   const out: string[] = [];
   const err: string[] = [];
   const deps: RunEvalDeps = {
-    env: { ANTHROPIC_API_KEY: "ak-test" },
+    env: { ANTHROPIC_API_KEY: "ak-test", ...opts.env },
     loadExamples: async () => opts.examples ?? examples,
     evaluate,
     generate,
@@ -597,5 +623,144 @@ describe("runEval target deadline", () => {
       expect(args.abortSignal).toBe(timeouts.signals[i]);
     });
     expect(timeouts.signals.some((signal) => signal.aborted)).toBe(false);
+  });
+});
+
+function lines(path: string) {
+  return readFileSync(path, "utf8")
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as Record<string, unknown>);
+}
+
+function withModelId(args: GenerateArgs) {
+  return { ...args, model: modelIdOf(args) };
+}
+
+describe("usage log (EVAL_USAGE_LOG)", () => {
+  const usage = {
+    inputTokens: 1200,
+    outputTokens: 3400,
+    totalTokens: 4600,
+    inputTokenDetails: {
+      noCacheTokens: 1200,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+    },
+    outputTokenDetails: { textTokens: 900, reasoningTokens: 2500 },
+    raw: { note: PRIVATE_SOURCE },
+  };
+  const call = {
+    apiKey: SECRET,
+    model: ANTHROPIC_MODELS.sonnet,
+    system: "system-prompt-text",
+    prompt: PRIVATE_SOURCE,
+    maxOutputTokens: 8000,
+  };
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "eval-usage-"));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const respondWith = (
+    text: string,
+    finishReason = "stop",
+    u: unknown = usage,
+  ) => fakeGenerate(() => ({ text, finishReason, usage: u }));
+
+  test("appends one line of model id and token counts per call, nothing else", async () => {
+    const path = join(dir, "usage.jsonl");
+    const { generate } = respondWith(`{"echo":"${PRIVATE_SOURCE}"}`);
+    await generateModelText(call, generate, path);
+    await generateModelText(call, generate, path);
+    const raw = readFileSync(path, "utf8");
+    expect(raw).not.toContain(PRIVATE_SOURCE);
+    expect(raw).not.toContain(SECRET);
+    expect(raw).not.toContain("system-prompt-text");
+    const expected = {
+      model: ANTHROPIC_MODELS.sonnet,
+      inputTokens: 1200,
+      outputTokens: 3400,
+      totalTokens: 4600,
+      reasoningTokens: 2500,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+    };
+    expect(lines(path)).toEqual([expected, expected]);
+    expect(statSync(path).mode & 0o777).toBe(0o600);
+  });
+
+  test("logs a truncated response before failing it, since it was billed", async () => {
+    const path = join(dir, "usage.jsonl");
+    const { generate } = respondWith('{"a":', "length");
+    await expect(generateModelText(call, generate, path)).rejects.toThrow(
+      "truncated",
+    );
+    expect(lines(path)).toHaveLength(1);
+  });
+
+  test("non-numeric usage fields are written as null", async () => {
+    const path = join(dir, "usage.jsonl");
+    const { generate } = respondWith("{}", "stop", {
+      inputTokens: PRIVATE_SOURCE,
+      outputTokens: Number.NaN,
+    });
+    await generateModelText(call, generate, path);
+    expect(lines(path)[0]).toEqual({
+      model: ANTHROPIC_MODELS.sonnet,
+      inputTokens: null,
+      outputTokens: null,
+      totalTokens: null,
+      reasoningTokens: null,
+      cacheReadTokens: null,
+      cacheWriteTokens: null,
+    });
+  });
+
+  test("unset writes nothing and the request is identical either way", async () => {
+    const path = join(dir, "usage.jsonl");
+    const plain = respondWith("{}");
+    const logged = respondWith("{}");
+    await generateModelText(call, plain.generate, undefined);
+    expect(readdirSync(dir)).toEqual([]);
+    await generateModelText(call, logged.generate, path);
+    expect(readdirSync(dir)).toEqual(["usage.jsonl"]);
+    expect(withModelId(logged.calls[0]!)).toEqual(withModelId(plain.calls[0]!));
+  });
+
+  test("a failed write fails the call with a safe message", async () => {
+    const path = join(dir, "missing-dir", "usage.jsonl");
+    const { generate } = respondWith("{}");
+    const failure = await generateModelText(call, generate, path).catch(
+      (error: Error) => error,
+    );
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toMatch(/^usage log write failed: /);
+    expect((failure as Error).message).not.toContain(dir);
+  });
+
+  test("runEval reads the path from its env and logs every target call", async () => {
+    const path = join(dir, "usage.jsonl");
+    const h = harness({
+      respond: () => ({ text: '{"quality": 1}', finishReason: "stop", usage }),
+      env: { EVAL_USAGE_LOG: path },
+    });
+    await expect(h.run()).resolves.toBe(0);
+    expect(lines(path)).toHaveLength(2);
+    expect(parseCompletionMarker(h.out.join("\n"))?.examples).toBe(2);
+  });
+
+  test("usageLogLine keeps only the model and numeric token fields", () => {
+    expect(Object.keys(JSON.parse(usageLogLine("m", usage)))).toEqual([
+      "model",
+      "inputTokens",
+      "outputTokens",
+      "totalTokens",
+      "reasoningTokens",
+      "cacheReadTokens",
+      "cacheWriteTokens",
+    ]);
   });
 });
