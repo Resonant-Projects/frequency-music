@@ -147,14 +147,21 @@ async function insertExtraction(
                 status: NonNullable<
                   Doc<"extractions">["compositionParameters"][number]["registryStatus"]
                 >;
+                name?: string;
+                merged: boolean;
               }
             | undefined = kind
             ? await ctx.runMutation(internal.vocabulary.ensureParameterKind, {
                 name: kind,
               })
             : undefined;
+          // A merged kind (`chordType` -> `chord`) canonicalizes to its
+          // target; `kind` keeps the model's spelling either way.
           const canonicalKind =
-            parameter.canonicalKind?.trim() || kind || undefined;
+            (registry?.merged ? registry.name : undefined) ||
+            parameter.canonicalKind?.trim() ||
+            kind ||
+            undefined;
           return {
             kind,
             type: parameter.type ?? kind,
