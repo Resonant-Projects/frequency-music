@@ -66,7 +66,13 @@ raw data, credentials, function source, environment values or job payloads.
    (SHA-256 `8961e78e…`), which must give 0 added, 0 removed and 0 changed. The six
    components above are listed and active, and `_system/frontend/getSchemas`
    for the root and each component returns the same schemas as the live
-   inspection, with no in-progress schema.
+   inspection, with no in-progress schema. Component source packages must
+   also resolve. `_system/frontend/modules:listForAllComponents` in the guest
+   returns the same per-component module paths and function inventory as
+   `deployment-inspection.json`. One read-only query in each of the six
+   components, chosen by the recovery owner and recorded by function name,
+   executes successfully inside the isolated guest. Metadata alone does not
+   prove the code loads.
 6. **Data coherence.** Allowlisted document counts for `claims` (by `status`,
    `active` and `superseded`), `extractions`, `sources`, `agentRuns`, `mediaJobs` and
    `audioArtifacts`, read in the guest. For a bounded sample of
@@ -102,7 +108,8 @@ same image and layout within the previous seven days.
 
 ## Decision criteria
 
-- **Ready:** part A passed every item, part B is recorded, and the
+- **Ready:** part A passed every item, including the component execution
+  checks in item 5, part B is recorded, and the
   coordinator has approved restore as the selected rollback mechanism, with
   its write-loss window.
 - **Not ready:** any item fails or is unobserved, the image or layout changed
