@@ -14,7 +14,14 @@ describe("inspectMp3", () => {
       channelMode: "jointStereo",
       audioFrames: 1251,
       durationSecs: 30.024,
-      infoFrame: { tag: "Info", frames: 1251, encoder: "Lavf lame" },
+      infoFrame: {
+        tag: "Info",
+        frames: 1251,
+        encoder: "Lavf lame",
+        delay: 576,
+        padding: 576,
+      },
+      decodedSamples: 1_440_000,
     });
   });
 

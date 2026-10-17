@@ -44,7 +44,8 @@ declarations were edited by hand.
    `big_values` over 288, a reserved block type, a reservoir pointer before
    the stream, or more coded bits than the frame and reservoir hold), differs from the machine delivery's
    bitrate, sample rate, channels, channel mode or encoder header, lasts more
-   than 0.15 s off the plan, or is byte-identical to the machine delivery.
+   than 0.15 s off the plan, decodes to a different number of samples than
+   the machine delivery, or is byte-identical to the machine delivery.
    It then stores a fresh copy of the machine delivery bytes, and one
    mutation:
    - attaches the studio blob and marks the row ready and metadata-stripped;
@@ -83,6 +84,9 @@ the listener hears both takes before rating.
 - `blindGroups.create` stores members ordered by their random `memberId`,
   so the projected order does not depend on which member is the studio
   render; labels A and B are assigned independently at random.
+- The studio file must decode to exactly the machine delivery's sample
+  count (frame count less the LAME-tag delay and padding), so the native
+  player shows the same duration for both. Export exactly the plan length.
 - `blindGroups.projection` omits `durationSecs` for an unrevealed
   `studioComparison`: frame-counted lengths differ by milliseconds.
 - Both files must share the machine delivery's encoding and encoder header.

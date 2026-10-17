@@ -10,7 +10,12 @@ export type Mp3FixtureOptions = {
   bitrateKbps?: number;
   sampleRate?: number;
   mode?: keyof typeof MODE_INDEX;
-  info?: { encoder: string; frames?: number } | null;
+  info?: {
+    encoder: string;
+    frames?: number;
+    delay?: number;
+    padding?: number;
+  } | null;
   fill?: number;
   prefix?: Uint8Array;
   suffix?: Uint8Array;
@@ -55,6 +60,13 @@ export function mp3Fixture(options: Mp3FixtureOptions): Uint8Array {
         (options.info?.encoder ?? "Lavf lame").padEnd(9, "\0"),
       ),
       start + 12,
+    );
+    // LAME-tag gapless fields 21 bytes after the encoder string.
+    const delay = options.info?.delay ?? 576;
+    const padding = options.info?.padding ?? 576;
+    info.set(
+      [delay >> 4, ((delay & 0x0f) << 4) | (padding >> 8), padding & 0xff],
+      start + 12 + 21,
     );
     parts.push(info);
   }

@@ -751,6 +751,16 @@ describe("studio upload content", () => {
       /lasts 1\.680 s; the plan asks for 2 s/,
     ],
     ["the machine render itself", MACHINE_MP3, /is the machine render/],
+    [
+      // Same frame count, 100 samples shorter: a player would show it.
+      "a different decoded length",
+      mp3Fixture({
+        frames: 84,
+        fill: 0x22,
+        info: { encoder: "Lavf lame", padding: 676 },
+      }),
+      /decodes to 95516 samples; the machine render has 95616/,
+    ],
   ])(
     "refuses %s, deletes the bytes and marks the row failed",
     async (_name, bytes, message) => {

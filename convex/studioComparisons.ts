@@ -37,7 +37,11 @@ import {
   listeningConditionsValidator,
   stableContentDigest,
 } from "./shared/decisionIntents";
-import { inspectMp3, Mp3InspectionError } from "./shared/mp3Inspect";
+import {
+  inspectMp3,
+  type Mp3Inspection,
+  Mp3InspectionError,
+} from "./shared/mp3Inspect";
 import { admitRenderPlan, renderPlanMemberCount } from "./shared/renderPlan";
 import { stableStringify } from "./shared/stableHash";
 import {
@@ -440,6 +444,12 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
 
 class StudioRejection extends Error {}
 
+function decodedLength(file: Mp3Inspection): string {
+  return file.decodedSamples === undefined
+    ? `${file.audioFrames} frames`
+    : `${file.decodedSamples} samples`;
+}
+
 const finishReturn = v.object({
   groupId: v.id("blindGroups"),
   replayed: v.boolean(),
@@ -509,6 +519,16 @@ export const finishUpload = action({
       )
         throw new StudioRejection(
           `The render lasts ${studio.durationSecs.toFixed(3)} s; the plan asks for ${context.durationSecs} s`,
+        );
+      // Players show the decoded length; any difference from the machine
+      // render would show in the native controls before reveal.
+      if (
+        machine.decodedSamples === undefined
+          ? studio.audioFrames !== machine.audioFrames
+          : studio.decodedSamples !== machine.decodedSamples
+      )
+        throw new StudioRejection(
+          `The render decodes to ${decodedLength(studio)}; the machine render has ${decodedLength(machine)}. Export exactly ${context.durationSecs} s at ${context.sampleRate} Hz`,
         );
       durationSecs = studio.durationSecs;
     } catch (error) {

@@ -32,7 +32,13 @@ export type Mp3Inspection = {
     frames?: number;
     /** The 9-byte encoder string after the Xing fields (e.g. "Lavc"). */
     encoder?: string;
+    /** LAME-tag encoder delay and end padding, in samples. */
+    delay?: number;
+    padding?: number;
   } | null;
+  /** Decoded length when the LAME tag gives delay and padding: what a
+   * gapless player (and its duration display) reports. */
+  decodedSamples?: number;
 };
 
 export class Mp3InspectionError extends Error {}
@@ -178,7 +184,20 @@ function infoFrame(
           .replaceAll(/[^\x20-\x7e]/g, "")
           .trimEnd()
       : undefined;
-  return { tag, ...(frames === undefined ? {} : { frames }), encoder };
+  // LAME tag: encoder string (9), revision (1), lowpass (1), replay gain (8),
+  // flags (1), bitrate (1), then 12-bit delay and 12-bit padding.
+  const gapless = cursor + 24 <= end ? cursor + 21 : null;
+  return {
+    tag,
+    ...(frames === undefined ? {} : { frames }),
+    encoder,
+    ...(gapless === null
+      ? {}
+      : {
+          delay: (bytes[gapless]! << 4) | (bytes[gapless + 1]! >> 4),
+          padding: ((bytes[gapless + 1]! & 0x0f) << 8) | bytes[gapless + 2]!,
+        }),
+  };
 }
 
 /** Parse every frame; throws Mp3InspectionError naming the first defect. */
@@ -243,5 +262,11 @@ export function inspectMp3(bytes: Uint8Array): Mp3Inspection {
     audioFrames,
     durationSecs: (audioFrames * SAMPLES_PER_FRAME) / audio.sampleRate,
     infoFrame: info,
+    ...(info?.delay === undefined || info.padding === undefined
+      ? {}
+      : {
+          decodedSamples:
+            audioFrames * SAMPLES_PER_FRAME - info.delay - info.padding,
+        }),
   };
 }
