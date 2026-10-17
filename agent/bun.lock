@@ -8,7 +8,7 @@
         "@langchain/anthropic": "1.5.12",
         "@langchain/core": "1.2.17",
         "@langchain/langgraph": "1.4.21",
-        "@langchain/langgraph-sdk": "1.12.3",
+        "@langchain/langgraph-sdk": "1.12.4",
         "@modelcontextprotocol/sdk": "1.32.1",
         "@openai/codex-sdk": "0.162.1",
         "@varlock/1password-plugin": "2.0.5",
@@ -144,7 +144,7 @@
 
     "@langchain/langgraph-cli": ["@langchain/langgraph-cli@1.5.2", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@commander-js/extra-typings": "^13.0.0", "@langchain/langgraph-api": "1.5.2", "chokidar": "^4.0.3", "commander": "^13.0.0", "create-langgraph": "1.1.5", "dedent": "^1.5.3", "dotenv": "^16.4.7", "execa": "^9.5.2", "exit-hook": "^4.0.0", "extract-zip": "^2.0.1", "ignore": "^7.0.5", "langsmith": "^0.10.5", "open": "^10.1.0", "package-manager-detector": "^1.3.0", "stacktrace-parser": "^0.1.10", "tar": "^7.5.19", "winston": "^3.17.0", "winston-console-format": "^1.0.8", "yaml": "^2.8.3", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs": "dist/cli/cli.mjs" } }, "sha512-oXCgmEnfYMbOdvM/RNVqdA5A4Vp47FOK1wVeO4KS487WMYh3O4SMLzBjchXvzcdY7QJk5AOzY5bRz+N7pTOjxg=="],
 
-    "@langchain/langgraph-sdk": ["@langchain/langgraph-sdk@1.12.3", "", { "dependencies": { "@langchain/protocol": "^0.0.19", "@types/json-schema": "^7.0.15", "p-queue": "^9.0.1", "p-retry": "^7.1.1" }, "peerDependencies": { "@langchain/core": "^1.1.48", "react": "^18 || ^19", "react-dom": "^18 || ^19" }, "optionalPeers": ["react", "react-dom"] }, "sha512-o5Qd1pepsJKHmHGIcWhOlZe2fvlPs2AEkVOxqzbL3R8IiMBPH2gNG8/kwK36czEnagiJtu4RUn02mKbGRwd5dQ=="],
+    "@langchain/langgraph-sdk": ["@langchain/langgraph-sdk@1.12.4", "", { "dependencies": { "@langchain/protocol": "^0.0.19", "@types/json-schema": "^7.0.15", "p-queue": "^9.0.1", "p-retry": "^7.1.1" }, "peerDependencies": { "@langchain/core": "^1.1.48", "react": "^18 || ^19", "react-dom": "^18 || ^19" }, "optionalPeers": ["react", "react-dom"] }, "sha512-DuYk7HbajphOzBBtZYm+4LpCZuHj1/Csqepej5Ro1PJvchotA+bjg9XLh9LRsbz5j49Tl3owNoUp9ezj0lMCXA=="],
 
     "@langchain/langgraph-ui": ["@langchain/langgraph-ui@1.5.2", "", { "dependencies": { "@commander-js/extra-typings": "^13.0.0", "commander": "^13.0.0", "esbuild": "^0.28.1", "esbuild-plugin-tailwindcss": "^2.0.1", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs-ui": "dist/cli.mjs" } }, "sha512-18QJ3uRAZuBQs1PyMTG2F//VoQh16D6eMf1N/IzGccRapBv7Xr/KrW5TvftKZmkrpw/IC6Ak1hWiChuQ2m0PhQ=="],
 
