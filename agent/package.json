@@ -30,7 +30,7 @@
     "langchain": "1.5.16",
     "langsmith": "0.10.13",
     "tsx": "4.23.15",
-    "zod": "4.6.6",
+    "zod": "4.6.7",
     "@modelcontextprotocol/sdk": "1.32.1",
     "varlock": "1.22.0",
     "@varlock/1password-plugin": "2.0.5"

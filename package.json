@@ -48,7 +48,7 @@
     "langsmith": "^0.10.11",
     "marked": "^18.1.0",
     "midi-file": "^1.2.4",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

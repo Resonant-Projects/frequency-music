@@ -14,7 +14,7 @@
     "convex-helpers": "0.1.128",
     "tsx": "4.23.15",
     "varlock": "^1.22.0",
-    "zod": "4.6.6"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
