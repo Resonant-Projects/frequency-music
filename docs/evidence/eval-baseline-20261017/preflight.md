@@ -29,10 +29,10 @@ after a baseline is recorded, the baseline must be re-recorded.
    function` (`node_modules/langsmith/lib/evaluation/_runner.mjs:896`). The
    evaluators then score the missing output as 0. Unparseable model text
    becomes `{}` (`eval-helper.ts:50,58`), and a failed judge call returns
-   `score: 0` (`evaluators/judge.ts`). An auth, rate-limit or truncation fault
-   lowers the mean instead of stopping the run. Until this is repaired, read
-   each run's output for that string and inspect errored runs before you
-   accept a mean.
+   `score: 0` and the error only in its feedback comment (`evaluators/judge.ts`).
+   An auth, rate-limit or truncation fault lowers the mean instead of stopping
+   the run. Until this is repaired, a mean is only acceptable after the checks
+   in step 2 below.
 2. **Inference config differs from production.** `eval-helper.ts:91` calls
    `MODELS.sonnet` through OpenRouter with no reasoning options. Output is
    capped at 4096 tokens for extraction, against 8000 in production. Deployed
@@ -79,17 +79,24 @@ Run these from the repository root on a host where Varlock can resolve every
 required `.env.schema` secret. `varlock/auto-load` refuses to start if any
 required secret fails, not only these two keys.
 
-1. **Upload datasets** (needs approval). This sends 18 extraction rows,
-   including private source `rawText`, to LangSmith Cloud:
+1. **Upload datasets** (needs approval). The script uploads all three golden
+   files to LangSmith Cloud: 18 extraction rows, including private source
+   `rawText`; 4 hypothesis rows; and 2 weekly-brief rows, including their
+   hypotheses, recipes and theses. Run
    `vpx tsx scripts/langsmith/upload-datasets.ts`.
 2. **Run each target three times**, in order, keeping the full output of every run:
    `vpx tsx scripts/langsmith/eval-extraction.ts`,
    `vpx tsx scripts/langsmith/eval-hypothesis.ts`,
    `vpx tsx scripts/langsmith/eval-weekly-brief.ts`.
-   Record each `Starting evaluation of experiment:` name. Treat any
-   `Error running target function` or `judge call failed` as a failed run, not
-   as a score. Under STOP 6, review the cost of the first extraction run before
-   the second.
+   Record each `Starting evaluation of experiment:` name. Before accepting a
+   run, check three things. Search stdout and stderr for
+   `Error running target function` or `Error running evaluator`. In LangSmith,
+   check that no run in the experiment has an error. Then read every feedback
+   comment: `judge call failed` marks a failed judge call, and `no output`,
+   `missing bodyMd`, `missing or too short` or a schema comment such as
+   `summary missing` can mark an unparseable response. Exit status and `feedback_stats` show none of these.
+   Treat any hit as a failed run, not as a score. Under STOP 6, review the cost
+   of the first extraction run before the second.
 3. **Record means.** Read each experiment's `feedback_stats` (as
    `readMeansForExperiment` in `promote.ts` does). Fill the mean of three runs
    to two decimals in the last cell. Fill the metadata line with the date and
@@ -103,7 +110,8 @@ required secret fails, not only these two keys.
 
 1. Supply credentials: a session or service account that can read the
    referenced 1Password vaults.
-2. Approve uploading private extraction `rawText` to LangSmith Cloud.
+2. Approve uploading all three golden datasets, including private extraction
+   `rawText`, to LangSmith Cloud.
 3. Choose whether to run hypothesis (4) and weekly brief (2) under STOP 4, or
    curate more rows first.
 4. Choose whether to repair findings 1–2 before recording any baseline.
