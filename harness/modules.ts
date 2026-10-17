@@ -23,6 +23,7 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./audioArtifacts.ts": () => import("../convex/audioArtifacts"),
   "./audioFeedback.ts": () => import("../convex/audioFeedback"),
   "./auth.ts": () => import("../convex/auth"),
+  "./authFailures.ts": () => import("../convex/authFailures"),
   "./blindGroups.ts": () => import("../convex/blindGroups"),
   "./campaigns.ts": () => import("../convex/campaigns"),
   "./claims.ts": () => import("../convex/claims"),

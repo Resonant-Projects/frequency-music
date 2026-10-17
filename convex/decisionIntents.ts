@@ -139,7 +139,7 @@ export const propose = mutation({
   },
   returns: decisionIntentReturnValidator,
   handler: async (ctx, args) => {
-    requireAgentToolSecret(args.secret);
+    requireAgentToolSecret(args.secret, "mutation:decisionIntents.propose");
     return await createProposal(ctx, args);
   },
 });

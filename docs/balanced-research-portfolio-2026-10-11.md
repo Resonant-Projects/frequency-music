@@ -40,7 +40,7 @@ Gap targeting now considers approved core domains even when the sampled on-missi
 
 The target cap favors distinct display areas before multiple domains in the same area. Planning ensures one query for each thin domain before repeats and supplies deterministic foundation queries if the planner fails. Intake similarly gives distinct motivating gaps a slot before repeats, retaining the five-source write cap and ten-search cap. This improves allocation within a run; it does not guarantee every area a turn when more than five areas are thin.
 
-Classification chooses primary domain by mechanism and retains the existing one-to-three-domain contract and canonical registry slugs. Extraction uses `extract_v3` because the instructions changed. Existing evidence-level values and the 30,000-character model input cap remain unchanged. Longer stored texts therefore do not establish that all methods reached the model.
+Classification chooses primary domain by mechanism and retains the existing one-to-three-domain contract and canonical registry slugs. Extraction uses `extract_v3` because the instructions changed. Existing evidence-level values and the 30,000-character model input cap remain unchanged. Longer stored texts therefore do not establish that all methods reached the model. (On 2026-10-17 the input cap rose to 100,000 characters under the same `extract_v3` version, because the instructions did not change.)
 
 ## Alexandria integration
 

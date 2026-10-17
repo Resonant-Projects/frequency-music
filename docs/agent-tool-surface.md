@@ -12,6 +12,12 @@ All tool calls require `AGENT_TOOL_SECRET`.
 - HTTP routes accept `secret` in the JSON body.
 - HTTP routes live under `/agent-tools/*`.
 
+Every rejection is classified, counted, and alerted on without keeping secret
+material. Every consumer of this secret, the media service identity, and the
+service bypass secret is inventoried, with its host and how it resolves the
+secret, in [`service-identity-inventory.md`](service-identity-inventory.md).
+Use it as the rotation checklist.
+
 ## Tools
 
 <!-- AGENT_TOOLS:BEGIN -->

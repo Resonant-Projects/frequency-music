@@ -299,6 +299,11 @@ run. Covers both 2026-07-12 handoff files.
     and no alerting on repeated auth failures. Inventory consumers at rotation
     time; add Convex-side alerting on repeated auth failures; longer-term give
     the worker/scripts a real service identity.
+    **Status (2026-10-17):** inventory and alerting landed in
+    `docs/service-identity-inventory.md`. Rejected agent-tool, media, and
+    action-path bypass calls persist hourly counters (`authFailureCounters`).
+    Rolled-back query and mutation rejections, `sources:updateText` among them,
+    log an `[auth-failure]` line. The real service identity is still open.
 
 ## Session 2 ledger (2026-07-10 late night — autonomous orchestration)
 
