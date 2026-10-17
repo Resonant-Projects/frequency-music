@@ -60,10 +60,10 @@ describe("source scout canonical writes", () => {
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,
-        rawText: "a".repeat(30_001),
+        rawText: "a".repeat(100_001),
         contentProvider: "crawl4ai",
       }),
-    ).rejects.toThrow("100-30000 characters");
+    ).rejects.toThrow("100-100000 characters");
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,
@@ -76,7 +76,7 @@ describe("source scout canonical writes", () => {
         rawText: "Short text",
         contentProvider: "crawl4ai",
       }),
-    ).rejects.toThrow("100-30000 characters");
+    ).rejects.toThrow("100-100000 characters");
     await expect(
       t.mutation(internal.sources.createScoutedSource, {
         ...input,

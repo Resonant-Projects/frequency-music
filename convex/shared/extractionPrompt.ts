@@ -6,8 +6,11 @@ import { RESEARCH_SOURCE_GUIDANCE } from "./researchTopics";
 import { truncateText } from "./truncateText";
 
 export const EXTRACTION_PROMPT_VERSION = "extract_v3";
-/** Source text beyond this many characters is not shown to the model. */
-export const EXTRACTION_CONTENT_MAX_CHARS = 30_000;
+/**
+ * Source text beyond this many characters is not shown to the model. Source
+ * Scout captures and their retained recovery inputs share this bound.
+ */
+export const EXTRACTION_CONTENT_MAX_CHARS = 100_000;
 
 export const EXTRACT_SYSTEM_PROMPT = `You are a research assistant for a music theory and acoustics project called "Resonant Projects." Your task is to analyze source material and extract structured information relevant to the intersection of music, physics, and mathematics.
 
@@ -74,7 +77,7 @@ Respond with a JSON object containing:
 Only include claims that are substantive and relevant to music, frequency, acoustics, or related fields. Be conservative - quality over quantity.`;
 
 /**
- * The Source text a model sees: the first 30,000 characters, never ending on
+ * The Source text a model sees: the first 100,000 characters, never ending on
  * a lone high surrogate (Convex rejects strings with unpaired surrogates).
  */
 export function extractionContent(text: string): string {

@@ -6,9 +6,13 @@ import {
   HEARTBEAT_INTERVAL_MS,
   KNOWN_GRAPH_NAMES,
   PENDING_DRAFT_CAP,
+  SCOUTED_TEXT_MAX_CHARS,
   STALE_RUN_MS,
   TERMINAL_STATUS_OWNER,
 } from "./agentContract";
+import { agentToolArgs } from "./agentToolArgs";
+import { EXTRACTION_CONTENT_MAX_CHARS } from "./extractionPrompt";
+import { captureInputZ } from "./operationRecovery";
 import { AGENT_RUN_STATUSES as STATUS_SOURCE } from "./statuses";
 
 describe("agentContract", () => {
@@ -172,5 +176,29 @@ describe("Source Scout bot-challenge filter", () => {
           ),
       ),
     ).toBe(false);
+  });
+});
+
+describe("Source Scout text bound", () => {
+  test("Scout capture keeps exactly the text Extraction reads", () => {
+    expect(EXTRACTION_CONTENT_MAX_CHARS).toBe(100_000);
+    expect(SCOUTED_TEXT_MAX_CHARS).toBe(EXTRACTION_CONTENT_MAX_CHARS);
+    const capture = {
+      url: "https://example.org/paper",
+      query: "q",
+      rationale: "r",
+      contentProvider: "crawl4ai" as const,
+    };
+    const full = "a".repeat(EXTRACTION_CONTENT_MAX_CHARS);
+    const over = `${full}a`;
+    expect(captureInputZ.safeParse({ ...capture, rawText: full }).success).toBe(
+      true,
+    );
+    expect(captureInputZ.safeParse({ ...capture, rawText: over }).success).toBe(
+      false,
+    );
+    const ingest = agentToolArgs.ingestScoutedSource.shape.rawText;
+    expect(ingest.safeParse(full).success).toBe(true);
+    expect(ingest.safeParse(over).success).toBe(false);
   });
 });

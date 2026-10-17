@@ -23,7 +23,7 @@ describe("self-hosted Crawl4AI source text", () => {
                 success: true,
                 status_code: 200,
                 markdown: {
-                  raw_markdown: "# Measured modes\n" + "e".repeat(35_000),
+                  raw_markdown: "# Measured modes\n" + "e".repeat(105_000),
                   // Crawl4AI's default generator returns "" without a filter.
                   fit_markdown: "",
                 },
@@ -43,7 +43,7 @@ describe("self-hosted Crawl4AI source text", () => {
       text: expect.stringMatching(/^# Measured modes/),
       provider: "crawl4ai",
     });
-    expect(result?.text.length).toBe(30_000);
+    expect(result?.text.length).toBe(100_000);
     expect(fetchImpl).toHaveBeenCalledWith(
       "https://crawl4ai.rproj.art/crawl",
       expect.objectContaining({
@@ -254,7 +254,7 @@ describe("bot challenges and the Lab Firecrawl fallback", () => {
     const fetchImpl = firecrawlReturning({
       success: true,
       data: {
-        markdown: "# Jazz models\n" + "Algorithmic creativity. ".repeat(2_000),
+        markdown: "# Jazz models\n" + "Algorithmic creativity. ".repeat(5_000),
         metadata: { statusCode: 200 },
       },
     });
@@ -265,7 +265,7 @@ describe("bot challenges and the Lab Firecrawl fallback", () => {
     });
     const page = await scrape("https://mtosmt.org/paper.pdf");
     expect(page?.provider).toBe("firecrawl");
-    expect(page?.text.length).toBe(30_000);
+    expect(page?.text.length).toBe(100_000);
     expect(fetchImpl).toHaveBeenCalledWith(
       "http://172.16.10.38:3002/v2/scrape",
       expect.objectContaining({ method: "POST", redirect: "error" }),

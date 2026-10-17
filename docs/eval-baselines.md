@@ -69,6 +69,18 @@ scores 0, and those zeros count toward the mean.
 | schema_valid | 1.00 |
 | parameter_specificity | 0.82 |
 
+**Re-baseline pending Keith's approval (2026-10-17).** These means were
+measured with a 30,000-character Extraction input. Production and
+`eval-extraction.ts` now read up to 100,000 characters
+(`EXTRACTION_CONTENT_MAX_CHARS`), so this run configuration is no longer
+the one measured. All 18 golden rows are 761 to 7,393 characters long.
+Each renders the same prompt at either limit, so a re-baseline sends the
+same inputs. At the stage 1 figures it would cost about $0.40 per run, or
+$1.20 for three runs. The worst-case bound is $1.52 per run, or $4.56 for
+three. The golden set has no row over 30,000 characters, so it cannot
+measure what the higher limit changes. That would need new long golden
+rows, which also need Keith's approval. No paid run has been made.
+
 ## Hypothesis baseline
 
 - Prompt version: `v1` · Model/provider: `anthropic/claude-opus-5.5` (Anthropic direct, adaptive/high, 6000 tokens) · Date: 2026-10-17 · Experiments: `hypothesis-v1-511b69df`, `hypothesis-v1-819866f8`, `hypothesis-v1-390c9c87` (6 examples each)

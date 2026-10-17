@@ -1022,7 +1022,7 @@ describe("concept linking", () => {
 describe("operator export page", () => {
   test("pages text_ready Sources with full-text hashes and prompt-sized text", async () => {
     const t = convexTest(schema, modules);
-    const long = `${article.repeat(400)}TAIL`;
+    const long = `${article.repeat(450)}TAIL`;
     const insert = (n: number, rawText: string, status = "text_ready") =>
       t.run((ctx) =>
         ctx.db.insert("sources", {
@@ -1058,7 +1058,8 @@ describe("operator export page", () => {
     });
     expect(longRow?.sourceId).toBe(longId);
     expect(longRow?.inputHash).toBe(await extractionInputHash(long));
-    expect(longRow?.content).toHaveLength(30_000);
+    expect(long.length).toBeGreaterThan(100_000);
+    expect(longRow?.content).toHaveLength(100_000);
     expect(longRow?.unextractable).toBeUndefined();
     const second = await page(first.continueCursor);
     expect(second.page).toHaveLength(3);
@@ -1082,14 +1083,15 @@ describe("operator export page", () => {
 });
 
 describe("extraction prompt", () => {
-  test("renders title, URL and text cut to 30,000 characters, literally", () => {
+  test("renders title, URL and text cut to 100,000 characters, literally", () => {
     const prompt = renderExtractionPrompt({
       title: "Costs $& and $'",
       canonicalUrl: "https://example.org/x",
-      content: `${"a".repeat(30_000)}TAIL`,
+      content: `${"a".repeat(30_000)}MIDDLE${"a".repeat(69_994)}TAIL`,
     });
     expect(prompt).toContain("Title: Costs $& and $'");
     expect(prompt).toContain("URL: https://example.org/x");
+    expect(prompt).toContain("MIDDLE");
     expect(prompt).not.toContain("TAIL");
     expect(
       prompt.startsWith(EXTRACT_USER_PROMPT.split("{{title}}")[0] ?? ""),
@@ -1107,9 +1109,9 @@ describe("extraction prompt", () => {
     expect(injected.match(/REAL TEXT/g)).toHaveLength(1);
   });
 
-  test("never cuts an emoji in half at the 30,000-character limit", () => {
-    const text = `${"a".repeat(29_999)}😀tail`;
-    expect(extractionContent(text)).toBe("a".repeat(29_999));
+  test("never cuts an emoji in half at the 100,000-character limit", () => {
+    const text = `${"a".repeat(99_999)}😀tail`;
+    expect(extractionContent(text)).toBe("a".repeat(99_999));
     expect(extractionContent("short 😀")).toBe("short 😀");
     expect(renderExtractionPrompt({ content: text }).includes("\uD83D")).toBe(
       false,
