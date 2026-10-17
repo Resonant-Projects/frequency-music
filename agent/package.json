@@ -28,7 +28,7 @@
     "esbuild": "0.28.2",
     "hono": "4.13.13",
     "langchain": "1.5.16",
-    "langsmith": "0.10.11",
+    "langsmith": "0.10.13",
     "tsx": "4.23.15",
     "zod": "4.6.6",
     "@modelcontextprotocol/sdk": "1.32.1",
