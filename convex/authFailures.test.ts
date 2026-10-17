@@ -171,6 +171,27 @@ describe("/agent-tools/* rejections", () => {
   });
 });
 
+describe("alert emission", () => {
+  test("the counter mutation never logs; only its committed caller alerts", async () => {
+    // Convex keeps console output from attempts that lose an OCC race, so an
+    // alert written inside the mutation could repeat.
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const t = convexTest(schema, modules);
+    const results = [];
+    for (let i = 0; i < AUTH_FAILURE_ALERT_THRESHOLD; i++)
+      results.push(
+        await t.mutation(internal.authFailures.record, {
+          surface: "agent_tool",
+          reason: "secret_mismatch",
+          operation: "http:countPendingDrafts",
+        }),
+      );
+    expect(error).not.toHaveBeenCalled();
+    expect(results.map((r) => r.surfaceTotal)).toEqual([1, 2, 3]);
+    expect(new Set(results.map((r) => r.windowStart)).size).toBe(1);
+  });
+});
+
 describe("agent-tool action rejections", () => {
   test("a direct action call with a stale secret is refused and counted", async () => {
     vi.stubEnv("AGENT_TOOL_SECRET", AGENT_SECRET);

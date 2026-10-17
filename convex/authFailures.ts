@@ -16,7 +16,6 @@ import {
   AUTH_FAILURE_USER_AGENT_MAX,
   AUTH_FAILURE_WINDOW_MS,
   type AuthFailureSurface,
-  authFailureAlertLine,
   boundedLabel,
   windowStartFor,
 } from "./shared/authFailures";
@@ -31,7 +30,11 @@ export const record = internalMutation({
     operation: v.string(),
     userAgent: v.optional(v.string()),
   },
-  returns: v.object({ count: v.number(), surfaceTotal: v.number() }),
+  returns: v.object({
+    count: v.number(),
+    surfaceTotal: v.number(),
+    windowStart: v.number(),
+  }),
   handler: async (ctx, args) => {
     const now = Date.now();
     const windowStart = windowStartFor(now);
@@ -79,8 +82,8 @@ export const record = internalMutation({
       for (const row of expired)
         await ctx.db.delete("authFailureCounters", row._id);
     }
-    // Increments are serialized, so the surface-hour total reaches the
-    // threshold exactly once and the alert line is not repeated.
+    // The caller alerts after this commits: Convex keeps console output from
+    // attempts that lose an OCC race, so logging here could repeat the alert.
     const surfaceRows = await ctx.db
       .query("authFailureCounters")
       .withIndex("by_key", (q) =>
@@ -88,15 +91,7 @@ export const record = internalMutation({
       )
       .collect();
     const surfaceTotal = surfaceRows.reduce((sum, row) => sum + row.count, 0);
-    if (surfaceTotal === AUTH_FAILURE_ALERT_THRESHOLD)
-      console.error(
-        authFailureAlertLine({
-          surface: args.surface,
-          windowStart,
-          total: surfaceTotal,
-        }),
-      );
-    return { count, surfaceTotal };
+    return { count, surfaceTotal, windowStart };
   },
 });
 

@@ -99,9 +99,11 @@ stores no `_storage` ids, so `mediaSweeper` needs no reference check for it.
 
 ### Alerts
 
-When a surface reaches 3 rejections in one hour, `convex/authFailures.ts`
-writes one `console.error` line. Because the increments are serialized, it
-fires once per surface per hour:
+When a surface reaches 3 rejections in one hour, the rejecting action writes
+one `console.error` line after its counter commits. It is not written inside
+the mutation, because Convex keeps console output from attempts that lose an
+OCC race. Committed increments are serialized, so the line fires once per
+surface per hour:
 
 ```text
 [auth-failure-alert] surface=agent_tool window=2026-10-17T21:00:00.000Z rejections=3 threshold=3 action=see docs/service-identity-inventory.md

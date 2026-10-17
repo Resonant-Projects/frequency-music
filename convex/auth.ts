@@ -2,8 +2,10 @@ import { ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import {
+  AUTH_FAILURE_ALERT_THRESHOLD,
   type AuthFailureEvent,
   type AuthFailureReason,
+  authFailureAlertLine,
   authFailureLogLine,
   classifyBypassRejection,
 } from "./shared/authFailures";
@@ -49,12 +51,24 @@ export async function recordAuthFailure(
   ctx: Pick<ActionCtx, "runMutation">,
   event: AuthFailureEvent,
 ): Promise<void> {
+  let recorded: { surfaceTotal: number; windowStart: number };
   try {
-    await ctx.runMutation(internal.authFailures.record, event);
-    console.warn(authFailureLogLine(event, true));
+    recorded = await ctx.runMutation(internal.authFailures.record, event);
   } catch {
     console.warn(authFailureLogLine(event, false));
+    return;
   }
+  console.warn(authFailureLogLine(event, true));
+  // Committed increments are serialized, so exactly one caller sees the
+  // surface-hour total equal the threshold.
+  if (recorded.surfaceTotal === AUTH_FAILURE_ALERT_THRESHOLD)
+    console.error(
+      authFailureAlertLine({
+        surface: event.surface,
+        windowStart: recorded.windowStart,
+        total: recorded.surfaceTotal,
+      }),
+    );
 }
 
 /** A query or mutation rolls back on rejection, so only a log line survives. */
