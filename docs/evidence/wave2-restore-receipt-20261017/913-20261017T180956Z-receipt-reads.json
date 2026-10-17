@@ -1,0 +1,5071 @@
+{
+  "allChecksPassed": true,
+  "audioBlobSample": {
+    "candidatesTried": 8,
+    "failed": 0,
+    "failures": [],
+    "noPlaybackUrl": 0,
+    "passed": 8,
+    "population": 140,
+    "sampled": 8
+  },
+  "checks": {
+    "blobSamplePassed": true,
+    "componentProbesAllSucceeded": true,
+    "countsComplete": true,
+    "environmentPresenceComplete": true,
+    "inspectionComplete": true
+  },
+  "componentProbes": [
+    {
+      "componentPath": "workflow",
+      "function": "workflow:list",
+      "resultType": "dict",
+      "status": "success"
+    },
+    {
+      "componentPath": "workflow/workpool",
+      "function": "lib:statusBatch",
+      "resultType": "list",
+      "status": "success"
+    },
+    {
+      "componentPath": "workflow/workpool/batchWorker",
+      "function": "lib:status",
+      "resultType": "null",
+      "status": "success"
+    },
+    {
+      "componentPath": "aggregate",
+      "function": "btree:paginateNamespaces",
+      "resultType": "dict",
+      "status": "success"
+    },
+    {
+      "componentPath": "aggregate/batchWorker",
+      "function": "lib:status",
+      "resultType": "null",
+      "status": "success"
+    },
+    {
+      "componentPath": "actionCache",
+      "function": "lib:get",
+      "resultType": "dict",
+      "status": "success"
+    }
+  ],
+  "counts": {
+    "_storage": {
+      "complete": true,
+      "total": 140
+    },
+    "agentRuns": {
+      "byStatus": {
+        "cancelled": 0,
+        "completed": 246,
+        "failed": 1,
+        "needs_review": 3,
+        "queued": 0,
+        "running": 0
+      },
+      "complete": true,
+      "otherStatusCount": 0,
+      "pages": 2,
+      "total": 250
+    },
+    "audioArtifacts": {
+      "byStatus": {
+        "failed": 0,
+        "pending": 0,
+        "ready": 140
+      },
+      "complete": true,
+      "otherStatusCount": 0,
+      "pages": 1,
+      "total": 140
+    },
+    "claims": {
+      "byStatus": {
+        "active": 9741,
+        "superseded": 6123
+      },
+      "complete": true,
+      "otherStatusCount": 0,
+      "pages": 80,
+      "total": 15864
+    },
+    "extractions": {
+      "complete": true,
+      "pages": 41,
+      "total": 8003
+    },
+    "mediaJobs": {
+      "complete": true,
+      "pages": 1,
+      "total": 66
+    },
+    "sources": {
+      "complete": true,
+      "pages": 156,
+      "total": 7841
+    }
+  },
+  "deploymentAuthorized": false,
+  "environmentPresence": {
+    "AGENT_TOOL_SECRET": true,
+    "ANTHROPIC_API_KEY": true,
+    "DECISION_SIGNERS_ENABLED": false,
+    "DOCKET_PREPARATION_ENABLED": false,
+    "FREQUENCY_WORKER_CLAIMS_PAUSED": true,
+    "HYPOTHESIS_TOURNAMENT_ENABLED": false,
+    "OPENAI_API_KEY": true
+  },
+  "format": "frequency-restore-receipt-reads-v1",
+  "inspection": {
+    "components": [
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m027gymakjksjk6j7qdty414cx81drhd",
+        "name": null,
+        "path": "",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m02av2ahmh2jdg978d6qgxxr8h81e14x",
+        "name": "workflow",
+        "path": "workflow",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m027j0hcjpahm3930aeerjzxr181fe20",
+        "name": "workpool",
+        "path": "workflow/workpool",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m0236h4kwc2mdhcsrfcabrkfq981fv3v",
+        "name": "aggregate",
+        "path": "aggregate",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m02e4r51fj02j1dnynq626pem181e6fh",
+        "name": "actionCache",
+        "path": "actionCache",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m02d1ts5bbkfbysbw8m08gaqa98g4aqw",
+        "name": "batchWorker",
+        "path": "workflow/workpool/batchWorker",
+        "state": "active"
+      },
+      {
+        "argsCount": 0,
+        "argsOmitted": true,
+        "httpPrefix": null,
+        "id": "m02b758nh71xnaxpddrnk9jtg58g54bj",
+        "name": "batchWorker",
+        "path": "aggregate/batchWorker",
+        "state": "active"
+      }
+    ],
+    "modules": [
+      {
+        "componentId": null,
+        "modules": [
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listEnabled",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByIds",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "proposeFeed",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "updateLastPolled",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "setEnabled",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "remove",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "seedInitialFeeds",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "feeds.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listByStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "operatorExtractionPage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecent",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByType",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByDedupeKey",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "updateStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "updateText",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "archiveRecoverySource",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "provideRecoveryText",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "requestSourceRecovery",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "upsertExternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "resetScoutCapture",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listScoutCaptureBacklog",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "existingScoutedUrls",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "createScoutedSource",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "setVisibility",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFromUrlInput",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFromYouTubeInput",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFromUrlAndQueue",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFromYouTubeAndQueue",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "archive",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "recomputeDedupeKeys",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "bulkArchive",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "sources.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "pollFeed",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "pollAllFeeds",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "pollAllFeedsInternal",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "fetchUrlText",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "ingestUrl",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "ingestYouTube",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "ingest.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "extractAllReady",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listModels",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "parkOperatorUnextractable",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "extractSource",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "storeOperatorExtraction",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "extract.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByInputHash",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getBySourceId",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecent",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "editExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "backfillClaims",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "startConceptBackfill",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "extractions.js"
+          },
+          {
+            "crons": [
+              {
+                "argsOmitted": true,
+                "identifier": "batch-extract",
+                "schedule": {
+                  "seconds": 28800,
+                  "type": "interval"
+                },
+                "udfPath": "workflows.js:startBatchExtractionInternal"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "classify-stale-concepts",
+                "schedule": {
+                  "seconds": 3600,
+                  "type": "interval"
+                },
+                "udfPath": "conceptClassifier.js:sweepUnreviewedConcepts"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "embed-missing-sweep",
+                "schedule": {
+                  "dayOfWeek": 0,
+                  "hourUTC": 15,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "embeddings.js:sweepMissingEmbeddings"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "enqueue-correspondence-miner",
+                "schedule": {
+                  "hourUTC": 5,
+                  "minuteUTC": 0,
+                  "type": "daily"
+                },
+                "udfPath": "agentRuns.js:enqueue"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "enqueue-evidence-hunter",
+                "schedule": {
+                  "hourUTC": 6,
+                  "minuteUTC": 0,
+                  "type": "daily"
+                },
+                "udfPath": "agentRuns.js:enqueue"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "enqueue-hypothesis-drafter",
+                "schedule": {
+                  "dayOfWeek": 4,
+                  "hourUTC": 16,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "agentRuns.js:enqueue"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "enqueue-source-scout",
+                "schedule": {
+                  "dayOfWeek": 3,
+                  "hourUTC": 16,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "agentRuns.js:enqueue"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "enqueue-transcript-capture",
+                "schedule": {
+                  "seconds": 10800,
+                  "type": "interval"
+                },
+                "udfPath": "transcriptCapture.js:enqueueIfNeeded"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "generate-hypotheses",
+                "schedule": {
+                  "dayOfWeek": 1,
+                  "hourUTC": 16,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "workflows.js:startBatchHypothesisInternal"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "generate-weekly-turn",
+                "schedule": {
+                  "dayOfWeek": 5,
+                  "hourUTC": 16,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "weeklyBriefs.js:generateInternal"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "poll-feeds",
+                "schedule": {
+                  "seconds": 21600,
+                  "type": "interval"
+                },
+                "udfPath": "ingest.js:pollAllFeedsInternal"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "recompute-stats",
+                "schedule": {
+                  "seconds": 1800,
+                  "type": "interval"
+                },
+                "udfPath": "dashboard.js:recomputeStats"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "reconcile-reviewed-agent-runs",
+                "schedule": {
+                  "seconds": 900,
+                  "type": "interval"
+                },
+                "udfPath": "agentRuns.js:reconcileReviewedRuns"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "retire-stale-correspondences",
+                "schedule": {
+                  "dayOfWeek": 0,
+                  "hourUTC": 16,
+                  "minuteUTC": 0,
+                  "type": "weekly"
+                },
+                "udfPath": "correspondences.js:autoRetireStale"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "sweep-stale-agent-runs",
+                "schedule": {
+                  "seconds": 900,
+                  "type": "interval"
+                },
+                "udfPath": "agentRuns.js:sweepStaleRuns"
+              },
+              {
+                "argsOmitted": true,
+                "identifier": "sweep-stale-media-jobs",
+                "schedule": {
+                  "seconds": 600,
+                  "type": "interval"
+                },
+                "udfPath": "mediaSweeper.js:sweep"
+              }
+            ],
+            "functions": [],
+            "path": "crons.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getYouTubeTranscript",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "fetchTranscriptForSource",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "fetchAllYouTubeTranscripts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "fetchArticleText",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "fetchArticleForSource",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "fabric.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateBatch",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateFromExtraction",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getBySourceId",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByThesis",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listMissingWhyThisMatters",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listUnlinkedBatchCandidates",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "updateStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "hypotheses.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listByStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByHypothesisId",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "updateStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateFromHypothesis",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateBatch",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "recipes.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getLatest",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "listSinceInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "publish",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "editBrief",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "loadBriefContext",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "generate",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateInternal",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "setPublished",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "publishToNotion",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "weeklyBriefs.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getConcept",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "searchConcepts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByDomain",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getTopConcepts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "upsertConcept",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "incrementMentions",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getEdgesFrom",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getEdgesTo",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getRelatedSources",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getConceptsFor",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "searchSourcesByConcept",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createEdge",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "deleteEdge",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "linkExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "linkExtractionConcepts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "linkHypothesisConcepts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "buildGraphFromExtractions",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getConceptsForDomain",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getConceptEdges",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getConceptDetail",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getConceptDetailPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "exportForVisualization",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "graph.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getTotalConceptCount",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getTotalMentions",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getTopConceptsRanked",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getSourceCounts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getTotalSourceCount",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "rebuildConceptAggregate",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "rebuildSourceAggregate",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "aggregates.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "components.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "batchExtractionWorkflow",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "batchHypothesisWorkflow",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "extractSourceWorkflow",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "fullPipelineWorkflow",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "generateHypothesisWorkflow",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "startBatchExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "startSingleSourceExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "startBatchExtractionInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "startBatchHypothesisInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "startBatchHypothesis",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "startFullPipeline",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "workflows.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "workspaceSnapshot",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listFeeds",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFeed",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setFeedEnabled",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setSourceStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "promoteVisibility",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "pollFeedsNow",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "admin.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getLineage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "compositions.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "activityFeed",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "countPage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "domainSubTopics",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "editorialSignals",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "itemRelations",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "pipeline",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "pipelineItems",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "readLoopTimestamps",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "recomputeStats",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "recordBatchExtractionOutcome",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "writeStat",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "zodiacSectors",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "dashboard.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "POST /agent-tools/addCorrespondenceEvidence",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/appendAgentRunEvent",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/attachAudioStorage",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/claimNextMediaJob",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/claimNextPendingRun",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/completeMediaJob",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/countPendingDrafts",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/createAgentReviewDraft",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/createAgentRun",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/failMediaJob",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/findExistingSourceUrls",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/generateAudioUploadUrl",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getAgentRun",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getCorrespondence",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getEditorialSignals",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getExtraction",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getRecentRecipes",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getRecommendedActions",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getScoutTargets",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/getSelfImprovementStats",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/ingestScoutedSource",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listActiveTheses",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listConceptCorrespondences",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listCorrespondenceCandidates",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listCorrespondenceTargets",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listCorrespondences",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listDraftableCorrespondences",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listFailureArchive",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listRecentExtractions",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listRecentHypotheses",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listScoutCaptureBacklog",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/listTranscriptBacklog",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/markAgentRunCompleted",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/markAgentRunFailed",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/markAgentRunNeedsReview",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/proposeFeed",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/recordTranscriptCapture",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/renewMediaJobLease",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/searchClaimsSemantic",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/searchSourcesByConcept",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /agent-tools/upsertCorrespondence",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "GET /health",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "GET /podcast/*",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /ingest/notion",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /ingest/rssItem",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "POST /ingest/url",
+                "udfType": "HttpAction",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "http.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "counts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "inbox.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listByComposition",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecent",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "updateVisibility",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteById",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "listening.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "sourceUtils.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "auth.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "validators.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByIds",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getDetail",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "theses.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "domainMappings.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "cleanupProvisionalConceptDomainDuplicates",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "ensureConceptDomain",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "ensureParameterKind",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "ensureRelationshipKind",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "mergeEntry",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "mergeVocabularyReferenceBatch",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "promoteEntry",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "rejectEntry",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "rekeyLegacyParameterKinds",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "reviewSummary",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "seedConceptDomains",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "seedKnownParameterKinds",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "seedKnownRelationshipKinds",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "seedMissionConceptDomains",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "triageBoard",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "vocabulary.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getByKey",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByKeys",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listArchive",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "failures.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "phase2.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "attachThesis",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "detachThesis",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getActive",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getRecommendedActions",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listForSelection",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setActive",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "campaigns.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "testHelpers.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "seedCampaigns",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "testing.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createDraftFromWeeklyBrief",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createDraftFromCampaign",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createDraftFromThesis",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "submitForReview",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "approve",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "publish",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listPublicExport",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getPublicExportBundle",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setAstroExportMetadata",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setAstroExportMetadataInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getExportBundleInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "exportForAstro",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "editorialArtifacts.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "exportForAstroInternal",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "editorialExports.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "addCorrespondenceEvidence",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "appendAgentRunEvent",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "attachAudioStorage",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "claimNextMediaJob",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "claimNextPendingRun",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "completeMediaJob",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "countPendingDrafts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createAgentReviewDraft",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createAgentRun",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "failMediaJob",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "findExistingSourceUrls",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "generateAudioUploadUrl",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getAgentRun",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getCorrespondence",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getEditorialSignals",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getExtraction",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getRecentRecipes",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getRecommendedActions",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getScoutTargets",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getSelfImprovementStats",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "ingestScoutedSource",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listActiveTheses",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listConceptCorrespondences",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listCorrespondenceCandidates",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listCorrespondenceTargets",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listCorrespondences",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listDraftableCorrespondences",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listFailureArchive",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecentExtractions",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecentHypotheses",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listScoutCaptureBacklog",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listTranscriptBacklog",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "markAgentRunCompleted",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "markAgentRunFailed",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "markAgentRunNeedsReview",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "proposeFeed",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "recordTranscriptCapture",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "renewMediaJobLease",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "searchClaimsSemantic",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "searchSourcesByConcept",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "upsertCorrespondence",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "selfImprovementStats",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "agentTools.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "agentToolsHttp.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "appendEvent",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "claimNextPending",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "createRunning",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "enqueue",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getForWorker",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listEvents",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listEventsPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecent",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecentPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "markCompleted",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markFailed",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markNeedsReview",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markRunning",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "opsStatusCountsPage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "reconcileReviewedRuns",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "statusCounts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "statusCountsPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "sweepStaleRuns",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "agentRuns.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "findExtractionForInput",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "storeExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "storeOperatorExtraction",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "parkOperatorUnextractable",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "extractInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "tracing.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "approve",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "countPending",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "countPendingHypothesesPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "countPendingPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "createFromAgentRun",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getReviewContext",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByRun",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByRunPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listDraftableCorrespondences",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "listPending",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listPendingPublic",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "reject",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "supersede",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "agentDrafts.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "agentDraftPromotion.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listUnexported",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "markExported",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "editCaptures.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "generateHypothesisText",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "hypothesesInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "generateRecipeText",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "recipesInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "generateBriefText",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "weeklyBriefsInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "agentToolRegistry.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "llm.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "llmNode.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/agentContract.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/agentToolArgs.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/agentToolManifest.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/draftPayloads.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/statuses.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listByExtraction",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listBySource",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getMany",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "claims.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/claims.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "conceptClassification.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "writeClassificationsInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "writeClassifications",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listClassificationCandidates",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getClassificationInputs",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "classifyConceptBatch",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "classifyConcepts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listStaleUnreviewed",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "sweepUnreviewedConcepts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "conceptClassifier.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "generateClassifications",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "conceptClassifierInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "conceptDomainNormalization.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "purgeE2eDebris",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "maintenance.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "addEvidence",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "addEvidenceFromAgent",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "autoRetireStale",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getByPairKey",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listForConcept",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listRecentMovement",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "scoutTargets",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "upsertConjecture",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "upsertConjectureFromAgent",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "correspondences.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/correspondenceKey.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/correspondences.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getProbeConcept",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markConceptProbed",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "hydrateClaimMatches",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getStructuralScores",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getCandidateSamples",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "generateCandidates",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "hydrateAgentCandidates",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "listForAgent",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "searchClaimsSemantic",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "listEvidenceTargets",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "correspondenceCandidates.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "backfillBatch",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "embedClaims",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "embedConcepts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "probe",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "sweepMissingEmbeddings",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "embedTexts",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "embeddings.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getClaims",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getConcepts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getBackfillPage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getSweepCandidates",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getProbeClaim",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "hydrateProbeMatches",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "storeClaimEmbeddings",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "storeConceptEmbeddings",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "embeddingsStore.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/agentRunClaim.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/conceptProjection.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/correspondenceCandidates.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/embeddingText.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/feedProposals.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/vocabularyTriage.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "auth.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "createPending",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "attachStorage",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markReady",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "markFailed",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "listByStatusOlderThan",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "playback",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "playbackInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "audioArtifacts.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "projectionInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "projection",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "reveal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "blindGroups.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "mediaJobEffects.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "claimNext",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "complete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "enqueue",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "fail",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "narrateJobStateForBrief",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "renewLease",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "sweepStale",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "mediaJobs.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "sweep",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "mediaSweeper.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "generateAudioUploadUrl",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "attachAudioStorage",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "mediaToolsInternal.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listFeedEpisodes",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "subscription",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "podcast.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/audioArtifacts.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/listeningPredicates.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/mediaJobs.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/stableHash.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "hasReadyEpisodeForBrief",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "narrateBrief",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "reconcile",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "enqueueShootout",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "episodes.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "shootoutsInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "shootouts",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "listen.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "buildScriptForBrief",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "narration.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "calibrationPassage",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "narrationPrompt.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "houseVoice",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "set",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "setHouseVoice",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setHouseVoiceInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "settings.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/voices.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "submitInternal",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "submit",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "forGroupInternal",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "forGroup",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "voiceRatings.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/doi.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/sourceText.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "listTranscriptBacklog",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "recordTranscriptCapture",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "enqueueIfNeeded",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "transcriptCapture.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/extractionPrompt.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/operatorExtraction.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/agentToolModelSchema.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/arxiv.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/domainMappings.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/researchTopics.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/llmPolicy.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared/sourceRecovery.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m02av2ahmh2jdg978d6qgxxr8h81e14x",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "send",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "event.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "load",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "startSteps",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "journal.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "logging.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "model.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "handlerOnComplete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "nestedWorkflowOnComplete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "onComplete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "pool.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "updateConfig",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "utils.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "cancel",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "cleanup",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "cleanupContinue",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "complete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "create",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "getStatus",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listByName",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listSteps",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "restart",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "sleep",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "workflow.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "oversizedValues.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m027j0hcjpahm3930aeerjzxr181fe20",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "complete",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "complete.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "update",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "config.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "clearPending",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "clearOldWork",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "danger.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "forceKick",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "kick.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "enqueue",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "enqueueBatch",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "cancel",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "cancelAll",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "status",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "statusBatch",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "lib.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "logging.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getBatch",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "run",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "main",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "updateRunStatus",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "loop.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "recover",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "recovery.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "calculateBacklogAndReport",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "diagnostics",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "running",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "scheduledFunctionsInRange",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "stats.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "runMutationWrapper",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "runActionWrapper",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "runBatch",
+                "udfType": "Action",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "getWorkArgs",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "worker.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "errors.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m0236h4kwc2mdhcsrfcabrkfq981fv3v",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "aggregateBetween",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "aggregateBetweenBatch",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "atNegativeOffset",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "atOffset",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "atOffsetBatch",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteTreeNodes",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "offset",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "offsetUntil",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "paginate",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "paginateNamespaces",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "validate",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "btree.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "compare.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "display",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "dump",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "inspectNode",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listTrees",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "listTreeNodes",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "inspect.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "init",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "makeRootLazy",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "insert",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "delete_",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "replace",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "deleteIfExists",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "replaceOrInsert",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "enqueue",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "enqueueBatch",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "clear",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "public.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "list",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "delete_",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "deadLetter.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getBatch",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "processBatch",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              },
+              {
+                "name": "processBatchInner",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "worker.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m02e4r51fj02j1dnynq626pem181e6fh",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [],
+            "path": "cache.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [
+              {
+                "argsOmitted": true,
+                "identifier": "expire",
+                "schedule": {
+                  "seconds": 86400,
+                  "type": "interval"
+                },
+                "udfPath": "crons.js:purge"
+              }
+            ],
+            "functions": [
+              {
+                "name": "purge",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "crons.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "get",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "put",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "remove",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "removeAll",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "lib.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m02d1ts5bbkfbysbw8m08gaqa98g4aqw",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "future.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "kick.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "ping",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "start",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "stop",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "status",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "lib.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "logging.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "loop",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "loop.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "monitor",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "monitor.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared.js"
+          }
+        ]
+      },
+      {
+        "componentId": "m02b758nh71xnaxpddrnk9jtg58g54bj",
+        "modules": [
+          {
+            "crons": [],
+            "functions": [],
+            "path": "convex.config.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "functions.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "kick.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "getCursor",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "kick",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "ping",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "setCursor",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "start",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "status",
+                "udfType": "Query",
+                "visibility": {
+                  "kind": "public"
+                }
+              },
+              {
+                "name": "stop",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "public"
+                }
+              }
+            ],
+            "path": "lib.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "logging.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "loop",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "loop.js"
+          },
+          {
+            "crons": [],
+            "functions": [
+              {
+                "name": "monitor",
+                "udfType": "Mutation",
+                "visibility": {
+                  "kind": "internal"
+                }
+              }
+            ],
+            "path": "monitor.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "schema.js"
+          },
+          {
+            "crons": [],
+            "functions": [],
+            "path": "shared.js"
+          }
+        ]
+      }
+    ],
+    "schemas": [
+      {
+        "activeHash": "fa5e78a6121404655dee7d5cbc6530cd3ab91dc60acaf8c23dd93c12dd431b02",
+        "componentId": null,
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "5da7c53b032331078a57b1d52180ed697e124d6ecea1a6a0e3e65e4d453cdc5c",
+        "componentId": "m02av2ahmh2jdg978d6qgxxr8h81e14x",
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "6a0414580482c8386d86b6a14d49639bf8c6d42d73fd9c23bdd348b484c7d3a4",
+        "componentId": "m027j0hcjpahm3930aeerjzxr181fe20",
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "63488b1a0fa2f75cb0bf4b3c74f8c8c24153631e8a1f2d75b0434c70442d0d65",
+        "componentId": "m0236h4kwc2mdhcsrfcabrkfq981fv3v",
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "70892a25c2e66bd0b3893ae441d59bb84be04edcdd4d9876e801448305eec513",
+        "componentId": "m02e4r51fj02j1dnynq626pem181e6fh",
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "672ea38ab1ce4ee410f093b7e278c989b8814a54cdf5e3302c771f6c5d4dc0a0",
+        "componentId": "m02d1ts5bbkfbysbw8m08gaqa98g4aqw",
+        "inProgressHash": null
+      },
+      {
+        "activeHash": "34eb1336118c0461bbc6d9cac5a2e6d484557b421b215aaa6cfce24c0626cd1f",
+        "componentId": "m02b758nh71xnaxpddrnk9jtg58g54bj",
+        "inProgressHash": null
+      }
+    ]
+  }
+}

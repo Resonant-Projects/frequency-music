@@ -238,3 +238,13 @@ the 11 core units those vendor units declare (`-.slice`, `system.slice`,
 `efi_pstore` and `fuse`). The masks are unchanged. Run against the systemd
 trees extracted from that archive with `pct` shimmed, `prepare` passes and
 audits a closure of 111 units.
+
+The second run then refused in `verify` on
+`unexpected interfaces in guest: bonding_masters`. That entry is the bonding
+driver's control file in `/sys/class/net`: a regular file, where every
+interface is a symlink. The interface gate now skips an entry only when it is
+named exactly `bonding_masters` and is a regular, non-symlink file. Any other
+regular file, and a symlink with that name, still fails the gate. Both changes
+were reviewed before the next run (Codex `gpt-6.1-sol`, five rounds, the last
+two scoped-clean). The third run passed every receipt item, as recorded in the
+[part A record](evidence/wave2-restore-receipt-20261017/README.md).

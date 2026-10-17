@@ -1,20 +1,31 @@
 # Wave 2 restore receipt, part A: method rehearsal, 2026-10-17
 
 Part A of the [receipt work order](../../wave2-restore-receipt-work-order.md),
-run from devbox on Saturday 2026-10-17 between 16:11 and 16:31 UTC after
-Keith approved the Wave 2 production rollout ("A"), which includes this
-receipt. **Result: not passed.** The on-demand archive meets item 1. The
-rehearsal restored it and then stopped at the helper's offline audit in
-`prepare`, before first boot. The guest was destroyed. Items 2 to 7 are
-unobserved. No current receipt exists, and the deploy stays blocked as the
-[supported procedure](../../frequency-supported-deployment-rollback.md#recoverable-rollback-acceptance-owned-by-mac)
-requires.
+run from devbox on Saturday 2026-10-17 between 16:11 and 18:12 UTC. Keith
+approved the Wave 2 production rollout ("A"), which includes this receipt,
+and the coordinator authorized the helper change and the reruns.
 
-Writes made: one on-demand `vzdump` of CT113 (the only CT113 write), and the
-disposable CT913 with its two `ceph-vm` volumes on prox4, created and purged.
-Nothing else changed: no CT113 or CT107 stop, restart or configuration
-change, no Convex CLI command, and no production restore. The helper
-(`scripts/recovery/isolated-restore-guest.sh` at `16ed5881`) is unchanged.
+**Result: part A passed on the third run** (18:07:44 to 18:11:46Z), using the
+reviewed helper and readers at `632ec2ca` against the same archive. Items 1
+to 7 and 9 pass, and item 8 is written with measured durations. Two earlier
+runs refused before any check could pass. Each refusal was fixed under review
+and is kept below as history.
+
+This passes part A only. Part B, the pre-activation capture, and the
+coordinator's approval of restore as the rollback mechanism are still
+required (see [Decision criteria](../../wave2-restore-receipt-work-order.md#decision-criteria)).
+
+Writes made:
+
+- one on-demand `vzdump` of CT113, the only CT113 write;
+- three disposable CT913 guests on prox4, with their `ceph-vm` volumes, each
+  created and purged.
+
+Nothing else changed:
+
+- no CT113 or CT107 stop, restart or configuration change;
+- no Convex CLI command;
+- no production restore.
 
 ## Item 1. Protected set: pass
 
@@ -26,10 +37,10 @@ change, no Convex CLI command, and no production restore. The helper
 | Capture time | Guest suspended and frozen at 16:15:58Z. Both RBD snapshots (`rootfs`, `mp0`) were taken inside that one freeze. Guest online again at 16:16:00Z (2 s). |
 | Size | 30,565,690,946 bytes compressed. The vzdump log reports "Total bytes written: 47469772800" and includes `rootfs ('/')` and `mp0 ('/srv/app-data')`. |
 | SHA-256 | `b07db9d4ca78ec7e6697c17029e9277cb603019cc46fb6b04d9dd9de1919b6ba` |
-| `zstd -t` | rc 0; 47,469,772,800 bytes decompressed, equal to the log's total |
+| `zstd -t` | rc 0; 47,469,772,800 bytes decompressed, equal to the log's total. All three restores read exactly that many bytes. |
 | Embedded `pct.conf` | `rootfs: ceph-vm:vm-113-disk-0,size=32G` and `mp0: ceph-vm:vm-113-disk-1,mp=/srv/app-data,backup=1,size=64G`, with no other volume keys. `rootfs` carries no `backup` flag because vzdump always includes it, and the log confirms that it did. |
 | After `81150337` | Yes: the provenance run was 2026-10-12T02:18Z, and the worker at that revision started 2026-10-13T01:38Z. |
-| Backend image | CT113 `app-convex-backend-1` read-only, just before the capture: image `sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4`, RepoDigest `ghcr.io/get-convex/convex-backend@sha256:d715e9ec…`. The image inside the archive was not read; that is item 4, which the rehearsal did not reach. |
+| Backend image | `d715e9ec…` in production just before the capture (read-only `docker inspect` on CT113) and inside the restored guest (item 4) |
 
 The integrity checks ran on prox4 in one pass over the `nas-docker` mount,
 from 16:21:44Z to 16:26:17Z. Values are in `archive-item1.json`.
@@ -37,116 +48,246 @@ from 16:21:44Z to 16:26:17Z. Values are in `archive-item1.json`.
 How the archive was started: `pvesh create /nodes/prox5/vzdump …` ran in the
 foreground of an SSH session that the client cut after 60 s. `pvesh` mirrors
 the task log to its stdout, and the PVE task code kills the worker when that
-write hits a broken pipe. That would have aborted the backup on its next log
-line. Before that line arrived, a `cat` reader was attached to the orphaned
-pipe (`/proc/<pvesh pid>/fd/1`) on prox5. The task then finished `OK`. After
-it, CT113 had no `lock`, no snapshot sections, no RBD snapshots on either
-volume, and both containers were healthy. For part B, start the archive
-detached, for example under `systemd-run`, rather than in a foreground
-`pvesh` session.
+write hits a broken pipe. Before the next log line, a `cat` reader was
+attached to the orphaned pipe (`/proc/<pvesh pid>/fd/1`) on prox5. The task
+then finished `OK`, leaving no lock, snapshot section or RBD snapshot on
+CT113. For part B, start the archive detached, for example under
+`systemd-run`, as the reruns did for every host step.
 
-## Rehearsal run
+## Runs
 
-The [prescribed block](../../frequency-backend-recovery-preparation-20260913.md#isolated-restore-rehearsal-prepared-not-executed)
-ran from the repository root on devbox (GNU coreutils), with these
-adaptations and none to the helper:
+| Run | Helper | Outcome |
+| --- | --- | --- |
+| 1, 16:26:32 to 16:29:17Z | `16ed5881` (unchanged) | Restore 151 s. `prepare` refused 106 links: 53 vendor `.wants` links, each under `/lib` and `/usr/lib/systemd/system`, none under `/etc`. Never booted. `rehearsal-run.log` |
+| 2, 18:00:31 to 18:02:42Z | `a8573cb2` (reviewed) | Restore 105 s, `prepare` passed, first boot `running` in 7 s. `verify` then refused with `unexpected interfaces in guest: bonding_masters`. That entry is the bonding driver's control file, a regular file in `/sys/class/net`; every interface there is a symlink. No container ever started. `rehearsal-run-2.log` |
+| 3, 18:07:44 to 18:11:46Z | `632ec2ca` (reviewed) | **Passed every step**, below. `rehearsal-run-3.log` |
 
-- The SSH destination is `root@prox4.rproj.art`. The helper's node argument
-  stays `prox4`, because the short name has no known host key on devbox.
-- The archive is the one above, and evidence lands in this directory.
-- After `read-identities` the block was to run one more host-side step for
-  items 2 and 4 to 7 (see [Not reached](#items-2-to-7-unobserved)), then the
-  identity delta against `deployed-module-identities.json` and
-  `convex-module-delta.ts` against the attested `81150337` manifest
-  (SHA-256 `8961e78e…`, checked by the block before it began).
+Each run ended with `destroy` and was purged with its own two volumes
+confirmed absent: runs 1 and 2 through the `EXIT` trap, run 3 through the
+final step. `rehearsal-block-20261017.sh` is the exact block of runs 2 and 3.
+It is the [prescribed block](../../frequency-backend-recovery-preparation-20260913.md#isolated-restore-rehearsal-prepared-not-executed)
+with these adaptations:
+
+- The SSH destination is `root@prox4.rproj.art`, with node argument `prox4`.
+- Every host step runs in its own `systemd-run --wait --pipe` unit under a
+  runtime limit. Both cleanup paths stop `isolated-restore-913-<run>-*`
+  before `destroy`.
+- `host-receipt-reads.sh` runs after `read-identities`.
+- The deltas run against the 2026-10-17 references.
 - Each step prints a UTC timestamp.
 
-The offline suites passed first on devbox: helper 108/108, smoke test, and
-rehearsal block 27/27.
+### Helper change and review
 
-| UTC | Step | Outcome |
+The two refusals led to the change in this PR, which the coordinator
+authorized. It does three things:
+
+- **Vendor links.** The offline audit accepts a vendor link only as one of
+  the exact 56 `<target>.wants/<unit>` pairs that Debian 13 ships in this
+  archive, and only when it points at the same-named regular unit file.
+  `/etc` and `/usr/local` keep the old check. A vendor link to Docker,
+  containerd, SSH, networking or any other unit refuses.
+- **Closure.** The boot dependency closure approves 11 exact core names that
+  those vendor units declare.
+- **Interfaces.** The interface gate skips only a regular file named exactly
+  `bonding_masters`.
+
+The masks are unchanged. Before any rerun, the changed `prepare` passed
+against the systemd trees extracted from this archive, with `pct` shimmed: a
+closure of 111 units. The tree was then deleted.
+
+Independent review used `codex-first` autoreview: Codex `gpt-6.1-sol`, high
+reasoning, a fresh isolated session per round, and P3 scope. It reviewed the
+helper and readers commit with the unchanged contracts supplied as source
+context. Five rounds:
+
+| Round | Candidate | Result |
 | --- | --- | --- |
-| 16:26:32 | `preflight 913 … prox4` | `preflight ok … bytes=30565690946 ceph-vm_avail_kib=3674902784 mem_avail_kib=34626176` |
-| 16:26:34 to 16:29:05 | `restore` in `isolated-restore-913-20261017T162632Z.service` | Preflight repeated, then `pct restore`: "Total bytes read: 47469772800 (45GiB, 342MiB/s)". `restored ctid=913 (stopped, no network)`. Unit runtime 2 min 30.644 s, memory peak 11.6 G. Run record: rootfs `ceph-vm:vm-913-disk-0`, mp0 `ceph-vm:vm-913-disk-1`, created 16:29:05Z. |
-| 16:29:05 | `prepare 913` | **Refused** (below). The guest was never started. |
-| 16:29:05 to 16:29:17 | `EXIT` trap: `systemctl stop "isolated-restore-913-…*" && destroy 913` | `destroyed ctid=913 volumes=[ceph-vm:vm-913-disk-0 ceph-vm:vm-913-disk-1] confirmed absent; record archived` |
+| 1 | `480807b1` | 3 × P2. Fixed: PostgreSQL log lines were forwarded whole; fractional numbers were rejected by the `metadataHash` port. **Rejected:** "compare blobs with the `audioArtifacts` row size". At `81150337` the row has no byte size or byte digest. `contentHash` is `fnv1a64Hex(stableStringify(params))`, a parameter hash, so `_storage.size` and `sha256` are the only records. |
+| 2 | `cdf71bd7` | 1 × P3, fixed: key order by UTF-16 code unit |
+| 3 | `e5f27cd3` | 3 × P2, fixed: the storage route needs the UUID, so URLs now come from the deployed `audioArtifacts:playbackInternal`; failed checks did not change the exit status; the RepoDigests read was unchecked |
+| 4 | `a8573cb2` | scoped-clean |
+| 5 | `632ec2ca` (adds the `bonding_masters` fix after run 2) | scoped-clean |
 
-The full output is in `rehearsal-run.log`, with RBD removal progress lines
-collapsed.
+Validation:
 
-### The refusal, verbatim
+- `vp run test:recovery` passes:
+  - helper 128/128;
+  - smoke test;
+  - rehearsal block 27/27;
+  - `host-receipt-reads` 33/33;
+  - `guest-receipt-reads` 18 unittest cases.
+- Five mutants of the vendor-link gate were each killed by their intended
+  case.
 
-`prepare` printed 106 lines of the form
-`unexpected enabled unit: <path>`, then:
+## Item 2. Consistency: pass
+
+The archive is crash-consistent: snapshot mode, with both volumes
+snapshotted inside one 2 s guest freeze while PostgreSQL ran. On its first
+start in the guest (container started 18:10:27.934Z), PostgreSQL logged
+these events, read by `guest-receipt-reads.py --postgres-recovery` inside
+the guest as fixed tokens:
+
+| Time (UTC) | Event | Value |
+| --- | --- | --- |
+| 18:10:28.452 | `interrupted` | last known up 2026-10-17 16:11:37 UTC |
+| 18:10:28.483 | `automatic_recovery_in_progress` | |
+| 18:10:28.499 | `redo_starts_at` | `9/31C563D8` |
+| 18:10:28.508 | `wal_end_invalid_record_length_at` | `9/31E02530` (normal end of WAL) |
+| 18:10:28.508 | `redo_done_at` | `9/31E02508` |
+| 18:10:28.545 | `end_of_recovery_checkpoint_started` | |
+| 18:10:28.679 | `ready_to_accept_connections` | |
+
+Crash recovery replayed about 2.6 MB of WAL and was accepting connections
+0.75 s after the container started. Severity counts since start: 0 PANIC,
+0 ERROR, 0 WARNING and 2 FATAL, out of 18 lines. The parser emits no message
+text, so the two FATAL lines are unclassified. They fall inside the startup
+window and are consistent with connection attempts before "ready", but that
+is not verified. After recovery, `start-db` read all databases and the
+document counts:
+
+- `self_hosted_convex`: 1,176,642,063 bytes
+- `hatchet_lite`: 61,104,655 bytes
+- `convex_features`: 7,954,959 bytes
+- documents 145,818; indexes 733,887; leases 1; persistence_globals 10
+
+## Item 3. Isolation: pass
+
+Host side:
+
+- `restore` removed the archive's `net0` before the run record was written.
+- `prepare` (run 3) masked compose, cron, apt, postfix and every `lab-*`
+  unit, removed the 1Password service-account env, and set 9 container
+  restart policies to `no`.
+- `prepare` printed the surviving enabled-unit list (in
+  `rehearsal-run-3.log`): the `/etc` links on the allow-list and the 56
+  vendor core links.
+- `start` re-asserted the stopped configuration. systemd reached `running`
+  in 7 s.
+
+`verify` (before any container ran) reported:
 
 ```text
-isolated-restore: offline rootfs has enabled units outside the allow-list
+verify ok ctid=913 systemd=running running_containers=0
+failed units (evidence):
 ```
 
-All 106 lines name vendor enablement links that the systemd packages ship
-under `/usr/lib/systemd/system`. Each of 53 distinct links appears twice,
-once under `/lib/systemd/system` and once under `/usr/lib/systemd/system`.
-The two lists are identical, which is consistent with a merged-`/usr`
-rootfs. None is under `/etc/systemd/system`, so no locally enabled unit was
-refused. By directory, with full paths in the log:
+There were no failed units. Every masked unit reported `masked`, and `curl`,
+`timeout` and `python3` were present.
 
-| Directory | Links |
+Inside the guest, `host-receipt-reads.sh` repeated the isolation gate after
+both containers ran:
+
+- no `net*`, `mp1+`, `unused`, `dev`, `hookscript` or raw `lxc` key;
+- the record matched, and the prepare marker was present;
+- exactly `app-postgres-1` and `app-convex-backend-1` running;
+- interfaces: `lo` (loopback), `docker0` and one Compose bridge, two `veth`
+  bridge ports, and the `bonding_masters` control file;
+- default routes: 0.
+
+Running services: `console-getty`, `container-getty@1`, `container-getty@2`,
+`containerd`, `dbus`, `docker`, `ssh`, `systemd-journald`, `systemd-logind`
+and `systemd-networkd`. SSH and networkd run but have no interface to reach.
+Restored Convex crons and workpool or scheduled functions could run during
+the roughly 55 s the backend was up (18:10:42 to 18:11:37Z), but nothing
+outside the guest was reachable.
+
+## Item 4. Runtime identity: pass
+
+Read inside the guest:
+
+- `app-convex-backend-1` image ID
+  `sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4`;
+- RepoDigests
+  `["ghcr.io/get-convex/convex-backend@sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4"]`;
+- `app-postgres-1` image ID `sha256:78bf48b8…`.
+
+Both equal the production containers' images. `GET /version` returned
+`unknown`, as production does.
+
+## Item 5. Source and components: pass
+
+- **Root modules.** `read-identities` returned 177 identities.
+  - `convex-identity-delta.ts` against `deployed-module-identities.json`
+    (`9066c3a4…`): `identical: true`, 177 unchanged.
+  - `convex-module-delta.ts` against the attested `81150337` manifest
+    (`8961e78e…`): **0 added, 0 removed, 0 changed**, 177 unchanged.
+  - Outputs: `identity-delta-vs-deployed.json` and
+    `module-delta-vs-81150337.json`.
+- **Components, schemas, inventory.** `guest-receipt-reads.py` read
+  `_system/frontend/components:list`,
+  `modules:listForAllComponents` and `getSchemas`, and reproduced
+  `convex-deployment-inspect.ts`'s output shape. `compare-inspection.py`
+  compared it with the live `deployment-inspection.json`
+  (`inspection-comparison.json`):
+  - components, modules and schemas are each **equal**;
+  - the 6 components plus root are all `active`;
+  - module counts: root 103, workflow 10, workpool 14, aggregate 8,
+    actionCache 5, and 9 for each `batchWorker`;
+  - 538 functions and 17 crons, equal to live;
+  - 0 in-progress schemas.
+- **Component execution.** One read-only query per component succeeded:
+
+  | Component | Function | Result |
+  | --- | --- | --- |
+  | `workflow` | `workflow:list` | success, object |
+  | `workflow/workpool` | `lib:statusBatch` (`ids: []`) | success, list |
+  | `workflow/workpool/batchWorker` | `lib:status` | success, null |
+  | `aggregate` | `btree:paginateNamespaces` | success, object |
+  | `aggregate/batchWorker` | `lib:status` | success, null |
+  | `actionCache` | `lib:get` | success, object |
+
+## Item 6. Data coherence: pass
+
+Counts read in the guest:
+
+| Table | Documents | By status |
+| --- | --- | --- |
+| `claims` | 15,864 | 9,741 active, 6,123 superseded |
+| `extractions` | 8,003 | |
+| `sources` | 7,841 | |
+| `agentRuns` | 250 | 0 queued, 0 running, 3 needs_review, 246 completed, 1 failed, 0 cancelled |
+| `mediaJobs` | 66 | |
+| `audioArtifacts` | 140 | 140 ready, 0 pending, 0 failed |
+| `_storage` | 140 | |
+
+For the blob sample, 8 of the 140 ready `audioArtifacts` rows were spread
+evenly across the table. Each resolved its URL through the deployed
+read-only `audioArtifacts:playbackInternal`. Only the `/api/storage/<uuid>`
+path was kept, and it was fetched from loopback without the key. **8 of 8
+passed**: each blob was readable, and its byte length and SHA-256 matched
+the referenced `_storage` row. The row records no byte size of its own; see
+the round 1 disposition above.
+
+## Item 7. Configuration references: pass (recorded)
+
+Presence only, read with `queryEnvironmentVariables:get`. No values were
+read out.
+
+| Name | Present |
 | --- | --- |
-| `sysinit.target.wants` | 33 (for example `systemd-journald.service`, `systemd-udevd.service`, `systemd-tmpfiles-setup.service`, `systemd-tpm2-setup.service`, `dev-hugepages.mount`) |
-| `sockets.target.wants` | 9 (`dbus.socket`, `systemd-journald.socket`, `systemd-creds.socket`, `systemd-pcrlock.socket`, …) |
-| `multi-user.target.wants` | 5 (`dbus.service`, `getty.target`, `systemd-logind.service`, `systemd-user-sessions.service`, `systemd-ask-password-wall.path`) |
-| `initrd.target.wants` | 3 |
-| `getty.target.wants`, `local-fs.target.wants`, `timers.target.wants` | 1 each (`getty-static.service`, `tmp.mount`, `systemd-tmpfiles-clean.timer`) |
+| `FREQUENCY_WORKER_CLAIMS_PAUSED` | yes |
+| `DECISION_SIGNERS_ENABLED` | no |
+| `DOCKET_PREPARATION_ENABLED` | no |
+| `HYPOTHESIS_TOURNAMENT_ENABLED` | no |
+| `ANTHROPIC_API_KEY` | yes |
+| `OPENAI_API_KEY` | yes |
+| `AGENT_TOOL_SECRET` | yes |
 
-The 2026-09-17 rehearsal refused earlier in `prepare`, on the vendor
-`graphical.target` default, so this vendor-link enumeration had not run
-against a real CT113 archive before today. Getting past it needs a reviewed
-helper change, which the work order requires to happen under its own review,
-and then a rerun. This record proposes no change.
+The receipt reader's own checks all passed: `allChecksPassed: true`.
 
-Separately, prox4 holds two destroyed CT913 records from September,
-`913.record.destroyed-20260917T235127Z` and `…20260918T001300Z`. The
-preparation record describes one September 17 run. Nothing more about the
-second run is recorded here.
-
-## Items 2 to 7: unobserved
-
-The guest never booted, so PostgreSQL never started (2), `verify` and the
-surviving enabled-unit list never ran (3), the in-guest image read did not
-happen (4), and nothing ran on the module identities, component metadata,
-component queries, counts, blob sample or environment names (5 to 7).
-
-Two observations short of item 3: `restore` removed the archive's `net0` and
-wrote the run record, and the guest stayed stopped until it was purged.
-
-The step prepared for items 2 and 4 to 7 never ran. It was a host-side
-wrapper plus a guest-side reader. The wrapper repeats the live isolation
-gate, reads the image ID and RepoDigest, and extracts PostgreSQL recovery
-lines since the container started. The reader, under the same admin-key trap
-as `read-identities`, does four things:
-
-- Ports `convex-deployment-inspect.ts`'s reads and output shape. Its
-  `metadataHash` port produced the TS function's digest on a test fixture.
-- Runs one read-only query per component: `workflow:list`,
-  `lib:statusBatch` with no ids, `lib:status` on both `batchWorker`
-  components, `btree:paginateNamespaces` and `lib:get`.
-- Reads the presence of the seven names.
-- Counts the six tables and checks a bounded `_storage` blob sample.
-
-It passed a fake-backend smoke test on devbox without leaking a value.
-Neither file is in this change. They need review alongside the helper
-change before the rerun.
+The admin key existed only in the guest, in a 0600 file under the exit trap,
+and the helper confirmed it absent after each read. The logs contain only
+`generate_admin_key.sh`'s `Admin key:` stderr label. A scan of the logs and
+evidence files found no key-shaped value.
 
 ## Item 8. Restore method (written, not executed)
 
-This is the recovery owner's proposed sequence. It is untested past
-`pct restore`, because the rehearsal stopped before first boot. It needs
-coordinator approval as the selected rollback mechanism. It follows the
-in-place replacement precedent in `homelab-infra`
+This is the recovery owner's proposed sequence. It follows the in-place
+replacement precedent in `homelab-infra`
 `docs/preflight/2026-08-18-rebalance-preflight.md`: a protected stop-mode
-archive, then verify, then destroy-and-restore. Run it
-as root on prox5. `$A` is the selected archive, which for the rollout is the
-part B capture, not this one.
+archive, then verify, then destroy-and-restore. It needs coordinator approval
+as the selected rollback mechanism. Run it as root on prox5, with long steps
+detached. `$A` is the part B capture, not this archive.
 
 ```bash
 A=nas-docker:backup/vzdump-lxc-113-<part-B capture>.tar.zst
@@ -160,10 +301,11 @@ zstd -t "$F"
 # 2. Stop production cleanly and keep its post-capture state for reconciliation.
 pct shutdown 113 --timeout 180 && [ "$(pct status 113)" = "status: stopped" ]
 pct config 113 > /root/ct113-pre-restore-$(date -u +%Y%m%dT%H%M%SZ).conf
-vzdump 113 --mode stop --compress zstd --storage nas-docker --protected 1 \
+systemd-run --wait --pipe --unit=ct113-pre-restore-archive vzdump 113 --mode stop --compress zstd \
+  --storage nas-docker --protected 1 \
   --notes-template "convex-hatchet pre-restore state, kept for write-loss reconciliation"
 # 3. Replace CT113 and both of its volumes with the archive (same VMID, MAC, IP and tags).
-pct restore 113 "$A" --storage ceph-vm --force 1
+systemd-run --wait --pipe --unit=ct113-restore pct restore 113 "$A" --storage ceph-vm --force 1
 pct config 113 | grep -E '^(rootfs|mp0|net0|onboot|unprivileged):'
 # 4. Boot. app-compose.service brings the stack up with guest-local 1Password injection.
 pct start 113
@@ -178,15 +320,27 @@ pct exec 113 -- docker inspect --format '{{.Image}}' app-convex-backend-1   # d7
 #    reconciliation decision.
 ```
 
-Expected duration is about 15 to 20 minutes of backend downtime:
+Measured durations, from the three runs on prox4, archive on `nas-docker`:
+
+| Step | Measured |
+| --- | --- |
+| `pct restore`, 45 GiB from the 30.6 GB archive to `ceph-vm` | **151 s, 105 s and 130 s** (342, 509 and 373 MiB/s) |
+| First boot, `pct start` to systemd `running` | **7 s** in runs 2 and 3 |
+| PostgreSQL crash recovery, container start to ready | **0.75 s** |
+| Backend, container start to `/version` answering | about **3 s** (started 18:10:42.4Z, ready by 18:10:45Z) |
+| Boot to backend ready, `pct start` to ready | **44 s**. About 30 s of that is the rehearsal's own isolation gates (`verify` and the gates in `start-db` and `start-backend`), which production does not run. |
+| Restore start to backend ready | **179 s** (run 3) |
+
+Expected production downtime is about 15 minutes:
 
 | Step | Basis | Time |
 | --- | --- | --- |
 | Shutdown | not measured | about 1 min |
-| Archive re-verification | measured for one combined pass | about 4.5 min |
-| Protected pre-restore archive | today's snapshot archive of the same set took 3 min 48 s | about 4 min |
-| `pct restore` | **measured today**: 151 s (2 min 30.6 s) for this 30.6 GB, 45 GiB archive from `nas-docker` to `ceph-vm` on prox4, at 342 MiB/s | about 2.5 min |
-| First boot, Compose start, backend ready, read-only checks | **not measured**, because the rehearsal stopped before first boot | about 5 min |
+| Archive re-verification | one combined pass | about 4.5 min |
+| Protected pre-restore archive | today's snapshot archive took 3 min 48 s | about 4 min |
+| `pct restore` | measured | about 2.5 min |
+| Boot and Compose start | measured boot and backend parts | about 1 min |
+| Read-only checks | not measured | about 3 min |
 
 Skipping the pre-restore archive saves about 4 minutes, but it discards the
 lost writes for good.
@@ -195,14 +349,12 @@ Write-loss window: everything written after the archive's capture time is
 lost. That runs from the freeze, which for part B is its recorded capture
 time, until CT113 stops in step 2:
 
-- all three databases (`self_hosted_convex`, `convex_features`,
-  `hatchet_lite`): the agent-run queue and its events, Claims and
-  extractions, `mediaJobs`, `audioArtifacts`, feedback, decisions,
-  scheduled and workpool state, and Hatchet state;
+- all three databases: the agent-run queue and its events, Claims,
+  extractions, `mediaJobs`, `audioArtifacts`, feedback, decisions, scheduled
+  and workpool state, and Hatchet state;
 - `/srv/app-data/convex/storage`: audio uploads and other file blobs, and
   search indexes;
-- the nightly PostgreSQL dumps under `/srv/app-data/backups`, which live on
-  `mp0`.
+- the nightly dumps under `/srv/app-data/backups`, which live on `mp0`.
 
 External effects are not reversed: model calls, messages, GitHub and Vercel
 activity. State outside CT113 survives and may re-deliver against the
@@ -212,42 +364,55 @@ lost writes for reconciliation.
 
 ## Item 9. Teardown: pass
 
-`destroy` printed
+Run 3 printed
 `destroyed ctid=913 volumes=[ceph-vm:vm-913-disk-0 ceph-vm:vm-913-disk-1] confirmed absent; record archived`.
-An independent check on prox4 at 16:29:57Z found:
+An independent check on prox4 at 18:12:34Z found:
 
-- no CTID 911 to 913 anywhere in the cluster;
-- no `/etc/pve/lxc/913.conf`;
-- no `vm-911` to `vm-913` volumes in `pvesm list ceph-vm` or `rbd ls`;
-- no RBD mappings and no `/var/lib/lxc/913` mounts;
-- the record archived as `913.record.destroyed-20261017T162917Z`.
+- no CTID 911 to 913 in the cluster;
+- no `913.conf`;
+- 0 `vm-911` to `vm-913` RBD images, 0 mappings and 0 `/var/lib/lxc/913`
+  mounts;
+- 0 leftover run units;
+- the staged scripts removed;
+- records archived for all three runs: `913.record.destroyed-20261017T162917Z`,
+  `…T180242Z` and `…T181146Z`.
 
-CT113 stayed `running` with both containers healthy and no lock or
-snapshot. CT107 stayed `stopped`, as it was before the run. The extra files
-staged on prox4 were removed. The helper and identity extractor at
-`/root/` there are the repository versions at `16ed5881`.
+The sanitized identity and receipt files stay in
+`/root/isolated-restore-runs/` on prox4 by the helper's convention. Runs 1
+and 2 were checked the same way. CT113 stayed `running` with both containers
+healthy and no lock or snapshot. CT107 stayed `stopped`, as it was before.
 
 ## Summary
 
 | Item | Result |
 | --- | --- |
 | 1. Protected set | Pass |
-| 2. Consistency | Unobserved. The archive is crash-consistent: snapshot mode, both volumes snapshotted in one 2 s freeze. PostgreSQL first-start recovery was not reached. |
-| 3. Isolation | Unobserved; `prepare` refused before first boot |
-| 4. Runtime identity | Unobserved in the guest; production observed `d715e9ec…` read-only |
-| 5. Source and components | Unobserved |
-| 6. Data coherence | Unobserved |
-| 7. Configuration references | Unobserved |
-| 8. Restore method | Written above; `pct restore` measured at 151 s |
-| 9. Teardown | Pass |
+| 2. Consistency | Pass: crash-consistent; clean crash recovery in 0.75 s. Two FATAL lines are unclassified. |
+| 3. Isolation | Pass |
+| 4. Runtime identity | Pass: `d715e9ec…` in the guest |
+| 5. Source and components | Pass: 177/177, 0/0/0; components, modules and schemas equal live; six component queries succeeded |
+| 6. Data coherence | Pass: counts recorded; blob sample 8/8 |
+| 7. Configuration references | Pass: presence recorded |
+| 8. Restore method | Written; durations measured |
+| 9. Teardown | Pass: all three runs |
 
-Next: a reviewed helper change for vendor enablement links, then a rerun
-against this archive or a newer one. A rerun within seven days of part B, on
-the same image and layout, lets part B skip a second restore.
+Part B needs no second restore if it is captured on the same image
+(`d715e9ec…`) and guest layout by 2026-10-24.
 
 ## File digests (SHA-256)
+
+The two pulled guest files were committed with a final newline added by the
+formatter. Their raw pulled bytes, which the deltas used, hash as
+`e53eae34…8b6` (identities) and `5997a4af…509` (receipt reads).
 
 | File | Digest |
 | --- | --- |
 | `archive-item1.json` | `1a5e9d33a4eda262f190dae41bc37a77cbb6a2328c6e808804edecaabc5f5067` |
+| `913-20261017T180956Z-module-identities.json` | `9fca1f1fad94ac8ef3bce4e096d5b2ab8a8771e66746d172a0fdcbd6083e3cb3` |
+| `913-20261017T180956Z-receipt-reads.json` | `ea64cda3aff992bbf149150b57e0f3f033d580d4c073bbf770a9bdf95365d216` |
+| `identity-delta-vs-deployed.json` | `624fa058e31420983e97bce6e3be4ec164d0b2fc9ef4138ce2875a6d752fceda` |
+| `module-delta-vs-81150337.json` | `3ca940915b7ff9d4a79090b0f255ff62a7117ec98ed39d124d9528ba97716d2d` |
+| `inspection-comparison.json` | `92f1fda0fdcd7cb6b2ba44a11c926c47ad2e7ea4ca8180aa5636b3695ce542a9` |
 | `rehearsal-run.log` | `34acf06898762fe7bfe9478d39937b88573753de7ebbaa234859df32692fb25a` |
+| `rehearsal-run-2.log` | `a2006c1a7c8778e146de7e629edb5cb19662dd7242e68eadecf43f5a1b5b46b7` |
+| `rehearsal-run-3.log` | `ec2762520885e6c7f8770c09e047b7895f24d00c38e8c947df92cafa6bd3d8ac` |

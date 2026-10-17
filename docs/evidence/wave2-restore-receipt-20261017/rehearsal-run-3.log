@@ -1,0 +1,330 @@
+step scp 2026-10-17T18:07:44Z
+683eda0efceec7cdaf94001be4ae03df59f30ba6fa9932c9cf0d32e8fd26fa75  /root/isolated-restore-guest.sh
+d6bcbd5894f56dd4f355fb6251752132cafe0ff9051e04171c0231c2d05780ea  /root/guest-module-identities.py
+724c9e8d7e75a13eb68860d44efcdb884a8e14b9802d50ef25f8e02dcd6453c1  /root/guest-receipt-reads.py
+a9f0d5253da9f322fb47d363986fdc43d03d2749b811353bf4c2119cb7fc2c91  /root/host-receipt-reads.sh
+step preflight 2026-10-17T18:07:44Z
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3702644480 mem_avail_kib=34285236
+step restore start 2026-10-17T18:07:46Z epoch=1792260466
+Running as unit: isolated-restore-913-20261017T180744Z-restore.service; invocation ID: 66d5b9661e5b4fcf865c06c35cecf673
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3702645504 mem_avail_kib=34230760
+recovering backed-up configuration from 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+/dev/rbd10
+Creating filesystem with 8388608 4k blocks and 2097152 inodes
+Filesystem UUID: 490f3a2a-1ef7-4407-987b-577a2d443ca4
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624
+/dev/rbd11
+Creating filesystem with 16777216 4k blocks and 4194304 inodes
+Filesystem UUID: df4cf9de-3d60-48a8-a05a-10cd6f90714d
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424
+restoring 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst' now..
+extracting archive '/mnt/pve/nas-docker/dump/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+Total bytes read: 47469772800 (45GiB, 373MiB/s)
+merging backed-up and given configuration..
+restored ctid=913 (stopped, no network) record=/root/isolated-restore-runs/913.record
+ctid=913
+node=prox4
+archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst
+created_at=2026-10-17T18:09:56Z
+hostname=convex-hatchet-restore-913
+rootfs=ceph-vm:vm-913-disk-0
+mp0=ceph-vm:vm-913-disk-1
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 2min 10.157s
+CPU time consumed: 2min 2.268s
+Memory peak: 8.3G (swap: 0B)
+step restore end 2026-10-17T18:09:56Z epoch=1792260596
+step prepare 2026-10-17T18:09:56Z
+Running as unit: isolated-restore-913-20261017T180744Z-prepare.service; invocation ID: bdf6f81e9a9e440fac048a68aff8e78a
+boot dependency closure audited: 111
+enabled units surviving on offline rootfs:
+  /etc/systemd/system/basic.target.wants/networking.service
+  /etc/systemd/system/default.target.wants/wtmpdb-update-boot.service
+  /etc/systemd/system/getty.target.wants/container-getty@1.service
+  /etc/systemd/system/getty.target.wants/container-getty@2.service
+  /etc/systemd/system/local-fs.target.wants/run-lock.mount
+  /etc/systemd/system/multi-user.target.wants/containerd.service
+  /etc/systemd/system/multi-user.target.wants/docker.service
+  /etc/systemd/system/multi-user.target.wants/e2scrub_reap.service
+  /etc/systemd/system/multi-user.target.wants/networking.service
+  /etc/systemd/system/multi-user.target.wants/remote-fs.target
+  /etc/systemd/system/multi-user.target.wants/ssh.service
+  /etc/systemd/system/network-online.target.wants/networking.service
+  /etc/systemd/system/network.target.wants/networking.service
+  /etc/systemd/system/shutdown.target.wants/networking.service
+  /etc/systemd/system/sockets.target.wants/docker.socket
+  /etc/systemd/system/sockets.target.wants/ssh.socket
+  /etc/systemd/system/sockets.target.wants/systemd-networkd.socket
+  /etc/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /etc/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /etc/systemd/system/sshd.service.wants/sshd-keygen.service
+  /etc/systemd/system/sshd@.service.wants/sshd-keygen.service
+  /etc/systemd/system/ssh.service.wants/sshd-keygen.service
+  /etc/systemd/system/ssh.socket.wants/sshd-keygen.service
+  /etc/systemd/system/sysinit.target.wants/apparmor.service
+  /etc/systemd/system/sysinit.target.wants/nftables.service
+  /etc/systemd/system/sysinit.target.wants/systemd-confext.service
+  /etc/systemd/system/sysinit.target.wants/systemd-network-generator.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-file-system.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-firmware-code.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-firmware-config.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-machine-id.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-make-policy.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-secureboot-authority.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-secureboot-policy.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pstore.service
+  /etc/systemd/system/sysinit.target.wants/systemd-sysext.service
+  /etc/systemd/system/sysinit.target.wants/systemd-timesyncd.service
+  /etc/systemd/system/sysinit.target.wants/systemd-udev-load-credentials.service
+  /etc/systemd/system/timers.target.wants/dpkg-db-backup.timer
+  /etc/systemd/system/timers.target.wants/e2scrub_all.timer
+  /etc/systemd/system/timers.target.wants/fstrim.timer
+  /etc/systemd/system/timers.target.wants/logrotate.timer
+  /etc/systemd/system/timers.target.wants/man-db.timer
+  /lib/systemd/system/getty.target.wants/getty-static.service
+  /lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+  /lib/systemd/system/initrd.target.wants/systemd-bsod.service
+  /lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+  /lib/systemd/system/local-fs.target.wants/run-lock.mount
+  /lib/systemd/system/local-fs.target.wants/tmp.mount
+  /lib/systemd/system/multi-user.target.wants/dbus.service
+  /lib/systemd/system/multi-user.target.wants/getty.target
+  /lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+  /lib/systemd/system/multi-user.target.wants/systemd-logind.service
+  /lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+  /lib/systemd/system/sockets.target.wants/dbus.socket
+  /lib/systemd/system/sockets.target.wants/systemd-creds.socket
+  /lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+  /lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+  /lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+  /lib/systemd/system/sockets.target.wants/systemd-journald.socket
+  /lib/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+  /lib/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+  /lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+  /lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+  /lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+  /lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+  /lib/systemd/system/sysinit.target.wants/ldconfig.service
+  /lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+  /lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+  /lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+  /lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+  /lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+  /lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+  /lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journald.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+  /lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+  /lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+  /lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+  /lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+  /lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+  /lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+  /lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+  /lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+  /lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+  /usr/lib/systemd/system/getty.target.wants/getty-static.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-bsod.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+  /usr/lib/systemd/system/local-fs.target.wants/run-lock.mount
+  /usr/lib/systemd/system/local-fs.target.wants/tmp.mount
+  /usr/lib/systemd/system/multi-user.target.wants/dbus.service
+  /usr/lib/systemd/system/multi-user.target.wants/getty.target
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-logind.service
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+  /usr/lib/systemd/system/sockets.target.wants/dbus.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-creds.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-journald.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+  /usr/lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+  /usr/lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+  /usr/lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+  /usr/lib/systemd/system/sysinit.target.wants/ldconfig.service
+  /usr/lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journald.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+  /usr/lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+restart policies set to no: 9
+prepared ctid=913: no net, autostart suppressed, credentials removed
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 4.454s
+CPU time consumed: 3.764s
+Memory peak: 134.5M (swap: 0B)
+step start (first boot) 2026-10-17T18:10:01Z epoch=1792260601
+Running as unit: isolated-restore-913-20261017T180744Z-start.service; invocation ID: 103999a29a8b4a05bb19f60bae7fd2df
+boot ok ctid=913 systemd=running
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 7.134s
+CPU time consumed: 3.188s
+Memory peak: 131M (swap: 0B)
+step boot settled 2026-10-17T18:10:08Z epoch=1792260608
+step verify 2026-10-17T18:10:08Z
+Running as unit: isolated-restore-913-20261017T180744Z-verify.service; invocation ID: 415d3c56d7d84abab5303b88affc0937
+verify ok ctid=913 systemd=running running_containers=0
+failed units (evidence):
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 9.500s
+CPU time consumed: 8.959s
+Memory peak: 123.4M (swap: 0B)
+step start-db 2026-10-17T18:10:18Z epoch=1792260618
+Running as unit: isolated-restore-913-20261017T180744Z-db.service; invocation ID: 65656e477b1343b0bc95e1d07f0425a7
+databases (name|bytes):
+convex_features|7954959
+hatchet_lite|61104655
+postgres|7861951
+self_hosted_convex|1176642063
+self_hosted_convex counts (documents|indexes|leases|persistence_globals):
+145818|733887|1|10
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 14.321s
+CPU time consumed: 9.680s
+Memory peak: 122.5M (swap: 0B)
+step start-backend 2026-10-17T18:10:33Z epoch=1792260633
+Running as unit: isolated-restore-913-20261017T180744Z-backend.service; invocation ID: 3974be5326d049f794044b02e62ac79a
+curl: (56) Recv failure: Connection reset by peer
+version: unknown
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 12.304s
+CPU time consumed: 9.268s
+Memory peak: 123.1M (swap: 0B)
+step backend ready 2026-10-17T18:10:45Z epoch=1792260645
+step read-identities 2026-10-17T18:10:45Z
+Running as unit: isolated-restore-913-20261017T180744Z-identities.service
+Admin key:
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 10.728s
+CPU time consumed: 9.972s
+Memory peak: 126.3M (swap: 0B)
+{"ok": true, "classification": "success_envelope", "httpStatus": 200, "moduleCount": 177, "outputFile": "/root/restore-module-identities.json", "outputSha256": "e53eae3477db255727b8988aacdb5ff09f6a5e93a754c968bac624d5b8d1e8b6"}
+identities: 177
+identities file: /root/isolated-restore-runs/913-20261017T180956Z-module-identities.json sha256=e53eae3477db255727b8988aacdb5ff09f6a5e93a754c968bac624d5b8d1e8b6
+step receipt-reads 2026-10-17T18:10:56Z
+Running as unit: isolated-restore-913-20261017T180744Z-reads.service; invocation ID: d974a7d63cae41b0a01938642adcaef6
+Admin key:
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 39.916s
+CPU time consumed: 6.526s
+Memory peak: 125.9M (swap: 0B)
+isolation gate ok: no net/mp1+/unused/dev/hookscript/lxc keys; interfaces lo and bridges only; running: app-convex-backend-1 app-postgres-1
+guest interfaces (name:kind):
+  bonding_masters:bonding-control-file
+  br-af060dfc480e:bridge
+  docker0:bridge
+  lo:loopback
+  veth318beb2:bridge-port
+  veth86e3d99:bridge-port
+guest default routes: 0
+guest running services:
+  console-getty.service
+  container-getty@1.service
+  container-getty@2.service
+  containerd.service
+  dbus.service
+  docker.service
+  ssh.service
+  systemd-journald.service
+  systemd-logind.service
+  systemd-networkd.service
+app-convex-backend-1 image id: sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4
+app-convex-backend-1 repo digests: ["ghcr.io/get-convex/convex-backend@sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4"]
+app-convex-backend-1 started at: 2026-10-17T18:10:42.439163797Z
+app-postgres-1 image id: sha256:78bf48b801e792f99e3ac62b5036fd3876e9be48afda16c1e331af1c75ceb2ff
+app-postgres-1 started at: 2026-10-17T18:10:27.934475258Z
+postgres recovery since that start: {"ok": true, "events": [{"at": "2026-10-17 18:10:28.452 UTC", "event": "interrupted", "value": "2026-10-17 16:11:37 UTC"}, {"at": "2026-10-17 18:10:28.483 UTC", "event": "automatic_recovery_in_progress"}, {"at": "2026-10-17 18:10:28.499 UTC", "event": "redo_starts_at", "value": "9/31C563D8"}, {"at": "2026-10-17 18:10:28.508 UTC", "event": "wal_end_invalid_record_length_at", "value": "9/31E02530"}, {"at": "2026-10-17 18:10:28.508 UTC", "event": "redo_done_at", "value": "9/31E02508"}, {"at": "2026-10-17 18:10:28.545 UTC", "event": "end_of_recovery_checkpoint_started"}, {"at": "2026-10-17 18:10:28.679 UTC", "event": "ready_to_accept_connections"}], "severityCounts": {"FATAL": 2, "PANIC": 0, "ERROR": 0, "WARNING": 0}, "linesScanned": 18}
+{"ok": true, "classification": "receipt_reads_written", "written": true, "outputFile": "/root/restore-receipt-reads.json", "outputSha256": "5997a4af165f6494ff654397b89740dc1b09405277cb4c1e4e38d8262d05c509"}
+receipt reads file: /root/isolated-restore-runs/913-20261017T180956Z-receipt-reads.json sha256=5997a4af165f6494ff654397b89740dc1b09405277cb4c1e4e38d8262d05c509
+receipt checks: passed
+step deltas 2026-10-17T18:11:36Z
+{
+  "leftSha256": "9066c3a4224fa944fb623221aff48fe1af3a145f916ab2e628eaa4436833ec79",
+  "rightSha256": "e53eae3477db255727b8988aacdb5ff09f6a5e93a754c968bac624d5b8d1e8b6",
+  "scope": "root-module-identities-only",
+  "provenanceEstablished": false,
+  "leftCount": 177,
+  "rightCount": 177,
+  "unchangedCount": 177,
+  "identical": true,
+  "onlyLeft": [],
+  "onlyRight": [],
+  "changed": []
+}
+{
+  "releaseManifestSha256": "8961e78e41a9d148f8b43a24098b4a0374e2c9957d114e25adbc07c56328f2fb",
+  "deployedIdentitiesSha256": "e53eae3477db255727b8988aacdb5ff09f6a5e93a754c968bac624d5b8d1e8b6",
+  "scope": "root-module-identities-only",
+  "deploymentAuthorized": false,
+  "deployedCount": 177,
+  "releaseCount": 177,
+  "unchangedCount": 177,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+step destroy 2026-10-17T18:11:37Z
+Removing image: 100% complete...done.
+Removing image: 100% complete...done.
+purging CT 913 from related configurations..
+destroyed ctid=913 volumes=[ceph-vm:vm-913-disk-0 ceph-vm:vm-913-disk-1] confirmed absent; record archived
+step done 2026-10-17T18:11:46Z
+exit=0

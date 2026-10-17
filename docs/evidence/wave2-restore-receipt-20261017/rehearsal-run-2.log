@@ -1,0 +1,231 @@
+step scp 2026-10-17T18:00:31Z
+abbddca75cf12f650fdab81e817bdb019d60d2eaa2b4a4d90a7f223a61f1f477  /root/isolated-restore-guest.sh
+d6bcbd5894f56dd4f355fb6251752132cafe0ff9051e04171c0231c2d05780ea  /root/guest-module-identities.py
+724c9e8d7e75a13eb68860d44efcdb884a8e14b9802d50ef25f8e02dcd6453c1  /root/guest-receipt-reads.py
+a8bc18f6817c32eefe60543a7aef5fa723928526946b2529721c5fc7c564ae3a  /root/host-receipt-reads.sh
+step preflight 2026-10-17T18:00:31Z
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3699832832 mem_avail_kib=34619532
+step restore start 2026-10-17T18:00:33Z epoch=1792260033
+Running as unit: isolated-restore-913-20261017T180031Z-restore.service
+preflight ok ctid=913 archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst bytes=30565690946 ceph-vm_avail_kib=3699832832 mem_avail_kib=34598940
+recovering backed-up configuration from 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+/dev/rbd10
+Creating filesystem with 8388608 4k blocks and 2097152 inodes
+Filesystem UUID: 8100b7c7-9b76-4d51-a32c-ae3508a74e1a
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624
+/dev/rbd11
+Creating filesystem with 16777216 4k blocks and 4194304 inodes
+Filesystem UUID: f61aeaba-97ff-4d65-a5da-10d83e431d8e
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000, 7962624, 11239424
+restoring 'nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst' now..
+extracting archive '/mnt/pve/nas-docker/dump/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst'
+Total bytes read: 47469772800 (45GiB, 509MiB/s)
+merging backed-up and given configuration..
+restored ctid=913 (stopped, no network) record=/root/isolated-restore-runs/913.record
+ctid=913
+node=prox4
+archive=nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst
+created_at=2026-10-17T18:02:18Z
+hostname=convex-hatchet-restore-913
+rootfs=ceph-vm:vm-913-disk-0
+mp0=ceph-vm:vm-913-disk-1
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 1min 44.824s
+CPU time consumed: 2min 2.452s
+Memory peak: 9.4G (swap: 0B)
+step restore end 2026-10-17T18:02:18Z epoch=1792260138
+step prepare 2026-10-17T18:02:18Z
+Running as unit: isolated-restore-913-20261017T180031Z-prepare.service
+boot dependency closure audited: 111
+enabled units surviving on offline rootfs:
+  /etc/systemd/system/basic.target.wants/networking.service
+  /etc/systemd/system/default.target.wants/wtmpdb-update-boot.service
+  /etc/systemd/system/getty.target.wants/container-getty@1.service
+  /etc/systemd/system/getty.target.wants/container-getty@2.service
+  /etc/systemd/system/local-fs.target.wants/run-lock.mount
+  /etc/systemd/system/multi-user.target.wants/containerd.service
+  /etc/systemd/system/multi-user.target.wants/docker.service
+  /etc/systemd/system/multi-user.target.wants/e2scrub_reap.service
+  /etc/systemd/system/multi-user.target.wants/networking.service
+  /etc/systemd/system/multi-user.target.wants/remote-fs.target
+  /etc/systemd/system/multi-user.target.wants/ssh.service
+  /etc/systemd/system/network-online.target.wants/networking.service
+  /etc/systemd/system/network.target.wants/networking.service
+  /etc/systemd/system/shutdown.target.wants/networking.service
+  /etc/systemd/system/sockets.target.wants/docker.socket
+  /etc/systemd/system/sockets.target.wants/ssh.socket
+  /etc/systemd/system/sockets.target.wants/systemd-networkd.socket
+  /etc/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /etc/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /etc/systemd/system/sshd.service.wants/sshd-keygen.service
+  /etc/systemd/system/sshd@.service.wants/sshd-keygen.service
+  /etc/systemd/system/ssh.service.wants/sshd-keygen.service
+  /etc/systemd/system/ssh.socket.wants/sshd-keygen.service
+  /etc/systemd/system/sysinit.target.wants/apparmor.service
+  /etc/systemd/system/sysinit.target.wants/nftables.service
+  /etc/systemd/system/sysinit.target.wants/systemd-confext.service
+  /etc/systemd/system/sysinit.target.wants/systemd-network-generator.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-file-system.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-firmware-code.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-firmware-config.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-machine-id.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-make-policy.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-secureboot-authority.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pcrlock-secureboot-policy.service
+  /etc/systemd/system/sysinit.target.wants/systemd-pstore.service
+  /etc/systemd/system/sysinit.target.wants/systemd-sysext.service
+  /etc/systemd/system/sysinit.target.wants/systemd-timesyncd.service
+  /etc/systemd/system/sysinit.target.wants/systemd-udev-load-credentials.service
+  /etc/systemd/system/timers.target.wants/dpkg-db-backup.timer
+  /etc/systemd/system/timers.target.wants/e2scrub_all.timer
+  /etc/systemd/system/timers.target.wants/fstrim.timer
+  /etc/systemd/system/timers.target.wants/logrotate.timer
+  /etc/systemd/system/timers.target.wants/man-db.timer
+  /lib/systemd/system/getty.target.wants/getty-static.service
+  /lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+  /lib/systemd/system/initrd.target.wants/systemd-bsod.service
+  /lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+  /lib/systemd/system/local-fs.target.wants/run-lock.mount
+  /lib/systemd/system/local-fs.target.wants/tmp.mount
+  /lib/systemd/system/multi-user.target.wants/dbus.service
+  /lib/systemd/system/multi-user.target.wants/getty.target
+  /lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+  /lib/systemd/system/multi-user.target.wants/systemd-logind.service
+  /lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+  /lib/systemd/system/sockets.target.wants/dbus.socket
+  /lib/systemd/system/sockets.target.wants/systemd-creds.socket
+  /lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+  /lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+  /lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+  /lib/systemd/system/sockets.target.wants/systemd-journald.socket
+  /lib/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+  /lib/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+  /lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+  /lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+  /lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+  /lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+  /lib/systemd/system/sysinit.target.wants/ldconfig.service
+  /lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+  /lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+  /lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+  /lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+  /lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+  /lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+  /lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+  /lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journald.service
+  /lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+  /lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+  /lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+  /lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+  /lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+  /lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+  /lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+  /lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+  /lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+  /lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+  /lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+  /lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+  /usr/lib/systemd/system/getty.target.wants/getty-static.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-battery-check.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-bsod.service
+  /usr/lib/systemd/system/initrd.target.wants/systemd-pcrphase-initrd.service
+  /usr/lib/systemd/system/local-fs.target.wants/run-lock.mount
+  /usr/lib/systemd/system/local-fs.target.wants/tmp.mount
+  /usr/lib/systemd/system/multi-user.target.wants/dbus.service
+  /usr/lib/systemd/system/multi-user.target.wants/getty.target
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-ask-password-wall.path
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-logind.service
+  /usr/lib/systemd/system/multi-user.target.wants/systemd-user-sessions.service
+  /usr/lib/systemd/system/sockets.target.wants/dbus.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-creds.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-hostnamed.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-initctl.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-journald-dev-log.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-journald.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-pcrextend.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-pcrlock.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-sysext.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-control.socket
+  /usr/lib/systemd/system/sockets.target.wants/systemd-udevd-kernel.socket
+  /usr/lib/systemd/system/sysinit.target.wants/dev-hugepages.mount
+  /usr/lib/systemd/system/sysinit.target.wants/dev-mqueue.mount
+  /usr/lib/systemd/system/sysinit.target.wants/kmod-static-nodes.service
+  /usr/lib/systemd/system/sysinit.target.wants/ldconfig.service
+  /usr/lib/systemd/system/sysinit.target.wants/proc-sys-fs-binfmt_misc.automount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-fs-fuse-connections.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-config.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-debug.mount
+  /usr/lib/systemd/system/sysinit.target.wants/sys-kernel-tracing.mount
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-ask-password-console.path
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-binfmt.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-firstboot.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-hibernate-clear.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-hwdb-update.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-catalog-update.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journald.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-journal-flush.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-machine-id-commit.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-modules-load.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrmachine.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-pcrphase-sysinit.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-random-seed.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-sysctl.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-sysusers.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev-early.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup-dev.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tmpfiles-setup.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup-early.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-tpm2-setup.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-udevd.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-udev-trigger.service
+  /usr/lib/systemd/system/sysinit.target.wants/systemd-update-done.service
+  /usr/lib/systemd/system/timers.target.wants/systemd-tmpfiles-clean.timer
+restart policies set to no: 9
+prepared ctid=913: no net, autostart suppressed, credentials removed
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 4.348s
+CPU time consumed: 3.785s
+Memory peak: 134.2M (swap: 0B)
+step start (first boot) 2026-10-17T18:02:23Z epoch=1792260143
+Running as unit: isolated-restore-913-20261017T180031Z-start.service; invocation ID: bb06d2cf4d1f4ca2b67621860ec59ed3
+boot ok ctid=913 systemd=running
+Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+Service runtime: 7.045s
+CPU time consumed: 3.172s
+Memory peak: 131M (swap: 0B)
+step boot settled 2026-10-17T18:02:30Z epoch=1792260150
+step verify 2026-10-17T18:02:30Z
+Running as unit: isolated-restore-913-20261017T180031Z-verify.service; invocation ID: 52e6e07a35834164b231f3859c8a0b2b
+isolated-restore: unexpected interfaces in guest: bonding_masters
+Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+Service runtime: 2.573s
+CPU time consumed: 2.447s
+Memory peak: 123.2M (swap: 0B)
+rehearsal step failed
+rehearsal step failed; purging CT 913
+Removing image: 100% complete...done.
+Removing image: 100% complete...done.
+purging CT 913 from related configurations..
+destroyed ctid=913 volumes=[ceph-vm:vm-913-disk-0 ceph-vm:vm-913-disk-1] confirmed absent; record archived
+exit=1
