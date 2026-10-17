@@ -22,20 +22,22 @@ function webSources(directory = join(repoRoot, "web/src")): string[] {
   });
 }
 
-/** Inspection-v1 shape with the given root functions, routes and crons. */
+/** Inspection-v1 shape with the given root functions, routes and crons.
+ * Functions are public unless named in `internal` as `module:name`. */
 function inspection(
   functions: RequiredFunction[],
   routes: string[] = [],
   crons: string[] = [],
+  internal: string[] = [],
 ) {
-  const byModule = new Map<string, string[]>();
+  const byModule = new Map<string, { name: string; kind: string }[]>();
+  const add = (path: string, name: string, kind: string) =>
+    byModule.set(path, [...(byModule.get(path) ?? []), { name, kind }]);
   for (const { module, name } of functions) {
-    byModule.set(`${module}.js`, [
-      ...(byModule.get(`${module}.js`) ?? []),
-      name,
-    ]);
+    const kind = internal.includes(`${module}:${name}`) ? "internal" : "public";
+    add(`${module}.js`, name, kind);
   }
-  byModule.set("http.js", [...(byModule.get("http.js") ?? []), ...routes]);
+  for (const route of routes) add("http.js", route, "public");
   return {
     format: "frequency-deployment-inspection-v1",
     finishedAt: "2026-10-17T00:00:00.000Z",
@@ -43,12 +45,12 @@ function inspection(
       {
         componentId: null,
         modules: [
-          ...[...byModule].map(([path, names]) => ({
+          ...[...byModule].map(([path, entries]) => ({
             path,
-            functions: names.map((name) => ({
+            functions: entries.map(({ name, kind }) => ({
               name,
               udfType: "Query",
-              visibility: { kind: "public" },
+              visibility: { kind },
             })),
             crons: [],
           })),
@@ -156,7 +158,13 @@ describe("wave 2 deployment coverage", () => {
             modules: [
               {
                 path: "docket.js",
-                functions: [{ name: "listWeb" }],
+                functions: [
+                  {
+                    name: "listWeb",
+                    udfType: "Query",
+                    visibility: { kind: "public" },
+                  },
+                ],
                 crons: [],
               },
             ],
@@ -166,6 +174,41 @@ describe("wave 2 deployment coverage", () => {
       [{ module: "docket", name: "listWeb" }],
     );
     expect(report.webCalls.missing).toEqual(["docket:listWeb"]);
+  });
+
+  test("an internal function does not satisfy a web call", () => {
+    const report = coverageReport(
+      inspection(allRequired, allRoutes, allCrons, ["docket:listWeb"]),
+      [{ module: "docket", name: "listWeb" }],
+    );
+    expect(report.groups.every((group) => group.deployed)).toBe(true);
+    expect(report.webCalls.missing).toEqual(["docket:listWeb"]);
+    expect(report.complete).toBe(false);
+  });
+
+  test("an internal function satisfies a capability group", () => {
+    const report = coverageReport(
+      inspection(allRequired, allRoutes, allCrons, [
+        "decisionIntentsMigrations:backfillRevisions",
+      ]),
+      [{ module: "docket", name: "listWeb" }],
+    );
+    expect(report.complete).toBe(true);
+  });
+
+  test("rejects a function without its visibility", () => {
+    const saved = inspection([{ module: "docket", name: "listWeb" }]);
+    const root = saved.modules[0]!.modules[0]!;
+    const stripped = {
+      ...saved,
+      modules: [
+        {
+          componentId: null,
+          modules: [{ ...root, functions: [{ name: "listWeb" }] }],
+        },
+      ],
+    };
+    expect(() => coverageReport(stripped, [])).toThrow();
   });
 
   test("rejects an unknown inspection format", () => {

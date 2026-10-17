@@ -37,7 +37,13 @@ describe("wave 2 deployment coverage CLI", () => {
             modules: [
               {
                 path: "podcast.js",
-                functions: [{ name: "subscription" }],
+                functions: [
+                  {
+                    name: "subscription",
+                    udfType: "Query",
+                    visibility: { kind: "public" },
+                  },
+                ],
                 crons: [],
               },
             ],

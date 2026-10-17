@@ -98,7 +98,12 @@ const inspectionZ = z.object({
       modules: z.array(
         z.object({
           path: z.string(),
-          functions: z.array(z.object({ name: z.string() })),
+          functions: z.array(
+            z.object({
+              name: z.string(),
+              visibility: z.object({ kind: z.enum(["public", "internal"]) }),
+            }),
+          ),
           crons: z.array(z.object({ identifier: z.string() })),
         }),
       ),
@@ -136,12 +141,18 @@ export function coverageReport(
   const routes = new Set(
     (modules.get("http.js")?.functions ?? []).map((f) => f.name),
   );
-  const hasFunction = ({ module, name }: RequiredFunction) =>
+  // Capability groups only need the function deployed (the revision backfill
+  // is internal); a browser call also needs it public.
+  const hasFunction = (
+    { module, name }: RequiredFunction,
+    requirePublic = false,
+  ) =>
     modules
       .get(modulePath(module))
       ?.functions.some(
         (candidate) =>
-          candidate.name === name || candidate.name.endsWith(`:${name}`),
+          (candidate.name === name || candidate.name.endsWith(`:${name}`)) &&
+          (!requirePublic || candidate.visibility.kind === "public"),
       ) ?? false;
   // Convex lists an exact route by its path and a prefix route as
   // `<prefix>*` (convex/src/server/router.ts getRoutes), so match exactly:
@@ -168,7 +179,7 @@ export function coverageReport(
     };
   });
   const missingWebCalls = webCalls
-    .filter((call) => !hasFunction(call))
+    .filter((call) => !hasFunction(call, true))
     .map(({ module, name }) => `${module}:${name}`);
   return {
     inspectedAt: parsed.finishedAt,
