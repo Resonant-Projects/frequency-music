@@ -20,8 +20,9 @@ export function itemSector(
 ): string | undefined {
   if (!names?.length) return undefined;
   const votes = new Map<string, number>();
-  for (const name of names) {
-    const sector = conceptSectors.get(normalizeName(name));
+  // One vote per concept: a source's own topics can repeat its extraction's.
+  for (const name of new Set(names.map(normalizeName))) {
+    const sector = conceptSectors.get(name);
     if (sector) votes.set(sector, (votes.get(sector) ?? 0) + 1);
   }
   let best: string | undefined;

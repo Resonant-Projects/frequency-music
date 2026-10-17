@@ -20,6 +20,16 @@ describe("item sectors", () => {
     ).toBe("wave");
   });
 
+  it("counts each concept once, however often its name repeats", () => {
+    // A source's own topics can repeat its extraction's topics.
+    expect(
+      itemSector(
+        ["Timbre", "timbre", "standing wave", "chladni plate"],
+        classified,
+      ),
+    ).toBe("wave");
+  });
+
   it("breaks a tie by the item's first classified concept", () => {
     expect(itemSector(["timbre", "tonnetz"], classified)).toBe("synthesis");
     expect(itemSector(["tonnetz", "timbre"], classified)).toBe("geometry");
