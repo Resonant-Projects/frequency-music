@@ -160,13 +160,19 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 
 - Leave every gate closed. That disables all new outbound or paid behavior
   except the five effects above.
-- Workers: point Argo CD and the media compose file at the previous digests.
-  The old agent worker fails new-graph runs, and the old media worker claims no
-  0.3.0 job. Use this only as a short holding state while the new backend
-  stays deployed. The old agent image predates the `.spool` outbox and cannot
-  replay it ([pipeline recovery](pipeline-recovery.md#audit-delivery)):
-  before reverting the agent, confirm `/data/outbox` holds no active record,
-  or keep the new worker running until it drains.
+- Workers: point Argo CD and the media compose file at the previous digests,
+  using the same protocol as steps 1 and 6. Set
+  `FREQUENCY_WORKER_CLAIMS_PAUSED=true`, suspend direct execution, wait until
+  the media worker holds no claimed job, confirm each old process terminated
+  after its drain, rerun the queue scan and reconcile any swept row before the
+  replacement starts. The old agent image predates the `.spool` outbox and
+  cannot replay it ([pipeline recovery](pipeline-recovery.md#audit-delivery)),
+  so also confirm `/data/outbox` holds no active record, or keep the new
+  worker running until it drains. The old agent worker fails any queued
+  `failure-investigation` or tournament run as an unknown graph, and the old
+  media worker claims no 0.3.0 job. Keep claims paused while such runs are
+  queued, and use this only as a short holding state while the new backend
+  stays deployed.
 - Convex code: within minutes of activation the normalization writes
   `extractions.historical`, which the `81150337` schema does not declare. After
   that, redeploying `81150337` as-is fails schema validation. Fix forward, or
