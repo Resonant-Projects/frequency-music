@@ -24,6 +24,8 @@ function frame(
 ): Uint8Array {
   const length = Math.floor((144_000 * bitrateKbps) / sampleRate);
   const bytes = new Uint8Array(length).fill(fill);
+  // All-zero side information is a valid, silent granule layout.
+  bytes.fill(0, 4, 4 + (mode === "mono" ? 17 : 32));
   bytes[0] = 0xff;
   bytes[1] = 0xfb;
   bytes[2] =

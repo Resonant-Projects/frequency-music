@@ -16,9 +16,9 @@ declarations were edited by hand.
    mirrors the kit's `provenance.md`. The server checks, before any state
    exists:
    - the machine delivery is the ready, private, metadata-free MP3 delivery
-     of a `done` single-member `litmusRender` job that lists it, with its
-     master and recipe present and no blind group (origin is proved by the
-     job, not the row);
+     of a `done` single-member, loudness-normalized (`normalize: true`)
+     `litmusRender` job that lists it, with its master and recipe present
+     and no blind group (origin is proved by the job, not the row);
    - the submitted plan, re-admitted, is identical to the job's frozen
      snapshot (same recipe revision and constraints);
    - the size is at most `MAX_UPLOAD_BYTES` (95 MB, now in
@@ -32,14 +32,17 @@ declarations were edited by hand.
    `refs.recipeId`, `createdBy` the user, and `engine.params` holding the
    recipe revision, plan digest, machine artifact and job, byte length,
    SHA-256 and the declaration. Then it mints one upload URL. Repeating the
-   declaration returns the same row.
+   same declaration returns the same row; the same file with a different
+   plan, size or provenance is refused rather than reported as saved.
 2. **Upload** the bytes to that URL (browser `fetch`).
 3. **Finish** (`studioComparisons.finishUpload` action, a Clerk user only, the
    uploader only). The blob must match the declared size and SHA-256 and be
    unreferenced. The action reads it and refuses, deleting the blob and
    marking the row `failed`, when it is not bare MPEG-1 Layer III frames
    (`convex/shared/mp3Inspect.ts` rejects ID3, APE and Lyrics tags, junk,
-   truncation and variable bitrate), differs from the machine delivery's
+   truncation, variable bitrate, and side information no decoder accepts:
+   `big_values` over 288, a reserved block type, a reservoir pointer before
+   the stream, or more coded bits than the frame and reservoir hold), differs from the machine delivery's
    bitrate, sample rate, channels, channel mode or encoder header, lasts more
    than 0.15 s off the plan, or is byte-identical to the machine delivery.
    It then stores a fresh copy of the machine delivery bytes, and one
@@ -68,11 +71,18 @@ declarations were edited by hand.
    studio SHA-256, the plan digest, the recipe revision and the renderer
    version.
 
+The Huffman-coded audio itself is not decoded on the server. The web client
+decodes the file with the browser's audio decoder before declaring it, and
+the listener hears both takes before rating.
+
 ## Blindness
 
 - Members are a studio row first readable in the grouping mutation and a
   copy whose storage id has never been served. Neither URL can be recognised
   from an earlier recipe page or cache.
+- `blindGroups.create` stores members ordered by their random `memberId`,
+  so the projected order does not depend on which member is the studio
+  render; labels A and B are assigned independently at random.
 - `blindGroups.projection` omits `durationSecs` for an unrevealed
   `studioComparison`: frame-counted lengths differ by milliseconds.
 - Both files must share the machine delivery's encoding and encoder header.
@@ -112,6 +122,9 @@ sweeper removes. No table gained a `_storage` reference.
   an unvalidated render would count as listening debt and evidence.
 - Loudness is declared, not measured; Convex cannot decode audio. An
   `analyze` media job could measure both members later.
+- Only normalized plans are accepted. A `normalize: false` plan keeps its
+  level by design, so a -18 LUFS declaration would not express the same
+  constraints.
 - A machine render joins one comparison. Its original keeps the group stamp
   after reveal, so a second studio take needs a new machine render.
 

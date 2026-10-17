@@ -66,4 +66,38 @@ describe("inspectMp3", () => {
       /no audio frames/,
     );
   });
+
+  // Side information starts after the 4-byte header of the first audio frame,
+  // which follows the 768-byte Info frame in these fixtures.
+  function corruptSideInfo(bitOffset: number, count: number, value: number) {
+    const bytes = mp3Fixture({ frames: 10 });
+    const start = (768 + 4) * 8 + bitOffset;
+    for (let index = 0; index < count; index++) {
+      const bit = start + index;
+      const mask = 0x80 >> (bit & 7);
+      if ((value >> (count - 1 - index)) & 1) bytes[bit >> 3]! |= mask;
+      else bytes[bit >> 3]! &= ~mask;
+    }
+    return bytes;
+  }
+
+  test("refuses frames whose side information cannot decode", () => {
+    // main_data_begin is bits 0-8; the first frame has no reservoir.
+    expect(() => inspectMp3(corruptSideInfo(0, 9, 100))).toThrow(
+      /main_data_begin/,
+    );
+    // Granule 0, channel 0: part2_3_length at bit 20, big_values at bit 32.
+    expect(() => inspectMp3(corruptSideInfo(32, 9, 289))).toThrow(/big_values/);
+    expect(() => inspectMp3(corruptSideInfo(32, 9, 288))).not.toThrow();
+    // window_switching_flag at bit 53, then block_type 0 is reserved.
+    expect(() => inspectMp3(corruptSideInfo(53, 3, 0b100))).toThrow(
+      /block_type/,
+    );
+    // Two granules of 4095 bits each exceed the 732 main-data bytes.
+    const bytes = corruptSideInfo(20, 12, 4095);
+    const second = (768 + 4) * 8 + 20 + 59;
+    for (let bit = second; bit < second + 12; bit++)
+      bytes[bit >> 3]! |= 0x80 >> (bit & 7);
+    expect(() => inspectMp3(bytes)).toThrow(/more coded bits/);
+  });
 });

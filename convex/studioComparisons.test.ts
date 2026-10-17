@@ -131,7 +131,9 @@ async function machineRender(
     const masterId = await mint(
       {
         ...base,
-        role: "masterNormalized",
+        role: (renderPlan as { normalize: boolean }).normalize
+          ? "masterNormalized"
+          : "masterRaw",
         encoding: { codec: "wav", sampleRate: 48000, channels: 2 },
         contentHash: `master-${member}`,
       },
@@ -667,6 +669,18 @@ describe("studio upload admission", () => {
     );
   });
 
+  test("a render that keeps its level is not compared against the loudness policy", async () => {
+    const t = convexTest(schema, modules);
+    const raw = { ...plan, normalize: false };
+    const machine = await machineRender(t, raw);
+    await expect(
+      begin(t, machine.deliveryId, STUDIO_MP3, { renderPlan: raw }),
+    ).rejects.toThrow(/Only a loudness-normalized render/);
+    expect(
+      await keith(t).query(api.studioComparisons.machineCandidates, {}),
+    ).toEqual([]);
+  });
+
   test("candidates list eligible machine baselines only", async () => {
     const t = convexTest(schema, modules);
     const machine = await machineRender(t);
@@ -822,6 +836,60 @@ describe("studio upload replay and races", () => {
     );
     const groups = await t.run((ctx) => ctx.db.query("blindGroups").collect());
     expect(groups).toHaveLength(1);
+  });
+
+  test("a replay must repeat its declaration", async () => {
+    const t = convexTest(schema, modules);
+    const machine = await machineRender(t);
+    const first = await begin(t, machine.deliveryId, STUDIO_MP3);
+    for (const overrides of [
+      { provenance: { ...provenance, instrument: "Zebra 2" } },
+      { provenance: { ...provenance, notes: "added later" } },
+      { byteLength: STUDIO_MP3.length - 1 },
+    ])
+      await expect(
+        begin(t, machine.deliveryId, STUDIO_MP3, overrides),
+      ).rejects.toThrow(/already declared with a different/);
+    // Whitespace the server trims is not a different declaration.
+    const again = await begin(t, machine.deliveryId, STUDIO_MP3, {
+      provenance: { ...provenance, daw: ` ${provenance.daw} ` },
+    });
+    expect(again.artifactId).toBe(first.artifactId);
+    const rows = await t.run(async (ctx) =>
+      (await ctx.db.query("audioArtifacts").collect()).filter(
+        (row) => row.engine?.name === "human-studio",
+      ),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.engine!.params.declared).toEqual(provenance);
+  });
+
+  test("presentation order and labels are independent of which member is the studio render", async () => {
+    const t = convexTest(schema, modules);
+    const firstIsStudio = new Set<boolean>();
+    const studioLabel = new Set<string>();
+    for (let index = 0; index < 16; index++) {
+      const machine = await machineRender(t, plan, () =>
+        mp3Fixture({ frames: 84, fill: 0x80 + index }),
+      );
+      const studio = mp3Fixture({ frames: 84, fill: 0x20 + index });
+      const { groupId, artifactId } = await uploadStudio(
+        t,
+        machine.deliveryId,
+        studio,
+      );
+      const group = await t.run(async (ctx) => (await ctx.db.get(groupId))!);
+      // Stored, and therefore projected, in random memberId order.
+      expect(group.members.map((m) => m.memberId)).toEqual(
+        group.members.map((m) => m.memberId).toSorted(),
+      );
+      firstIsStudio.add(group.members[0]!.artifactId === artifactId);
+      studioLabel.add(
+        group.members.find((m) => m.artifactId === artifactId)!.label,
+      );
+    }
+    expect(firstIsStudio).toEqual(new Set([true, false]));
+    expect(studioLabel).toEqual(new Set(["A", "B"]));
   });
 
   test("two uploads racing for one machine render: the loser is failed and cleaned up", async () => {

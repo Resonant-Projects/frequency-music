@@ -115,6 +115,10 @@ async function machineSource(
   // single baseline render only.
   if (renderPlanMemberCount(job.input.renderPlan) !== 1)
     throw refuse("Only a single baseline render can be compared");
+  // The studio declaration is held to the music loudness policy, which a
+  // normalize:false render deliberately does not meet.
+  if (!job.input.renderPlan.normalize)
+    throw refuse("Only a loudness-normalized render can be compared");
   const master = delivery.masterArtifactId
     ? await ctx.db.get(delivery.masterArtifactId)
     : null;
@@ -245,6 +249,26 @@ export const beginUpload = mutation({
         `The file must be between 1 byte and ${MAX_UPLOAD_BYTES / 1e6} MB`,
         "INVALID_ARGUMENT",
       );
+    let submitted;
+    try {
+      submitted = admitRenderPlan(args.renderPlan);
+    } catch {
+      throw refuse("The render plan file is not a valid render plan");
+    }
+    const declared: StudioProvenance = {
+      daw: args.provenance.daw.trim(),
+      instrument: args.provenance.instrument.trim(),
+      tuningMethod: args.provenance.tuningMethod,
+      effects: args.provenance.effects.trim(),
+      tunerCheck: args.provenance.tunerCheck.trim(),
+      integratedLufs: args.provenance.integratedLufs,
+      truePeakDbtp: args.provenance.truePeakDbtp,
+      ...(args.provenance.notes?.trim()
+        ? { notes: args.provenance.notes.trim() }
+        : {}),
+    };
+    const problems = studioProvenanceProblems(declared);
+    if (problems.length) throw refuse(problems.join("; "), "INVALID_ARGUMENT");
     const contentHash = studioContentHash(sha256);
     // Replays come first: after grouping the machine render is no longer
     // eligible, but the same declaration must still answer.
@@ -260,6 +284,16 @@ export const beginUpload = mutation({
         params.machineArtifactId !== args.machineArtifactId
       )
         throw refuse("This file was already uploaded");
+      // A replay must repeat the declaration it replays; a corrected one
+      // would otherwise report success while the first stays stored.
+      if (
+        params.byteLength !== args.byteLength ||
+        params.planDigest !== (await stableContentDigest(submitted)) ||
+        stableStringify(params.declared) !== stableStringify(declared)
+      )
+        throw refuse(
+          "This file was already declared with a different plan, size or provenance",
+        );
       if (row.status === "ready")
         return {
           artifactId: row._id,
@@ -274,12 +308,6 @@ export const beginUpload = mutation({
     }
     const machine = await machineSource(ctx, args.machineArtifactId);
     const plan = machine.input.renderPlan;
-    let submitted;
-    try {
-      submitted = admitRenderPlan(args.renderPlan);
-    } catch {
-      throw refuse("The render plan file is not a valid render plan");
-    }
     // Same constraints, byte for byte: the studio render must follow the
     // exact plan revision the machine rendered.
     if (stableStringify(submitted) !== stableStringify(plan))
@@ -296,20 +324,6 @@ export const beginUpload = mutation({
         `A ${plan.durationSecs} s delivery at ${encoding.bitrateKbps} kbps is at most ${maxBytes} bytes`,
         "INVALID_ARGUMENT",
       );
-    const declared: StudioProvenance = {
-      daw: args.provenance.daw.trim(),
-      instrument: args.provenance.instrument.trim(),
-      tuningMethod: args.provenance.tuningMethod,
-      effects: args.provenance.effects.trim(),
-      tunerCheck: args.provenance.tunerCheck.trim(),
-      integratedLufs: args.provenance.integratedLufs,
-      truePeakDbtp: args.provenance.truePeakDbtp,
-      ...(args.provenance.notes?.trim()
-        ? { notes: args.provenance.notes.trim() }
-        : {}),
-    };
-    const problems = studioProvenanceProblems(declared);
-    if (problems.length) throw refuse(problems.join("; "), "INVALID_ARGUMENT");
     const params: StudioParams = {
       recipeId: machine.input.recipeId,
       recipeUpdatedAt: machine.input.recipeUpdatedAt,

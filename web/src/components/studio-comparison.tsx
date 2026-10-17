@@ -291,6 +291,18 @@ function StudioUploadForm(props: {
       } catch {
         throw new Error("render-plan.json is not valid JSON.");
       }
+      // The server checks frame structure, not the compressed audio; a file
+      // the browser cannot decode would make a comparison nobody can hear.
+      setStatus("Decoding the MP3...");
+      try {
+        await new OfflineAudioContext(2, 1, 48000).decodeAudioData(
+          await audio.arrayBuffer(),
+        );
+      } catch {
+        throw new Error(
+          "This MP3 does not decode. Re-encode it with the command above.",
+        );
+      }
       setStatus("Checking the file...");
       const started = await begin({
         machineArtifactId: machine.artifactId,
