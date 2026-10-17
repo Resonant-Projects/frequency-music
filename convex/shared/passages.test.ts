@@ -7,7 +7,11 @@ import {
   PASSAGE_RESPONSE_MAX_CHARS,
   PASSAGE_TRUNCATION_MARKER,
   type PassageHit,
+  embeddingBatches,
+  PASSAGE_BATCH_MAX_BYTES,
+  PASSAGE_CHUNK_MAX_BYTES,
   passageSourceText,
+  splitChunksByBytes,
   supersededEntryId,
   wellFormedChunks,
 } from "./passages";
@@ -108,7 +112,7 @@ describe("passage search bounds", () => {
         status: "ready",
         replacedEntry: { entryId: "mine" },
       }),
-    ).toBeNull();
+    ).toBe("mine");
     expect(
       supersededEntryId({
         entryId: "mine",
@@ -116,6 +120,34 @@ describe("passage search bounds", () => {
         replacedEntry: null,
       }),
     ).toBeNull();
+  });
+
+  test("splits chunks so no embedding input can exceed the token limit", () => {
+    const bytes = (text: string) => new TextEncoder().encode(text).length;
+    // A 10,000-character CJK line is 30,000 UTF-8 bytes.
+    const cjk = "音".repeat(10_000);
+    const pieces = splitChunksByBytes([cjk, "short", "🎵".repeat(3000)]);
+    expect(pieces.join("")).toBe(`${cjk}short${"🎵".repeat(3000)}`);
+    for (const piece of pieces) {
+      expect(bytes(piece)).toBeLessThanOrEqual(PASSAGE_CHUNK_MAX_BYTES);
+      expect(piece.isWellFormed()).toBe(true);
+    }
+    expect(splitChunksByBytes(["plain"])).toEqual(["plain"]);
+  });
+
+  test("bounds each embedding request by chunk count and bytes", () => {
+    const chunks = Array.from({ length: 250 }, () => "x".repeat(4000));
+    const batches = embeddingBatches(chunks);
+    expect(batches.flat()).toEqual(chunks);
+    for (const batch of batches) {
+      expect(batch.length).toBeLessThanOrEqual(100);
+      expect(batch.join("").length).toBeLessThanOrEqual(
+        PASSAGE_BATCH_MAX_BYTES,
+      );
+    }
+    expect(
+      embeddingBatches(Array.from({ length: 150 }, () => "y")),
+    ).toHaveLength(2);
   });
 
   test("indexes rawText before transcript, matching rawTextSha256", () => {

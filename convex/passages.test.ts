@@ -31,6 +31,13 @@ vi.mock("@ai-sdk/openai", () => ({
         doEmbed: async ({ values }) => {
           if (embedder.fail || embedder.calls >= embedder.failAfterCalls)
             throw new Error("embedding provider unavailable");
+          // Bytes bound tokens from above; reject what the provider could.
+          if (
+            values.some(
+              (value) => new TextEncoder().encode(value).length > 8192,
+            )
+          )
+            throw new Error("embedding input exceeds the token limit");
           embedder.calls++;
           embedder.texts.push(...values);
           return {
@@ -310,6 +317,19 @@ describe("indexSource", () => {
         : [];
     });
     expect(pending).toEqual([]);
+  });
+
+  test("indexes a long single-line CJK transcript within the input limit", async () => {
+    const t = setup();
+    await enable(t);
+    const id = await insertSource(t, "cjk", {
+      type: "youtube",
+      transcript: "共鸣".repeat(5000),
+    });
+    expect(
+      await t.action(internal.passages.indexSource, { sourceId: id }),
+    ).toBe("indexed");
+    expect(embedder.texts.join("")).toBe("共鸣".repeat(5000));
   });
 
   test("indexes a long line whose chunk split falls inside an emoji", async () => {

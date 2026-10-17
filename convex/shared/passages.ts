@@ -100,9 +100,74 @@ export function supersededEntryId<EntryId extends string>(result: {
   status: "pending" | "ready" | "replaced";
   replacedEntry: { entryId: EntryId } | null;
 }): EntryId | null {
+  // Promotion reports an entry that was already replaced as its own
+  // replacedEntry, with status "ready": that run lost too.
   if (result.status === "replaced") return result.entryId;
-  const replaced = result.replacedEntry?.entryId;
-  return replaced && replaced !== result.entryId ? replaced : null;
+  return result.replacedEntry?.entryId ?? null;
+}
+
+// Every embedding token covers at least one UTF-8 byte, so byte bounds are
+// token bounds: under text-embedding-3-large's 8,192-token input limit and
+// the 300,000-token per-request limit, whatever the script.
+export const PASSAGE_CHUNK_MAX_BYTES = 8000;
+export const PASSAGE_BATCH_MAX_BYTES = 250_000;
+export const PASSAGE_BATCH_MAX_CHUNKS = 100;
+
+function utf8Bytes(codePoint: number): number {
+  if (codePoint < 0x80) return 1;
+  if (codePoint < 0x800) return 2;
+  return codePoint < 0x10000 ? 3 : 4;
+}
+
+/** Split well-formed chunks so none exceeds maxBytes of UTF-8. */
+export function splitChunksByBytes(
+  chunks: readonly string[],
+  maxBytes = PASSAGE_CHUNK_MAX_BYTES,
+): string[] {
+  const pieces: string[] = [];
+  for (const chunk of chunks) {
+    let piece = "";
+    let bytes = 0;
+    for (const char of chunk) {
+      const size = utf8Bytes(char.codePointAt(0) ?? 0);
+      if (bytes + size > maxBytes) {
+        pieces.push(piece);
+        piece = "";
+        bytes = 0;
+      }
+      piece += char;
+      bytes += size;
+    }
+    if (piece) pieces.push(piece);
+  }
+  return pieces;
+}
+
+/** Group chunks into embedding requests bounded by count and UTF-8 bytes. */
+export function embeddingBatches(
+  chunks: readonly string[],
+  maxChunks = PASSAGE_BATCH_MAX_CHUNKS,
+  maxBytes = PASSAGE_BATCH_MAX_BYTES,
+): string[][] {
+  const batches: string[][] = [];
+  let batch: string[] = [];
+  let bytes = 0;
+  for (const chunk of chunks) {
+    let size = 0;
+    for (const char of chunk) size += utf8Bytes(char.codePointAt(0) ?? 0);
+    if (
+      batch.length > 0 &&
+      (batch.length === maxChunks || bytes + size > maxBytes)
+    ) {
+      batches.push(batch);
+      batch = [];
+      bytes = 0;
+    }
+    batch.push(chunk);
+    bytes += size;
+  }
+  if (batch.length > 0) batches.push(batch);
+  return batches;
 }
 
 export type PassageHit<SourceId extends string = string> = {

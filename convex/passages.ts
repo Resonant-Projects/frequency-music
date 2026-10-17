@@ -33,7 +33,9 @@ import {
   type PassageHit,
   type PassageSearchResult as SharedPassageSearchResult,
   type PassageSourceType,
+  embeddingBatches,
   passageSourceText,
+  splitChunksByBytes,
   supersededEntryId,
   wellFormedChunks,
 } from "./shared/passages";
@@ -59,7 +61,6 @@ const PAGE_SIZE = 10;
 // distinct hit source is one document read during hydration.
 const SEARCH_OVERFETCH = 2;
 const SEARCH_MAX_CANDIDATES = 12;
-const EMBED_BATCH_SIZE = 100;
 
 const sourceTypeValidator = literals(...PASSAGE_SOURCE_TYPES);
 
@@ -241,14 +242,13 @@ async function removeEntries(ctx: ActionCtx, sourceId: Id<"sources">) {
  * Chunk and embed a source's text before any RAG entry exists, so a provider
  * failure leaves nothing behind. On a first index the component makes chunk
  * batches searchable while the entry is still pending, and a later add never
- * removes an abandoned pending entry. Batches of 100 match the component's
- * own batching and stay under the provider's per-request token limit.
+ * removes an abandoned pending entry. Chunks and requests are bounded by
+ * UTF-8 bytes, so they stay under the provider's token limits.
  */
 async function embedChunks(text: string) {
-  const texts = wellFormedChunks(defaultChunker(text));
+  const texts = splitChunksByBytes(wellFormedChunks(defaultChunker(text)));
   const chunks: { text: string; embedding: number[] }[] = [];
-  for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
-    const batch = texts.slice(start, start + EMBED_BATCH_SIZE);
+  for (const batch of embeddingBatches(texts)) {
     const { embeddings } = await embedMany({
       model: rag.options.textEmbeddingModel,
       values: batch.map((chunk) => chunk.trim() || "<empty>"),
