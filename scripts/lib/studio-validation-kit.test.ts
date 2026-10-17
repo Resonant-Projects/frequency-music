@@ -206,6 +206,19 @@ describe("plan 11 studio validation kits", () => {
     expect(decoded.every((note) => note.end >= note.start)).toBe(true);
   });
 
+  test("back-to-back notes on one key are not an overlap", () => {
+    // 1-EDO puts every note on key 60; at 104 BPM one note's end beat is
+    // 6.000000000000001 where the next starts at 6, the same MIDI tick.
+    const kit = buildStudioKit({
+      ...DEFAULT_STUDIO_KITS[0]!,
+      tuning: { kind: "edo", divisions: 1 },
+      tempoBpm: 104,
+    });
+    const { decoded, open } = decodeKitMidi(kit);
+    expect(open.size).toBe(0);
+    expect(decoded).toHaveLength(kit.notes.length);
+  });
+
   test("the card states the reference pitch and fixed constraints", () => {
     const kit = buildStudioKit(DEFAULT_STUDIO_KITS[0]!);
     const card = text(kit, "card.md");

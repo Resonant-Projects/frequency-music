@@ -200,10 +200,16 @@ export function studioMidi(
   notes: readonly StudioNote[],
   name: string,
 ): Uint8Array {
+  // Compare encoded ticks: beats derived through different arithmetic can
+  // differ by roundoff where one note ends exactly as the next starts.
   const byKey = new Map<number, StudioNote>();
   for (const note of notes.toSorted((a, b) => a.startBeat - b.startBeat)) {
     const previous = byKey.get(note.key);
-    if (previous && previous.endBeat > note.startBeat) {
+    if (
+      previous &&
+      (ticks(previous.endBeat) > ticks(note.startBeat) ||
+        ticks(previous.startBeat) === ticks(note.startBeat))
+    ) {
       throw new Error(
         `Notes ${previous.index} and ${note.index} overlap on MIDI key ${note.key}; one MIDI channel cannot represent that.`,
       );
