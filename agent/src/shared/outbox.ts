@@ -10,6 +10,7 @@ import {
 } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { SCOUTED_TEXT_MAX_CHARS } from "../../../convex/shared/agentContract";
 import type { ToolCaller } from "../graphs/shared/audit.js";
 import { redactError } from "./redactError.js";
 import { ConvexToolHttpError } from "../tools/convexTools.js";
@@ -18,6 +19,9 @@ const OUTBOX_TOOLS = ["appendAgentRunEvent", "reportCaptureFailure"] as const;
 const OUTBOX_CAPACITY = 2000;
 const TEMP_WRITE_GRACE_MS = 15 * 60_000;
 const READY_OFFSET = '{"ready":'.length;
+// A record holds any capture intake accepts. JSON writes a control character
+// as \u00XX, six bytes per character; 256 KB covers the remaining fields.
+const MAX_RECORD_BYTES = 256_000 + 6 * SCOUTED_TEXT_MAX_CHARS;
 const ACTIVE_SLOTS = Array.from(
   { length: OUTBOX_CAPACITY },
   (_, index) => `${index.toString(16)}.spool`,
@@ -68,7 +72,7 @@ export class DurableOutbox {
   async enqueue(delivery: Delivery) {
     await this.prepareDirectory();
     const bytes = JSON.stringify({ ready: 0, delivery });
-    if (Buffer.byteLength(bytes) > 256_000)
+    if (Buffer.byteLength(bytes) > MAX_RECORD_BYTES)
       throw new Error("Recovery outbox record exceeds limit");
     const existing = new Set(
       (await readdir(this.dir)).filter((file) =>

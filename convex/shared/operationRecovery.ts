@@ -1,6 +1,9 @@
 import { zid, zodToConvex } from "convex-helpers/server/zod4";
 import { z } from "zod";
-import { SCOUTED_CONTENT_PROVIDERS } from "./agentContract";
+import {
+  SCOUTED_CONTENT_PROVIDERS,
+  SCOUTED_TEXT_MAX_CHARS,
+} from "./agentContract";
 
 export const captureInputZ = z.object({
   url: z.string().url(),
@@ -8,7 +11,7 @@ export const captureInputZ = z.object({
   publishedAt: z.number().optional(),
   query: z.string().max(4000),
   rationale: z.string().max(4000),
-  rawText: z.string().max(30000).optional(),
+  rawText: z.string().max(SCOUTED_TEXT_MAX_CHARS).optional(),
   contentProvider: z.enum(SCOUTED_CONTENT_PROVIDERS).optional(),
 });
 export type CaptureInput = z.infer<typeof captureInputZ>;

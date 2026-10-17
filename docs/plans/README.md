@@ -66,7 +66,7 @@ record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 |---|------|--------|
 | 15 | [Passage index foundation + `searchSourcePassages` agent tool](./2026-08-01-15-passage-index.md) | Implementation merged in #153 (`6f33238`); live acceptance pending. Deployed 2026-10-17 in `6fb562b2`; the `rag` component is installed and active, and the passage hooks return `disabled` while `passageIndexing` is absent. Nothing enabled, backfilled or probed. The bounded backfill canary and [acceptance sequence](../evidence/passage-index-20261017/acceptance.md) are ready; the budget cap and enabling are Keith's |
 | — | Hypothesis cross-source context (ship directly, no flag) | Follow-on, unplanned |
-| — | Extraction full-text fix (send all ≤100k chars; not a RAG change) | Follow-on, trivial |
+| — | Extraction full-text fix (send all ≤100k chars; not a RAG change) | Implemented 2026-10-17: `EXTRACTION_CONTENT_MAX_CHARS` is 100,000, and Scout capture and recovery inputs derive from it. Prompt version stays `extract_v3`. The Convex and agent-worker deploys are operator-gated, and existing Sources over 30,000 characters keep their 30,000-character Extractions until someone re-extracts them |
 | — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
 | — | Migrate claims/concepts to 3-large | Roadmap follow-on (ADR 0001) |
 

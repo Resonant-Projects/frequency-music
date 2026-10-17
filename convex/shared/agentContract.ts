@@ -1,5 +1,6 @@
 // Cross-workspace contract for the agent-run lifecycle. Imported by both the
 // Convex backend and the agent workspace; keep this module runtime-pure.
+import { EXTRACTION_CONTENT_MAX_CHARS } from "./extractionPrompt";
 import { AGENT_RUN_STATUSES, type AgentRunStatus } from "./statuses";
 
 export { AGENT_RUN_STATUSES, type AgentRunStatus };
@@ -8,12 +9,12 @@ export const PENDING_DRAFT_CAP = 3;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const LISTENING_DEBT_AFTER_MS = 14 * DAY_MS;
 export const MAX_FEED_ENABLE_STATE_IDS = 20;
-// Bounds on Source Scout page text: the agent trims captures to the maximum,
-// and ingestScoutedSource rejects text too thin for Extraction.
+// Bounds on Source Scout page text: the agent trims captures to what
+// Extraction reads, and ingestScoutedSource rejects text too thin for it.
 export const SCOUTED_TEXT_MIN_CHARS = 100;
-export const SCOUTED_TEXT_MAX_CHARS = 30_000;
-// Bounds on a captured YouTube transcript. Extraction reads the first 30,000
-// characters; longer transcripts are kept whole for later use.
+export const SCOUTED_TEXT_MAX_CHARS = EXTRACTION_CONTENT_MAX_CHARS;
+// Bounds on a captured YouTube transcript. Extraction reads the first
+// EXTRACTION_CONTENT_MAX_CHARS; longer transcripts are kept whole for later use.
 export const TRANSCRIPT_MIN_CHARS = 100;
 export const TRANSCRIPT_MAX_CHARS = 400_000;
 export type TranscriptBacklogRow = {

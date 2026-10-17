@@ -476,14 +476,14 @@ describe("recovery seams", () => {
         {
           agentRunId: "run",
           input: { url: "https://example.org", query: "q", rationale: "r" },
-          page: { text: "x".repeat(29_999) + "🎵", provider: "firecrawl" },
+          page: { text: "x".repeat(99_999) + "🎵", provider: "firecrawl" },
         },
         callTool,
       );
       const text = calls.get("ingestScoutedSource")!.rawText as string;
       expect(text.isWellFormed()).toBe(true);
       expect(Buffer.from(text).toString("utf8")).toBe(text);
-      expect(text).toHaveLength(29_999);
+      expect(text).toHaveLength(99_999);
       expect(result.failed).toBe(failIntake);
       if (failIntake) {
         const retained = captureInputZ.parse(
@@ -501,14 +501,20 @@ describe("recovery seams", () => {
       {
         agentRunId: "run",
         input: { url: "https://example.org", query: "q", rationale: "r" },
-        page: { text: "x".repeat(40_000), provider: "firecrawl" },
+        page: { text: "x".repeat(140_000), provider: "firecrawl" },
       },
       callTool,
     );
     const input = callTool.mock.calls.find(
       ([name]) => name === "ingestScoutedSource",
     )![1];
-    expect((input as { rawText: string }).rawText).toHaveLength(30_000);
+    expect((input as { rawText: string }).rawText).toHaveLength(100_000);
+    expect(() =>
+      captureInputZ.parse({
+        ...(input as object),
+        rawText: "x".repeat(100_001),
+      }),
+    ).toThrow();
   });
   test.each([400, 403, 429, 503])(
     "outbox quarantines terminal HTTP errors and retains transient status %s",
