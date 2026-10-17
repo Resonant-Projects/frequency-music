@@ -5,6 +5,8 @@ import { looksLikeBotChallenge } from "./agentContract";
 
 // Below this many words there is nothing to extract.
 export const MIN_EXTRACTABLE_WORDS = 25;
+// One cap for automatically captured source text: URL fetches and PDFs.
+export const SOURCE_TEXT_MAX_CHARS = 100_000;
 // A truncated feed excerpt is short; full articles that end in an ellipsis are not.
 const EXCERPT_MAX_WORDS = 150;
 const EXCERPT_MARKERS = [

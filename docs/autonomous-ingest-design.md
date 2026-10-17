@@ -143,7 +143,7 @@ Supadata/Tactiq currently have no configured key; that is an observation, not a 
 2. **S2 — Workflow operations surface (M):** add per-source status to `/display`, receipts to `/ingest`, and the filtered operational list to `/admin`; add stale sweeping and safe error events.
 3. **S3 — Blocked-source Kernel fallback (M):** classify access blocks, call the Kernel HTTP API with bounded concurrency/session cleanup, and add cost-aware retry/fallback controls.
 4. **S4 — YouTube transcript worker (M):** add a `fetchJobs` worker claim/heartbeat adapter for Fabric, measure a timedtext/direct-provider experiment, and keep Kernel manual-only.
-5. **S5 — PDF extraction (M–L):** probe the shortlist, implement public-URL and uploaded-file paths with size/type checks, and route scanned documents to a clear OCR/manual blocked state.
+5. **S5 — PDF extraction (M–L):** probe the shortlist, implement public-URL and uploaded-file paths with size/type checks, and route scanned documents to a clear OCR/manual blocked state. *Implemented 2026-10-17 with Lab Firecrawl instead of an in-process parser; see [pdf-capture.md](./pdf-capture.md). It uses `metadata.pdfCapture` rather than the proposed `fetchJobs` table, and adds the `pdf_parse_error` blocked reason.*
 
 Each slice must preserve the Phase A requirement that Source Intake reaches `text_ready` or an exact blocked state without pasted content. S1 precedes S2; S3–S5 depend on the shared S1 job/error contract but can then be carded independently.
 
