@@ -34,8 +34,10 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.78",
     "@ai-sdk/groq": "^4.0.59",
+    "@ai-sdk/openai": "^4.0.96",
     "@convex-dev/action-cache": "^0.3.1",
     "@convex-dev/aggregate": "^0.3.2",
+    "@convex-dev/rag": "^0.7.8",
     "@convex-dev/workflow": "^0.4.10",
     "@convex-dev/workpool": "^0.4.14",
     "@onkernel/sdk": "^0.123.0",

@@ -5,9 +5,9 @@ import { agentToolArgs } from "./agentToolArgs";
 import { AGENT_TOOL_MANIFEST, AGENT_TOOL_NAMES } from "./agentToolManifest";
 
 describe("agent tool manifest", () => {
-  test("covers all 62 current tools with unique names and schemas", () => {
-    expect(AGENT_TOOL_MANIFEST).toHaveLength(62);
-    expect(new Set(AGENT_TOOL_NAMES).size).toBe(62);
+  test("covers all 63 current tools with unique names and schemas", () => {
+    expect(AGENT_TOOL_MANIFEST).toHaveLength(63);
+    expect(new Set(AGENT_TOOL_NAMES).size).toBe(63);
     for (const entry of AGENT_TOOL_MANIFEST) {
       expect(entry.description.length).toBeGreaterThan(10);
       expect(entry.context.length).toBeGreaterThan(10);
@@ -34,6 +34,8 @@ describe("agent tool manifest", () => {
       "submitFailureDiagnosis",
       "getCaptureRecovery",
       "finishCaptureRecovery",
+      // Bounded document text; graphs call it explicitly until a model needs it.
+      "searchSourcePassages",
       // Deterministic transcript-capture plumbing, never a model's choice.
       "listTranscriptBacklog",
       "recordTranscriptCapture",

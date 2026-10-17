@@ -83,6 +83,23 @@ const FROZEN_ARGS: Record<string, string> = {
     text: field(string),
     limit: field(number, true),
   }),
+  searchSourcePassages: frozenArgs({
+    query: field(string),
+    limit: field(number, true),
+    types: field(
+      array(
+        union(
+          literal("notion"),
+          literal("rss"),
+          literal("url"),
+          literal("youtube"),
+          literal("pdf"),
+          literal("podcast"),
+        ),
+      ),
+      true,
+    ),
+  }),
   listCorrespondenceTargets: frozenArgs({ limit: field(number, true) }),
   getScoutTargets: frozenArgs({}),
   listTranscriptBacklog: frozenArgs({

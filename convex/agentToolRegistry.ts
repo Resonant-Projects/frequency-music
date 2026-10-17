@@ -170,6 +170,17 @@ const runs: Record<AgentToolName, AgentToolDef["run"]> = {
       actionRef("correspondenceCandidates:searchClaimsSemantic"),
       omitUndefined({ text: args.text, limit: args.limit }),
     ),
+  searchSourcePassages: (ctx, args) => {
+    const parsed = agentToolArgs.searchSourcePassages.parse(args);
+    return ctx.runAction(
+      internal.passages.searchForAgent,
+      omitUndefined({
+        query: parsed.query,
+        limit: parsed.limit,
+        types: parsed.types,
+      }),
+    );
+  },
   listCorrespondenceTargets: (ctx, args) =>
     ctx.runQuery(
       queryRef("correspondenceCandidates:listEvidenceTargets"),
