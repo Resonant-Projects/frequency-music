@@ -74,7 +74,8 @@ Each rejection is classified with one fixed reason: `missing_secret`,
 off), or `server_unconfigured`. It also gets a surface (`bypass`, `agent_tool`,
 `media_tool`) and a bounded operation label such as `http:claimNextMediaJob`.
 Nothing derived from the presented secret is kept. No hash is stored, and the
-only header kept is a truncated `User-Agent` on HTTP rejections. A call with no
+only header kept is a truncated `User-Agent` on HTTP rejections, with any
+copy of the presented secret replaced by `[REDACTED]`. A call with no
 identity and no `devBypassSecret` is an ordinary signed-out request, so it is
 not counted.
 

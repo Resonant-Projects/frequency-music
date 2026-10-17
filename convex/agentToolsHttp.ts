@@ -12,6 +12,11 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+/** Removes a presented secret a caller echoed into a retained header. */
+function redactPresented(value: string | undefined, presented?: string) {
+  return value && presented ? value.replaceAll(presented, "[REDACTED]") : value;
+}
+
 function makeAgentToolHttpHandler(toolName: AgentToolName) {
   const reference = makeFunctionReference<"action">(`agentTools:${toolName}`);
   return httpAction(async (ctx, request) => {
@@ -24,7 +29,10 @@ function makeAgentToolHttpHandler(toolName: AgentToolName) {
         reason: rejection ?? "missing_secret",
         operation: `http:${toolName}`,
         // The one header kept, truncated by the recorder.
-        userAgent: request.headers.get("user-agent") ?? undefined,
+        userAgent: redactPresented(
+          request.headers.get("user-agent") ?? undefined,
+          secret,
+        ),
       });
       return json({ error: "Forbidden" }, 403);
     }

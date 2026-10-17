@@ -101,6 +101,21 @@ describe("/agent-tools/* rejections", () => {
     );
   });
 
+  test("a presented secret echoed in the User-Agent is redacted", async () => {
+    vi.stubEnv("AGENT_TOOL_SECRET", AGENT_SECRET);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const t = convexTest(schema, modules);
+    const response = await postTool(
+      t,
+      "countPendingDrafts",
+      { secret: STALE_SECRET, kind: "hypothesis_draft" },
+      { "user-agent": `curl/8 key=${STALE_SECRET} again=${STALE_SECRET}` },
+    );
+    expect(response.status).toBe(403);
+    const [row] = await rows(t);
+    expect(row?.lastUserAgent).toBe("curl/8 key=[REDACTED] again=[REDACTED]");
+  });
+
   test("a media lifecycle call without a secret is a media_tool rejection", async () => {
     vi.stubEnv("AGENT_TOOL_SECRET", AGENT_SECRET);
     vi.spyOn(console, "warn").mockImplementation(() => {});
