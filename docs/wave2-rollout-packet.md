@@ -12,6 +12,33 @@ Read with [backend integration](wave2-backend-integration.md),
 [MCP integration](../agent/src/mcp/README.md), and the
 [Wave 2 plan](superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md).
 
+## Current status, 2026-10-17
+
+Read-only facts gathered on 2026-10-17 between 00:13 and 00:20 UTC. None of
+them shows what the Convex backend runs.
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| Production web (Vercel) | `main` at `ec04c7c`, READY | Vercel deployment `dpl_5QC2q55HnZ6geiPeRft17Yjx3ZrZ`; production builds every `main` merge |
+| Production backend | Unknown | Admin key still unreadable, see below. `GET /version` returned 200. The last recorded Convex deployment is `2d2c78e` (2026-10-05), before #138. |
+| Media image with renderer 0.3.0 | Published, host rollout unknown | `publish-media-image` succeeded for `main` at `0cc0592`: `ghcr.io/resonant-projects/frequency-music-media:sha-0cc05921d05c53dd6a3076824b19aab68215a77a` |
+| Agent image with the tournament graph | Published and copied to Lab Harbor, host rollout unknown | `publish-agent-image` succeeded for `main` at `0cc0592` |
+| MCP workload | Not reachable from the rollout host | `mcp.frequency.rproj.art` resolves to 192.168.30.200; `GET /health` made no connection |
+| Runtime changes after `0cc0592` | None | `ec04c7c` differs from `0cc0592` in `convex/` only by `convex/listenNextIntegration.test.ts`, and not at all in `media/` or `agent/` |
+
+**Web ahead of backend.** The production web calls functions that #138 and
+#141 added: `docket.listWeb`, `decisionIntents.get`, `applyWeb`, `deferWeb`,
+`cancelWeb`, `audioFeedback.queue`, `item`, `submit`, and
+`audioArtifacts.listReadyForTarget`. If the backend still runs a pre-#138
+deployment, the pages that use them fail in production now. This is inferred
+from source and deployment records, not observed. Stage R below settles it
+with one read.
+
+The 1Password service account on the rollout host can list only the
+`Vedic.Today` vault, so `CONVEX_SELF_HOSTED_ADMIN_KEY` ("Country Manor Lab")
+remains unavailable to agents, as on 2026-10-13. No credential was changed or
+requested.
+
 ## Current status, 2026-10-13
 
 | Item | State | Evidence |
@@ -58,13 +85,53 @@ work while both flags are off.
    This runs proposal, signer binding, confirmation, replay, a second event,
    expiry, web fallback with a wrong digest, docket delivery receipts and the
    revision backfill driver against `convex-test`. It is a fixture rehearsal,
-   not live acceptance.
+   not live acceptance. On 2026-10-17 these three files and
+   `convex/listenNextIntegration.test.ts` passed 50 of 50 tests at `ec04c7c`.
 3. Print the backfill plan. The dry run reads no credential and makes no
    network call:
 
    ```sh
    vpx tsx scripts/wave2-revision-backfill.ts --origin https://convex.resonantprojects.art
    ```
+
+## Stage R. Read-only deployment inspection (before Stage 1)
+
+Each read contacts production and needs the coordinator's approval of the
+target. Neither mutates anything.
+
+1. Inspect the deployment with the inherited admin key, delivered by the
+   operator's existing credential broker (never argv, shell history or a
+   file), then read the saved result offline:
+
+   ```sh
+   vpx tsx scripts/convex-deployment-inspect.ts https://convex.resonantprojects.art \
+     > out/inspection-$(date -u +%Y%m%dT%H%MZ).json
+   vpx tsx scripts/wave2-deployment-coverage.ts out/inspection-<stamp>.json
+   ```
+
+   The coverage report lists, per merged PR (#138, #141, #140, #142), the
+   functions, HTTP routes and crons the deployed root component lacks, and
+   every `api.*` function the current web source calls that is missing. Exit
+   0 means everything is deployed, 3 means something is missing, 2 means the
+   file is not an inspection. The inspection prints module paths, function
+   names, cron schedules and schema hashes, not secrets.
+2. Without the admin key, one anonymous query answers the web-skew question
+   alone. `docket.listWeb` checks for a signed-in human before reading any
+   table, so the call reads nothing:
+
+   ```sh
+   curl -s -X POST https://convex.resonantprojects.art/api/query \
+     -H 'content-type: application/json' \
+     -d '{"path":"docket:listWeb","args":{},"format":"json"}'
+   ```
+
+   An error naming a missing public function means #138 is not deployed. An
+   authentication error means it is.
+
+If #138 is missing while the web runs `ec04c7c`, the coordinator chooses
+between Stage 1 promptly and rolling the Vercel production alias back to a
+build that matches the backend. Either is a production change needing its own
+approval.
 
 ## Stage 1. Backend deployment with everything disabled
 
@@ -296,12 +363,15 @@ Deployment order, from the current contracts:
    masters stop listing. If Convex is deployed before all three land, #141
    must be deployed before #140: without #141's delivery-only rule, the docket
    lists each render's master as well as its delivery.
-2. **Media image 0.3.0 on ai-5090-02, promptly after Convex.** #140 raises
+2. **Media image 0.3.0 on ai-5090-02, promptly after Convex.** Use
+   `ghcr.io/resonant-projects/frequency-music-media:sha-0cc05921d05c53dd6a3076824b19aab68215a77a`. #140 raises
    `RENDERER_VERSION_FOR_JOBS` to `0.3.0`. Every media job enqueued after the
    Convex deploy carries that version, including narration and shootout jobs,
    not only renders. A 0.2.2 worker claims none of them, and the sweep parks
    queued mismatches after ten minutes. Add `litmusRender` to `MEDIA_JOB_KINDS`
-   on the host. Then run the image smoke test before requesting any render.
+   on the host. Then run the image smoke test
+   (`node_modules/.bin/tsx src/engines/sc/smoke.ts` in the container) before
+   requesting any render.
 3. **Agent worker image containing the `hypothesis-tournament` graph**, before
    the tournament gate opens. An older worker would claim a queued tournament
    run and fail it as an unknown graph. The MCP workload (Stage 3) needs the
@@ -313,6 +383,9 @@ Deployment order, from the current contracts:
      [the tournament integration](hypothesis-tournament-integration.md);
    - `renderValidation=go`, only after the human studio comparison and go/no-go
      in the render ladder plan. A human rating of a render does not validate it.
+     The [plan 11 studio validation packet](plan11-studio-validation-packet.md)
+     prepares the three kits and records why studio renders cannot yet join a
+     blind group.
 
 Integration evidence (fixtures only): `convex/listenNextIntegration.test.ts`
 contains eight tests added after all four PRs landed. It
