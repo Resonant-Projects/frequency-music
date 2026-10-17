@@ -1,4 +1,11 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 
 // Declared before the module under test is imported: `promote` pulls in
 // `varlock/auto-load`, which would otherwise resolve secrets from
@@ -9,6 +16,7 @@ import type { SpawnSyncReturns } from "node:child_process";
 import {
   averageMeans,
   completeMeans,
+  DEFAULT_STATS_WAIT,
   evaluateRubric,
   extractMeans,
   parseArgs,
@@ -34,6 +42,18 @@ describe("parseArgs", () => {
   test("enforces a minimum of two trials", () => {
     expect(parseArgs(["--trials", "1"]).trials).toBe(2);
     expect(parseArgs(["--trials", "5"]).trials).toBe(5);
+  });
+
+  test("reads --stats-timeout in seconds, defaulting to 900", () => {
+    expect(parseArgs([]).statsTimeoutSeconds).toBe(900);
+    expect(parseArgs(["--stats-timeout", "1200"]).statsTimeoutSeconds).toBe(
+      1200,
+    );
+    expect(parseArgs(["--stats-timeout", "0"]).statsTimeoutSeconds).toBe(0);
+    expect(parseArgs(["--stats-timeout", "-5"]).statsTimeoutSeconds).toBe(900);
+    expect(parseArgs(["--stats-timeout", "soon"]).statsTimeoutSeconds).toBe(
+      900,
+    );
   });
 
   test("recognizes --help", () => {
@@ -253,40 +273,143 @@ describe("runExperiment", () => {
   });
 });
 
+/** A sleep that records each wait and resolves at once. */
+function recorder() {
+  const sleeps: number[] = [];
+  const sleep = (ms: number) => {
+    sleeps.push(ms);
+    return Promise.resolve();
+  };
+  return { sleeps, sleep };
+}
+
 describe("completeMeans / readMeansForExperiment", () => {
   test("returns means only when every key has one score per example", () => {
     expect(
       completeMeans({ why_this_matters: { avg: 0, n: 4 } }, completed),
-    ).toEqual({ means: { why_this_matters: 0 } });
+    ).toEqual({
+      means: { why_this_matters: 0 },
+    });
     expect(
       completeMeans({ why_this_matters: { avg: 0.5, n: 3 } }, completed),
-    ).toEqual({ missing: ["why_this_matters: 3/4 scores"] });
+    ).toEqual({
+      missing: ["why_this_matters: 3/4 scores"],
+    });
     expect(completeMeans({}, completed)).toEqual({
       missing: ["why_this_matters: no mean"],
     });
   });
 
-  test("throws on partial feedback instead of returning partial means", async () => {
-    const client = {
-      readProject: vi.fn(async () => ({
-        feedback_stats: { why_this_matters: { avg: 0.9, n: 2 } },
-      })),
-    };
+  const wait = { timeoutMs: 10, initialDelayMs: 1, maxDelayMs: 4 };
+  const partial = { feedback_stats: { why_this_matters: { avg: 0.9, n: 2 } } };
+  const full = { feedback_stats: { why_this_matters: { avg: 0.75, n: 4 } } };
+
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("defaults to a 15-minute budget backing off from 2.5 s to 60 s", () => {
+    expect(DEFAULT_STATS_WAIT).toEqual({
+      timeoutMs: 900_000,
+      initialDelayMs: 2_500,
+      maxDelayMs: 60_000,
+    });
+  });
+
+  test("backs off up to the cap and spends exactly the budget before refusing", async () => {
+    const readProject = vi.fn().mockResolvedValue(partial);
+    const { sleeps, sleep } = recorder();
     await expect(
-      readMeansForExperiment(client as never, completed, 3, 0),
+      readMeansForExperiment({ readProject } as never, completed, wait, sleep),
+    ).rejects.toThrow(
+      "after 5 reads over 0.0 s of waiting (why_this_matters: 2/4 scores); refusing partial scores",
+    );
+    expect(sleeps).toEqual([1, 2, 4, 3]);
+    expect(readProject).toHaveBeenCalledTimes(5);
+  });
+
+  test("the default budget bounds the reads", async () => {
+    const readProject = vi.fn().mockResolvedValue(partial);
+    const { sleeps, sleep } = recorder();
+    await expect(
+      readMeansForExperiment(
+        { readProject } as never,
+        completed,
+        DEFAULT_STATS_WAIT,
+        sleep,
+      ),
     ).rejects.toThrow("refusing partial scores");
-    expect(client.readProject).toHaveBeenCalledTimes(3);
+    expect(sleeps.reduce((a, b) => a + b, 0)).toBe(900_000);
+    expect(Math.max(...sleeps)).toBe(60_000);
+    expect(readProject).toHaveBeenCalledTimes(sleeps.length + 1);
   });
 
   test("waits for complete feedback", async () => {
     const readProject = vi
       .fn()
       .mockResolvedValueOnce({ feedback_stats: {} })
-      .mockResolvedValueOnce({
-        feedback_stats: { why_this_matters: { avg: 0.75, n: 4 } },
-      });
+      .mockResolvedValueOnce(partial)
+      .mockResolvedValueOnce(full);
+    const { sleeps, sleep } = recorder();
     await expect(
-      readMeansForExperiment({ readProject } as never, completed, 3, 0),
+      readMeansForExperiment({ readProject }, completed, wait, sleep),
+    ).resolves.toEqual({
+      why_this_matters: 0.75,
+    });
+    expect(sleeps).toEqual([1, 2]);
+  });
+
+  test("retries a failed read and rethrows one on the final read", async () => {
+    const recovering = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("502"))
+      .mockResolvedValueOnce(full);
+    await expect(
+      readMeansForExperiment(
+        { readProject: recovering },
+        completed,
+        wait,
+        recorder().sleep,
+      ),
     ).resolves.toEqual({ why_this_matters: 0.75 });
+
+    const failing = vi.fn().mockRejectedValue(new Error("502"));
+    await expect(
+      readMeansForExperiment(
+        { readProject: failing },
+        completed,
+        wait,
+        recorder().sleep,
+      ),
+    ).rejects.toThrow("502");
+    expect(failing).toHaveBeenCalledTimes(5);
+  });
+
+  test("a zero budget reads once", async () => {
+    const readProject = vi.fn().mockResolvedValue(partial);
+    const { sleeps, sleep } = recorder();
+    await expect(
+      readMeansForExperiment(
+        { readProject } as never,
+        completed,
+        { ...wait, timeoutMs: 0 },
+        sleep,
+      ),
+    ).rejects.toThrow("after 1 reads");
+    expect(sleeps).toEqual([]);
+  });
+
+  test("rejects a wait that could never advance", async () => {
+    const readProject = vi.fn().mockResolvedValue(partial);
+    await expect(
+      readMeansForExperiment({ readProject } as never, completed, {
+        ...wait,
+        initialDelayMs: 0,
+      }),
+    ).rejects.toThrow("Invalid feedback wait");
+    expect(readProject).not.toHaveBeenCalled();
   });
 });
