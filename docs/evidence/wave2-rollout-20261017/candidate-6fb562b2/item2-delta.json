@@ -1,340 +1,254 @@
 {
- "format": "wave2-item2-delta-v1",
- "method": "function-spec and system metadata reads (components:list, modules:listForAllComponents, getSchemas) from live production (read-only) and from two isolated local backends (image sha256:d715e9ec\u2026, --network none) running 81150337 and 6fb562b2",
- "methodCheck": {
-  "liveVsLocal81150337": {
-   "functions": [
-    442,
-    442,
-    true
-   ],
-   "components": true,
-   "crons": true,
-   "rootSchema": true,
-   "componentSchemaNote": "actionCache and workflow differ only by stagedDocumentType: null, which a fresh backend writes into each table record"
+  "format": "wave2-item2-delta-v1",
+  "method": "function-spec and system metadata reads (components:list, modules:listForAllComponents, getSchemas) from live production (read-only) and from two isolated local backends (image sha256:d715e9ec\u2026, --network none) running 81150337 and 6fb562b2",
+  "methodCheck": {
+    "liveVsLocal81150337": {
+      "functions": [442, 442, true],
+      "components": true,
+      "crons": true,
+      "rootSchema": true,
+      "componentSchemaNote": "actionCache and workflow differ only by stagedDocumentType: null, which a fresh backend writes into each table record"
+    }
+  },
+  "functions": {
+    "before": 442,
+    "after": 610,
+    "added": 168,
+    "removed": [],
+    "changed": {
+      "admin.js:listFeeds": ["returns changed"],
+      "agentRuns.js:appendEvent": ["+arg deliveryId (optional)"],
+      "agentRuns.js:claimNextPending": ["returns changed"],
+      "agentTools.js:appendAgentRunEvent": ["+arg deliveryId (optional)"],
+      "agentTools.js:claimNextMediaJob": ["+arg rendererVersion (optional)"],
+      "audioArtifacts.js:createPending": ["~arg fields (union widened)"],
+      "blindGroups.js:create": ["~arg purpose (union widened)"],
+      "blindGroups.js:projection": ["returns changed"],
+      "blindGroups.js:projectionInternal": ["returns changed"],
+      "compositions.js:get": ["returns changed"],
+      "compositions.js:getLineage": ["returns changed"],
+      "compositions.js:list": ["returns changed"],
+      "extract.js:extractSource": ["returns changed"],
+      "extract.js:listModels": ["returns changed"],
+      "extract.js:storeOperatorExtraction": [
+        "+arg snapshotId (optional)",
+        "returns changed"
+      ],
+      "extractions.js:get": ["returns changed"],
+      "extractions.js:getByInputHash": ["returns changed"],
+      "extractions.js:getBySourceId": [
+        "+arg includeHistorical (optional)",
+        "returns changed"
+      ],
+      "extractions.js:listRecent": ["returns changed"],
+      "feeds.js:get": ["returns changed"],
+      "feeds.js:list": ["returns changed"],
+      "feeds.js:listEnabled": ["returns changed"],
+      "graph.js:buildGraphFromExtractions": [
+        "+arg endOfTable (optional)",
+        "+arg pendingExtractionId (optional)",
+        "+arg topicOffset (optional)",
+        "+arg topicsHash (optional)"
+      ],
+      "graph.js:linkExtraction": [
+        "+arg topicOffset (optional)",
+        "+arg topicsHash (optional)"
+      ],
+      "hypotheses.js:get": ["returns changed"],
+      "hypotheses.js:listUnlinkedBatchCandidates": ["returns changed"],
+      "inbox.js:list": ["returns changed"],
+      "listening.js:create": ["+arg conditions (optional)"],
+      "listening.js:listByComposition": ["returns changed"],
+      "listening.js:listRecent": ["returns changed"],
+      "mediaJobs.js:claimNext": [
+        "+arg rendererVersion (optional)",
+        "returns changed"
+      ],
+      "mediaJobs.js:complete": ["~arg result (union widened)"],
+      "mediaJobs.js:enqueue": [
+        "+arg resumeOperatorPublication (optional)",
+        "~arg input (union widened)"
+      ],
+      "mediaToolsInternal.js:generateAudioUploadUrl": ["returns changed"],
+      "recipes.js:get": ["returns changed"],
+      "recipes.js:getByHypothesisId": ["returns changed"],
+      "recipes.js:listByStatus": ["returns changed"],
+      "sources.js:get": ["returns changed"],
+      "sources.js:getByDedupeKey": ["returns changed"],
+      "sources.js:listByStatus": ["returns changed"],
+      "sources.js:listByType": ["returns changed"],
+      "sources.js:listRecent": ["returns changed"],
+      "theses.js:getDetail": ["returns changed"],
+      "transcriptCapture.js:enqueueIfNeeded": ["+arg cursor (optional)"],
+      "weeklyBriefs.js:loadBriefContext": ["returns changed"]
+    },
+    "requiredArgsAdded": []
+  },
+  "http": {
+    "added": [
+      "POST /agent-tools/beginTournamentRun",
+      "POST /agent-tools/completeTournamentRun",
+      "POST /agent-tools/embedTournamentStatement",
+      "POST /agent-tools/finalizeTournamentRun",
+      "POST /agent-tools/findTournamentNeighbors",
+      "POST /agent-tools/finishCaptureRecovery",
+      "POST /agent-tools/getCaptureRecovery",
+      "POST /agent-tools/getDocketCard",
+      "POST /agent-tools/getFailureInvestigation",
+      "POST /agent-tools/hydrateClaims",
+      "POST /agent-tools/listDocket",
+      "POST /agent-tools/listTournamentSeeds",
+      "POST /agent-tools/proposeDecision",
+      "POST /agent-tools/proposeListening",
+      "POST /agent-tools/recordDocketDelivery",
+      "POST /agent-tools/recordHypothesisCandidates",
+      "POST /agent-tools/reportCaptureFailure",
+      "POST /agent-tools/requestTournamentRun",
+      "POST /agent-tools/searchSourcePassages",
+      "POST /agent-tools/searchTournamentEvidence",
+      "POST /agent-tools/submitFailureDiagnosis",
+      "POST /agent-tools/submitTournamentDraft",
+      "POST /discord/interactions",
+      "POST /telegram/webhook/*"
+    ],
+    "removed": []
+  },
+  "components": {
+    "added": ["rag", "rag/workpool", "rag/workpool/batchWorker"],
+    "removed": []
+  },
+  "crons": {
+    "expire (actionCache)": {
+      "schedule": "every 86400s",
+      "target": "crons.js:purge",
+      "new": false
+    },
+    "batch-extract": {
+      "schedule": "every 28800s",
+      "target": "workflows.js:startBatchExtractionInternal",
+      "new": false
+    },
+    "classify-stale-concepts": {
+      "schedule": "every 3600s",
+      "target": "conceptClassifier.js:sweepUnreviewedConcepts",
+      "new": false
+    },
+    "embed-missing-sweep": {
+      "schedule": "Sun 15:00Z",
+      "target": "embeddings.js:sweepMissingEmbeddings",
+      "new": false
+    },
+    "enqueue-correspondence-miner": {
+      "schedule": "daily 05:00Z",
+      "target": "agentRuns.js:enqueue",
+      "new": false
+    },
+    "enqueue-evidence-hunter": {
+      "schedule": "daily 06:00Z",
+      "target": "agentRuns.js:enqueue",
+      "new": false
+    },
+    "enqueue-hypothesis-drafter": {
+      "schedule": "Thu 16:00Z",
+      "target": "agentRuns.js:enqueue",
+      "new": false
+    },
+    "enqueue-source-scout": {
+      "schedule": "Wed 16:00Z",
+      "target": "agentRuns.js:enqueue",
+      "new": false
+    },
+    "enqueue-transcript-capture": {
+      "schedule": "every 10800s",
+      "target": "transcriptCapture.js:enqueueIfNeeded",
+      "new": false
+    },
+    "generate-hypotheses": {
+      "schedule": "Mon 16:00Z",
+      "target": "workflows.js:startBatchHypothesisInternal",
+      "new": false
+    },
+    "generate-weekly-turn": {
+      "schedule": "Fri 16:00Z",
+      "target": "weeklyBriefs.js:generateInternal",
+      "new": false
+    },
+    "normalize-legacy-extraction-history": {
+      "schedule": "every 300s",
+      "target": "extractions.js:normalizeLegacyHistory",
+      "new": true
+    },
+    "passage-index-sweep": {
+      "schedule": "Sun 15:30Z",
+      "target": "passages.js:sweep",
+      "new": true
+    },
+    "poll-feeds": {
+      "schedule": "every 21600s",
+      "target": "ingest.js:pollAllFeedsInternal",
+      "new": false
+    },
+    "rebuild-docket": {
+      "schedule": "Thu 16:30Z",
+      "target": "docket.js:prepare",
+      "new": true
+    },
+    "recompute-stats": {
+      "schedule": "every 1800s",
+      "target": "dashboard.js:recomputeStats",
+      "new": false
+    },
+    "reconcile-extraction-attempts": {
+      "schedule": "every 300s",
+      "target": "extractInternal.js:reconcileAttempts",
+      "new": true
+    },
+    "reconcile-operation-recovery": {
+      "schedule": "every 300s",
+      "target": "operationFailures.js:reconcile",
+      "new": true
+    },
+    "reconcile-reviewed-agent-runs": {
+      "schedule": "every 900s",
+      "target": "agentRuns.js:reconcileReviewedRuns",
+      "new": false
+    },
+    "retire-stale-correspondences": {
+      "schedule": "Sun 16:00Z",
+      "target": "correspondences.js:autoRetireStale",
+      "new": false
+    },
+    "sweep-stale-agent-runs": {
+      "schedule": "every 900s",
+      "target": "agentRuns.js:sweepStaleRuns",
+      "new": false
+    },
+    "sweep-stale-media-jobs": {
+      "schedule": "every 600s",
+      "target": "mediaSweeper.js:sweep",
+      "new": false
+    }
+  },
+  "rootSchema": {
+    "tablesBefore": 29,
+    "tablesAfter": 40,
+    "added": [
+      "audioRatings",
+      "decisionIntents",
+      "docketCards",
+      "docketDeliveries",
+      "extractionAttempts",
+      "failureInvestigationGroups",
+      "hypothesisCandidates",
+      "hypothesisEmbeddings",
+      "operationFailures",
+      "tournamentRuns",
+      "webhookEvents"
+    ],
+    "removed": [],
+    "fieldsRemoved": [],
+    "fieldsBecameRequired": [],
+    "indexesRemoved": [],
+    "indexesAddedOnExistingTables": 14
   }
- },
- "functions": {
-  "before": 442,
-  "after": 610,
-  "added": 168,
-  "removed": [],
-  "changed": {
-   "admin.js:listFeeds": [
-    "returns changed"
-   ],
-   "agentRuns.js:appendEvent": [
-    "+arg deliveryId (optional)"
-   ],
-   "agentRuns.js:claimNextPending": [
-    "returns changed"
-   ],
-   "agentTools.js:appendAgentRunEvent": [
-    "+arg deliveryId (optional)"
-   ],
-   "agentTools.js:claimNextMediaJob": [
-    "+arg rendererVersion (optional)"
-   ],
-   "audioArtifacts.js:createPending": [
-    "~arg fields (union widened)"
-   ],
-   "blindGroups.js:create": [
-    "~arg purpose (union widened)"
-   ],
-   "blindGroups.js:projection": [
-    "returns changed"
-   ],
-   "blindGroups.js:projectionInternal": [
-    "returns changed"
-   ],
-   "compositions.js:get": [
-    "returns changed"
-   ],
-   "compositions.js:getLineage": [
-    "returns changed"
-   ],
-   "compositions.js:list": [
-    "returns changed"
-   ],
-   "extract.js:extractSource": [
-    "returns changed"
-   ],
-   "extract.js:listModels": [
-    "returns changed"
-   ],
-   "extract.js:storeOperatorExtraction": [
-    "+arg snapshotId (optional)",
-    "returns changed"
-   ],
-   "extractions.js:get": [
-    "returns changed"
-   ],
-   "extractions.js:getByInputHash": [
-    "returns changed"
-   ],
-   "extractions.js:getBySourceId": [
-    "+arg includeHistorical (optional)",
-    "returns changed"
-   ],
-   "extractions.js:listRecent": [
-    "returns changed"
-   ],
-   "feeds.js:get": [
-    "returns changed"
-   ],
-   "feeds.js:list": [
-    "returns changed"
-   ],
-   "feeds.js:listEnabled": [
-    "returns changed"
-   ],
-   "graph.js:buildGraphFromExtractions": [
-    "+arg endOfTable (optional)",
-    "+arg pendingExtractionId (optional)",
-    "+arg topicOffset (optional)",
-    "+arg topicsHash (optional)"
-   ],
-   "graph.js:linkExtraction": [
-    "+arg topicOffset (optional)",
-    "+arg topicsHash (optional)"
-   ],
-   "hypotheses.js:get": [
-    "returns changed"
-   ],
-   "hypotheses.js:listUnlinkedBatchCandidates": [
-    "returns changed"
-   ],
-   "inbox.js:list": [
-    "returns changed"
-   ],
-   "listening.js:create": [
-    "+arg conditions (optional)"
-   ],
-   "listening.js:listByComposition": [
-    "returns changed"
-   ],
-   "listening.js:listRecent": [
-    "returns changed"
-   ],
-   "mediaJobs.js:claimNext": [
-    "+arg rendererVersion (optional)",
-    "returns changed"
-   ],
-   "mediaJobs.js:complete": [
-    "~arg result (union widened)"
-   ],
-   "mediaJobs.js:enqueue": [
-    "+arg resumeOperatorPublication (optional)",
-    "~arg input (union widened)"
-   ],
-   "mediaToolsInternal.js:generateAudioUploadUrl": [
-    "returns changed"
-   ],
-   "recipes.js:get": [
-    "returns changed"
-   ],
-   "recipes.js:getByHypothesisId": [
-    "returns changed"
-   ],
-   "recipes.js:listByStatus": [
-    "returns changed"
-   ],
-   "sources.js:get": [
-    "returns changed"
-   ],
-   "sources.js:getByDedupeKey": [
-    "returns changed"
-   ],
-   "sources.js:listByStatus": [
-    "returns changed"
-   ],
-   "sources.js:listByType": [
-    "returns changed"
-   ],
-   "sources.js:listRecent": [
-    "returns changed"
-   ],
-   "theses.js:getDetail": [
-    "returns changed"
-   ],
-   "transcriptCapture.js:enqueueIfNeeded": [
-    "+arg cursor (optional)"
-   ],
-   "weeklyBriefs.js:loadBriefContext": [
-    "returns changed"
-   ]
-  },
-  "requiredArgsAdded": []
- },
- "http": {
-  "added": [
-   "POST /agent-tools/beginTournamentRun",
-   "POST /agent-tools/completeTournamentRun",
-   "POST /agent-tools/embedTournamentStatement",
-   "POST /agent-tools/finalizeTournamentRun",
-   "POST /agent-tools/findTournamentNeighbors",
-   "POST /agent-tools/finishCaptureRecovery",
-   "POST /agent-tools/getCaptureRecovery",
-   "POST /agent-tools/getDocketCard",
-   "POST /agent-tools/getFailureInvestigation",
-   "POST /agent-tools/hydrateClaims",
-   "POST /agent-tools/listDocket",
-   "POST /agent-tools/listTournamentSeeds",
-   "POST /agent-tools/proposeDecision",
-   "POST /agent-tools/proposeListening",
-   "POST /agent-tools/recordDocketDelivery",
-   "POST /agent-tools/recordHypothesisCandidates",
-   "POST /agent-tools/reportCaptureFailure",
-   "POST /agent-tools/requestTournamentRun",
-   "POST /agent-tools/searchSourcePassages",
-   "POST /agent-tools/searchTournamentEvidence",
-   "POST /agent-tools/submitFailureDiagnosis",
-   "POST /agent-tools/submitTournamentDraft",
-   "POST /discord/interactions",
-   "POST /telegram/webhook/*"
-  ],
-  "removed": []
- },
- "components": {
-  "added": [
-   "rag",
-   "rag/workpool",
-   "rag/workpool/batchWorker"
-  ],
-  "removed": []
- },
- "crons": {
-  "expire (actionCache)": {
-   "schedule": "every 86400s",
-   "target": "crons.js:purge",
-   "new": false
-  },
-  "batch-extract": {
-   "schedule": "every 28800s",
-   "target": "workflows.js:startBatchExtractionInternal",
-   "new": false
-  },
-  "classify-stale-concepts": {
-   "schedule": "every 3600s",
-   "target": "conceptClassifier.js:sweepUnreviewedConcepts",
-   "new": false
-  },
-  "embed-missing-sweep": {
-   "schedule": "Sun 15:00Z",
-   "target": "embeddings.js:sweepMissingEmbeddings",
-   "new": false
-  },
-  "enqueue-correspondence-miner": {
-   "schedule": "daily 05:00Z",
-   "target": "agentRuns.js:enqueue",
-   "new": false
-  },
-  "enqueue-evidence-hunter": {
-   "schedule": "daily 06:00Z",
-   "target": "agentRuns.js:enqueue",
-   "new": false
-  },
-  "enqueue-hypothesis-drafter": {
-   "schedule": "Thu 16:00Z",
-   "target": "agentRuns.js:enqueue",
-   "new": false
-  },
-  "enqueue-source-scout": {
-   "schedule": "Wed 16:00Z",
-   "target": "agentRuns.js:enqueue",
-   "new": false
-  },
-  "enqueue-transcript-capture": {
-   "schedule": "every 10800s",
-   "target": "transcriptCapture.js:enqueueIfNeeded",
-   "new": false
-  },
-  "generate-hypotheses": {
-   "schedule": "Mon 16:00Z",
-   "target": "workflows.js:startBatchHypothesisInternal",
-   "new": false
-  },
-  "generate-weekly-turn": {
-   "schedule": "Fri 16:00Z",
-   "target": "weeklyBriefs.js:generateInternal",
-   "new": false
-  },
-  "normalize-legacy-extraction-history": {
-   "schedule": "every 300s",
-   "target": "extractions.js:normalizeLegacyHistory",
-   "new": true
-  },
-  "passage-index-sweep": {
-   "schedule": "Sun 15:30Z",
-   "target": "passages.js:sweep",
-   "new": true
-  },
-  "poll-feeds": {
-   "schedule": "every 21600s",
-   "target": "ingest.js:pollAllFeedsInternal",
-   "new": false
-  },
-  "rebuild-docket": {
-   "schedule": "Thu 16:30Z",
-   "target": "docket.js:prepare",
-   "new": true
-  },
-  "recompute-stats": {
-   "schedule": "every 1800s",
-   "target": "dashboard.js:recomputeStats",
-   "new": false
-  },
-  "reconcile-extraction-attempts": {
-   "schedule": "every 300s",
-   "target": "extractInternal.js:reconcileAttempts",
-   "new": true
-  },
-  "reconcile-operation-recovery": {
-   "schedule": "every 300s",
-   "target": "operationFailures.js:reconcile",
-   "new": true
-  },
-  "reconcile-reviewed-agent-runs": {
-   "schedule": "every 900s",
-   "target": "agentRuns.js:reconcileReviewedRuns",
-   "new": false
-  },
-  "retire-stale-correspondences": {
-   "schedule": "Sun 16:00Z",
-   "target": "correspondences.js:autoRetireStale",
-   "new": false
-  },
-  "sweep-stale-agent-runs": {
-   "schedule": "every 900s",
-   "target": "agentRuns.js:sweepStaleRuns",
-   "new": false
-  },
-  "sweep-stale-media-jobs": {
-   "schedule": "every 600s",
-   "target": "mediaSweeper.js:sweep",
-   "new": false
-  }
- },
- "rootSchema": {
-  "tablesBefore": 29,
-  "tablesAfter": 40,
-  "added": [
-   "audioRatings",
-   "decisionIntents",
-   "docketCards",
-   "docketDeliveries",
-   "extractionAttempts",
-   "failureInvestigationGroups",
-   "hypothesisCandidates",
-   "hypothesisEmbeddings",
-   "operationFailures",
-   "tournamentRuns",
-   "webhookEvents"
-  ],
-  "removed": [],
-  "fieldsRemoved": [],
-  "fieldsBecameRequired": [],
-  "indexesRemoved": [],
-  "indexesAddedOnExistingTables": 14
- }
 }
