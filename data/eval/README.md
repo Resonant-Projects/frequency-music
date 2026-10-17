@@ -6,7 +6,7 @@ Golden datasets for the LangSmith experiments. Two file kinds per family:
 | --- | --- | --- | --- |
 | **Candidates** | `*-candidates.jsonl` | `scripts/export-eval-datasets.ts` (`vp run eval:export`) and `scripts/langsmith/export-edit-captures.ts` (`*-golden.candidates.jsonl`) | human curation |
 | **Golden** | `extractions-golden.jsonl`, `hypotheses-golden.jsonl`, `recipes-golden.jsonl`, `weekly-briefs-golden.jsonl` | **human curation** of candidates | `scripts/langsmith/upload-datasets.ts` |
-| **Proposed** | `proposed/*.proposed-<date>.jsonl` | candidate rows copied for a curation sheet (`curation-<date>.md`) | Keith's ratification only; nothing uploads them |
+| **Proposed** | `proposed/*.proposed-<date>.jsonl` | candidate rows copied for a curation sheet (`curation-<date>.md`) | Keith's ratification; once ratified, the drift check's approved snapshot. Nothing uploads them |
 
 ## Flow
 

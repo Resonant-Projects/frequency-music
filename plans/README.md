@@ -86,7 +86,7 @@ trivial merge. 011/012/013 touch disjoint files and parallelize freely.
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
 | 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
-| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | BLOCKED 2026-10-17 — STOP 4 (hypothesis 4 / brief 2 rows); no scores. STOP 1 cleared later that day: credentials resolve through Varlock on `devbox`. Hypothesis ratification pending (6 rows recommended); briefs stay at 2. No budget approved ($11 single-attempt stage 1 proposed, $21.53 retry ceiling). Runner defects repaired ([runner repair](../docs/evidence/eval-baseline-20261017/runner-repair.md)); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) and [readiness](../docs/evidence/eval-baseline-20261017/readiness.md) |
+| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | BLOCKED 2026-10-17 — STOP 4 (hypothesis 4 / brief 2 rows); no scores. STOP 1 cleared later that day: credentials resolve through Varlock on `devbox`. Hypotheses ratified at 6 rows (H1–H3, H5–H7) by Keith; the materializer run found production drift in 9 extraction rows and the briefs' embedded source metadata, so the golden files are not regenerated until Keith decides it. Briefs stay at 2 (STOP 4). No upload or budget approved ($11 stage-1 estimate proposed, $6.80 single-attempt worst case, $20.39 retry ceiling). Runner defects repaired ([runner repair](../docs/evidence/eval-baseline-20261017/runner-repair.md)); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) and [readiness](../docs/evidence/eval-baseline-20261017/readiness.md) |
 | 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | DONE — [Open questions](../docs/recipe-export-v1-design.md#6-open-questions) |
 | 010 | Spike: autonomous ingest design + URL-fetch prototype | P3 | M | — (see its STOP 1 re: arch plan 06) | DONE — see `docs/autonomous-ingest-design.md` §7 build slices |
 
@@ -116,8 +116,9 @@ action in `convex/ingest.ts` — don't run 004 and 010 concurrently).
   (resolving on `devbox` since 2026-10-17), a cost estimate approved before
   the first paid run, and upload approval. Human dataset curation was ratified
   in `d2487c1`, but hypothesis (4) and weekly brief (2) sit under STOP 4's
-  5-row floor; ratifying the proposed hypothesis rows is Keith's call, and no
-  further brief qualifies. It STOPs cleanly if either key is missing.
+  5-row floor. Keith ratified 6 hypothesis rows on 2026-10-17, pending a
+  production-drift decision before they are materialized; no further brief
+  qualifies. It STOPs cleanly if either key is missing.
 
 ## Audit findings that did NOT become plans
 

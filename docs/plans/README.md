@@ -115,12 +115,14 @@ Small; several are gate-specific, and item 1 must finish before plan 13 starts.
    with no scores recorded. The runner defects it found were
    [repaired](../evidence/eval-baseline-20261017/runner-repair.md) the same
    day. Credentials now resolve through Varlock on `devbox` (STOP 1 clear
-   there). STOP 4 remains: hypothesis ratification is pending (the
-   [curation proposal](../../data/eval/curation-2026-10-17.md) recommends
-   H5–H7 and dropping H4, giving 6 rows), and weekly briefs stay at 2 rows
-   because production has no thesis rows. Still needed from Keith: that
-   ratification, upload approval by hash, and a budget. $11 is proposed for a
-   single-attempt stage 1; the retry ceiling is $21.53; no budget is
+   there). Keith ratified 6 hypothesis rows (H1–H3, H5–H7, H4 dropped) on
+   2026-10-17 ([curation sheet](../../data/eval/curation-2026-10-17.md)).
+   Applying it found production drift in 9 golden extraction rows and the
+   briefs' embedded source metadata, so the golden files are not regenerated
+   yet. Weekly briefs stay at 2 rows under STOP 4, because production has no
+   thesis rows. Still needed from Keith: the drift choice, upload approval by
+   hash, and a budget. $11 is proposed as a stage-1 estimate, not a cap
+   ($6.80 single-attempt worst case, $20.39 retry ceiling); no budget is
    approved ([readiness](../evidence/eval-baseline-20261017/readiness.md)).
    Record that baseline before starting plan 13 so its generator changes
    remain measurable.

@@ -34,11 +34,19 @@ const EXTRACTION_IDS = [
   "j97cs7s2wqevgarwtn5vtjc2rh8ab3rq",
 ] as const;
 
+/**
+ * H1–H3 from `data/eval/curation-2026-07-18.md`; H5–H7 added and H4
+ * (`jh7d82hc6s…`) dropped per `data/eval/curation-2026-10-17.md`. H4's golden
+ * `rationaleMd` repeats Claim 4's wrong arithmetic, so it is no longer a
+ * standalone reference output.
+ */
 const HYPOTHESIS_IDS = [
   "jh77f6vrfdyewjs2pdzfhdphms8ae2zs",
   "jh72zwgdmb5nytqka5nvbsbhv58afm5e",
   "jh7enth03nza8fe597vpf427qx8aejtb",
-  "jh7d82hc6s34cdww0k25sb4gd18aafhv",
+  "jh79bj87pjx2at0mqqy2jkppdx8axjc1",
+  "jh7602kgehf8mjkh1685gb55f98aw3eq",
+  "jh7c1rd967g1bz7ny40bft8evx8axfyy",
 ] as const;
 
 const WEEKLY_BRIEF_IDS = [
@@ -54,9 +62,16 @@ const WEEKLY_BRIEF_IDS = [
  * that was KEPT into `extractions-golden.jsonl`. The sheet's own note calls for
  * the repoint, so it is applied here rather than hand-edited into the JSONL, and
  * survives re-materialization.
+ *
+ * H4 (`jh7d82hc6s…`, `data/eval/curation-2026-10-17.md`) has no
+ * `extractionIds`, so it would resolve to its source's newest extraction, a
+ * 2026-10-13 re-extraction. Both ratified weekly briefs still embed H4, so the
+ * pin keeps their embedded claims, parameters and topics on the 2026-05-11
+ * extraction the golden rows were built from.
  */
 const HYPOTHESIS_EXTRACTION_REPOINTS: Record<string, readonly string[]> = {
   jh72zwgdmb5nytqka5nvbsbhv58afm5e: ["j97d7hq5d3kndbx5sq26qppqwn8afr0d"],
+  jh7d82hc6s34cdww0k25sb4gd18aafhv: ["j97f14ww3grvkgbgx82zppkj5x86hmsg"],
 };
 
 const convexUrl =
