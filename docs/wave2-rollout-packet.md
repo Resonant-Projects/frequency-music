@@ -14,13 +14,14 @@ Read with [backend integration](wave2-backend-integration.md),
 
 ## Current status, 2026-10-17
 
-Read-only facts gathered on 2026-10-17 between 00:13 and 00:20 UTC. None of
-them shows what the Convex backend runs.
+Read-only facts gathered on 2026-10-17. The table rows date from 00:13 to
+00:20 UTC; the anonymous docket query came later the same day. Only that query
+observes the Convex backend, and it observes one function.
 
 | Item | State | Evidence |
 | --- | --- | --- |
 | Production web (Vercel) | `main` at `ec04c7c`, READY | Vercel deployment `dpl_5QC2q55HnZ6geiPeRft17Yjx3ZrZ`; production builds every `main` merge |
-| Production backend | Unknown | Admin key still unreadable, see below. `GET /version` returned 200. The last recorded Convex deployment is `2d2c78e` (2026-10-05), before #138. |
+| Production backend | `docket:listWeb` absent; deployed revision otherwise unknown | One anonymous `docket:listWeb` query (Stage R step 2) returned HTTP 200 with `status: "error"` and `Could not find public function for 'docket:listWeb'.` (request `001916731ddd8d07`). `GET /version` returned 200. Admin key still unreadable, see below. The last recorded Convex deployment is `2d2c78e` (2026-10-05), before #138. |
 | Media image with renderer 0.3.0 | Published, host rollout unknown | `publish-media-image` succeeded for `main` at `0cc0592`: `ghcr.io/resonant-projects/frequency-music-media:sha-0cc05921d05c53dd6a3076824b19aab68215a77a` |
 | Agent image with the tournament graph | Published and copied to Lab Harbor, host rollout unknown | `publish-agent-image` succeeded for `main` at `0cc0592` |
 | MCP workload | Not reachable from the rollout host | `mcp.frequency.rproj.art` resolves to 192.168.30.200; `GET /health` made no connection |
@@ -29,10 +30,14 @@ them shows what the Convex backend runs.
 **Web ahead of backend.** The production web calls functions that #138 and
 #141 added: `docket.listWeb`, `decisionIntents.get`, `applyWeb`, `deferWeb`,
 `cancelWeb`, `audioFeedback.queue`, `item`, `submit`, and
-`audioArtifacts.listReadyForTarget`. If the backend still runs a pre-#138
-deployment, the pages that use them fail in production now. This is inferred
-from source and deployment records, not observed. Stage R below settles it
-with one read.
+`audioArtifacts.listReadyForTarget`. The production backend does not expose
+`docket:listWeb` as a public function, so the docket page the production web
+at `ec04c7c` serves fails now. The query proves that this one endpoint is
+absent, which confirms the docket deployment gap. It does not identify the
+deployed revision or show which other #138 to #142 functions are present or
+absent; the Stage R step 1 inspection answers that. The local source requires
+a signed-in human before `listWeb` reads anything, and the error returned no
+data. The query mutated nothing; it does not need repeating.
 
 The 1Password service account on the rollout host can list only the
 `Vedic.Today` vault, so `CONVEX_SELF_HOSTED_ADMIN_KEY` ("Country Manor Lab")
@@ -104,6 +109,7 @@ target. Neither mutates anything.
    file), then read the saved result offline:
 
    ```sh
+   mkdir -p out
    vpx tsx scripts/convex-deployment-inspect.ts https://convex.resonantprojects.art \
      > out/inspection-$(date -u +%Y%m%dT%H%MZ).json
    vpx tsx scripts/wave2-deployment-coverage.ts out/inspection-<stamp>.json
@@ -111,10 +117,10 @@ target. Neither mutates anything.
 
    The coverage report lists, per merged PR (#138, #141, #140, #142), the
    functions, HTTP routes and crons the deployed root component lacks, and
-   every `api.*` function the current web source calls that is missing. Exit
-   0 means everything is deployed, 3 means something is missing, 2 means the
-   file is not an inspection. The inspection prints module paths, function
-   names, cron schedules and schema hashes, not secrets.
+   every `api.*` function the current web source calls that is missing or not
+   public. Exit 0 means everything is deployed, 3 means something is missing,
+   2 means the file is not an inspection. The inspection prints module paths,
+   function names, cron schedules and schema hashes, not secrets.
 2. Without the admin key, one anonymous query answers the web-skew question
    alone. `docket.listWeb` checks for a signed-in human before reading any
    table, so the call reads nothing:
@@ -125,8 +131,10 @@ target. Neither mutates anything.
      -d '{"path":"docket:listWeb","args":{},"format":"json"}'
    ```
 
-   An error naming a missing public function means #138 is not deployed. An
-   authentication error means it is.
+   An error naming a missing public function means `docket:listWeb` is not
+   deployed as a public function. An authentication error means it is. On
+   2026-10-17 this query returned the missing-function error (see the status
+   section above).
 
 If #138 is missing while the web runs `ec04c7c`, the coordinator chooses
 between Stage 1 promptly and rolling the Vercel production alias back to a

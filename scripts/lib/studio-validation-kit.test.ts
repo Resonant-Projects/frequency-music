@@ -113,7 +113,7 @@ describe("plan 11 studio validation kits", () => {
       for (const note of kit.notes) {
         const hz = scalaHz(scl, kbm, note.key);
         // .scl stores EDO cents to five decimals: under 1e-5 cent of error.
-        expect(Math.abs(1200 * Math.log2(hz / note.hz))).toBeLessThan(1e-4);
+        expect(Math.abs(1200 * Math.log2(hz / note.hz))).toBeLessThan(1e-5);
       }
     },
   );

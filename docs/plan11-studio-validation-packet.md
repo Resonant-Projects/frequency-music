@@ -62,7 +62,7 @@ share a semitone), so it cannot serve this comparison. `seed-degree.mid` with
 `tuning.kbm` reproduces the renderer's frequencies exactly. Tests check the
 note list against the renderer's own score expansion, decode the MIDI back to
 the same notes, and recompute every key's frequency from the `.scl` and
-`.kbm` text (within 1e-5 cent; Scala stores EDO steps to five decimals).
+`.kbm` text (asserted under 1e-5 cent; Scala stores EDO steps to five decimals).
 
 ## Machine renders
 
