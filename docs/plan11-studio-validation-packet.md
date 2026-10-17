@@ -13,7 +13,7 @@ change `renderValidation`. The go or no-go decision remains Keith's.
 | --- | --- |
 | 1. Bounded spike: three kits with the litmus engine | Done on 2026-10-13 (4-second renders, [SC README](../media/src/engines/sc/README.md)). Repeated on 2026-10-17 at 30 seconds with the published media image; see evidence below. |
 | 2. Pitch check under 0.5 cents | Done on 2026-10-13 for six sustained notes; on 2026-10-17 every distinct key of the three 30-second renders measured within 0.01 cent of the packet's pitch table. Necessary, not sufficient. |
-| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The path that carries them into a blind group on `/listen` is implemented and reviewed locally but not merged or deployed; see [Comparison path](#comparison-path). |
+| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The path that carries them into a blind group on `/listen` merged in #155 (`16ed588`) and is not deployed; see [Comparison path](#comparison-path). |
 | 4. Contamination assessment and go or no-go | Keith's decision, written up in `docs/plans/` as the plan 11 outcome. |
 
 ## The three kits
@@ -118,8 +118,8 @@ The earlier blocker (no human upload could create a `litmusRender` artifact,
 and nothing grouped a machine render with a human one) is closed in source by
 the [studio comparison contract](studio-comparison-contract.md):
 `convex/studioComparisons.ts`, a `studioComparison` blind-group purpose and a
-studio section on `/listen`. It is a local candidate, reviewed but not merged
-or deployed. Using it needs its own attested backend release and deploy; the
+studio section on `/listen`. It merged in #155 (`16ed588`) and is not
+deployed. Using it needs its own attested backend release and deploy; the
 [rollout work order](wave2-rollout-packet.md#combined-rollout-work-order-2026-10-17)
 pins `91cb3047`, which does not contain it.
 
