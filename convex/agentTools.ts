@@ -51,6 +51,7 @@ export const listCorrespondenceCandidates = makeAgentToolAction(
   "listCorrespondenceCandidates",
 );
 export const searchClaimsSemantic = makeAgentToolAction("searchClaimsSemantic");
+export const searchSourcePassages = makeAgentToolAction("searchSourcePassages");
 export const listCorrespondenceTargets = makeAgentToolAction(
   "listCorrespondenceTargets",
 );

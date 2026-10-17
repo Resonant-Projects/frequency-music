@@ -186,6 +186,14 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "Use to seek supporting or contradicting evidence for a concrete correspondence statement, not for broad source discovery.",
   ),
   entry(
+    "searchSourcePassages",
+    "read",
+    "internal.passages:searchForAgent",
+    "Semantically search source full text and return verbatim passages with source provenance and live status.",
+    "The bounded exception to the no-document-text rule: at most 8 passages (default 5), each the hit chunk with one neighbouring chunk either side, at most 12,000 characters in total with truncation marked; archived sources are excluded. Optional types filter by source type. Not bound into LangChain agents yet.",
+    { langchain: false },
+  ),
+  entry(
     "listCorrespondenceTargets",
     "read",
     "internal.correspondenceCandidates:listEvidenceTargets",

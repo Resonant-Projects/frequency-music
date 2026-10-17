@@ -104,6 +104,15 @@ crons.weekly(
   {},
 );
 
+// Re-index sources whose text has no current passage entry. A no-op until an
+// operator enables passage indexing; unchanged sources are never re-embedded.
+crons.weekly(
+  "passage-index-sweep",
+  { dayOfWeek: "sunday", hourUTC: 15, minuteUTC: 30 },
+  internal.passages.sweep,
+  {},
+);
+
 // Park unresolved conjectures that have shown no evidence or movement in 90 days.
 crons.weekly(
   "retire-stale-correspondences",

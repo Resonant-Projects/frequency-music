@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { insertQueuedRun } from "./agentRuns";
+import { schedulePassageIndex } from "./passages";
 import {
   TRANSCRIPT_MAX_CHARS,
   TRANSCRIPT_MIN_CHARS,
@@ -152,6 +153,7 @@ export const recordTranscriptCapture = internalMutation({
         },
         updatedAt: advanceSourceVersion(source.updatedAt, now),
       });
+      await schedulePassageIndex(ctx, source._id);
       return { updated: true };
     }
     const previousAttempts =

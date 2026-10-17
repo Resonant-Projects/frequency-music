@@ -16,6 +16,7 @@ import {
   settleCaptureFailures,
   settleExtractionFailures,
 } from "./operationFailures";
+import { schedulePassageIndex, schedulePassageRemoval } from "./passages";
 import {
   looksLikeBotChallenge,
   SCOUTED_CONTENT_PROVIDERS,
@@ -358,6 +359,7 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    if (rawTextSha256) await schedulePassageIndex(ctx, id);
 
     return { id, created: true };
   },
@@ -482,6 +484,7 @@ export const updateText = mutation({
         : {}),
       updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    await schedulePassageIndex(ctx, args.id);
     return null;
   },
 });
@@ -655,6 +658,7 @@ export const provideRecoveryText = mutation({
         },
       },
     });
+    await schedulePassageIndex(ctx, source._id);
     // Reuse the canonical completion check and bounded settlement. A
     // transcript-only recovery does not satisfy Scout's raw-text contract.
     await ctx.runMutation(internal.operationFailures.settleCaptured, {
@@ -805,6 +809,7 @@ async function upsertExternalSource(
       createdAt: now,
       updatedAt: now,
     });
+    if (text) await schedulePassageIndex(ctx, id);
     return { id, created: true, contentChanged: Boolean(text) };
   }
 
@@ -826,6 +831,8 @@ async function upsertExternalSource(
     blockedReason: contentChanged ? undefined : existing.blockedReason,
     updatedAt: advanceSourceVersion(existing.updatedAt, now),
   });
+  if (text && rawTextSha256 !== existing.rawTextSha256)
+    await schedulePassageIndex(ctx, existing._id);
 
   return { id: existing._id, created: false, contentChanged };
 }
@@ -926,6 +933,8 @@ export const resetScoutCapture = mutation({
       metadata: { ...metadata, scoutedBy: scoutProvenance },
       updatedAt: advanceSourceVersion(source.updatedAt),
     });
+    // Cleared text removes the bot wall's passages.
+    await schedulePassageIndex(ctx, args.id);
     return null;
   },
 });
@@ -1136,6 +1145,7 @@ export const createScoutedSource = internalMutation({
         },
         updatedAt: advanceSourceVersion(existing.updatedAt, capturedAt),
       });
+      await schedulePassageIndex(ctx, existing._id);
       await settleCaptureFailures(ctx, { dedupeKey, capturedAt });
       return { id: existing._id, created: false, enriched: true };
     }
@@ -1689,5 +1699,6 @@ export const deleteById = mutation({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     await ctx.db.delete(args.id);
+    await schedulePassageRemoval(ctx, args.id);
   },
 });

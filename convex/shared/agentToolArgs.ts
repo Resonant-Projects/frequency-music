@@ -31,6 +31,7 @@ import {
   TOURNAMENT_SEED_HINT_MAX_CHARS,
   TOURNAMENT_STATEMENT_MAX_CHARS,
 } from "./hypothesisTournament";
+import { PASSAGE_QUERY_MAX_CHARS, PASSAGE_SOURCE_TYPES } from "./passages";
 
 const limit = z.number().int().positive().max(100).optional();
 
@@ -83,6 +84,12 @@ export const agentToolArgs = {
   searchClaimsSemantic: z.object({
     text: z.string().trim().min(1),
     limit,
+  }),
+  // limit is clamped to 1..8 by the backing action rather than rejected.
+  searchSourcePassages: z.object({
+    query: z.string().trim().min(1).max(PASSAGE_QUERY_MAX_CHARS),
+    limit,
+    types: z.array(z.enum(PASSAGE_SOURCE_TYPES)).max(6).optional(),
   }),
   listCorrespondenceTargets: z.object({ limit }),
   getScoutTargets: z.object({}),

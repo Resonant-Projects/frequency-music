@@ -4,6 +4,28 @@
 > **Found-state rule:** adapt to found state; schemas, interfaces, gates binding.
 > **Session decisions (grilling 2026-08-01, Keith):** see `docs/adr/0001-split-embedding-spaces-for-passages.md` and the **Passage** entry in `GLOSSARY.md`. This plan is wave one of the passage-retrieval program (foundation + agent tool). Follow-on waves — hypothesis context, extraction full-text fix, recipe context — are **not** in scope here.
 
+## Status (2026-10-17)
+
+Code complete locally; deploy, backfill and probe acceptance remain operator steps. Found-state adaptations:
+
+- The repo runs `ai@7`, so the deps are `@convex-dev/rag@^0.7.8` (peers `ai ^7`, `convex ^1.46`) and `@ai-sdk/openai@^4`.
+- `rag.add()` embeds chunks before its `contentHash` dedupe for entries under 100 chunks, so "unchanged text is free" only holds because `indexSource` first checks `findEntryByContentHash` for a ready entry. The sweep and backfill use the same check.
+- Paid indexing (write hooks, weekly sweep, backfill `--apply`) is off until `passages:setIndexingEnabled` turns it on. This is a `settings` row, not an env var, so deploying does not start spending. Clearing or deleting text removes passages whatever the setting.
+- Hard delete schedules `passages:removeSource`; cleared text (for example `resetScoutCapture`) schedules `indexSource`, which removes the entry. After `rag.add`, `indexSource` re-reads the source and reschedules itself if the text changed or vanished while it embedded.
+- Search over-fetches 2× so archived hits can be dropped, then rebuilds each kept hit's ±1 chunk window from all returned ranges, because the component assigns a shared neighbour chunk to only one adjacent hit.
+- `searchSourcePassages` is registered with `langchain: false`: graphs call it explicitly, and the weekly-brief agent's model-visible toolset is unchanged.
+- `convex/_generated/api.d.ts` gained `components.rag` and `passages` by hand, from the package's `ComponentApi<"rag">`, because codegen contacts the live deployment. The deploy's codegen replaces it; commit any drift.
+
+### Operator runbook (each step contacts production)
+
+1. Confirm `OPENAI_API_KEY` is set in the Convex deployment environment (presence only).
+2. Deploy through the normal path (`vp run convex:deploy:dry-run`, then `vp run convex:deploy`), which runs codegen and mounts the `rag` component with its nested workpool. Commit any `_generated` drift.
+3. Dry run: `vpx tsx scripts/backfill-passages.ts`, then record `textBearing`, `pending`, chars, token estimate and cost (3-large at $0.13/1M tokens).
+4. After the budget is approved: `vpx convex run passages:setIndexingEnabled '{"enabled": true}'`.
+5. `vpx tsx scripts/backfill-passages.ts --apply`, then rerun the dry run until it reports `pending=0` (`converged=yes`).
+6. Probe: `vpx tsx scripts/probe-passages.ts "<cross-domain cymatics phrase>"`, check by eye that both article prose and a transcript passage come back, and paste the output into the PR.
+7. Rollback: `vpx convex run passages:setIndexingEnabled '{"enabled": false}'` stops all paid indexing. Search keeps serving whatever is already indexed.
+
 **Goal:** Make source prose retrievable. Chunk-index every text-bearing source's full text (`rawText`/`transcript`) into a `@convex-dev/rag` passage index, and expose one bounded agent tool, `searchSourcePassages`, so agents can semantically query the corpus and get back what sources actually *say* — with provenance — instead of only claim assertions.
 
 **Supersedes** plan 04's non-goal "No embedding of sources' raw text" — that exclusion was scoped to the claims/concepts wave, and the 2026-08-01 session explicitly reversed it for passages.
