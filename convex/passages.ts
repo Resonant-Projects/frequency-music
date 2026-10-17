@@ -28,7 +28,6 @@ import {
   PASSAGE_INDEXING_SETTING,
   PASSAGE_NAMESPACE,
   PASSAGE_QUERY_MAX_CHARS,
-  PASSAGE_SEARCH_MAX_LIMIT,
   PASSAGE_SOURCE_TYPES,
   type PassageHit,
   type PassageSearchResult as SharedPassageSearchResult,
@@ -50,11 +49,13 @@ export const rag = new RAG<{ type: PassageSourceType }, { sourceId: string }>(
   },
 );
 
-// Twenty documents keep one page's read under Convex's per-call limits even
-// when every one holds a long transcript (see OPERATOR_EXPORT_PAGE_SIZE).
-const PAGE_SIZE = 20;
-// Archived hits are dropped after search, so fetch extra candidates.
+// Pages and hydrations read whole source documents (up to 1 MiB each), so ten
+// or twelve rows keep one transaction under Convex's 16 MiB read limit.
+const PAGE_SIZE = 10;
+// Archived hits are dropped after search, so fetch extra candidates; each
+// distinct hit source is one document read during hydration.
 const SEARCH_OVERFETCH = 2;
+const SEARCH_MAX_CANDIDATES = 12;
 
 const sourceTypeValidator = literals(...PASSAGE_SOURCE_TYPES);
 
@@ -260,6 +261,15 @@ async function indexOne(
     if (!source || !source.text) {
       // Removal is free, so cleared or deleted text never waits for the gate.
       await removeEntries(ctx, sourceId);
+      // Text restored meanwhile may have been judged unchanged by another
+      // run, whose entry this removal just deleted: index it again.
+      const restored = await ctx.runQuery(internal.passages.sourceForIndex, {
+        sourceId,
+      });
+      if (restored?.text)
+        await ctx.scheduler.runAfter(0, internal.passages.indexSource, {
+          sourceId,
+        });
       return "removed";
     }
     if (!(await ctx.runQuery(internal.passages.indexingEnabled, {}))) {
@@ -306,6 +316,7 @@ export const removeSource = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
+      // A hard-deleted id is never reused, so no restore recheck is needed.
       await removeEntries(ctx, args.sourceId);
     } catch (error) {
       console.warn(
@@ -366,7 +377,7 @@ async function searchPassages(
   const { results, entries } = await rag.search(ctx, {
     namespace: PASSAGE_NAMESPACE,
     query,
-    limit: Math.min(limit * SEARCH_OVERFETCH, PASSAGE_SEARCH_MAX_LIMIT * 2),
+    limit: Math.min(limit * SEARCH_OVERFETCH, SEARCH_MAX_CANDIDATES),
     chunkContext: PASSAGE_CHUNK_CONTEXT,
     filters: [...new Set(args.types ?? [])].map((type) => ({
       name: "type" as const,

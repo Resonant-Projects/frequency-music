@@ -12,7 +12,7 @@ Code complete locally; deploy, backfill and probe acceptance remain operator ste
 - `rag.add()` embeds chunks before its `contentHash` dedupe for entries under 100 chunks, so "unchanged text is free" only holds because `indexSource` first checks `findEntryByContentHash` for a ready entry. The sweep and backfill use the same check.
 - Paid indexing (write hooks, weekly sweep, backfill `--apply`) is off until `passages:setIndexingEnabled` turns it on. This is a `settings` row, not an env var, so deploying does not start spending. Clearing or deleting text removes passages whatever the setting.
 - Hard delete schedules `passages:removeSource`; cleared text (for example `resetScoutCapture`) schedules `indexSource`, which removes the entry. After `rag.add`, `indexSource` re-reads the source and reschedules itself if the text changed or vanished while it embedded.
-- Search over-fetches 2× so archived hits can be dropped, then rebuilds each kept hit's ±1 chunk window from all returned ranges, because the component assigns a shared neighbour chunk to only one adjacent hit.
+- Search over-fetches 2× (at most 12 candidates, and source pages are 10 rows, so no transaction can exceed the 16 MiB read limit) so archived hits can be dropped, then rebuilds each kept hit's ±1 chunk window from all returned ranges, because the component assigns a shared neighbour chunk to only one adjacent hit.
 - `searchSourcePassages` is registered with `langchain: false`: graphs call it explicitly, and the weekly-brief agent's model-visible toolset is unchanged.
 - `convex/_generated/api.d.ts` gained `components.rag` and `passages` by hand, from the package's `ComponentApi<"rag">`, because codegen contacts the live deployment. The deploy's codegen replaces it; commit any drift.
 

@@ -326,11 +326,12 @@ describe("searchSourcePassages", () => {
     expect(result.passages[0]).toMatchObject({ order: 1 });
     for (const marker of ["markerx.", "markerxx.", "markerxxx."])
       expect(result.passages[0]?.text).toContain(marker);
-    const many = await t.action(internal.passages.searchForAgent, {
-      query: "passage",
-      limit: 50,
-    });
+    // Out-of-range limits reach the clamp through the agent tool.
+    const many = await searchTool(t, { query: "passage", limit: 500 });
     expect(many.passages.length).toBeLessThanOrEqual(8);
+    expect(many.passages.length).toBeGreaterThan(5);
+    const one = await searchTool(t, { query: "passage", limit: 0 });
+    expect(one.passages).toHaveLength(1);
   });
 
   test("an empty index answers without a paid query embedding", async () => {

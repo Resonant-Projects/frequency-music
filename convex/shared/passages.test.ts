@@ -57,6 +57,15 @@ describe("passage search bounds", () => {
     expect(result).toMatchObject({ truncated: true, omitted: 1 });
   });
 
+  test("never leaves a lone surrogate where an oversized passage is cut", () => {
+    const room = PASSAGE_RESPONSE_MAX_CHARS - PASSAGE_TRUNCATION_MARKER.length;
+    const text = `${"x".repeat(room - 1)}🎵${"y".repeat(100)}`;
+    const [first] = boundPassages([{ ...hit(0.9, 0), text }]).passages;
+    const kept = first?.text.slice(0, -PASSAGE_TRUNCATION_MARKER.length) ?? "";
+    expect(kept).toBe("x".repeat(room - 1));
+    expect(kept.isWellFormed()).toBe(true);
+  });
+
   test("indexes rawText before transcript, matching rawTextSha256", () => {
     expect(passageSourceText({ rawText: "a", transcript: "b" })).toBe("a");
     expect(passageSourceText({ rawText: "", transcript: "b" })).toBe("b");

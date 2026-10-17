@@ -93,7 +93,10 @@ export function boundPassages<SourceId extends string>(
       continue;
     }
     if (passages.length === 0) {
-      const room = Math.max(maxChars - PASSAGE_TRUNCATION_MARKER.length, 0);
+      let room = Math.max(maxChars - PASSAGE_TRUNCATION_MARKER.length, 0);
+      // Never split a surrogate pair: a lone surrogate is not a valid string.
+      const last = hit.text.charCodeAt(room - 1);
+      if (last >= 0xd800 && last <= 0xdbff) room--;
       passages.push({
         ...hit,
         text: `${hit.text.slice(0, room)}${PASSAGE_TRUNCATION_MARKER}`,

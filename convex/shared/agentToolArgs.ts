@@ -88,7 +88,7 @@ export const agentToolArgs = {
   // limit is clamped to 1..8 by the backing action rather than rejected.
   searchSourcePassages: z.object({
     query: z.string().trim().min(1).max(PASSAGE_QUERY_MAX_CHARS),
-    limit,
+    limit: z.number().finite().optional(),
     types: z.array(z.enum(PASSAGE_SOURCE_TYPES)).max(6).optional(),
   }),
   listCorrespondenceTargets: z.object({ limit }),
