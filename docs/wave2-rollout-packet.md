@@ -38,6 +38,17 @@ coordinator's approval of that step.
 
 ### Pinned candidate
 
+**Superseded 2026-10-17 by `6fb562b2`.** `main` now carries #155, and Vercel
+production already serves its web code, so the rollout pins
+`6fb562b270176c94372962ed921dbca9e21ef208` with agent image
+`sha256:000c8219…` and media image `sha256:714a58dd…` (both built from
+`13e0c22c`). Pins, attestations, the byte-identical rebuild and the full
+comparison are in the [candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md).
+Where the steps below name `91cb3047`, `6f332386` or their digests, use those
+pins instead; the coverage check from the `6fb562b2` checkout expects all seven
+groups, including `studio-comparison`, and exit 0. The table below is the
+earlier pin, kept as the record.
+
 | Artifact | Pin |
 | --- | --- |
 | Convex source | `main` at `91cb3047`. `convex/`, `package.json` and `bun.lock` are identical at `6f332386`, `57f7c90b` and `91cb3047`. Attested manifest `convex-root-modules-91cb304701f5a96b06251bda3f34ff6e0407c37a` from provenance run [38998580987](https://github.com/Resonant-Projects/frequency-music/actions/runs/38998580987): 249 root modules, SHA-256 `1f9dd07b8f8e0e3eb3d0ed346c7aed977f971322022071758e22573aa090ab7b`, attestation verified with the strict flags (`release-attestation-91cb3047.json`). |
@@ -233,8 +244,8 @@ holds. This work order adds no exception to it.
 
 | Approval packet item | Status |
 | --- | --- |
-| 1. Release binding | Candidate named: `91cb304701f5a96b06251bda3f34ff6e0407c37a`, run 38998580987, artifact 12087908946, manifest SHA-256 `1f9dd07b…`, attestation verified. A clean detached checkout at that commit (Node 24.22.0, Convex CLI 1.46.0, frozen lockfile) rebuilt the manifest offline byte-identical to the attested artifact. Open: preserve the candidate's full schemas, component definitions and bundles for review, beyond the root-only attestation. |
-| 2. Protected current-to-candidate comparison | Partial: root module delta, offline `schema.export()` comparison, the six coverage groups and the new crons are recorded above. Open: the complete comparison of validators, visibility, HTTP routes, authentication, component definitions, arguments and state, Node runtime and dependencies, and every root and component cron schedule. |
+| 1. Release binding | **Held for `6fb562b2`** (2026-10-17): attestation verified, clean rebuild byte-identical, full schemas, component definitions and bundles preserved by hash ([candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md#item-1-release-binding)). Earlier pin: Candidate named: `91cb304701f5a96b06251bda3f34ff6e0407c37a`, run 38998580987, artifact 12087908946, manifest SHA-256 `1f9dd07b…`, attestation verified. A clean detached checkout at that commit (Node 24.22.0, Convex CLI 1.46.0, frozen lockfile) rebuilt the manifest offline byte-identical to the attested artifact. Open: preserve the candidate's full schemas, component definitions and bundles for review, beyond the root-only attestation. |
+| 2. Protected current-to-candidate comparison | **Complete for `6fb562b2`** (2026-10-17): function specs, HTTP routes, authentication, schemas, components with arguments, crons and dependencies compared against live production through an isolated replica; nothing removed, no required argument or field added ([candidate record](evidence/wave2-rollout-20261017/candidate-6fb562b2/README.md#item-2-protected-current-to-candidate-comparison)). Earlier status: Partial: root module delta, offline `schema.export()` comparison, the six coverage groups and the new crons are recorded above. Open: the complete comparison of validators, visibility, HTTP routes, authentication, component definitions, arguments and state, Node runtime and dependencies, and every root and component cron schedule. |
 | 3. Rollback receipt and backend identity | Open: the [restore receipt](wave2-restore-receipt-work-order.md), parts A and B, each needing its own approval because each writes infrastructure. The backend image is declared (`d715e9ec…`, `precompiled-2026-09-28-5c7cb5b`) but not observed; `/version` returns `unknown`. Read the running container's image digest under the recovery owner's read-only access. |
 | 4. Maintenance protocol | Open: step 1 pauses agent claims and direct execution only. The deployed `81150337` crons, workpool recovery and scheduled work keep running, and after activation so do effects 1, 2 and 4. The backend coordinator must supply verified controls, or an approved protocol for producers, scheduled execution and active work, before step 3. |
 | 5. Named approval | Open: operator, target, candidate, maintenance interval, rollback criteria and the approved rollback mechanism (restore). Approve schema preparation (step 3) and activation (step 4) separately, or approve one ordinary deploy that explicitly covers both phases. Include approval of the five activation effects, among them the irreversible #118 normalization. |
