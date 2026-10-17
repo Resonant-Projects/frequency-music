@@ -141,16 +141,39 @@ or a row outside the snapshot, prints `DRIFT`, and those rows go back to Keith
 before any upload. With `MATCH`, record the new `sha256sum` values as the
 upload approval. If any row size changed, recompute the cost estimate.
 
-The check was tested offline. Against the current files it prints `MATCH`.
+The check accepts exactly one approved delta. The H4 extraction pin
+(`HYPOTHESIS_EXTRACTION_REPOINTS`, see the curation sheet) makes the
+materializer set `extractionIds` to `["j97f14ww3grvkgbgx82zppkj5x86hmsg"]` on
+the H4 copy embedded in each ratified brief, where the snapshot has `[]`. The
+upload reads the whole `hypotheses` array, so this is uploaded content. A brief
+that differs only by that field prints `matches with the approved H4 pin
+delta`. Any other difference is still `DRIFT`. The standalone H4 row is
+unaffected, because `extractionIds` is not a hypothesis upload key.
+
 A read-only simulation of the materializer's enrichment on 2026-10-17 found
-that, without the H4 extraction pin, this check would print `DRIFT` for H4 and
-both weekly-brief rows (see the curation sheet). Add the pin with the ratification edit. A
+that, without the pin, H4 and both brief rows change `claims`,
+`compositionParameters` and `topics`, which this check reports as `DRIFT`. Add
+the pin with the ratification edit.
+
+The check was tested offline. Against the current files it prints `MATCH`. A
 temporary copy with all proposed rows appended, and one `rationaleMd` edited,
-reports `DRIFT` on that row and ignores an added `sources` field.
+reports `DRIFT` on that row and ignores an added `sources` field. A copy whose
+briefs carry only the pinned `extractionIds` prints the pin-delta line and
+`MATCH`. With the pin plus one changed claim in an embedded H4, it prints
+`DRIFT`.
 
 ```bash
 python3 -I - <<'EOF'
-import json, os, subprocess
+import copy, json, os, subprocess
+# The one approved metadata delta: the H4 extraction pin sets `extractionIds` on
+# the H4 copy embedded in each ratified brief (empty in the snapshot).
+H4, H4_PIN = "jh7d82hc6s34cdww0k25sb4gd18aafhv", ["j97f14ww3grvkgbgx82zppkj5x86hmsg"]
+def with_pin(brief):
+    pinned = copy.deepcopy(brief)
+    for h in pinned.get("hypotheses", []):
+        if h.get("_id") == H4 and not h.get("extractionIds"):
+            h["extractionIds"] = list(H4_PIN)
+    return pinned
 KEYS = {
     "extractions": ["sourceTitle", "sourceType", "rawText", "summary", "claims", "compositionParameters", "topics", "openQuestions"],
     "hypotheses": ["sourceTitle", "claims", "compositionParameters", "topics", "title", "question", "hypothesis", "whyThisMatters", "rationaleMd"],
@@ -169,6 +192,11 @@ for family, keys in KEYS.items():
     for row_id, row in after.items():
         ref = approved.get(row_id)
         changed = ["(not in the approved snapshot)"] if ref is None else [k for k in keys if row.get(k) != ref.get(k)]
+        if changed and ref is not None and family == "weekly-briefs":
+            pinned = with_pin(ref)
+            if pinned != ref and all(row.get(k) == pinned.get(k) for k in keys):
+                print(f"{family} {row_id}: matches with the approved H4 pin delta")
+                changed = []
         if changed:
             drift = True
             print(f"{family} {row_id}: {', '.join(changed)}")
