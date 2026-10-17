@@ -193,10 +193,11 @@ async function resolveMergedParameterKind(
 ): Promise<{ entry: Doc<"parameterKinds">; merged: boolean }> {
   let current = entry;
   const visited = new Set<string>([String(entry._id)]);
-  for (let hop = 0; hop < MAX_PARAMETER_KIND_MERGE_HOPS; hop++) {
+  for (let hop = 0; ; hop++) {
     if (current.status !== "deprecated" || !current.mergedInto) {
       return { entry: current, merged: current._id !== entry._id };
     }
+    if (hop === MAX_PARAMETER_KIND_MERGE_HOPS) break;
     if (visited.has(current.mergedInto)) break;
     visited.add(current.mergedInto);
     const targetId = ctx.db.normalizeId("parameterKinds", current.mergedInto);

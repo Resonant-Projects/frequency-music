@@ -141,6 +141,28 @@ describe("ensureParameterKind merge aliasing", () => {
     ).toEqual({ status: "known", name: "chord", merged: true });
   });
 
+  test("resolves a chain of eight merges but not nine", async () => {
+    const t = setup();
+    let next = await insertKind(t, "end");
+    for (let link = 1; link <= 9; link++) {
+      next = await insertKind(t, `hop${link}`, {
+        status: "deprecated",
+        mergedInto: String(next),
+      });
+    }
+
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "hop8",
+      }),
+    ).toEqual({ status: "known", name: "end", merged: true });
+    expect(
+      await t.mutation(internal.vocabulary.ensureParameterKind, {
+        name: "hop9",
+      }),
+    ).toEqual({ status: "deprecated", name: "hop9", merged: false });
+  });
+
   test("a rejected kind stays deprecated under its own name", async () => {
     const t = setup();
     await insertKind(t, "vibe", { status: "deprecated" });
