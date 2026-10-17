@@ -51,6 +51,8 @@ after a baseline is recorded, the baseline must be re-recorded.
    flag. The extraction golden rows have no `sourceUrl`, so the `v3` prompt
    always renders an empty URL. Both weekly-brief golden rows have empty
    `failures`. `promote.ts:363` spawns `bun` rather than `vpx tsx`.
+   `upload-datasets.ts` does not import `varlock/auto-load`, unlike the
+   runners, so it sees `LANGSMITH_API_KEY` only when the key is injected.
 
 `docs/eval-baselines.md` previously keyed its rows in camelCase
 (`extractionSchema`). The evaluators emit snake_case feedback keys
@@ -82,8 +84,9 @@ required secret fails, not only these two keys.
 1. **Upload datasets** (needs approval). The script uploads all three golden
    files to LangSmith Cloud: 18 extraction rows, including private source
    `rawText`; 4 hypothesis rows; and 2 weekly-brief rows, including their
-   hypotheses, recipes and theses. Run
-   `vpx tsx scripts/langsmith/upload-datasets.ts`.
+   hypotheses, recipes and theses. `upload-datasets.ts` does not import
+   `varlock/auto-load`, so run it through Varlock to inject the LangSmith key:
+   `vpx varlock run -- vpx tsx scripts/langsmith/upload-datasets.ts`.
 2. **Run each target three times**, in order, keeping the full output of every run:
    `vpx tsx scripts/langsmith/eval-extraction.ts`,
    `vpx tsx scripts/langsmith/eval-hypothesis.ts`,
