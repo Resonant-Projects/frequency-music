@@ -347,6 +347,40 @@ describe("runEval full-run outcome", () => {
     await expect(h.run()).resolves.toBe(1);
     expect(h.err.join("\n")).toContain("brokenEvaluator");
     expect(h.logged.join("\n")).toContain("Error running evaluator");
+    const everything = [...h.err, ...h.logged, ...h.out].join("\n");
+    expect(everything).not.toContain(PRIVATE_SOURCE);
+  });
+
+  test("a prompt renderer exception fails the run without leaking its message", async () => {
+    const h = harness({});
+    const code = await runEval(
+      {
+        prompts: {
+          v1: {
+            ...prompts.v1!,
+            user: () => {
+              throw new TypeError(`cannot render ${PRIVATE_SOURCE}`);
+            },
+          },
+        },
+        defaultVersion: "v1",
+        data: "golden",
+        evaluators: [scoreField],
+        experimentPrefix: "extraction",
+        argv: ["node", "eval.ts"],
+      },
+      {
+        env: { ANTHROPIC_API_KEY: "ak-test" },
+        loadExamples: async () => examples,
+        evaluate: fakeEvaluate().evaluate,
+        generate: async () => ({ text: "{}", finishReason: "stop" }),
+        log: (line) => h.out.push(line),
+        error: (line) => h.err.push(line),
+      },
+    );
+    expect(code).toBe(1);
+    expect(h.err.join("\n")).toContain("target failed: TypeError");
+    expect(h.err.join("\n")).not.toContain(PRIVATE_SOURCE);
   });
 
   test("an evaluator returning a non-finite score fails the run", async () => {

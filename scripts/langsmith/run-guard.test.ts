@@ -16,19 +16,43 @@ const row = (
 ) => ({ run, example: { id }, evaluationResults: { results } });
 
 describe("describeFailure", () => {
-  test("keeps the name, status and a bounded redacted message", () => {
+  test("keeps structured fields and withholds the message", () => {
     const error = Object.assign(
-      new Error("bad key sk-ant-abc123 " + "x".repeat(400)),
+      new Error("prompt was: PRIVATE text sk-ant-abc123"),
       {
         name: "AI_APICallError",
-        statusCode: 401,
-        requestBodyValues: { prompt: "private" },
+        statusCode: 529,
+        responseBody: JSON.stringify({
+          type: "error",
+          error: { type: "overloaded_error", message: "PRIVATE echo" },
+        }),
+        requestBodyValues: { prompt: "PRIVATE" },
       },
     );
-    const text = describeFailure(error);
-    expect(text).toMatch(/^AI_APICallError \(HTTP 401\): bad key \[redacted\]/);
-    expect(text).not.toContain("private");
-    expect(text.length).toBeLessThan(260);
+    expect(describeFailure(error)).toBe(
+      "AI_APICallError (HTTP 529) [overloaded_error]",
+    );
+  });
+
+  test("describes the last attempt of a retried call", () => {
+    const last = Object.assign(new Error("PRIVATE"), {
+      name: "AI_APICallError",
+      statusCode: 429,
+    });
+    const retry = Object.assign(new Error("PRIVATE"), {
+      name: "AI_RetryError",
+      lastError: last,
+    });
+    expect(describeFailure(retry)).toBe(
+      "AI_RetryError; last attempt: AI_APICallError (HTTP 429)",
+    );
+  });
+
+  test("withholds unsafe names and non-errors", () => {
+    expect(
+      describeFailure(Object.assign(new Error("x"), { name: "PRIVATE text!" })),
+    ).toBe("Error");
+    expect(describeFailure("PRIVATE")).toBe("non-error thrown (string)");
   });
 
   test("passes an infrastructure error's safe message through", () => {
@@ -120,14 +144,14 @@ describe("guardEvaluators", () => {
   test("records and sanitizes an evaluator exception", async () => {
     const { evaluators, failures } = guardEvaluators([
       function judge() {
-        throw Object.assign(new Error("down"), { statusCode: 503 });
+        throw Object.assign(new Error("down PRIVATE"), { statusCode: 503 });
       },
     ]);
     await expect(evaluators[0]!(ok, { id: "ex" } as never)).rejects.toThrow(
-      "judge failed: Error (HTTP 503): down",
+      "judge failed: Error (HTTP 503)",
     );
     expect(failures).toEqual([
-      { exampleId: "ex", evaluator: "judge", reason: "Error (HTTP 503): down" },
+      { exampleId: "ex", evaluator: "judge", reason: "Error (HTTP 503)" },
     ]);
   });
 
@@ -169,4 +193,20 @@ describe("completion marker", () => {
   ])("rejects %j", (output) => {
     expect(parseCompletionMarker(output)).toBeNull();
   });
+});
+
+test("a foreign target error string is withheld from problems", () => {
+  const report = validateExperimentRows({
+    rows: [
+      row("a", [], { error: "TypeError: PRIVATE source text" }),
+      row("b", [], { error: "EvalInfrastructureError: response truncated" }),
+    ],
+    expectedExampleIds: ["a", "b"],
+    evaluatorCount: 1,
+    evaluatorFailures: [],
+  });
+  const text = report.problems.join("\n");
+  expect(text).not.toContain("PRIVATE");
+  expect(text).toContain("example a: target failed: error withheld");
+  expect(text).toContain("example b: target failed: response truncated");
 });

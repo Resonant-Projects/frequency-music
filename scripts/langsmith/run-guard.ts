@@ -22,36 +22,53 @@ export class EvalInfrastructureError extends Error {
   override name = "EvalInfrastructureError";
 }
 
-const SECRET_PATTERNS = [
-  /sk-ant-[\w-]+/g,
-  /sk-or-[\w-]+/g,
-  /lsv2_[\w-]+/g,
-  /\bBearer\s+[\w.-]+/gi,
-];
+const SAFE_IDENTIFIER = /^[A-Za-z][\w.-]{0,63}$/;
 
-function redactSecrets(text: string): string {
-  return SECRET_PATTERNS.reduce(
-    (out, pattern) => out.replace(pattern, "[redacted]"),
-    text,
-  );
+function safeIdentifier(value: unknown): string | null {
+  return typeof value === "string" && SAFE_IDENTIFIER.test(value)
+    ? value
+    : null;
+}
+
+/** The provider's error type (e.g. `overloaded_error`) from a response body. */
+function providerErrorType(responseBody: unknown): string | null {
+  if (typeof responseBody !== "string") return null;
+  try {
+    const parsed = JSON.parse(responseBody) as {
+      error?: { type?: unknown };
+    } | null;
+    return safeIdentifier(parsed?.error?.type);
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Describe an error without request bodies, prompts or secrets. Provider
- * errors (`APICallError`) carry the full request body as a property, so only
- * the name, HTTP status and a bounded, redacted message are kept.
+ * Describe an error from structured fields only. Exception messages are
+ * withheld: a provider error carries the request body, and any message can
+ * quote prompt or source text, so redaction cannot make one safe. Kept: the
+ * error name, HTTP status, provider error type, and the same for the last
+ * attempt of a retried call.
  */
 export function describeFailure(error: unknown): string {
   if (error instanceof EvalInfrastructureError) return error.message;
   if (!(error instanceof Error)) return `non-error thrown (${typeof error})`;
-  const status = (error as { statusCode?: unknown }).statusCode;
-  const statusText = typeof status === "number" ? ` (HTTP ${status})` : "";
-  const message = redactSecrets(error.message).replace(/\s+/g, " ").trim();
-  const bounded =
-    message.length > 200
-      ? `${message.slice(0, 200)}…`
-      : message || "no message";
-  return `${error.name}${statusText}: ${bounded}`;
+  const fields = error as {
+    statusCode?: unknown;
+    responseBody?: unknown;
+    lastError?: unknown;
+  };
+  const name = safeIdentifier(error.name) ?? "Error";
+  const status =
+    typeof fields.statusCode === "number" && Number.isInteger(fields.statusCode)
+      ? ` (HTTP ${fields.statusCode})`
+      : "";
+  const type = providerErrorType(fields.responseBody);
+  const described = `${name}${status}${type ? ` [${type}]` : ""}`;
+  if (fields.lastError !== undefined && fields.lastError !== error) {
+    return `${described}; last attempt: ${describeFailure(fields.lastError)}`;
+  }
+  return described;
 }
 
 /**
@@ -134,15 +151,6 @@ export interface ValidationReport {
   evaluatorKeys: string[];
 }
 
-function boundedText(value: unknown): string {
-  const text = redactSecrets(
-    typeof value === "string" ? value : "non-string error",
-  )
-    .replace(/\s+/g, " ")
-    .trim();
-  return text.length > 300 ? `${text.slice(0, 300)}…` : text;
-}
-
 /**
  * Validate a finished experiment. It passes only when every expected example
  * produced exactly one row, no target run errored, no evaluator failed, and
@@ -183,9 +191,15 @@ export function validateExperimentRows(opts: {
   for (const row of rows) {
     const id = row.example.id;
     if (row.run.error) {
-      problems.push(
-        `example ${id}: target failed: ${boundedText(row.run.error)}`,
-      );
+      // The runner's target throws only EvalInfrastructureError, whose
+      // message is safe; anything else is withheld.
+      const error = row.run.error;
+      const safe =
+        typeof error === "string" &&
+        error.startsWith("EvalInfrastructureError: ")
+          ? error.slice("EvalInfrastructureError: ".length)
+          : "error withheld";
+      problems.push(`example ${id}: target failed: ${safe}`);
       continue;
     }
     const outputs = row.run.outputs;

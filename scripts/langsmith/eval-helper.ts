@@ -265,23 +265,32 @@ export async function runEval(
     }
     results = await deps.evaluate(
       async (input) => {
-        const text = await generateModelText(
-          {
-            apiKey,
-            model: config.model,
-            system: prompt.system,
-            prompt: prompt.user(input),
-            maxOutputTokens: config.maxOutputTokens,
-          },
-          deps.generate,
-        );
-        const parsed = parseJsonObjectFromText(text);
-        if (!parsed) {
-          throw new EvalInfrastructureError(
-            `${config.model} response is not a JSON object (${text.length} chars)`,
+        try {
+          const text = await generateModelText(
+            {
+              apiKey,
+              model: config.model,
+              system: prompt.system,
+              prompt: prompt.user(input),
+              maxOutputTokens: config.maxOutputTokens,
+            },
+            deps.generate,
           );
+          const parsed = parseJsonObjectFromText(text);
+          if (!parsed) {
+            throw new EvalInfrastructureError(
+              `${config.model} response is not a JSON object (${text.length} chars)`,
+            );
+          }
+          return parsed;
+        } catch (error) {
+          // Only a safe message reaches the SDK's log and the traced run.
+          throw error instanceof EvalInfrastructureError
+            ? error
+            : new EvalInfrastructureError(
+                `target failed: ${describeFailure(error)}`,
+              );
         }
-        return parsed;
       },
       {
         data: examples,

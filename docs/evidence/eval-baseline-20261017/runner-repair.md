@@ -20,9 +20,11 @@ preflight's credential and dataset decisions.
 | 5. `upload-datasets.ts` lacked Varlock | Its first import is `varlock/auto-load`. It still uploads only when an operator runs it. |
 
 Errors are logged without the prompt, the source text or the response text.
-Provider errors keep only their name, HTTP status and a 200-character message
-with key-shaped tokens redacted. The SDK prints these safe messages in its own
-`Error running target function` and `Error running evaluator` lines.
+Exception messages are withheld entirely, because any message can quote
+private text. A failure is described only by its error name, HTTP status,
+provider error type (such as `overloaded_error`) and, for a retried call, the
+same fields for the last attempt. The SDK prints these safe descriptions in its
+own `Error running target function` and `Error running evaluator` lines.
 
 Unchanged: production generators, prompts, persisted routing and
 `convex/shared/llmPolicy.ts`. The simplified hypothesis and weekly-brief
@@ -36,8 +38,8 @@ All checks ran in the repair worktree with no network access.
 
 | Check | Result |
 | --- | --- |
-| `vp test scripts/langsmith/` | 12 files, all passing. Mutation check: with the final validation disabled, 10 full-run failure tests fail. |
-| Full-run tests (`eval-helper.test.ts`) | These use a stand-in for `evaluate()` that swallows errors the way `_forward` and `_runEvaluators` do in langsmith 0.10.11. Each of these exits 1 with no completion line: a failed target request, a malformed, truncated or empty response, one failed example among successes, an evaluator exception, a non-finite score, a dropped feedback write, an empty dataset, a judge transport failure and an unparseable verdict. A completed run, valid zero scores and a judge awarding zeros all exit 0. No error output contains the source text or a key. |
+| `vp test scripts/langsmith/` | 12 files, 123 tests, all passing. Mutation check: with the final validation disabled, 11 full-run failure tests fail. |
+| Full-run tests (`eval-helper.test.ts`) | These use a stand-in for `evaluate()` that swallows errors the way `_forward` and `_runEvaluators` do in langsmith 0.10.11. Each of these exits 1 with no completion line: a failed target request, a malformed, truncated or empty response, one failed example among successes, an evaluator exception, a non-finite score, a dropped feedback write, an empty dataset, a judge transport failure, an unparseable verdict and a prompt renderer exception. A completed run, valid zero scores and a judge awarding zeros all exit 0. No error output contains the source text or a key, including the evaluator-exception path. |
 | Routing tests | Model ids `claude-sonnet-5-5`, `claude-opus-5-5` and `claude-haiku-5-5`. Adaptive thinking, with high effort only on Opus. Caps 8000, 6000, 8000 and 5000. No `temperature`, `topP` or `topK`. |
 | Promotion tests | The child runs as `vpx tsx … --version`. A nonzero exit, a signal, a spawn error or a missing marker all throw, tested with both mocked spawn and a real `vpx tsx` child under `APP_ENV=test`. Through `main()`, a failed child or partial candidate feedback never reaches PASS. |
 | Upload test | Varlock is the first import and loads before the client is built. With mocked I/O, nothing is uploaded. |
