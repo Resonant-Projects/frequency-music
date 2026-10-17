@@ -477,6 +477,64 @@ describe("studio comparison upload", () => {
     expect(after).toEqual({ compositions: [], sessions: [] });
   });
 
+  test("the docket and rating queue hide the comparison, then count both members rated", async () => {
+    const t = convexTest(schema, modules);
+    const machine = await machineRender(t);
+    const debt = async () =>
+      (await t.query(internal.docket.currentState, {})).map(
+        (card) => `${card.kind}:${card.targetId}`,
+      );
+    const queued = async () =>
+      (await keith(t).query(api.audioFeedback.queue, {})).map(
+        (item) => item.artifactId,
+      );
+    const recipeDebt = `recipeNoComposition:${machine.recipeId}`;
+    const originalDebt = `unratedAudio:${machine.deliveryId}`;
+    // Before any comparison the machine delivery is ordinary listening debt.
+    expect((await debt()).toSorted()).toEqual(
+      [recipeDebt, originalDebt].toSorted(),
+    );
+    expect(await queued()).toEqual([machine.deliveryId]);
+
+    const { groupId, artifactId } = await uploadStudio(t, machine.deliveryId);
+    const group = await t.run(async (ctx) => (await ctx.db.get(groupId))!);
+    const members = group.members.map((member) => member.artifactId);
+    expect(members).toContain(artifactId);
+    // Blind: no member, nor the original it copies, is debt or rateable.
+    expect(await debt()).toEqual([recipeDebt]);
+    expect(await queued()).toEqual([]);
+    for (const id of [...members, machine.deliveryId])
+      expect(
+        await keith(t).query(api.audioFeedback.forArtifact, { artifactId: id }),
+      ).toEqual([]);
+
+    await rateAll(t, groupId);
+    // Revealed: both members carry a human rating of their current content,
+    // so neither becomes debt. The original was never rated itself and is
+    // its own debt again. The recipe still has no composition.
+    expect((await debt()).toSorted()).toEqual(
+      [recipeDebt, originalDebt].toSorted(),
+    );
+    expect(await queued()).toEqual([machine.deliveryId]);
+    for (const id of members) {
+      const ratings = await keith(t).query(api.audioFeedback.forArtifact, {
+        artifactId: id,
+      });
+      expect(ratings).toHaveLength(1);
+      expect(ratings[0]!.current).toBe(true);
+    }
+    expect(
+      await t.run(async (ctx) => ({
+        compositions: await ctx.db.query("compositions").collect(),
+        sessions: await ctx.db.query("listeningSessions").collect(),
+        gate: await ctx.db
+          .query("settings")
+          .withIndex("by_key", (q) => q.eq("key", "renderValidation"))
+          .unique(),
+      })),
+    ).toEqual({ compositions: [], sessions: [], gate: null });
+  });
+
   test("ratings need every member, the six render scales and conditions", async () => {
     const t = convexTest(schema, modules);
     const machine = await machineRender(t);

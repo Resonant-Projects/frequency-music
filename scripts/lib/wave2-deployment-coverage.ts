@@ -140,6 +140,31 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     crons: ["passage-index-sweep"],
     components: ["rag"],
   },
+  {
+    // Not in the 91cb3047 release pin: a checkout carrying this candidate
+    // reports the group missing until its own attested release is deployed.
+    // The `studioComparison` blind-group purpose ships in the same schema
+    // push; the inspection carries only a schema hash, so the module stands
+    // in for it.
+    id: "studio-comparison",
+    description:
+      "Human studio renders rated blind against machine litmus renders (plan 11 step 3; unmerged candidate)",
+    functions: fn(
+      "studioComparisons",
+      "beginUpload",
+      "finishContext",
+      "finishUpload",
+      "rejectUpload",
+      "completeUpload",
+      "list",
+      "get",
+      "machineCandidates",
+      "submitRatings",
+    ),
+    httpRoutes: [],
+    crons: [],
+    components: [],
+  },
 ]);
 
 const API_REFERENCE = /\bapi\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\b/g;

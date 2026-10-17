@@ -2,7 +2,7 @@
 
 Plan 11 step 3 needs one of Keith's studio renders rated blind against the
 machine litmus render of the same plan
-([packet](plan11-studio-validation-packet.md#blocker-studio-renders-cannot-join-a-blind-group)).
+([packet](plan11-studio-validation-packet.md#comparison-path)).
 This change adds that path: `convex/studioComparisons.ts`, a
 `studioComparison` blind-group purpose, and a section on `/listen`. No Convex
 codegen, deploy, run or production command was run; the generated API
@@ -119,7 +119,9 @@ Every blob the path keeps is referenced by an `audioArtifacts` row, so
 before, and a copy orphaned by a crashed action is an unreferenced blob the
 sweeper removes. No table gained a `_storage` reference.
 
-## Choices to confirm
+## Decisions
+
+The coordinator accepted these for the bounded first version on 2026-10-17.
 
 - Ratings go to `audioRatings`, the existing form for litmus renders, not to
   `listeningSessions`: a session needs a composition, and a composition for
@@ -134,7 +136,13 @@ sweeper removes. No table gained a `_storage` reference.
 
 ## Remaining human steps
 
-1. Deploy this backend and web change (parent lane).
+1. Release and deploy this backend and web change. The Wave 2 rollout work
+   order pins `91cb3047`, which does not contain it, so it needs its own
+   attested `convex-root-modules` release (or a re-pinned work order) before
+   it is deployed. A checkout that contains it reports a seventh coverage
+   group, `studio-comparison`, missing until then. Merging the web change to
+   `main` publishes the `/listen` section to Vercel production at once, ahead
+   of the backend functions it calls.
 2. Save a typed render plan on a real recipe (`renders.setPlan`) and render
    it in production (`renders.request`) with media 0.3.0 on ai-5090-02.
 3. Generate the studio kit from that plan, render in the studio per the kit

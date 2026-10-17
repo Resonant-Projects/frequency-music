@@ -43,6 +43,14 @@ coordinator's approval of that step.
 | Media image | `ghcr.io/resonant-projects/frequency-music-media@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d` (source `6f332386`, renderer 0.3.0). It replaces the earlier `sha-0cc0592…` pin: `media/` is unchanged since then, but the image also carries `convex/shared/`, which #153 changed. |
 | Web | No change; production already runs the candidate's web source |
 
+The pin excludes the human studio comparison
+([contract](studio-comparison-contract.md)), which was reviewed locally on
+2026-10-17 and is not merged. Including it in this window means a new pinned
+commit, its own `convex-provenance.yml` artifact and attestation, a fresh dry
+run and coverage from that checkout. It changes `convex/` (a new module and a
+widened `blindGroups.purpose` union) and `web/`; a `main` merge publishes the
+web change to Vercel production before the backend carries it.
+
 ### What the Convex deploy changes (`81150337` to `main`)
 
 - **Schema.** 11 new tables, 16 new optional fields, 3 widened unions and 15
@@ -134,7 +142,10 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 4. **Deploy.** Run `vp run convex:deploy` from the same checkout.
 5. **Verify the backend.** Run the inspection and coverage again. Expect exit 0,
    all six groups deployed, `rag` active, no in-progress schema, and the root
-   modules equal to the attested artifact.
+   modules equal to the attested artifact. Run coverage from the pinned
+   checkout: a checkout that contains the unmerged studio comparison
+   candidate adds a seventh group, `studio-comparison`, which stays missing
+   (exit 3) after this deploy.
 6. **Agent worker.** Merge the `homelab-infra` change and let Argo CD roll the
    worker. Zero running rows do not prove the old process is idle: the stale
    sweep can fail a row while its process continues, and a claim admitted
@@ -318,7 +329,8 @@ target. Neither mutates anything.
    ```
 
    The coverage report lists, per merged PR (#118, #138, #141, #140, #142,
-   #153), the functions, HTTP routes (including agent-tool routes), crons and
+   #153), plus the unmerged `studio-comparison` candidate when the checkout
+   contains it, the functions, HTTP routes (including agent-tool routes), crons and
    active component mounts the deployment lacks, and every `api.*` function
    the current web source calls that is missing or not public. Exit 0 means
    everything is deployed, 3 means something is missing, 2 means the file is
@@ -611,8 +623,10 @@ Deployment order, from the current contracts:
    - `renderValidation=go`, only after the human studio comparison and go/no-go
      in the render ladder plan. A human rating of a render does not validate it.
      The [plan 11 studio validation packet](plan11-studio-validation-packet.md)
-     prepares the three kits and records why studio renders cannot yet join a
-     blind group.
+     prepares the three kits and describes the studio comparison path. That
+     path ([contract](studio-comparison-contract.md)) is not in the
+     `91cb3047` pin; including it needs its own attested release before
+     deploy.
 
 Integration evidence (fixtures only): `convex/listenNextIntegration.test.ts`
 contains eight tests added after all four PRs landed. It

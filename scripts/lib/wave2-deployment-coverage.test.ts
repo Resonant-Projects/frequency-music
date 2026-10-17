@@ -248,6 +248,7 @@ describe("wave 2 deployment coverage", () => {
       "rendering-140",
       "tournament-142",
       "passages-153",
+      "studio-comparison",
     ]);
     expect(report.groups.every((group) => !group.deployed)).toBe(true);
     const passages = report.groups.find((g) => g.id === "passages-153");
@@ -266,6 +267,48 @@ describe("wave 2 deployment coverage", () => {
         "route POST /agent-tools/reportCaptureFailure",
       ]),
     );
+  });
+
+  test("the saved 2026-10-17 inspection: the recorded web skew holds and the studio calls are their own group", () => {
+    const evidence = join(repoRoot, "docs/evidence/wave2-rollout-20261017");
+    const saved = JSON.parse(
+      readFileSync(join(evidence, "deployment-inspection.json"), "utf8"),
+    );
+    const recorded = JSON.parse(
+      readFileSync(join(evidence, "coverage.json"), "utf8"),
+    ) as { webCalls: { missing: string[] } };
+    const web = webApiReferences(webSources());
+    const report = coverageReport(saved, web);
+    expect(report.complete).toBe(false);
+    expect(report.groups.every((group) => !group.deployed)).toBe(true);
+    const studio = COVERAGE_GROUPS.find((g) => g.id === "studio-comparison")!;
+    const studioNames = studio.functions.map((f) => `${f.module}:${f.name}`);
+    // Every studioComparisons call the web makes belongs to the new group.
+    const studioCalls = web
+      .filter((call) => call.module === "studioComparisons")
+      .map((call) => `${call.module}:${call.name}`);
+    expect(studioCalls.length).toBeGreaterThan(0);
+    for (const call of studioCalls) expect(studioNames).toContain(call);
+    // Without the candidate's calls, the web skew is exactly the ten functions
+    // recorded against this inspection.
+    expect(
+      report.webCalls.missing.filter((call) => !studioCalls.includes(call)),
+    ).toEqual(recorded.webCalls.missing);
+    expect(recorded.webCalls.missing).toHaveLength(10);
+    expect(report.webCalls.missing).toEqual(
+      expect.arrayContaining(studioCalls),
+    );
+    // Every missing web call is accounted for by some coverage group.
+    const grouped = new Set(
+      COVERAGE_GROUPS.flatMap((group) =>
+        group.functions.map((f) => `${f.module}:${f.name}`),
+      ),
+    );
+    for (const call of report.webCalls.missing)
+      expect(grouped.has(call)).toBe(true);
+    expect(
+      report.groups.find((g) => g.id === "studio-comparison")?.missing,
+    ).toEqual(studioNames);
   });
 
   test("a mounted but inactive or unmounted rag component is missing", () => {
