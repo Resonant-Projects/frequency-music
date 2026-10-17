@@ -1,0 +1,41 @@
+{
+  "format": "frequency-restore-receipt-item1-v1",
+  "volid": "nas-docker:backup/vzdump-lxc-113-2026_10_17-12_15_58.tar.zst",
+  "guest": { "ctid": 113, "hostname": "convex-hatchet", "node": "prox5" },
+  "vzdumpTask": "UPID:prox5:0011890C:0B26E897:6AD39F3E:vzdump:113:root@pam:",
+  "taskExitStatus": "OK",
+  "mode": "snapshot",
+  "compress": "zstd",
+  "storage": "nas-docker",
+  "notes": "convex-hatchet 2026-10-17 Wave 2 restore receipt part A archive (on-demand, snapshot, zstd)",
+  "taskStartedAt": "2026-10-17T16:15:58Z",
+  "snapshotWindow": {
+    "suspendedAt": "2026-10-17T16:15:58Z",
+    "resumedAt": "2026-10-17T16:16:00Z",
+    "guestOfflineSeconds": 2
+  },
+  "taskFinishedAt": "2026-10-17T16:19:46Z",
+  "includedMountPoints": ["rootfs ('/')", "mp0 ('/srv/app-data')"],
+  "compressedBytes": 30565690946,
+  "vzdumpTotalBytesWritten": 47469772800,
+  "sha256": "b07db9d4ca78ec7e6697c17029e9277cb603019cc46fb6b04d9dd9de1919b6ba",
+  "zstdTest": { "rc": 0, "decompressedBytes": 47469772800 },
+  "decompressedBytesEqualTotalBytesWritten": true,
+  "embeddedPctConf": {
+    "rootfs": "ceph-vm:vm-113-disk-0,size=32G",
+    "mp0": "ceph-vm:vm-113-disk-1,mp=/srv/app-data,backup=1,size=64G",
+    "otherVolumeKeys": []
+  },
+  "integrityCheckedOn": "prox4",
+  "integrityCheckWindow": {
+    "startedAt": "2026-10-17T16:21:44Z",
+    "finishedAt": "2026-10-17T16:26:17Z"
+  },
+  "productionBackendImageAtCapture": {
+    "observedBetween": ["2026-10-17T16:11:25Z", "2026-10-17T16:15:57Z"],
+    "method": "read-only pct exec 113 -- docker inspect / docker image inspect",
+    "imageId": "sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4",
+    "repoDigest": "ghcr.io/get-convex/convex-backend@sha256:d715e9ec088784407ca4ba2d3db592702cd328d02c76cdca3852c0018f2a76b4",
+    "readInsideRestoredGuest": false
+  }
+}
