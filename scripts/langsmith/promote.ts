@@ -35,6 +35,7 @@
  *   --baseline <version>                           optional; defaults per target
  *   --trials <n>                                   optional; default 2 (min 2)
  *   --threshold <float>                            optional; default 0.02
+ *   --stats-timeout <seconds>                      optional; default 900
  *   --help                                         print this help and exit
  */
 import "varlock/auto-load";
@@ -95,6 +96,26 @@ export const TARGETS: Record<Target, TargetConfig> = {
 
 const BASELINES_DOC = "docs/eval-baselines.md";
 
+/**
+ * How long to wait for LangSmith's feedback_stats to catch up with stored
+ * feedback. The aggregate has lagged about 8 minutes behind the scores, so
+ * the default budget is 15 minutes of waiting, backing off from 2.5 s to one
+ * read a minute.
+ */
+export interface StatsWait {
+  /** Most total milliseconds spent waiting between reads. */
+  timeoutMs: number;
+  /** First wait; each later wait doubles, up to `maxDelayMs`. */
+  initialDelayMs: number;
+  maxDelayMs: number;
+}
+
+export const DEFAULT_STATS_WAIT: StatsWait = {
+  timeoutMs: 15 * 60_000,
+  initialDelayMs: 2_500,
+  maxDelayMs: 60_000,
+};
+
 // ---------------------------------------------------------------------------
 // Pure helpers (unit-tested in promote.test.ts)
 // ---------------------------------------------------------------------------
@@ -105,11 +126,18 @@ export interface CliArgs {
   baseline?: string;
   trials: number;
   threshold: number;
+  /** Most seconds to wait between feedback_stats reads, per experiment. */
+  statsTimeoutSeconds: number;
   help: boolean;
 }
 
 export function parseArgs(argv: string[]): CliArgs {
-  const args: CliArgs = { trials: 2, threshold: 0.02, help: false };
+  const args: CliArgs = {
+    trials: 2,
+    threshold: 0.02,
+    statsTimeoutSeconds: DEFAULT_STATS_WAIT.timeoutMs / 1000,
+    help: false,
+  };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
     const next = argv[i + 1];
@@ -139,6 +167,15 @@ export function parseArgs(argv: string[]): CliArgs {
         if (!Number.isFinite(args.threshold)) args.threshold = 0.02;
         i++;
         break;
+      case "--stats-timeout": {
+        const seconds = Number(next);
+        args.statsTimeoutSeconds =
+          Number.isFinite(seconds) && seconds >= 0
+            ? seconds
+            : DEFAULT_STATS_WAIT.timeoutMs / 1000;
+        i++;
+        break;
+      }
       default:
         break;
     }
@@ -382,6 +419,8 @@ Options:
                                    extraction=v3, hypothesis=v1, brief=v1, recipe=v1)
   --trials <n>                   experiments per side; default 2, minimum 2
   --threshold <float>            max allowed per-evaluator regression; default 0.02
+  --stats-timeout <seconds>      most time to wait for LangSmith feedback_stats to
+                                   cover every score, per experiment; default 900
   --help, -h                     show this help
 
 Rubric (PASS):
@@ -462,17 +501,29 @@ export function runExperiment(
 
 /**
  * Poll LangSmith until the experiment's feedback_stats cover every validated
- * evaluator with one score per example. Throws rather than returning partial
- * means.
+ * evaluator with one score per example, backing off between reads until
+ * `wait.timeoutMs` of waiting is spent. Throws rather than returning partial
+ * means. The budget counts waits, not request time, so it is deterministic.
  */
 export async function readMeansForExperiment(
   client: Pick<Client, "readProject">,
   experiment: CompletedExperiment,
-  attempts = 6,
-  delayMs = 2500,
+  wait: StatsWait = DEFAULT_STATS_WAIT,
+  sleep: (ms: number) => Promise<void> = (ms) =>
+    new Promise((resolve) => setTimeout(resolve, ms)),
 ): Promise<Record<string, number>> {
+  if (!(wait.initialDelayMs > 0) || !(wait.maxDelayMs >= wait.initialDelayMs)) {
+    throw new Error(
+      `Invalid feedback wait: initialDelayMs must be > 0 and maxDelayMs >= initialDelayMs.`,
+    );
+  }
   let missing: string[] = ["no feedback stats read"];
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  let waited = 0;
+  let delay = wait.initialDelayMs;
+  let reads = 0;
+  for (;;) {
+    reads++;
+    const last = waited >= wait.timeoutMs;
     try {
       const project = await client.readProject({
         projectName: experiment.experiment,
@@ -482,14 +533,22 @@ export async function readMeansForExperiment(
       if ("means" in outcome) return outcome.means;
       missing = outcome.missing;
     } catch (error) {
-      if (attempt === attempts - 1) throw error;
+      if (last) throw error;
+      missing = [
+        `read failed: ${error instanceof Error ? error.message : String(error)}`,
+      ];
     }
-    if (attempt < attempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
+    if (last) break;
+    const pause = Math.min(delay, wait.timeoutMs - waited);
+    console.log(
+      `Feedback for ${experiment.experiment} is incomplete (${missing.join("; ")}); reading again in ${(pause / 1000).toFixed(1)} s.`,
+    );
+    await sleep(pause);
+    waited += pause;
+    delay = Math.min(delay * 2, wait.maxDelayMs);
   }
   throw new Error(
-    `Experiment ${experiment.experiment} feedback is incomplete after ${attempts} reads (${missing.join("; ")}); refusing partial scores.`,
+    `Experiment ${experiment.experiment} feedback is incomplete after ${reads} reads over ${(waited / 1000).toFixed(1)} s of waiting (${missing.join("; ")}); refusing partial scores.`,
   );
 }
 
@@ -602,6 +661,10 @@ export async function main(argv: string[] = process.argv.slice(2)) {
   }
 
   const client = new Client();
+  const statsWait: StatsWait = {
+    ...DEFAULT_STATS_WAIT,
+    timeoutMs: args.statsTimeoutSeconds * 1000,
+  };
   const candidateTrialMeans: Array<Record<string, number>> = [];
   let allPass = true;
 
@@ -612,11 +675,19 @@ export async function main(argv: string[] = process.argv.slice(2)) {
 
     console.log(`Running baseline experiment (${baseline})…`);
     const baselineExp = runExperiment(runnerPath, baseline);
-    const baselineMeans = await readMeansForExperiment(client, baselineExp);
+    const baselineMeans = await readMeansForExperiment(
+      client,
+      baselineExp,
+      statsWait,
+    );
 
     console.log(`Running candidate experiment (${candidate})…`);
     const candidateExp = runExperiment(runnerPath, candidate);
-    const candidateMeans = await readMeansForExperiment(client, candidateExp);
+    const candidateMeans = await readMeansForExperiment(
+      client,
+      candidateExp,
+      statsWait,
+    );
     candidateTrialMeans.push(candidateMeans);
 
     if (
