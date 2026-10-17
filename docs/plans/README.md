@@ -109,7 +109,7 @@ retains the earlier capture history and unresolved capture issues.
 
 Small; several are gate-specific, and item 1 must finish before plan 13 starts.
 
-1. **Eval baseline — NEXT, operator-gated, BLOCKED.**
+1. **Eval baseline — stage 1 DONE 2026-10-17; weekly briefs BLOCKED.**
    [`plans/008`](../../plans/008-eval-baseline-sweep.md) stopped at its
    2026-10-17 [preflight](../evidence/eval-baseline-20261017/preflight.md)
    with no scores recorded. The runner defects it found were
@@ -123,13 +123,11 @@ Small; several are gate-specific, and item 1 must finish before plan 13 starts.
    briefs stay at 2 rows under STOP 4, because production has no thesis rows.
    Keith approved the upload by hash and stage 1 at $11 (an estimate, not a
    cap). The [stage 1 sweep](../evidence/eval-baseline-20261017/sweep-stage1.md)
-   stopped at STOP 6, after extraction run 1. That run completed, but its cost
-   could not be measured, because LangSmith traced no model usage and there is
-   no console access. The bounded worst case is $1.52. Keith now needs to
-   check run 1's cost in the console, and to decide about two stale examples
-   in the LangSmith hypothesis dataset, a pre-repoint H2 and the dropped H4.
-   No baseline is recorded yet. Record it before starting plan 13 so its
-   generator changes remain measurable.
+   finished the same day. Extraction and hypothesis are now baselined:
+   extraction `schema_valid` 1.00 and `parameter_specificity` 0.82, hypothesis
+   `why_this_matters` 0.67. It cost $3.48. The weekly-brief baseline (stage 2)
+   is still open, under STOP 4 and pending its own approval. Whether plan 13
+   can start on the stage 1 baseline alone is Keith's call.
 2. **Domain triage** — now carded as
    [plan 12](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md): the packet is decided
    *through* the new surface, not hand-applied.

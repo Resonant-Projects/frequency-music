@@ -1,27 +1,30 @@
 # Plan 008 stage 1 sweep — 2026-10-17
 
-This is the first paid step of [plan 008](../../../plans/008-eval-baseline-sweep.md),
-run with the [readiness runbook](readiness.md#runbook) on host `devbox` at
+This is the paid stage 1 of [plan 008](../../../plans/008-eval-baseline-sweep.md),
+run with the [readiness runbook](readiness.md#runbook) on host `devbox` from
 base `16ed5881`. Keith approved it on 2026-10-17. He approved the upload by
 the three hashes in [Upload content](readiness.md#upload-content) and stage 1
 (extraction 18 rows and hypothesis 6 rows, three runs each) at the proposed
 $11. That figure is an estimate, not a cap. Stage 2 (weekly briefs) was not
 approved, and `eval-weekly-brief.ts` did not run.
 
-**Verdict: stopped at STOP 6, after extraction run 1.** Run 1 completed. Its
-Anthropic cost could not be measured: there is no console access here,
-LangSmith recorded no token usage, and the runner prints none. So `stop6-ok`
-was not created and run 2 did not start. **No baseline is recorded.**
-`docs/eval-baselines.md` keeps every `—`.
+**Verdict: stage 1 baselined.** Six runs completed. The extraction and
+hypothesis means are recorded in `docs/eval-baselines.md`. Stage 1 cost
+**$3.48**: extraction run 1 at its $1.52 bound, plus $1.96 measured across the
+other five runs.
 
-A second blocker affects the hypothesis stage, and resuming does not clear
-it. The LangSmith hypothesis dataset holds 8 examples, not 6. Two of them are
-stale rows from an upload on 2026-07-24, and one is the H4 that Keith dropped
-(see [Datasets in LangSmith](#datasets-in-langsmith)).
+The sweep paused twice, and Keith decided both pauses the same day:
+
+1. **STOP 6.** Run 1's cost could not be measured. Keith accepted run 1 at its
+   $1.52 bound, and authorized an opt-in usage log so that every later run is
+   measured ([Cost](#cost)).
+2. **Stale LangSmith rows.** The hypothesis and brief datasets held leftover
+   examples from an upload on 2026-07-24. Keith had those four examples
+   deleted ([Datasets in LangSmith](#datasets-in-langsmith)).
 
 Nothing was written to Convex, and no Convex `run`, `dev`, `codegen` or
-`deploy` command ran. The only paid call was extraction run 1. Logs and the
-read-only helper scripts are outside the repository, in
+`deploy` command ran. The only paid calls were the six runs. Logs, usage logs
+and the read-only helper scripts are outside the repository, in
 `~/.local/state/frequency-eval/plan008-20261017/` (mode 700).
 
 ## Checks
@@ -31,11 +34,12 @@ read-only helper scripts are outside the repository, in
 | Drift | `git diff --stat 57f7c90 HEAD -- scripts/langsmith/ docs/eval-baselines.md` | The 300 s target deadline (`eval-helper.ts` and its test), the materializer's `--dataset` selector and its test, and 2 lines in the baselines doc. All are covered in [runner-repair](runner-repair.md#follow-up-target-deadline) and [readiness](readiness.md#materialized-hypotheses-2026-10-17). `parseBaselinesDoc` is unchanged. |
 | Hashes | `sha256sum data/eval/*-golden.jsonl` | All three equal the approved values: extractions `006f9498…3c3a` (18 rows), hypotheses `1090976e…aaaa` (6), weekly briefs `9f836cd4…a5f6` (2). |
 | STOP 1 | Varlock boolean check, 16:08Z | Exit 0, `true true`. Only booleans were printed. |
-| STOP 2 | `vp test scripts/langsmith/` | 13 files, 144 tests, all passing. |
+| STOP 2 | `vp test scripts/langsmith/` | 13 files, 144 tests, all passing (151 after the usage hook). |
 | Upload 1 | `upload-datasets.ts`, 16:09Z | Exit 0. Extractions: found existing, `already has all 18 local examples`. Hypotheses: found existing, `uploaded 4 examples`. Weekly briefs: found existing, `uploaded 2 examples`. |
 | STOP 3 | Upload 2, immediately after | Exit 0. `already has all 18`, `all 6` and `all 2 local examples`. Idempotent; clear. |
-| Extraction run 1 | `run_eval extraction eval-extraction.ts 1`, 16:11:36Z–16:15:02Z | Exit 0. `EVAL_RUN_COMPLETE {"experiment":"extraction-v3-7b345c01","examples":18,"evaluatorKeys":["parameter_specificity","schema_valid"]}` |
-| STOP 6 | Run 1 cost | **Not measurable; stopped.** See [STOP 6](#stop-6). |
+| STOP 4 | LangSmith example counts after cleanup | Extractions 18, hypotheses 6 and briefs 2. Every example matches a ratified row. Briefs stay under the floor, so stage 2 stays blocked. |
+| STOP 5 | Every run | No run failed. |
+| STOP 6 | Run 1 cost | Accepted at the $1.52 bound on Keith's decision. Runs 2–6 were measured ([Cost](#cost)). |
 
 ## Datasets in LangSmith
 
@@ -46,98 +50,139 @@ So the private extraction `rawText` has been in LangSmith since then. The
 "nothing uploaded" statements in the preflight and readiness packages
 described only their own sessions.
 
-A read-only inventory compared each example's upload keys with the local
-rows, using `canonicalExampleKey` from `upload-datasets-lib.ts`:
+After the upload, a read-only inventory compared each example's upload keys
+with the local rows, using `canonicalExampleKey` from
+`upload-datasets-lib.ts`:
 
 | Dataset | Examples | Match a local row | Stale |
 | --- | --- | --- | --- |
-| `resonant-extractions-golden` | 18 | 18 (all from 2026-07-24) | 0 |
-| `resonant-hypotheses-golden` | **8** | 6: H1 and H3 from 2026-07-24, and H2, H5, H6 and H7 from this upload | **2** |
-| `resonant-weekly-briefs-golden` | **4** | 2, both from this upload | **2** |
+| `resonant-extractions-golden` (`2b1ebba9-…`) | 18 | 18 (all from 2026-07-24) | 0 |
+| `resonant-hypotheses-golden` (`921914ca-…`) | 8 | 6: H1 and H3 from 2026-07-24, and H2, H5, H6 and H7 from this upload | 2 |
+| `resonant-weekly-briefs-golden` (`671451bf-…`) | 4 | 2, both from this upload | 2 |
 
-Each stale example was matched to its closest historical row, comparing
-fields only:
+Every runner loads its whole dataset by name. A hypothesis run would
+therefore have scored 8 examples, including the dropped H4, and the runbook's
+means reader would have rejected it (`8 examples, expected 6`).
 
-| Example id | Closest row | Fields that differ |
-| --- | --- | --- |
-| `e71b0af7-d12a-4f0c-98d3-8c6ea8283d5a` (hypotheses) | H2 `jh72zwgdmb…` | `claims`, `topics`, `compositionParameters`: built from H2's extraction before the repoint |
-| `8c9c62ff-1189-45e2-a8ec-ba8b338640ee` (hypotheses) | H4 `jh7d82hc6s…` (dropped) | `claims`, `compositionParameters` |
-| `dba20cd4-7dd0-4e08-ad05-77e7c4f55ca2` (briefs) | `k57dmdzgv0…` | `recipes`, `hypotheses`, `studioPrompts` |
-| `e40f6085-17e3-4e3a-9fd3-c4a302e5391f` (briefs) | `k57atxwnwd…` | `recipes`, `hypotheses`, `studioPrompts` |
+### Deleted on Keith's decision
 
-The upload never deletes, so these stay. Every runner loads its whole dataset
-by name, so `eval-hypothesis.ts` would score 8 examples, including the
-dropped H4. The runbook's means reader then rejects every hypothesis run
-(`8 examples, expected 6; dataset drifted, STOP`). Each such run would also be
-billed for 8 Opus calls, up to $1.00 worst case instead of $0.75. Removing
-the two stale examples deletes LangSmith data, which no one has approved, so
-nothing was removed. The two stale brief examples matter only for stage 2.
+Before deleting anything, a check-only pass re-read each example. All four
+were in the expected dataset, created at 2026-07-24T02:45Z, and matched no
+ratified row on the upload keys. Together they were exactly the set of
+non-matching examples in each dataset, and the closest-row comparison was
+unchanged. The script deletes only when every check passes and deletion is
+explicitly enabled. It then deleted these four examples, and nothing else:
 
-## STOP 6
+| Dataset | Example id | Created (UTC) | Why it is stale |
+| --- | --- | --- | --- |
+| `resonant-hypotheses-golden` | `e71b0af7-d12a-4f0c-98d3-8c6ea8283d5a` | 2026-07-24T02:45:39.92Z | H2 (`jh72zwgdmb…`) built from its extraction before the repoint. It differs from the ratified H2 in `claims`, `topics` and `compositionParameters` |
+| `resonant-hypotheses-golden` | `8c9c62ff-1189-45e2-a8ec-ba8b338640ee` | 2026-07-24T02:45:40.28Z | H4 (`jh7d82hc6s…`), which Keith dropped. It also differs from the July H4 in `claims` and `compositionParameters` |
+| `resonant-weekly-briefs-golden` | `dba20cd4-7dd0-4e08-ad05-77e7c4f55ca2` | 2026-07-24T02:45:40.77Z | Pre-ratification brief `k57dmdzgv0…`. It differs from the ratified row in `recipes`, `hypotheses` and `studioPrompts` |
+| `resonant-weekly-briefs-golden` | `e40f6085-17e3-4e3a-9fd3-c4a302e5391f` | 2026-07-24T02:45:40.98Z | Pre-ratification brief `k57atxwnwd…`, with the same three fields changed |
 
-The runbook asks for the Anthropic console cost of extraction run 1. With no
-console access, Keith's instruction allowed one substitute: the run's recorded
-token usage, from LangSmith run usage metadata or the runner's own output,
-priced from the [Cost estimate](readiness.md#cost-estimate) table. Neither
-source exists:
+The inventory afterwards: extractions 18 of 18, hypotheses 6 of 6 and briefs
+2 of 2, each matching a ratified row, with no stale example left.
 
-- **LangSmith.** A read-only `listRuns` on `extraction-v3-7b345c01` returned
-  18 runs, all `chain` (the `evaluate()` target), and no `llm` child run.
-  `prompt_tokens`, `completion_tokens`, `total_tokens` and `total_cost` are 0
-  or absent on every run, and no `usage_metadata` exists. `eval-helper.ts`
-  calls `generateText` without a LangSmith AI SDK wrapper or telemetry, so
-  model calls are not traced.
-- **Runner output.** The log holds only the start line, the results URL and
-  the completion marker.
+## Cost
 
-Without measured usage the run's cost is only bounded, not known. Under the
-readiness method, run 1 costs at most **$1.52** (37,829 input tokens and
-144,000 output tokens at their caps). If every call were billed three times,
-the ceiling is $4.55. A completed run cannot reach the output bound, because
-a call that hits its cap fails the run. Measured that way, cumulative stage 1
-spend is **at most $1.52**, and the projected stage 1 total stays within the
-$6.80 worst case. That is a bound, not a measurement. The STOP 6 rule needs a
-measured figure, so the gate stays closed.
+**Run 1, by bound.** No measured usage exists for run 1. There was no console
+access, LangSmith recorded only the 18 `chain` target runs and no `llm` run,
+and every token and cost field was 0 or absent. The runner printed no usage.
+Keith accepted run 1 at its readiness single-attempt worst case, $1.52
+(37,829 input and 144,000 output tokens at their caps). After that decision,
+`stop6-ok` was created.
 
-## Extraction run 1 scores (provisional, not a baseline)
+**Runs 2–6, measured.** Keith authorized an opt-in hook. When
+`EVAL_USAGE_LOG=<path>` is set, `generateModelText` in `eval-helper.ts`
+appends one JSON line per model response. The line holds the model id and the
+AI SDK's token counts, and every count is a finite number or null. It carries
+no prompt, output or key text. Truncated and empty responses are logged too,
+because they are billed. Prompts, parameters, caps and scoring are unchanged.
+The runbook's `run_eval` set the variable to a per-run file.
 
-A baseline needs three runs, so these figures are recorded only as evidence.
-They are not in `docs/eval-baselines.md`.
+Each run was priced as its log totals multiplied by the
+[Cost estimate](readiness.md#cost-estimate) prices: Sonnet 5.5 at $2/$10 and
+Opus 5.5 at $4/$20 per million input/output tokens. No log showed cache
+tokens. The log line count equalled the example count every time, so no AI
+SDK retry was logged. A retried error attempt returns no usage, and nothing
+here suggests one was billed.
 
-| Evaluator | Run 1 mean (`readMeansForExperiment`) |
-| --- | --- |
-| `schema_valid` | 1.00 (1 exactly) |
-| `parameter_specificity` | 0.82 (0.8240777…) |
+| # | Run | Experiment | Calls | Input tok | Output tok | Cost | Cumulative |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Extraction 1 | `extraction-v3-7b345c01` | 18 | not measured | not measured | $1.52 (bound) | $1.52 |
+| 2 | Extraction 2 | `extraction-v3-fdbaee62` | 18 | 37,499 | 32,091 | $0.3959 | $1.92 |
+| 3 | Extraction 3 | `extraction-v3-dfbaf6de` | 18 | 37,499 | 32,542 | $0.4004 | $2.32 |
+| 4 | Hypothesis 1 | `hypothesis-v1-511b69df` | 6 | 8,377 | 18,303 | $0.3996 | $2.72 |
+| 5 | Hypothesis 2 | `hypothesis-v1-819866f8` | 6 | 8,377 | 16,585 | $0.3652 | $3.08 |
+| 6 | Hypothesis 3 | `hypothesis-v1-390c9c87` | 6 | 8,377 | 18,355 | $0.4006 | **$3.48** |
 
-**LangSmith stats lag.** `readMeansForExperiment` first refused this
-experiment: `feedback is incomplete after 6 reads (parameter_specificity:
-17/18 scores; schema_valid: 17/18 scores)`. A read-only probe found 18 root
-runs, 18 distinct examples, no run errors, and exactly one finite score per
-key on each run. The raw feedback means equal the figures above. The project's
-`feedback_stats` stayed at `n=17` until about 16:23Z, about 8 minutes after
-the run finished. Then the same call returned all 18. Its built-in polling
-lasts about 15 s (6 reads, 2.5 s apart). So the runbook's step 3 reader, and
-`promote.ts`, can fail closed on a sound run if they read too soon. Retrying
-later is enough. This is reported, not fixed: plan 008 keeps
-`scripts/langsmith/` out of scope.
+Before each run, the projected total was checked: cumulative spend plus the
+worst case of every remaining run ($1.52 per extraction run, about $0.75 per
+hypothesis run). It peaked at $6.81, when only run 1 had happened, and fell
+after every run. It never approached $11.
 
-## To resume
+Observations on the estimate:
 
-1. **STOP 6 (Keith).** In the Anthropic console, check the usage for the
-   `ANTHROPIC_API_KEY` that Varlock resolves on `devbox`. The window is
-   2026-10-17 16:11:36Z–16:15:02Z: 18 Sonnet 5.5 requests. If the cost is at
-   or under about $1.52, run
-   `touch ~/.local/state/frequency-eval/plan008-20261017/stop6-ok`.
-   Alternatively, approve a way to measure usage on later runs. For example,
-   a local fetch hook could log only each response's `usage` field. It would
-   need no change to `scripts/langsmith/`, but it is not in the runbook.
-2. **Hypothesis dataset (Keith).** Choose one: (a) delete the stale examples
-   `e71b0af7-…` and `8c9c62ff-…` from `resonant-hypotheses-golden`; (b)
-   accept an 8-example dataset that includes the dropped H4, which needs a new
-   curation decision and cost line; or (c) keep hypotheses blocked. Until he
-   decides, run only the extraction part of the runbook chain. The full chain
-   would spend on hypothesis runs whose scores cannot be recorded.
-3. **Extraction runs 2 and 3.** These use the same `run_eval` steps, in the
-   same `RUN_DIR`. Run 1's log passes and is skipped. To read the means, run
-   the step 3 reader with `EXPECTED_EXAMPLES=18` a few minutes after run 3, so
-   that `feedback_stats` has caught up.
+- Extraction input matched the offline estimate (37,499 against 37,829
+  tokens). Output was about 22% of the cap.
+- Hypothesis input was 8,377 tokens, about 12% above the 7,490 estimate, even
+  though the estimate assumed 3 characters per token. Output was about half
+  the cap. The per-run worst case therefore rises from $0.75 to about $0.754.
+- The AI SDK reported `reasoningTokens` 0 for every Sonnet call, and 4,282 to
+  4,830 per hypothesis run on Opus. `outputTokens` includes thinking either
+  way, so the cost figures do not depend on that split.
+- Runs 2 and 3 suggest that run 1, which used the same prompts and data, cost
+  about $0.40. The recorded total still counts it at the $1.52 bound, as Keith
+  decided.
+
+LangSmith is not priced. Stage 1 created 72 traced target runs and their
+feedback.
+
+## Scores
+
+Read with the runbook's step 3 reader, which uses `readMeansForExperiment`
+from `promote.ts`. Each run passed its log guards: `exit=0`, a completion
+marker, the expected example count, and no `EVAL RUN FAILED`.
+
+| Target | Evaluator | Run 1 | Run 2 | Run 3 | Three-run mean (recorded) |
+| --- | --- | --- | --- | --- | --- |
+| Extraction | `schema_valid` | 1 | 1 | 1 | **1.00** |
+| Extraction | `parameter_specificity` | 0.8241 | 0.8426 | 0.8056 | **0.82** |
+| Hypothesis | `why_this_matters` | 0.5833 | 0.5833 | 0.8333 | **0.67** |
+
+The hypothesis means move in steps of 1/6, because the dataset has 6 rows,
+and the evaluator varies between runs. A future candidate's comparison should
+allow for that.
+
+**LangSmith stats lag.** `feedback_stats` lagged behind the stored feedback
+by about 8 minutes for both targets. For run 1 it showed 17 of 18 scores per
+key. A read-only probe found 18 runs, 18 distinct examples, no run errors and
+exactly one finite score per key on each run, with raw means equal to the
+recorded ones. For the hypothesis runs it showed 5 of 6. Its built-in polling
+lasts about 15 s (6 reads, 2.5 s apart), so `readMeansForExperiment` refused
+each read until the stats caught up. Retrying once a minute succeeded in
+about 8 minutes. `promote.ts` uses the same reader, so a promotion run right
+after its experiments can fail closed in the same way. This is reported, not
+fixed.
+
+## Still `—`
+
+- Hypothesis `judge`: `eval-hypothesis.ts` emits no judge feedback.
+- The Codex provider-comparison rows: no runner has a provider flag.
+- Recipe: no runner exists.
+- Weekly brief, and the plan 04 comparison: stage 2 is not approved, and
+  STOP 4 applies (2 rows, and production has no thesis rows).
+
+## Usage hook review
+
+The hook (commit `aee240f7`) adds 7 focused tests to `eval-helper.test.ts`.
+They cover one line per call with only the model and numeric fields, a
+mode-600 file, logging before a truncation failure, null for non-numeric
+fields, an unset variable writing nothing and leaving the request unchanged,
+a failed write failing the call with a safe message, and `runEval` logging
+every target call. With the hook call removed, 6 of the 7 fail. `vp test
+scripts/langsmith/` passes 151 tests, and `tsc` passes. An independent Codex
+autoreview (`gpt-6.1-sol`, high reasoning, branch mode against `e9b04ebe`,
+with the judge, run-guard and runner sources as context) returned
+`scoped-clean`, with no findings at P0–P3, before any measured run used the
+hook.

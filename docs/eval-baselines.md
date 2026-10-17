@@ -15,11 +15,13 @@ is a **shared contract**:
 - Plan 04's weekly-brief comparison appends Convex-cron-vs-agent rows here.
 - Plan 05's `promote.ts` PASS updates the relevant means here.
 
-> **Status: skeleton.** Numbers are `—` placeholders until the first baseline
-> sweep runs ([plan 008](../plans/008-eval-baseline-sweep.md), needs live
-> Anthropic + LangSmith + uploaded golden datasets). `—` parses as non-numeric
-> and is skipped, so `promote.ts` degrades gracefully — it still runs the
-> head-to-head experiments and compares those. The 2026-10-17 preflight
+> **Status: baselined 2026-10-17 (extraction and hypothesis only).** Weekly
+> brief and recipe rows stay `—`. [Plan 008](../plans/008-eval-baseline-sweep.md)
+> stage 1 recorded the extraction and hypothesis means below. Stage 2, weekly
+> briefs, waits for at least 5 curated rows and its own approval. No recipe
+> runner exists. `—` parses as non-numeric and is skipped, so `promote.ts`
+> degrades gracefully for those rows: it still runs the head-to-head
+> experiments and compares those. The 2026-10-17 preflight
 > recorded no scores; its blockers and prepared commands are in
 > [`evidence/eval-baseline-20261017/preflight.md`](evidence/eval-baseline-20261017/preflight.md).
 > The runner defects it found were repaired the same day, before any
@@ -27,8 +29,7 @@ is a **shared contract**:
 > [`evidence/eval-baseline-20261017/runner-repair.md`](evidence/eval-baseline-20261017/runner-repair.md).
 > The current gates, cost estimate and runbook are in
 > [`evidence/eval-baseline-20261017/readiness.md`](evidence/eval-baseline-20261017/readiness.md).
-> The approved stage 1 sweep stopped at STOP 6 after one extraction run, so
-> no mean is recorded; see
+> The stage 1 runs, their measured cost and the dataset cleanup are in
 > [`evidence/eval-baseline-20261017/sweep-stage1.md`](evidence/eval-baseline-20261017/sweep-stage1.md).
 
 **How to record a baseline** (per target): run its `eval-*.ts` runner 3× against
@@ -61,20 +62,20 @@ scores 0, and those zeros count toward the mean.
 
 ## Extraction baseline
 
-- Prompt version: `v3` (`extract_v3` prompt text; `eval-extraction.ts` default) · Model/provider: `anthropic/claude-sonnet-5.5` (Anthropic direct, adaptive/medium, 8000 tokens) · Date: — · Experiments: —
+- Prompt version: `v3` (`extract_v3` prompt text; `eval-extraction.ts` default) · Model/provider: `anthropic/claude-sonnet-5.5` (Anthropic direct, adaptive/medium, 8000 tokens) · Date: 2026-10-17 · Experiments: `extraction-v3-7b345c01`, `extraction-v3-fdbaee62`, `extraction-v3-dfbaf6de` (18 examples each)
 
 | Evaluator | Mean |
 | --- | --- |
-| schema_valid | — |
-| parameter_specificity | — |
+| schema_valid | 1.00 |
+| parameter_specificity | 0.82 |
 
 ## Hypothesis baseline
 
-- Prompt version: `v1` · Model/provider: `anthropic/claude-opus-5.5` (Anthropic direct, adaptive/high, 6000 tokens) · Date: — · Experiments: —
+- Prompt version: `v1` · Model/provider: `anthropic/claude-opus-5.5` (Anthropic direct, adaptive/high, 6000 tokens) · Date: 2026-10-17 · Experiments: `hypothesis-v1-511b69df`, `hypothesis-v1-819866f8`, `hypothesis-v1-390c9c87` (6 examples each)
 
 | Evaluator | Mean |
 | --- | --- |
-| why_this_matters | — |
+| why_this_matters | 0.67 |
 | judge | — |
 
 `eval-hypothesis.ts` emits no `judge` feedback today, so that row stays `—`
