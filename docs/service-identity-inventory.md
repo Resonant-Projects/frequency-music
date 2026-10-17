@@ -41,6 +41,7 @@ client display flag, not a secret, and grants nothing server-side.
 | Consumer | Files | Runtime | Host | Resolution |
 | --- | --- | --- | --- | --- |
 | LangGraph worker | `agent/src/tools/convexTools.ts`, `agent/src/worker/runner.ts` | Bun in Docker (`agent/docker-compose.yml`, `langgraph-worker`) | CT107 on prox6 today; the Kubernetes migration in `docs/frequency-worker-handoff.md` moves it to one cluster consumer | `agent/.env` `env_file` on the host, or `agent/.env.schema` `op()` reference through Varlock. The host copy must be refreshed by hand on rotation |
+| LangGraph Studio dev server (opt-in `dev` profile) | `agent/docker-compose.yml` (`langgraph-dev`) | Bun in Docker | Same host as the worker, only while the profile runs | The same `agent/.env` `env_file`. Restart it with the worker on rotation |
 | Agent MCP server (outbound) | `agent/src/mcp/main.ts` | Bun (`vp run mcp`) | Wherever the operator runs it | `agent/.env.schema`. Its inbound `MCP_SHARED_SECRET` is a separate secret |
 | Worker smoke test | `agent/scripts/smoke-research-pipeline.ts` | Bun | Operator workstation | Process environment, or the four allowlisted keys it parses from a local `.env` |
 | Eval dataset export | `scripts/export-eval-datasets.ts` | `vpx tsx` | Operator workstation | Varlock auto-load |
@@ -61,8 +62,8 @@ stub synthetic values and never hold a real secret.
 2. Set the new value in the Convex deployment environment (operator-gated).
 3. Refresh every consumer that copies the value instead of resolving it at
    start: the worker's `agent/.env` on its host, and the GitHub Actions secret
-   `AUTH_BYPASS_SECRET`. Restart Varlock-resolved services (media, worker) so
-   they read the new value.
+   `AUTH_BYPASS_SECRET`. Restart every service that holds the old value: the
+   media service, the worker, and `langgraph-dev` if its profile is running.
 4. Watch the auth-failure alerts below for the next 24 hours. A consumer that
    was missed shows up as a `secret_mismatch` burst.
 
@@ -113,6 +114,8 @@ change adds no new push channel. Reading it:
 - Persisted counters: `authFailures:summary` (requires a signed-in user or
   `devBypassSecret`). It returns the last 24 hours of rows, per-surface totals,
   and `alertingSurfaces`, the surfaces with an hour at or above the threshold.
+  Totals cover every row; the row list is capped at 200, newest first, and
+  `countersTruncated` says when rows were left out.
 - Everything, including transactional rejections: filter the Convex log for
   `[auth-failure]` (dashboard Logs, or `vpx convex logs`). Both read
   production. The function path on each log line names the rejected mutation.

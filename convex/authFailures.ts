@@ -111,7 +111,7 @@ const counterValidator = v.object({
   lastUserAgent: v.optional(v.string()),
 });
 
-const SUMMARY_MAX_ROWS = 200;
+const SUMMARY_MAX_COUNTERS = 200;
 
 /** Operator view of the last 24 hours of persisted rejections. */
 export const summary = query({
@@ -126,16 +126,20 @@ export const summary = query({
     }),
     alertingSurfaces: v.array(surfaceValidator),
     counters: v.array(counterValidator),
+    countersTruncated: v.boolean(),
   }),
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const now = Date.now();
     const since = windowStartFor(now) - 23 * AUTH_FAILURE_WINDOW_MS;
+    // Totals read every row in the window. Surfaces, reasons, and operation
+    // labels are fixed sets (tool names and requireAuth entry points), so a
+    // day holds at most 24 hours times that product. Only details are capped.
     const rows = await ctx.db
       .query("authFailureCounters")
       .withIndex("by_key", (q) => q.gte("windowStart", since))
       .order("desc")
-      .take(SUMMARY_MAX_ROWS);
+      .collect();
     const totals: Record<AuthFailureSurface, number> = {
       bypass: 0,
       agent_tool: 0,
@@ -159,7 +163,10 @@ export const summary = query({
       threshold: AUTH_FAILURE_ALERT_THRESHOLD,
       totals,
       alertingSurfaces,
-      counters: rows.map(({ _id, _creationTime, ...row }) => row),
+      counters: rows
+        .slice(0, SUMMARY_MAX_COUNTERS)
+        .map(({ _id, _creationTime, ...row }) => row),
+      countersTruncated: rows.length > SUMMARY_MAX_COUNTERS,
     };
   },
 });

@@ -363,5 +363,47 @@ describe("authFailureCounters retention and summary", () => {
       media_tool: AUTH_FAILURE_ALERT_THRESHOLD,
     });
     expect(summary.counters).toHaveLength(2);
+    expect(summary.countersTruncated).toBe(false);
+  });
+
+  test("totals and alerts cover every bucket even when details are capped", async () => {
+    vi.stubEnv("AUTH_BYPASS_ENABLED", "true");
+    vi.stubEnv("AUTH_BYPASS_SECRET", BYPASS_SECRET);
+    const t = convexTest(schema, modules);
+    const now = windowStartFor(Date.now());
+    await t.run(async (ctx) => {
+      // The oldest hour holds the only media_tool burst; 250 newer agent_tool
+      // buckets would push it out of a capped read.
+      await ctx.db.insert("authFailureCounters", {
+        windowStart: now - 22 * 60 * 60 * 1000,
+        surface: "media_tool",
+        reason: "secret_mismatch",
+        operation: "http:claimNextMediaJob",
+        count: AUTH_FAILURE_ALERT_THRESHOLD,
+        firstAt: now,
+        lastAt: now,
+      });
+      for (let i = 0; i < 250; i++)
+        await ctx.db.insert("authFailureCounters", {
+          windowStart: now - (i % 20) * 60 * 60 * 1000,
+          surface: "agent_tool",
+          reason: "secret_mismatch",
+          operation: `http:tool${i}`,
+          count: 1,
+          firstAt: now,
+          lastAt: now,
+        });
+    });
+    const summary = await t.query(api.authFailures.summary, {
+      devBypassSecret: BYPASS_SECRET,
+    });
+    expect(summary.totals).toEqual({
+      bypass: 0,
+      agent_tool: 250,
+      media_tool: AUTH_FAILURE_ALERT_THRESHOLD,
+    });
+    expect(summary.alertingSurfaces).toEqual(["agent_tool", "media_tool"]);
+    expect(summary.counters).toHaveLength(200);
+    expect(summary.countersTruncated).toBe(true);
   });
 });
