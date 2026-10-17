@@ -1,7 +1,8 @@
 import { makeFunctionReference } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { constantTimeEqual } from "./auth";
+import { agentToolSecretRejection, recordAuthFailure } from "./auth";
 import type { AgentToolName } from "./shared/agentToolArgs";
+import { agentToolSurface } from "./shared/authFailures";
 import { AGENT_TOOL_NAMES } from "./shared/agentToolManifest";
 
 function json(data: unknown, status = 200): Response {
@@ -16,8 +17,15 @@ function makeAgentToolHttpHandler(toolName: AgentToolName) {
   return httpAction(async (ctx, request) => {
     const body = (await request.json()) as Record<string, unknown>;
     const secret = typeof body.secret === "string" ? body.secret : undefined;
-    const expected = process.env.AGENT_TOOL_SECRET;
-    if (!secret || !expected || !constantTimeEqual(secret, expected)) {
+    const rejection = agentToolSecretRejection(secret);
+    if (rejection || !secret) {
+      await recordAuthFailure(ctx, {
+        surface: agentToolSurface(toolName),
+        reason: rejection ?? "missing_secret",
+        operation: `http:${toolName}`,
+        // The one header kept, truncated by the recorder.
+        userAgent: request.headers.get("user-agent") ?? undefined,
+      });
       return json({ error: "Forbidden" }, 403);
     }
 
