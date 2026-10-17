@@ -1,0 +1,19 @@
+{
+  "target": "https://convex.resonantprojects.art",
+  "complete": true,
+  "consistency": "single-convex-query-timestamp",
+  "startedAt": "2026-10-17T02:55:53.917Z",
+  "finishedAt": "2026-10-17T02:55:54.299Z",
+  "pages": 3,
+  "rowsRead": 248,
+  "counts": {
+    "queued": 0,
+    "running": 0,
+    "needs_review": 3,
+    "completed": 244,
+    "failed": 1,
+    "cancelled": 0
+  },
+  "claimsPaused": false,
+  "claimsPauseConsistency": "observed-equal-across-pages"
+}

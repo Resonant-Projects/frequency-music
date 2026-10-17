@@ -13,7 +13,7 @@ change `renderValidation`. The go or no-go decision remains Keith's.
 | --- | --- |
 | 1. Bounded spike: three kits with the litmus engine | Done on 2026-10-13 (4-second renders, [SC README](../media/src/engines/sc/README.md)). Repeated on 2026-10-17 at 30 seconds with the published media image; see evidence below. |
 | 2. Pitch check under 0.5 cents | Done on 2026-10-13 for six sustained notes; on 2026-10-17 every distinct key of the three 30-second renders measured within 0.01 cent of the packet's pitch table. Necessary, not sufficient. |
-| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The blind `/listen` route cannot hold them yet; see [Blocker](#blocker-studio-renders-cannot-join-a-blind-group). |
+| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The path that carries them into a blind group on `/listen` is implemented and reviewed locally but not merged or deployed; see [Comparison path](#comparison-path). |
 | 4. Contamination assessment and go or no-go | Keith's decision, written up in `docs/plans/` as the plan 11 outcome. |
 
 ## The three kits
@@ -112,44 +112,86 @@ For each kit, follow `card.md`:
 
 Studio time is Keith's; no paid service is involved.
 
-## Blocker: studio renders cannot join a blind group
+## Comparison path
 
-The render ladder design says Keith's studio renders are "uploaded as
-`litmusRender` artifacts with `engine.name: "human-studio"` so they join a
-blind group like any other member". On `main` at `ec04c7c` that path does not
-exist:
+The earlier blocker (no human upload could create a `litmusRender` artifact,
+and nothing grouped a machine render with a human one) is closed in source by
+the [studio comparison contract](studio-comparison-contract.md):
+`convex/studioComparisons.ts`, a `studioComparison` blind-group purpose and a
+studio section on `/listen`. It is a local candidate, reviewed but not merged
+or deployed. Using it needs its own attested backend release and deploy; the
+[rollout work order](wave2-rollout-packet.md#combined-rollout-work-order-2026-10-17)
+pins `91cb3047`, which does not contain it.
 
-- Audio artifacts are minted only by a leased media job
-  (`convex/mediaToolsInternal.ts`); no human upload creates a `litmusRender`
-  artifact.
-- Blind groups are created only by media job effects
-  (`convex/mediaJobEffects.ts`), for a voice shootout or for the members of
-  one render's study family. Nothing groups a machine render with a human
-  one.
-- Study families require `renderValidation=go`, which is the decision this
-  comparison exists to make.
+Once deployed, one comparison runs:
 
-Building that path changes shared Convex schema and functions, which this
-rollout lane does not own. Two ways forward, for Keith and the coordinator to
-choose:
+1. **Machine baseline in production.** Save a kit's `render-plan.json` as a
+   real recipe's typed plan (`renders.setPlan`) and render it
+   (`renders.request`) with media renderer 0.3.0 on ai-5090-02. Only a
+   finished single-member, loudness-normalized render qualifies, and each
+   machine render joins at most one comparison. Study families still need
+   `renderValidation=go`.
+2. **Studio master.** Render that kit in the studio as in
+   [Keith's studio pass](#keiths-studio-pass): a 48 kHz, 24-bit WAV of
+   exactly the plan length, -18 LUFS within 0.5 LU, true peak at most
+   -1 dBTP.
+3. **Metadata-free MP3.** Encode the WAV with the documented command, the
+   same ffmpeg arguments the litmus engine uses for its delivery
+   (`STUDIO_ENCODE_COMMAND` in `convex/shared/studioComparison.ts`; a test
+   holds the two equal):
 
-1. **Implement the human-studio path first.** A separately authorized change
-   adds a Clerk-gated studio upload that mints an unvalidated `litmusRender`
-   delivery with `engine.name: "human-studio"` and the recipe reference, and a
-   blind-group purpose that pairs one machine delivery with one studio
-   delivery per kit. Ratings then land in `listeningSessions` through the
-   existing panel. This matches the design.
-2. **Run the comparison offline now.** Someone other than the listener
-   assigns A and B to the machine and studio file of each kit; Keith rates
-   with `session-sheet.md` before the mapping is revealed. Record the sheets
-   in the plan 11 outcome document. This is weaker: the sessions are not in
-   `listeningSessions`, and the design's blind panel guarantees (no labels
-   before reveal) depend on the person assigning labels.
+   ```sh
+   ffmpeg -i studio-master.wav -map_metadata -1 -fflags +bitexact -ar 48000 -ac 2 -c:a libmp3lame -b:a 256k -id3v2_version 0 -write_xing 1 studio-delivery.mp3
+   ```
 
-Either way the machine side must eventually be rendered in production through
-`renders.request` so the compared artifact is the one later stamped. That
-needs the Convex deployment, media image 0.3.0 on ai-5090-02, and a recipe
-with a typed render plan, each per the [rollout packet](wave2-rollout-packet.md).
+4. **Signed-in human upload with the exact plan.** On `/listen`, a Clerk user
+   (service identities are refused) picks the machine baseline, attaches the
+   same `render-plan.json` and the MP3, and fills in the provenance record
+   from `provenance.md`. The server refuses a plan that differs from the
+   machine job's frozen plan, a file over 95 MB or more than one second over
+   the plan length at the delivery bitrate, and a loudness declaration
+   outside the bounds above. After upload it checks the declared size and
+   SHA-256, refuses tags, junk, variable bitrate, malformed frames, a
+   different encoding or encoder header, a sample count different from the
+   machine delivery, and a byte-identical copy of the machine file. Then it
+   pairs the studio file with a fresh storage copy of the machine delivery
+   under random labels A and B.
+5. **Blind comparison in `audioRatings`.** Rate both members at once under
+   one set of listening conditions, on the six render scales (overall
+   optional). The ratings and the reveal commit together; afterwards the page
+   shows which label was which, with the declaration, studio SHA-256, plan
+   digest, recipe revision and renderer version. The ratings are general
+   audio ratings, not `listeningSessions`: the path creates no composition,
+   so listening debt, evidence and tournament fitness are unchanged, and
+   every member stays `unvalidated`.
+6. **Written contamination assessment and go or no-go.** See
+   [After the comparison](#after-the-comparison).
+
+Limitations to carry into the outcome report:
+
+- **Loudness is declared, not measured.** Convex does not decode audio. The
+  server holds the declaration to the bounds and checks frame structure and
+  sample count, not integrated loudness or true peak.
+- **Decoding is partial.** The browser decodes the file before upload, and
+  the server parses frame headers and side information without decoding the
+  Huffman-coded audio. A file can pass and still sound wrong; the listener
+  hears both takes before rating.
+- **Blindness guards against system leaks, not the listener.** A listener who
+  downloads and hashes both files, or plays local copies, can tell them
+  apart. The uploader is usually the listener.
+- **Not scientific validation.** One listener rating one pair is the human
+  check plan 11 asks for, not a validated measurement. A rating does not
+  validate a render.
+- **Visual acceptance is incomplete.** The upload form was driven in a real
+  local browser against no backend (labels, errors, focus, overflow on
+  desktop and mobile). The comparison, rating and reveal views have only
+  backend tests; no browser has rendered them against real data.
+
+The offline fallback stays available if the path is not deployed: someone
+other than the listener assigns A and B to each kit's machine and studio
+file, Keith rates with `session-sheet.md` before the mapping is revealed, and
+the sheets go into the plan 11 outcome document. This is weaker, because the
+blind guarantees depend on the person assigning labels.
 
 ## After the comparison
 

@@ -1,6 +1,7 @@
 /**
  * Probe the passage index with free text: top passages with source titles,
- * live statuses, scores and chunk positions.
+ * hosts, live statuses, scores and chunk positions. The header's chars total
+ * is the response size the 12,000-character bound applies to.
  *
  *   vpx tsx scripts/probe-passages.ts "standing waves on a plate"
  *   vpx tsx scripts/probe-passages.ts "chladni figures" --type youtube --limit 8
@@ -23,6 +24,15 @@ function printUsage() {
     'Usage: vpx tsx scripts/probe-passages.ts "query" [--limit N] [--type TYPE ...]',
   );
   console.log(`Types: ${PASSAGE_SOURCE_TYPES.join(", ")}`);
+}
+
+function host(url: string | undefined) {
+  if (!url) return "";
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
 }
 
 function truncate(text: string, length: number) {
@@ -72,8 +82,12 @@ async function main() {
     ...(args.types.length > 0 ? { types: args.types } : {}),
     devBypassSecret: getDevBypassSecret(),
   });
+  const chars = result.passages.reduce(
+    (sum, passage) => sum + passage.text.length,
+    0,
+  );
   console.log(
-    `query=${JSON.stringify(args.query)} passages=${result.passages.length} truncated=${result.truncated} omitted=${result.omitted}`,
+    `query=${JSON.stringify(args.query)} passages=${result.passages.length} chars=${chars} truncated=${result.truncated} omitted=${result.omitted}`,
   );
   if (result.passages.length === 0) {
     console.log("No passages returned.");
@@ -86,6 +100,7 @@ async function main() {
       chunk: passage.order,
       status: passage.status,
       source: truncate(passage.title ?? passage.sourceId, 40),
+      host: host(passage.canonicalUrl),
       passage: truncate(passage.text, 90),
     })),
   );

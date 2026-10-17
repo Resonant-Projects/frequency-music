@@ -6,6 +6,7 @@
 > Completed waves live in [docs/archive/](../archive/README.md). Decision history: [decision-log.md](../decision-log.md).
 > **Visual plan** (dependency graph + gate order, 2026-07-19): `plan-1511dbd302914c0a` on plans.rproj.art.
 > Listen-first status rows (§1c) reconciled 2026-10-13 against `main` at `6c83e4d` and the dated handoffs they cite.
+> Plans 008, 11 and 15 and §1c re-checked 2026-10-17 against `main` at `91cb3047`. Production facts come from that day's read-only [rollout evidence](../evidence/wave2-rollout-20261017/README.md).
 
 ## Where things stand
 
@@ -19,8 +20,8 @@ live/operator acceptance is listed below rather than keeping implementation
 specs in the active folder.
 
 The active plan files are now: **008** (next, operator-gated eval baseline
-sweep), **13** (recipe loop closure, blocked on 008), **11** (deferred studio
-spike), **15** (passage-index foundation), **16** (deferred WebMCP
+sweep), **13** (recipe loop closure, blocked on 008), **11** (studio spike; awaiting Keith's comparison
+and go/no-go), **15** (passage index; merged, live acceptance pending), **16** (deferred WebMCP
 readiness), and the autonomous Proxmox operations plan.
 
 The sequencing rule, per the 2026-07-07 decision-log entry: **synthesis is the
@@ -49,7 +50,7 @@ implementation may still have an operator/live acceptance item in §2.
 | 09 | [Source scout](../archive/plan-waves/2026-07-07-09-loop-source-scout.md) | ✅ Implemented in PR #35 (`073cb94`) — archived; first live run remains |
 | 14 | [Decision-surface sweep](../archive/plan-waves/2026-07-18-14-decision-surface-sweep.md) (card-level) | ✅ Implemented in PR #36 (`236e6f0`) — archived; visual acceptance remains |
 | 10 | [Composition starter kits](../archive/plan-waves/2026-07-07-10-loop-starter-kits.md) | ✅ Implemented in PR #30 (`3b72b5c`) — archived; real-recipe/studio acceptance remains |
-| 11 | Self-render spike (bounded) | Deferred to a Keith/DA studio session (needs audio engine install, real kits, human A/B listening) |
+| 11 | [Self-render spike (bounded)](./2026-07-07-11-loop-selfrender-spike.md) | Steps 1 and 2 done (litmus engine, pitch within 0.01 cent). Step 3 needs Keith's studio renders; the human studio comparison path ([contract](../studio-comparison-contract.md)) is reviewed locally, not merged or deployed, and needs its own attested release. Step 4, the contamination assessment and go/no-go, is Keith's. See the [studio validation packet](../plan11-studio-validation-packet.md). Renders stay `unvalidated` |
 
 After 11: **generator steering** (model/prompt/scope knobs in the UI) is the next roadmapped item —
 deferred by the 2026-07-18 decision, not dropped.
@@ -63,7 +64,7 @@ record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 
 | # | Plan | Status |
 |---|------|--------|
-| 15 | [Passage index foundation + `searchSourcePassages` agent tool](./2026-08-01-15-passage-index.md) | 📝 Planned — wave one |
+| 15 | [Passage index foundation + `searchSourcePassages` agent tool](./2026-08-01-15-passage-index.md) | Implementation merged in #153 (`6f33238`); live acceptance pending. Not deployed: the 2026-10-17 backend has no `rag` component. Nothing enabled, backfilled or probed. The bounded backfill canary and [acceptance sequence](../evidence/passage-index-20261017/acceptance.md) are ready; the budget cap and enabling are Keith's |
 | — | Hypothesis cross-source context (ship directly, no flag) | Follow-on, unplanned |
 | — | Extraction full-text fix (send all ≤100k chars; not a RAG change) | Follow-on, trivial |
 | — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
@@ -82,8 +83,8 @@ Language: **Audio Artifact**, **Media Job**, **Blind Group**, **House Voice** un
 |---|------|--------|
 | W0 | [Wave 0 — substrate](../superpowers/plans/2026-09-28-listen-first-wave-0-substrate.md) (artifacts, media jobs, blind groups, media service, podcast feed) | ✅ Merged (#75) and deployed 2026-09-29; media worker live on ai-5090-02, probe and feed verified |
 | W1 | [Wave 1 — voice and feed](../superpowers/plans/2026-09-28-listen-first-wave-1-voice-and-feed.md) | Implementation deployed September 30, with Cartesia expansion in #87. The managed podcast route repair is deployed; private RSS and full/range audio downloads are verified. Keith selected the house voice: live `houseVoiceId` read `inworld-max` (Inworld Max, Dennis) on October 5. His October 5 listening preferences were recorded without numeric ratings. Weekly narration ran for September 14, 21 and 28, and four audio editions were published on October 5. Playback on his devices and subjective fatigue remain his checks. See [live handoff](../listen-first-live-handoff-2026-09-30.md). |
-| W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Implementation merged to `main` in #138 (`6c83e4d`): docket preparation/playback, signed decisions, MCP, signer delivery and web Listen sections, with signer and preparation gates disabled by default. Rollout tooling merged in #139 (`52b7664`). General audio ratings (render deliveries and episodes) and recipe/audio deferral merged in #141 (`6e33381`); its headed visual acceptance is still blocked on this host. Production deployment is unverified; the revision backfill, MCP workload, signer bots and human signing acceptance are outstanding. Follow the [rollout packet](../wave2-rollout-packet.md), including its deployment order; see [backend integration](../wave2-backend-integration.md). |
-| W3–W4 | Render ladder and listen page; hypothesis tournament | Shared pitch contracts, an offline SuperCollider renderer, and the injected tournament core merged in #138. PR #140 (`1a368d1`) adds typed litmus render jobs (media renderer 0.3.0), with a real SuperCollider smoke render in the media container. Renders stay `unvalidated` until Keith's studio comparison and go/no-go. PR #142 (`0cc0592`) adds durable tournament persistence, direct-Anthropic model adapters and the worker graph behind `HYPOTHESIS_TOURNAMENT_ENABLED=false`. Both PRs are merged; production deployment is unverified. No live run or paid call was made during implementation, and listening fitness stays deferred. |
+| W2 | [Docket and signed decisions](../superpowers/plans/2026-09-30-listen-first-wave-2-docket-and-decisions.md) | Implementation merged to `main` in #138 (`6c83e4d`): docket preparation/playback, signed decisions, MCP, signer delivery and web Listen sections, with signer and preparation gates disabled by default. Rollout tooling merged in #139 (`52b7664`). General audio ratings (render deliveries and episodes) and recipe/audio deferral merged in #141 (`6e33381`); its headed visual acceptance is still blocked on this host. Not deployed: a read-only inspection on 2026-10-17 found the backend at `81150337` (#135), before #118, and the agent and media workers on matching older images. The `91cb3047` release manifest is attested and the `homelab-infra` worker change is prepared locally; no current restore receipt exists ([work order](../wave2-restore-receipt-work-order.md)), and the rollback, maintenance and named-approval items of the [approval packet](../wave2-rollout-packet.md#open-decision) are open. Production is unchanged by that preparation. The backend deploy, worker images, revision backfill, MCP workload, signer bots and human signing acceptance are outstanding. Follow the [rollout packet's work order](../wave2-rollout-packet.md#combined-rollout-work-order-2026-10-17); see [backend integration](../wave2-backend-integration.md). |
+| W3–W4 | Render ladder and listen page; hypothesis tournament | Shared pitch contracts, an offline SuperCollider renderer, and the injected tournament core merged in #138. PR #140 (`1a368d1`) adds typed litmus render jobs (media renderer 0.3.0), with a real SuperCollider smoke render in the media container. Renders stay `unvalidated` until Keith's studio comparison and go/no-go; the studio comparison path is a separate local candidate, not merged or deployed (plan 11 row above). PR #142 (`0cc0592`) adds durable tournament persistence, direct-Anthropic model adapters and the worker graph behind `HYPOTHESIS_TOURNAMENT_ENABLED=false`. Both PRs are merged and not deployed; on 2026-10-17 the backend ran `81150337` and the media worker renderer 0.2.2. No live run or paid call was made during implementation, and listening fitness stays deferred. |
 
 ## 1d. Source backlog and operator extraction (completed 2026-10-11)
 
@@ -113,12 +114,19 @@ Small; several are gate-specific, and item 1 must finish before plan 13 starts.
    2026-10-17 [preflight](../evidence/eval-baseline-20261017/preflight.md)
    with no scores recorded. The runner defects it found were
    [repaired](../evidence/eval-baseline-20261017/runner-repair.md) the same
-   day: failed or incomplete runs now exit 1, and the runners call Anthropic
-   directly on the production route. Still needed from Keith: credentials that
-   let Varlock resolve `ANTHROPIC_API_KEY` and `LANGSMITH_API_KEY`, approval to
-   upload the golden datasets, a STOP 4 decision on the hypothesis (4) and
-   weekly-brief (2) rows, and approval of a fresh cost estimate. Record that
-   baseline before starting plan 13 so its generator changes remain measurable.
+   day. Credentials now resolve through Varlock on `devbox` (STOP 1 clear
+   there). Keith ratified 6 hypothesis rows (H1–H3, H5–H7, H4 dropped) on
+   2026-10-17 ([curation sheet](../../data/eval/curation-2026-10-17.md)).
+   They are materialized in `hypotheses-golden.jsonl`, clearing the
+   hypothesis floor. The extraction and brief files keep their approved
+   bytes, so the production drift found in them is not committed. Weekly
+   briefs stay at 2 rows under STOP 4, because production has no thesis rows.
+   Still needed from Keith: upload approval by hash (the upload sends all
+   three files) and a budget. $11 is proposed as a stage-1 estimate, not a cap
+   ($6.80 single-attempt worst case, $20.39 retry ceiling); no budget is
+   approved ([readiness](../evidence/eval-baseline-20261017/readiness.md)).
+   Record that baseline before starting plan 13 so its generator changes
+   remain measurable.
 2. **Domain triage** — now carded as
    [plan 12](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md): the packet is decided
    *through* the new surface, not hand-applied.

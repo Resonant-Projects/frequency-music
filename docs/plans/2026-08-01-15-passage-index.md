@@ -6,7 +6,21 @@
 
 ## Status (2026-10-17)
 
-Code complete locally; deploy, backfill and probe acceptance remain operator steps. Found-state adaptations:
+**Implementation merged, live acceptance pending.** PR #153 merged to `main` (merge `6f33238`). Nothing has been deployed, enabled, backfilled or probed in production. The activation sequence, its gates, zero-failure criteria, rollback and evidence slots are in [`docs/evidence/passage-index-20261017/acceptance.md`](../evidence/passage-index-20261017/acceptance.md).
+
+Remaining evidence, in order:
+
+1. The coordinated backend deploy includes #153 (deployment lane), and the parent confirms it.
+2. Read-only checks: the gate reads `false` and `OPENAI_API_KEY` is present in the deployment environment.
+3. A full dry run: `textBearing`, `pending`, chars, the estimate and the ceiling.
+4. Keith's budget cap, at or above the dry run's ceiling.
+5. Gate enabled, then a canary apply (`--canary`, at most one page of pending work) with `indexed` equal to its `pending`, at least 1, and `failed=0`.
+6. A full apply with `failed=0`, and a convergence dry run with `scope=full pending=0 converged=yes`.
+7. Probes within bounds (1–8 passages, at most 12,000 chars, none archived), with a by-eye verdict that a cross-domain phrase returns both article prose and a transcript passage.
+8. No `Passage indexing skipped for` or `Passage removal failed for` line in the Convex logs for the window.
+9. Keith's decision to keep indexing enabled.
+
+Found-state adaptations:
 
 - The repo runs `ai@7`, so the deps are `@convex-dev/rag@^0.7.8` (peers `ai ^7`, `convex ^1.46`) and `@ai-sdk/openai@^4`.
 - `rag.add()` embeds chunks before its `contentHash` dedupe for entries under 100 chunks, so "unchanged text is free" only holds because `indexSource` first checks `findEntryByContentHash` for a ready entry. The sweep and backfill use the same check.
@@ -17,17 +31,11 @@ Code complete locally; deploy, backfill and probe acceptance remain operator ste
 - The default chunker bisects lines over 10,000 characters by UTF-16 index, which can split an emoji, and Convex rejects lone surrogates. `indexSource` passes explicit chunks with split pairs rejoined (`wellFormedChunks`).
 - The default chunker allows chunks up to 10,000 characters, which can exceed text-embedding-3-large's 8,192-token input limit for CJK or emoji text. Chunks are split to at most 8,000 UTF-8 bytes, and embedding requests are capped at 100 chunks and 250,000 bytes. Every token covers at least one byte, so this holds for any script.
 - `searchSourcePassages` is registered with `langchain: false`: graphs call it explicitly, and the weekly-brief agent's model-visible toolset is unchanged.
-- `convex/_generated/api.d.ts` gained `components.rag` and `passages` by hand, from the package's `ComponentApi<"rag">`, because codegen contacts the live deployment. The deploy's codegen replaces it; commit any drift.
+- `convex/_generated/api.d.ts` gained `components.rag` and `passages` by hand, from the package's `ComponentApi<"rag">`, because codegen contacts the live deployment. It is type-only: `api.js` resolves functions and components at runtime, and the supported deploy disables codegen. Commit any drift a later, separately authorized codegen shows.
 
-### Operator runbook (each step contacts production)
+### Operator runbook
 
-1. Confirm `OPENAI_API_KEY` is set in the Convex deployment environment (presence only).
-2. Deploy through the normal path (`vp run convex:deploy:dry-run`, then `vp run convex:deploy`), which runs codegen and mounts the `rag` component with its nested workpool. Commit any `_generated` drift.
-3. Dry run: `vpx tsx scripts/backfill-passages.ts`, then record `textBearing`, `pending`, chars, token estimate and cost (3-large at $0.13/1M tokens).
-4. After the budget is approved: `vpx convex run passages:setIndexingEnabled '{"enabled": true}'`.
-5. `vpx tsx scripts/backfill-passages.ts --apply`, then rerun the dry run until it reports `pending=0` (`converged=yes`).
-6. Probe: `vpx tsx scripts/probe-passages.ts "<cross-domain cymatics phrase>"`, check by eye that both article prose and a transcript passage come back, and paste the output into the PR.
-7. Rollback: `vpx convex run passages:setIndexingEnabled '{"enabled": false}'` stops all paid indexing. Search keeps serving whatever is already indexed.
+The [acceptance sequence](../evidence/passage-index-20261017/acceptance.md) supersedes the earlier seven-step runbook here. It corrects two steps: the supported deploy runs with `--codegen disable`, so it does not regenerate `_generated`, and enabling the gate also starts the weekly sweep and the write hooks spending. It adds the read-only gate check, a canary apply (`--canary`, which embeds only the first page holding pending work), a hard cost ceiling in the dry-run report, and machine-checkable pass criteria for each step. Rollback is `passages:setIndexingEnabled '{"enabled": false}'`. Search keeps serving whatever is already indexed, and no generator prompt reads it.
 
 **Goal:** Make source prose retrievable. Chunk-index every text-bearing source's full text (`rawText`/`transcript`) into a `@convex-dev/rag` passage index, and expose one bounded agent tool, `searchSourcePassages`, so agents can semantically query the corpus and get back what sources actually *say* — with provenance — instead of only claim assertions.
 

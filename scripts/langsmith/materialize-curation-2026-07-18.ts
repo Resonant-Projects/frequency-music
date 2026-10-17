@@ -1,8 +1,14 @@
 #!/usr/bin/env -S vpx tsx
 
+// Regenerates the golden files from production through read-only Convex
+// queries. With no arguments it rewrites all three; `--dataset <name>`
+// (repeatable) queries and rewrites only the named files and leaves the others'
+// bytes untouched.
 // oxlint-disable-next-line import/no-unassigned-import -- Loads .env.local before Convex URL resolution.
 import "varlock/auto-load";
-import { writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { open, rename, rm } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import {
   createEvalQuery,
@@ -10,6 +16,7 @@ import {
   getSource,
   requireRow,
   withPlaceholderTheses,
+  type EvalQuery,
   type Row,
 } from "../lib/eval-dataset-helpers";
 
@@ -34,11 +41,19 @@ const EXTRACTION_IDS = [
   "j97cs7s2wqevgarwtn5vtjc2rh8ab3rq",
 ] as const;
 
+/**
+ * H1–H3 from `data/eval/curation-2026-07-18.md`; H5–H7 added and H4
+ * (`jh7d82hc6s…`) dropped per `data/eval/curation-2026-10-17.md`. H4's golden
+ * `rationaleMd` repeats Claim 4's wrong arithmetic, so it is no longer a
+ * standalone reference output.
+ */
 const HYPOTHESIS_IDS = [
   "jh77f6vrfdyewjs2pdzfhdphms8ae2zs",
   "jh72zwgdmb5nytqka5nvbsbhv58afm5e",
   "jh7enth03nza8fe597vpf427qx8aejtb",
-  "jh7d82hc6s34cdww0k25sb4gd18aafhv",
+  "jh79bj87pjx2at0mqqy2jkppdx8axjc1",
+  "jh7602kgehf8mjkh1685gb55f98aw3eq",
+  "jh7c1rd967g1bz7ny40bft8evx8axfyy",
 ] as const;
 
 const WEEKLY_BRIEF_IDS = [
@@ -54,19 +69,21 @@ const WEEKLY_BRIEF_IDS = [
  * that was KEPT into `extractions-golden.jsonl`. The sheet's own note calls for
  * the repoint, so it is applied here rather than hand-edited into the JSONL, and
  * survives re-materialization.
+ *
+ * H4 (`jh7d82hc6s…`, `data/eval/curation-2026-10-17.md`) has no
+ * `extractionIds`, so it would resolve to its source's newest extraction, a
+ * 2026-10-13 re-extraction. Both ratified weekly briefs still embed H4, so the
+ * pin keeps their embedded claims, parameters and topics on the 2026-05-11
+ * extraction the golden rows were built from.
  */
 const HYPOTHESIS_EXTRACTION_REPOINTS: Record<string, readonly string[]> = {
   jh72zwgdmb5nytqka5nvbsbhv58afm5e: ["j97d7hq5d3kndbx5sq26qppqwn8afr0d"],
+  jh7d82hc6s34cdww0k25sb4gd18aafhv: ["j97f14ww3grvkgbgx82zppkj5x86hmsg"],
 };
 
-const convexUrl =
-  process.env.CONVEX_URL ??
-  process.env.CONVEX_SELF_HOSTED_URL ??
-  "https://convex.resonantprojects.art";
-const client = new ConvexHttpClient(convexUrl);
-const query = createEvalQuery(client);
+type Materialize = (query: EvalQuery, id: string) => Promise<Row>;
 
-async function materializeExtraction(id: string) {
+async function materializeExtraction(query: EvalQuery, id: string) {
   const extraction = await requireRow(query, "extraction", id);
   const source = await getSource(query, extraction.sourceId);
   return {
@@ -77,19 +94,19 @@ async function materializeExtraction(id: string) {
   };
 }
 
-async function materializeHypothesis(id: string) {
+async function materializeHypothesis(query: EvalQuery, id: string) {
   const hypothesis = await requireRow(query, "hypothesis", id);
   const repointed = HYPOTHESIS_EXTRACTION_REPOINTS[id];
   if (repointed) hypothesis.extractionIds = [...repointed];
   return await enrichHypothesis(query, hypothesis, "throw");
 }
 
-async function materializeBrief(id: string) {
+async function materializeBrief(query: EvalQuery, id: string) {
   const brief = await requireRow(query, "weeklyBrief", id);
   const [hypotheses, recipes, storedTheses, failures] = await Promise.all([
     Promise.all(
       (brief.recommendedHypothesisIds ?? []).map((hypothesisId: string) =>
-        materializeHypothesis(hypothesisId),
+        materializeHypothesis(query, hypothesisId),
       ),
     ),
     Promise.all(
@@ -110,23 +127,144 @@ async function materializeBrief(id: string) {
   };
 }
 
-async function writeJsonl(path: string, rows: Row[]) {
-  await writeFile(
-    path,
-    rows.map((row) => JSON.stringify(row)).join("\n") + "\n",
-  );
-  console.log(`wrote ${rows.length} rows to ${path}`);
+/** Golden files in write order. The keys are the `--dataset` names. */
+export const DATASETS = {
+  extractions: {
+    path: "data/eval/extractions-golden.jsonl",
+    ids: EXTRACTION_IDS,
+    materialize: materializeExtraction,
+  },
+  hypotheses: {
+    path: "data/eval/hypotheses-golden.jsonl",
+    ids: HYPOTHESIS_IDS,
+    materialize: materializeHypothesis,
+  },
+  "weekly-briefs": {
+    path: "data/eval/weekly-briefs-golden.jsonl",
+    ids: WEEKLY_BRIEF_IDS,
+    materialize: materializeBrief,
+  },
+} satisfies Record<
+  string,
+  { path: string; ids: readonly string[]; materialize: Materialize }
+>;
+
+export type DatasetName = keyof typeof DATASETS;
+const DATASET_NAMES = Object.keys(DATASETS) as DatasetName[];
+
+const USAGE = `Usage: materialize-curation-2026-07-18.ts [--dataset <name>]...
+  <name>: ${DATASET_NAMES.join(", ")}. Repeatable. Default: all three.`;
+
+function isDatasetName(name: string): name is DatasetName {
+  return Object.hasOwn(DATASETS, name);
 }
 
-await writeJsonl(
-  "data/eval/extractions-golden.jsonl",
-  await Promise.all(EXTRACTION_IDS.map(materializeExtraction)),
-);
-await writeJsonl(
-  "data/eval/hypotheses-golden.jsonl",
-  await Promise.all(HYPOTHESIS_IDS.map(materializeHypothesis)),
-);
-await writeJsonl(
-  "data/eval/weekly-briefs-golden.jsonl",
-  await Promise.all(WEEKLY_BRIEF_IDS.map(materializeBrief)),
-);
+/**
+ * The datasets to materialize, in write order. Throws on anything it does not
+ * recognize, so a typo never falls back to rewriting every file.
+ */
+export function parseDatasetArgs(argv: readonly string[]): DatasetName[] {
+  if (argv.length === 0) return DATASET_NAMES;
+  const selected = new Set<DatasetName>();
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] !== "--dataset") {
+      throw new Error(`unknown argument ${JSON.stringify(argv[i])}`);
+    }
+    const name = argv[++i];
+    if (name === undefined || name === "" || name.startsWith("-")) {
+      throw new Error("--dataset needs a dataset name");
+    }
+    if (!isDatasetName(name)) {
+      throw new Error(`unknown dataset ${JSON.stringify(name)}`);
+    }
+    selected.add(name);
+  }
+  return DATASET_NAMES.filter((name) => selected.has(name));
+}
+
+function productionQuery(): EvalQuery {
+  const convexUrl =
+    process.env.CONVEX_URL ??
+    process.env.CONVEX_SELF_HOSTED_URL ??
+    "https://convex.resonantprojects.art";
+  return createEvalQuery(new ConvexHttpClient(convexUrl));
+}
+
+/**
+ * Writes `text` completely to a new file beside `path` and returns its name.
+ * The random name is created exclusively, so it never follows or reuses an
+ * existing entry; a failed write removes only the file this call created.
+ */
+async function stage(path: string, text: string): Promise<string> {
+  const temporary = join(
+    dirname(path),
+    `.${basename(path)}.${randomUUID()}.tmp`,
+  );
+  const handle = await open(temporary, "wx");
+  try {
+    await handle.writeFile(text);
+    await handle.sync();
+    await handle.close();
+  } catch (error) {
+    await handle.close().catch(() => {});
+    await rm(temporary, { force: true }).catch(() => {});
+    throw error;
+  }
+  return temporary;
+}
+
+/**
+ * Arguments are checked before any client exists, and every selected dataset is
+ * read before the first write, so a bad argument or a failed read rewrites
+ * nothing. Every selected file is staged before any is replaced, so a failed
+ * staging write leaves every golden file as it was. Each replacement is an
+ * atomic rename; a failed rename can still leave earlier files replaced.
+ */
+export async function main(argv: readonly string[] = process.argv.slice(2)) {
+  let names: DatasetName[];
+  try {
+    names = parseDatasetArgs(argv);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`${message}\n${USAGE}`);
+    return 1;
+  }
+
+  const query = productionQuery();
+  const outputs: { path: string; rows: Row[] }[] = [];
+  for (const name of names) {
+    const { path, ids, materialize } = DATASETS[name];
+    const rows = await Promise.all(ids.map((id) => materialize(query, id)));
+    outputs.push({ path, rows });
+  }
+  // Temporary files not yet renamed into place; removed on any failure.
+  const pending = new Set<string>();
+  try {
+    const staged: { path: string; temporary: string; count: number }[] = [];
+    for (const { path, rows } of outputs) {
+      const text = rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
+      const temporary = await stage(path, text);
+      pending.add(temporary);
+      staged.push({ path, temporary, count: rows.length });
+    }
+    for (const { path, temporary, count } of staged) {
+      await rename(temporary, path);
+      pending.delete(temporary);
+      console.log(`wrote ${count} rows to ${path}`);
+    }
+  } finally {
+    await Promise.allSettled(
+      [...pending].map((temporary) => rm(temporary, { force: true })),
+    );
+  }
+  return 0;
+}
+
+if (import.meta.main) {
+  main()
+    .then((code) => process.exit(code))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

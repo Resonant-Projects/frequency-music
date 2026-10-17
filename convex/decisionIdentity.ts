@@ -1,9 +1,11 @@
 import { ConvexError } from "convex/values";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import { requireAuth } from "./auth";
 
 /** A service bypass or a raw Clerk subject is never a human users-table id. */
-export async function requireHumanIdentity(ctx: QueryCtx | MutationCtx) {
+export async function requireHumanIdentity(
+  ctx: QueryCtx | MutationCtx | ActionCtx,
+) {
   const identity = await requireAuth(ctx);
   if (identity.isBypass || identity.subject === "system")
     throw new ConvexError("Human authentication required");

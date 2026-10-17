@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-10-17T03:27Z",
+  "verifier": {
+    "gh": "2.102.0 (cli/cli release v2.102.0, user-local at ~/.local/share/gh-cli; tarball sha256 bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386 matched the release checksums file; its own build attestation verified to cli/cli deployment.yml at fc4b137c, the v2.102.0 tag commit)",
+    "configIsolation": "GH_CONFIG_DIR pointed at an empty private directory; GH_TOKEN supplied from the existing gh login in the environment, never printed"
+  },
+  "sourceSha": "6f332386d01089270b740ea009ee5088d8534a91",
+  "note": "main 6f332386..91cb3047 changes no file under agent/, media/, convex/ or the image workflows' paths",
+  "images": [
+    {
+      "image": "ghcr.io/resonant-projects/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d",
+      "tag": "sha-6f332386d01089270b740ea009ee5088d8534a91",
+      "harborCopy": "registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d (manifest resolved by digest with docker buildx imagetools inspect)",
+      "command": "gh attestation verify oci://<image> --repo Resonant-Projects/frequency-music --signer-workflow Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml --source-digest 6f332386d01089270b740ea009ee5088d8534a91 --source-ref refs/heads/main --deny-self-hosted-runners --format json",
+      "exitCode": 0,
+      "attestations": [
+        {
+          "subject": [
+            {
+              "name": "ghcr.io/resonant-projects/frequency-music-agent",
+              "sha256": "6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d"
+            }
+          ],
+          "predicateType": "https://slsa.dev/provenance/v1",
+          "sourceRepositoryURI": "https://github.com/Resonant-Projects/frequency-music",
+          "sourceRepositoryRef": "refs/heads/main",
+          "sourceRepositoryDigest": "6f332386d01089270b740ea009ee5088d8534a91",
+          "buildSignerURI": "https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main",
+          "buildTrigger": "push",
+          "runInvocationURI": "https://github.com/Resonant-Projects/frequency-music/actions/runs/38995835502/attempts/1",
+          "runnerEnvironment": "github-hosted",
+          "certificateIssuer": "https://token.actions.githubusercontent.com",
+          "transparencyLog": [
+            {
+              "type": "Tlog",
+              "uri": "https://rekor.sigstore.dev",
+              "timestamp": "2026-10-17T02:42:00Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "image": "ghcr.io/resonant-projects/frequency-music-media@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d",
+      "tag": "sha-6f332386d01089270b740ea009ee5088d8534a91",
+      "command": "gh attestation verify oci://<image> --repo Resonant-Projects/frequency-music --signer-workflow Resonant-Projects/frequency-music/.github/workflows/publish-media-image.yml --source-digest 6f332386d01089270b740ea009ee5088d8534a91 --source-ref refs/heads/main --deny-self-hosted-runners --format json",
+      "exitCode": 0,
+      "attestations": [
+        {
+          "subject": [
+            {
+              "name": "ghcr.io/resonant-projects/frequency-music-media",
+              "sha256": "2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d"
+            }
+          ],
+          "predicateType": "https://slsa.dev/provenance/v1",
+          "sourceRepositoryURI": "https://github.com/Resonant-Projects/frequency-music",
+          "sourceRepositoryRef": "refs/heads/main",
+          "sourceRepositoryDigest": "6f332386d01089270b740ea009ee5088d8534a91",
+          "buildSignerURI": "https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-media-image.yml@refs/heads/main",
+          "buildTrigger": "push",
+          "runInvocationURI": "https://github.com/Resonant-Projects/frequency-music/actions/runs/38995835619/attempts/1",
+          "runnerEnvironment": "github-hosted",
+          "certificateIssuer": "https://token.actions.githubusercontent.com",
+          "transparencyLog": [
+            {
+              "type": "Tlog",
+              "uri": "https://rekor.sigstore.dev",
+              "timestamp": "2026-10-17T02:42:05Z"
+            }
+          ]
+        }
+      ],
+      "offlineSmoke": "docker run --rm --network none --init --cap-drop ALL --security-opt no-new-privileges:true (compose.yaml's settings) ... node_modules/.bin/tsx src/engines/sc/smoke.ts printed {\"members\":[2]}"
+    }
+  ]
+}

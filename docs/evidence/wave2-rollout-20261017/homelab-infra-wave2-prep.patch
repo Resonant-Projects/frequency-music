@@ -1,0 +1,217 @@
+From 42ff776dc5def0fee43055c6aeab59500867904d Mon Sep 17 00:00:00 2001
+From: Keith Elliott <keith@resonantrhythm.com>
+Date: Sat, 17 Oct 2026 03:34:00 +0000
+Subject: [PATCH] feat(frequency): prepare Wave 2 agent and media worker images
+
+Local preparation only; not pushed. Merging to main is production
+authorization: Argo CD rolls frequency-worker, so merge only at step 6 of
+frequency-music docs/wave2-rollout-packet.md after the backend deploy.
+
+- Agent worker: frequency-music-agent@sha256:68538360 (frequency-music main
+  at 6f332386, publish-agent-image run 38995835502; attestation verified
+  with gh 2.102.0 against the workflow, source digest, refs/heads/main and
+  a GitHub-hosted runner). The Harbor copy has the same digest. The pod
+  template annotation, the process monitor's IMAGE and its CronJob image
+  follow it. 91cb3047 changes nothing under agent/ or convex/shared/.
+- AGENT_OUTBOX_DIR=/data/outbox on the retained frequency-state volume, as
+  frequency-music docs/pipeline-recovery.md requires for Kubernetes. The
+  worker treats that directory as its durable root and refuses to spool
+  when it is missing, so an outbox-dir init container from the same image
+  creates it (mode 0700, UID 1001) before the worker starts.
+- Media worker: MEDIA_JOB_KINDS gains litmusRender (renderer 0.3.0, #140).
+  The image tag lives in the host's untracked .env, not here; set
+  MEDIA_IMAGE_TAG=sha-6f332386d01089270b740ea009ee5088d8534a91@sha256:2b58a8ace6bb080f1b5515f3ba89e687df357ab3d2f92b583114c35d522c971d
+  on ai-5090-02 in the same deploy (publish-media-image run 38995835619,
+  attestation verified the same way).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ hosts/frequency-media/.env.example            |  6 ++--
+ hosts/frequency-media/README.md               |  7 ++--
+ hosts/frequency-media/compose.yaml            |  7 ++--
+ hosts/frequency-process-monitor/check.cjs     |  2 +-
+ .../infra/frequency-worker/deployment.yaml    | 34 +++++++++++++++++--
+ .../frequency-worker/process-monitor.yaml     |  4 +--
+ .../test_frequency_active_preparation.py      | 20 +++++++++++
+ 7 files changed, 65 insertions(+), 15 deletions(-)
+
+diff --git a/hosts/frequency-media/.env.example b/hosts/frequency-media/.env.example
+index 61435e6a..e779e169 100644
+--- a/hosts/frequency-media/.env.example
++++ b/hosts/frequency-media/.env.example
+@@ -7,7 +7,7 @@
+ # the registry pull); otherwise a published `sha-<commit>` tag. CI publishes
+ # only immutable `sha-<commit>` tags, never `latest`. To pin the bytes, append
+ # the digest: MEDIA_IMAGE_TAG=sha-<commit>@sha256:<digest>.
+-# compose.yaml claims the wave 1 job kinds, so a published tag must come from
+-# frequency-music main at or after the wave 1 merge (#77); an older image
+-# exits at start with "no handler for job kinds".
++# compose.yaml claims the wave 1 job kinds and Wave 2 litmusRender, so a
++# published tag must come from frequency-music main at or after #140; an older
++# image exits at start with "no handler for job kinds".
+ MEDIA_IMAGE_TAG=local
+diff --git a/hosts/frequency-media/README.md b/hosts/frequency-media/README.md
+index d0a5ea8f..baca7f94 100644
+--- a/hosts/frequency-media/README.md
++++ b/hosts/frequency-media/README.md
+@@ -5,9 +5,10 @@ Docker Compose definition for the Frequency Music media service on
+ self-hosted Convex deployment through `/agent-tools/*`, renders and normalizes
+ audio with the ffmpeg shipped in its own image, uploads artifacts to Convex
+ storage, and completes each job with a typed result. It claims the wave 1
+-job kinds (`probe`, `narrate`, `shootout`, `assembleEpisode`), so the image
+-must come from frequency-music main at or after the wave 1 merge (#77); an
+-older probe-only image logs `no handler for job kinds` and exits at start.
++job kinds (`probe`, `narrate`, `shootout`, `assembleEpisode`) and the Wave 2
++`litmusRender` kind (SuperCollider renderer 0.3.0), so the image must come
++from frequency-music main at or after #140; an older image logs
++`no handler for job kinds` and exits at start.
+ 
+ - Image: `ghcr.io/resonant-projects/frequency-music-media`, built from
+   `media/Dockerfile` in the frequency-music repo by its
+diff --git a/hosts/frequency-media/compose.yaml b/hosts/frequency-media/compose.yaml
+index c81293b2..e0a3c713 100644
+--- a/hosts/frequency-media/compose.yaml
++++ b/hosts/frequency-media/compose.yaml
+@@ -19,9 +19,10 @@ services:
+       # the MEDIA_ALLOW_INSECURE_CONVEX opt-in.
+       CONVEX_SITE_URL: https://convex-http.resonantprojects.art
+       MEDIA_WORKER_ID: ai-5090-02
+-      # Wave 1 kinds: needs an image from frequency-music main at or after
+-      # #77. An older image (probe only) exits at start rather than poll.
+-      MEDIA_JOB_KINDS: probe,narrate,shootout,assembleEpisode
++      # Wave 1 kinds plus Wave 2 litmusRender (SuperCollider renderer 0.3.0):
++      # needs an image from frequency-music main at or after #140. An older
++      # image exits at start ("no handler for job kinds") rather than poll.
++      MEDIA_JOB_KINDS: probe,narrate,shootout,assembleEpisode,litmusRender
+       # Local voice: the tts-local service below, on the compose network.
+       # Set means "configured"; empty it when tts-local is retired so the
+       # shootout skips the voice instead of waiting on a stopped server.
+diff --git a/hosts/frequency-process-monitor/check.cjs b/hosts/frequency-process-monitor/check.cjs
+index bc973f05..c0a480ef 100644
+--- a/hosts/frequency-process-monitor/check.cjs
++++ b/hosts/frequency-process-monitor/check.cjs
+@@ -2,7 +2,7 @@
+ // Kubernetes process readiness only. Queue completion is separate acceptance.
+ const fs = require('node:fs');
+ const https = require('node:https');
+-const IMAGE = 'registry.rproj.art/frequency-music/frequency-music-agent@sha256:06bcf3d679af8945897a188daa9dd75bf54fa6b8768bdbb1e4d32bd88fdbfddb';
++const IMAGE = 'registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d';
+ // The worker and its PO-token sidecar, both from the promoted image.
+ const CONTAINERS = ['worker', 'pot-provider'];
+ function ready(deployment, pods) {
+diff --git a/kubernetes/infra/frequency-worker/deployment.yaml b/kubernetes/infra/frequency-worker/deployment.yaml
+index 2b6def28..43f5b852 100644
+--- a/kubernetes/infra/frequency-worker/deployment.yaml
++++ b/kubernetes/infra/frequency-worker/deployment.yaml
+@@ -16,7 +16,7 @@ spec:
+       labels:
+         app: frequency-worker
+       annotations:
+-        rproj.source-revision: 81150337a777594c3a39f2be0a5f75b5e226d9d3
++        rproj.source-revision: 6f332386d01089270b740ea009ee5088d8534a91
+     spec:
+       automountServiceAccountToken: false
+       enableServiceLinks: false
+@@ -30,11 +30,39 @@ spec:
+         seccompProfile:
+           type: RuntimeDefault
+       terminationGracePeriodSeconds: 86400
++      # The audit outbox (AGENT_OUTBOX_DIR) is its own durable root: the worker
++      # refuses to spool unless the directory already exists. Create it on the
++      # retained volume before the worker starts; idempotent on every start.
++      initContainers:
++      - name: outbox-dir
++        image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d
++        command:
++        - /bin/sh
++        - -c
++        - mkdir -p /data/outbox && chmod 700 /data/outbox && sync
++        resources:
++          requests:
++            cpu: 10m
++            memory: 16Mi
++          limits:
++            cpu: 100m
++            memory: 64Mi
++        securityContext:
++          allowPrivilegeEscalation: false
++          readOnlyRootFilesystem: true
++          capabilities:
++            drop:
++            - ALL
++        volumeMounts:
++        - name: state
++          mountPath: /data
+       containers:
+       - name: worker
+-        image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:06bcf3d679af8945897a188daa9dd75bf54fa6b8768bdbb1e4d32bd88fdbfddb
++        image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d
+         workingDir: /app/agent
+         env:
++        - name: AGENT_OUTBOX_DIR
++          value: /data/outbox
+         - name: CODEX_ENABLED
+           value: 'false'
+         - name: CODEX_SPECIALIST
+@@ -126,7 +154,7 @@ spec:
+       # YouTube PO-token provider for transcript capture (bgutil server built
+       # into the same image), reachable only inside the pod on 127.0.0.1:4416.
+       - name: pot-provider
+-        image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:06bcf3d679af8945897a188daa9dd75bf54fa6b8768bdbb1e4d32bd88fdbfddb
++        image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d
+         workingDir: /opt/bgutil-server
+         # Node as PID 1 ignores SIGTERM, which held a terminating pod (and the
+         # worker's ReadWriteOncePod volume) for the full grace period. The
+diff --git a/kubernetes/infra/frequency-worker/process-monitor.yaml b/kubernetes/infra/frequency-worker/process-monitor.yaml
+index 5d4c2f9c..a30f2bec 100644
+--- a/kubernetes/infra/frequency-worker/process-monitor.yaml
++++ b/kubernetes/infra/frequency-worker/process-monitor.yaml
+@@ -6,7 +6,7 @@ metadata:
+ data:
+   "check.cjs": "'use strict';\n// Kubernetes process readiness only. Queue completion\
+     \ is separate acceptance.\nconst fs = require('node:fs');\nconst https = require('node:https');\n\
+-    const IMAGE = 'registry.rproj.art/frequency-music/frequency-music-agent@sha256:06bcf3d679af8945897a188daa9dd75bf54fa6b8768bdbb1e4d32bd88fdbfddb';\n\
++    const IMAGE = 'registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d';\n\
+     // The worker and its PO-token sidecar, both from the promoted image.\nconst CONTAINERS\
+     \ = ['worker', 'pot-provider'];\nfunction ready(deployment, pods) {\n  const d\
+     \ = deployment;\n  if (d.metadata?.deletionTimestamp || d.spec?.replicas !== 1\
+@@ -152,7 +152,7 @@ spec:
+               type: RuntimeDefault
+           containers:
+           - name: check
+-            image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:06bcf3d679af8945897a188daa9dd75bf54fa6b8768bdbb1e4d32bd88fdbfddb
++            image: registry.rproj.art/frequency-music/frequency-music-agent@sha256:6853836008280dbca712558e412a946b73a79993ad5250b54e67c079f4d37c5d
+             command:
+             - node
+             - /check/check.cjs
+diff --git a/scripts/tests/test_frequency_active_preparation.py b/scripts/tests/test_frequency_active_preparation.py
+index 9199e6a6..53af8358 100644
+--- a/scripts/tests/test_frequency_active_preparation.py
++++ b/scripts/tests/test_frequency_active_preparation.py
+@@ -110,6 +110,26 @@ class FrequencyActivePreparation(unittest.TestCase):
+                     for entry in transcripts:
+                         self.assertIn(entry, worker_env)
+                         worker_env.remove(entry)
++                    # Audit outbox (frequency-music pipeline recovery): a
++                    # persistent directory on the retained volume, created by
++                    # an init container from the promoted image before the
++                    # worker starts, because the worker refuses a missing one.
++                    outbox = {'name': 'AGENT_OUTBOX_DIR', 'value': '/data/outbox'}
++                    self.assertIn(outbox, worker_env)
++                    worker_env.remove(outbox)
++                    init = template['spec'].pop('initContainers')
++                    self.assertEqual([c['name'] for c in init], ['outbox-dir'])
++                    self.assertEqual(init[0]['image'], PROMOTED_IMAGE)
++                    self.assertEqual(init[0]['command'], [
++                        '/bin/sh', '-c',
++                        'mkdir -p /data/outbox && chmod 700 /data/outbox && sync'])
++                    self.assertEqual(init[0]['volumeMounts'],
++                                     [{'name': 'state', 'mountPath': '/data'}])
++                    self.assertNotIn('env', init[0])
++                    self.assertNotIn('envFrom', init[0])
++                    self.assertTrue(init[0]['securityContext']['readOnlyRootFilesystem'])
++                    self.assertEqual(init[0]['securityContext']['capabilities'], {'drop': ['ALL']})
++                    self.assertFalse(init[0]['securityContext']['allowPrivilegeEscalation'])
+                     containers = template['spec']['containers']
+                     self.assertEqual([c['name'] for c in containers], ['worker', 'pot-provider'])
+                     sidecar = containers.pop(1)

@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vite-plus/test";
+import { AGENT_TOOL_NAMES } from "../../convex/shared/agentToolManifest";
 import {
   COVERAGE_GROUPS,
   coverageReport,
@@ -22,13 +23,15 @@ function webSources(directory = join(repoRoot, "web/src")): string[] {
   });
 }
 
-/** Inspection-v1 shape with the given root functions, routes and crons.
- * Functions are public unless named in `internal` as `module:name`. */
+/** Inspection-v1 shape with the given root functions, routes, crons and
+ * active component mounts. Functions are public unless named in `internal`
+ * as `module:name`. */
 function inspection(
   functions: RequiredFunction[],
   routes: string[] = [],
   crons: string[] = [],
   internal: string[] = [],
+  components: string[] = [],
 ) {
   const byModule = new Map<string, { name: string; kind: string }[]>();
   const add = (path: string, name: string, kind: string) =>
@@ -41,6 +44,10 @@ function inspection(
   return {
     format: "frequency-deployment-inspection-v1",
     finishedAt: "2026-10-17T00:00:00.000Z",
+    components: [
+      { path: "", state: "active" },
+      ...components.map((path) => ({ path, state: "active" })),
+    ],
     modules: [
       {
         componentId: null,
@@ -66,8 +73,10 @@ function inspection(
 }
 
 const allRequired = COVERAGE_GROUPS.flatMap((group) => group.functions);
-const allRoutes = ["POST /discord/interactions", "POST /telegram/webhook/*"];
+const allRoutes = COVERAGE_GROUPS.flatMap((group) => group.httpRoutes);
 const allCrons = COVERAGE_GROUPS.flatMap((group) => group.crons);
+const allComponents = COVERAGE_GROUPS.flatMap((group) => group.components);
+const signerRoutes = ["POST /discord/interactions", "POST /telegram/webhook/*"];
 
 describe("wave 2 deployment coverage", () => {
   test("every required function is an export of the current source", () => {
@@ -79,8 +88,15 @@ describe("wave 2 deployment coverage", () => {
     const http = convexSource("http");
     expect(http).toContain('path: "/discord/interactions"');
     expect(http).toContain('pathPrefix: "/telegram/webhook/"');
+    for (const route of allRoutes.filter((r) => !signerRoutes.includes(r))) {
+      const tool = route.match(/^POST \/agent-tools\/(\w+)$/)?.[1];
+      expect(AGENT_TOOL_NAMES).toContain(tool);
+    }
     for (const cron of allCrons) {
       expect(convexSource("crons")).toContain(`"${cron}"`);
+    }
+    for (const component of allComponents) {
+      expect(convexSource("convex.config")).toContain(`app.use(${component})`);
     }
   });
 
@@ -98,7 +114,13 @@ describe("wave 2 deployment coverage", () => {
   test("a deployment carrying everything is complete", () => {
     const web = webApiReferences(webSources());
     const report = coverageReport(
-      inspection([...allRequired, ...web], allRoutes, allCrons),
+      inspection(
+        [...allRequired, ...web],
+        allRoutes,
+        allCrons,
+        [],
+        allComponents,
+      ),
       web,
     );
     expect(report.complete).toBe(true);
@@ -135,8 +157,14 @@ describe("wave 2 deployment coverage", () => {
     const report = coverageReport(
       inspection(
         allRequired,
-        ["POST /discord/interactions-test", "POST /telegram/webhook/one-token"],
+        [
+          ...allRoutes.filter((route) => !signerRoutes.includes(route)),
+          "POST /discord/interactions-test",
+          "POST /telegram/webhook/one-token",
+        ],
         allCrons,
+        [],
+        allComponents,
       ),
       [],
     );
@@ -178,7 +206,13 @@ describe("wave 2 deployment coverage", () => {
 
   test("an internal function does not satisfy a web call", () => {
     const report = coverageReport(
-      inspection(allRequired, allRoutes, allCrons, ["docket:listWeb"]),
+      inspection(
+        allRequired,
+        allRoutes,
+        allCrons,
+        ["docket:listWeb"],
+        allComponents,
+      ),
       [{ module: "docket", name: "listWeb" }],
     );
     expect(report.groups.every((group) => group.deployed)).toBe(true);
@@ -188,12 +222,126 @@ describe("wave 2 deployment coverage", () => {
 
   test("an internal function satisfies a capability group", () => {
     const report = coverageReport(
-      inspection(allRequired, allRoutes, allCrons, [
-        "decisionIntentsMigrations:backfillRevisions",
-      ]),
+      inspection(
+        allRequired,
+        allRoutes,
+        allCrons,
+        ["decisionIntentsMigrations:backfillRevisions"],
+        allComponents,
+      ),
       [{ module: "docket", name: "listWeb" }],
     );
     expect(report.complete).toBe(true);
+  });
+
+  test("the October 11 deployment lacks #118 onward, including the rag mount", () => {
+    // Root inventory of 81150337 as observed on 2026-10-17: none of the
+    // groups' functions, routes, crons or components.
+    const report = coverageReport(
+      inspection([{ module: "podcast", name: "subscription" }]),
+      [],
+    );
+    expect(report.groups.map((group) => group.id)).toEqual([
+      "recovery-118",
+      "wave2-138",
+      "audio-feedback-141",
+      "rendering-140",
+      "tournament-142",
+      "passages-153",
+      "studio-comparison",
+    ]);
+    expect(report.groups.every((group) => !group.deployed)).toBe(true);
+    const passages = report.groups.find((g) => g.id === "passages-153");
+    expect(passages?.missing).toEqual(
+      expect.arrayContaining([
+        "passages:sweep",
+        "route POST /agent-tools/searchSourcePassages",
+        "cron passage-index-sweep",
+        "component rag",
+      ]),
+    );
+    expect(report.groups.find((g) => g.id === "recovery-118")?.missing).toEqual(
+      expect.arrayContaining([
+        "operationFailures:listForRun",
+        "cron normalize-legacy-extraction-history",
+        "route POST /agent-tools/reportCaptureFailure",
+      ]),
+    );
+  });
+
+  test("the saved 2026-10-17 inspection: the recorded web skew holds and the studio calls are their own group", () => {
+    const evidence = join(repoRoot, "docs/evidence/wave2-rollout-20261017");
+    const saved = JSON.parse(
+      readFileSync(join(evidence, "deployment-inspection.json"), "utf8"),
+    );
+    const recorded = JSON.parse(
+      readFileSync(join(evidence, "coverage.json"), "utf8"),
+    ) as { webCalls: { missing: string[] } };
+    const web = webApiReferences(webSources());
+    const report = coverageReport(saved, web);
+    expect(report.complete).toBe(false);
+    expect(report.groups.every((group) => !group.deployed)).toBe(true);
+    const studio = COVERAGE_GROUPS.find((g) => g.id === "studio-comparison")!;
+    const studioNames = studio.functions.map((f) => `${f.module}:${f.name}`);
+    // Every studioComparisons call the web makes belongs to the new group.
+    const studioCalls = web
+      .filter((call) => call.module === "studioComparisons")
+      .map((call) => `${call.module}:${call.name}`);
+    expect(studioCalls.length).toBeGreaterThan(0);
+    for (const call of studioCalls) expect(studioNames).toContain(call);
+    // Without the candidate's calls, the web skew is exactly the ten functions
+    // recorded against this inspection.
+    expect(
+      report.webCalls.missing.filter((call) => !studioCalls.includes(call)),
+    ).toEqual(recorded.webCalls.missing);
+    expect(recorded.webCalls.missing).toHaveLength(10);
+    expect(report.webCalls.missing).toEqual(
+      expect.arrayContaining(studioCalls),
+    );
+    // Every missing web call is accounted for by some coverage group.
+    const grouped = new Set(
+      COVERAGE_GROUPS.flatMap((group) =>
+        group.functions.map((f) => `${f.module}:${f.name}`),
+      ),
+    );
+    for (const call of report.webCalls.missing)
+      expect(grouped.has(call)).toBe(true);
+    expect(
+      report.groups.find((g) => g.id === "studio-comparison")?.missing,
+    ).toEqual(studioNames);
+  });
+
+  test("a mounted but inactive or unmounted rag component is missing", () => {
+    const deployed = inspection(allRequired, allRoutes, allCrons);
+    const inactive = {
+      ...deployed,
+      components: [...deployed.components, { path: "rag", state: "unmounted" }],
+    };
+    for (const saved of [deployed, inactive]) {
+      const report = coverageReport(saved, []);
+      expect(report.complete).toBe(false);
+      expect(
+        report.groups.filter((group) => !group.deployed).map((g) => g.id),
+      ).toEqual(["passages-153"]);
+      expect(
+        report.groups.find((g) => g.id === "passages-153")?.missing,
+      ).toEqual(["component rag"]);
+    }
+  });
+
+  test("a nested component path does not satisfy a top-level mount", () => {
+    const report = coverageReport(
+      inspection(allRequired, allRoutes, allCrons, [], ["rag/workpool"]),
+      [],
+    );
+    expect(report.groups.find((g) => g.id === "passages-153")?.missing).toEqual(
+      ["component rag"],
+    );
+  });
+
+  test("rejects an inspection without its component list", () => {
+    const { components: _omitted, ...saved } = inspection(allRequired);
+    expect(() => coverageReport(saved, [])).toThrow();
   });
 
   test("rejects a function without its visibility", () => {
