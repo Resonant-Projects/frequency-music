@@ -18,7 +18,7 @@ function run(args: string[]) {
         PATH: process.env.PATH ?? "",
         HOME: process.env.HOME ?? "",
         APP_ENV: "test",
-      },
+      } as unknown as typeof process.env,
     },
   );
 }

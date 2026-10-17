@@ -33,7 +33,7 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
       ...fn("decisionIntents", "get", "applyWeb", "deferWeb", "cancelWeb"),
       ...fn("decisionIntentsMigrations", "backfillRevisions"),
     ],
-    httpRoutes: ["POST /discord/interactions", "POST /telegram/webhook/"],
+    httpRoutes: ["POST /discord/interactions", "POST /telegram/webhook/*"],
     crons: ["rebuild-docket"],
   },
   {
@@ -133,7 +133,9 @@ export function coverageReport(
   const crons = new Set(
     root.modules.flatMap((module) => module.crons.map((c) => c.identifier)),
   );
-  const routes = (modules.get("http.js")?.functions ?? []).map((f) => f.name);
+  const routes = new Set(
+    (modules.get("http.js")?.functions ?? []).map((f) => f.name),
+  );
   const hasFunction = ({ module, name }: RequiredFunction) =>
     modules
       .get(modulePath(module))
@@ -141,9 +143,10 @@ export function coverageReport(
         (candidate) =>
           candidate.name === name || candidate.name.endsWith(`:${name}`),
       ) ?? false;
-  // Prefix routes may be listed with a wildcard or suffix; match the prefix.
-  const hasRoute = (route: string) =>
-    routes.some((name) => name === route || name.startsWith(route));
+  // Convex lists an exact route by its path and a prefix route as
+  // `<prefix>*` (convex/src/server/router.ts getRoutes), so match exactly:
+  // a longer path never stands in for the required one.
+  const hasRoute = (route: string) => routes.has(route);
 
   const groups = COVERAGE_GROUPS.map((group) => {
     const missing = [

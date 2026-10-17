@@ -119,7 +119,7 @@ describe("wave 2 deployment coverage", () => {
         "docket:listWeb",
         "decisionIntentsMigrations:backfillRevisions",
         "route POST /discord/interactions",
-        "route POST /telegram/webhook/",
+        "route POST /telegram/webhook/*",
         "cron rebuild-docket",
       ]),
     );
@@ -127,6 +127,22 @@ describe("wave 2 deployment coverage", () => {
       checked: 2,
       missing: ["docket:listWeb"],
     });
+  });
+
+  test("a longer or exact path does not satisfy a required route", () => {
+    const report = coverageReport(
+      inspection(
+        allRequired,
+        ["POST /discord/interactions-test", "POST /telegram/webhook/one-token"],
+        allCrons,
+      ),
+      [],
+    );
+    expect(report.complete).toBe(false);
+    expect(report.groups.find((g) => g.id === "wave2-138")?.missing).toEqual([
+      "route POST /discord/interactions",
+      "route POST /telegram/webhook/*",
+    ]);
   });
 
   test("component modules do not satisfy root requirements", () => {
