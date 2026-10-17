@@ -22,7 +22,9 @@ import {
 } from "../convex/shared/passages";
 import { getConvexClient, getDevBypassSecret } from "./lib/convexClient";
 
-const BATCH_SIZE = 20;
+// Matches PAGE_SIZE in convex/passages.ts, which caps each page at ten
+// sources to stay under Convex's 16 MiB transaction read limit.
+const BATCH_SIZE = 10;
 
 type BackfillBatchResult = FunctionReturnType<
   typeof api.passages.backfillBatch
