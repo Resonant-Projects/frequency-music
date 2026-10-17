@@ -1,3 +1,4 @@
+import { defaultChunker } from "@convex-dev/rag";
 import { describe, expect, test } from "vite-plus/test";
 import {
   boundPassages,
@@ -7,6 +8,7 @@ import {
   PASSAGE_TRUNCATION_MARKER,
   type PassageHit,
   passageSourceText,
+  wellFormedChunks,
 } from "./passages";
 
 const hit = (score: number, chars: number): PassageHit => ({
@@ -64,6 +66,24 @@ describe("passage search bounds", () => {
     const kept = first?.text.slice(0, -PASSAGE_TRUNCATION_MARKER.length) ?? "";
     expect(kept).toBe("x".repeat(room - 1));
     expect(kept.isWellFormed()).toBe(true);
+  });
+
+  test("rejoins a surrogate pair the default chunker split on a long line", () => {
+    const line = `${"a".repeat(5999)}🎵${"b".repeat(5999)}`;
+    const raw = defaultChunker(line);
+    expect(raw.some((chunk) => !chunk.isWellFormed())).toBe(true);
+    const chunks = wellFormedChunks(raw);
+    expect(chunks.every((chunk) => chunk.isWellFormed())).toBe(true);
+    expect(chunks.join("")).toBe(line);
+  });
+
+  test("replaces surrogates that cannot be rejoined", () => {
+    expect(wellFormedChunks(["a\uD83C", "b", "\uDFB5c"])).toEqual([
+      "a",
+      "\uFFFDb",
+      "\uFFFDc",
+    ]);
+    expect(wellFormedChunks(["end\uD83C"])).toEqual(["end\uFFFD"]);
   });
 
   test("indexes rawText before transcript, matching rawTextSha256", () => {

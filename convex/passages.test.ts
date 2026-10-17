@@ -13,7 +13,13 @@ import {
 
 // A deterministic bag-of-words embedder stands in for OpenAI: no network,
 // and texts sharing words land near each other.
-const embedder = vi.hoisted(() => ({ texts: [] as string[], fail: false }));
+const embedder = vi.hoisted(() => ({
+  texts: [] as string[],
+  fail: false,
+  // Fail every embedding call after this many have succeeded.
+  failAfterCalls: Number.POSITIVE_INFINITY,
+  calls: 0,
+}));
 
 vi.mock("@ai-sdk/openai", () => ({
   openai: {
@@ -23,7 +29,9 @@ vi.mock("@ai-sdk/openai", () => ({
         modelId,
         maxEmbeddingsPerCall: 2048,
         doEmbed: async ({ values }) => {
-          if (embedder.fail) throw new Error("embedding provider unavailable");
+          if (embedder.fail || embedder.calls >= embedder.failAfterCalls)
+            throw new Error("embedding provider unavailable");
+          embedder.calls++;
           embedder.texts.push(...values);
           return {
             embeddings: values.map(embed),
@@ -72,6 +80,8 @@ const tuning = [1, 2, 3].map((n) => paragraph("tuning", n)).join("\n\n");
 afterEach(() => {
   embedder.texts = [];
   embedder.fail = false;
+  embedder.failAfterCalls = Number.POSITIVE_INFINITY;
+  embedder.calls = 0;
   vi.unstubAllEnvs();
   vi.useRealTimers();
 });
@@ -262,6 +272,56 @@ describe("indexSource", () => {
       await t.action(internal.passages.indexSource, { sourceId: id }),
     ).toBe("removed");
     expect(await entryKeys(t, id)).toHaveLength(0);
+  });
+
+  test("a first index that fails after one batch leaves no searchable passages", async () => {
+    const t = setup();
+    await enable(t);
+    // Over 100 chunks forces batched insertion; the second batch fails.
+    const long = Array.from({ length: 120 }, (_, n) =>
+      paragraph("resonance", n + 1),
+    ).join("\n\n");
+    const id = await insertSource(t, "partial", { rawText: long });
+    embedder.failAfterCalls = 1;
+    expect(
+      await t.action(internal.passages.indexSource, { sourceId: id }),
+    ).toBe("failed");
+    embedder.failAfterCalls = Number.POSITIVE_INFINITY;
+    const result = await t.action(internal.passages.searchForAgent, {
+      query: "resonance",
+    });
+    expect(result.passages).toEqual([]);
+    const pending = await t.run(async (ctx) => {
+      const namespace = await ctx.runQuery(components.rag.namespaces.get, {
+        namespace: "sources",
+        modelId: PASSAGE_EMBEDDING_MODEL,
+        dimension: PASSAGE_EMBEDDING_DIMENSIONS,
+        filterNames: ["type"],
+      });
+      return namespace
+        ? (
+            await ctx.runQuery(components.rag.entries.list, {
+              namespaceId: namespace.namespaceId,
+              status: "pending",
+              order: "asc",
+              paginationOpts: { cursor: null, numItems: 50 },
+            })
+          ).page
+        : [];
+    });
+    expect(pending).toEqual([]);
+  });
+
+  test("indexes a long line whose chunk split falls inside an emoji", async () => {
+    const t = setup();
+    await enable(t);
+    const id = await insertSource(t, "emoji", {
+      transcript: `${"a".repeat(5999)}🎵${"b".repeat(5999)}`,
+    });
+    expect(
+      await t.action(internal.passages.indexSource, { sourceId: id }),
+    ).toBe("indexed");
+    expect(embedder.texts.every((text) => text.isWellFormed())).toBe(true);
   });
 
   test("removeSource drops a hard-deleted source's entries", async () => {

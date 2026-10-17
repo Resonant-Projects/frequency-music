@@ -3,7 +3,7 @@
 // the RAG client. Indexing is scheduled from source text writes and never
 // runs inline, so an indexing failure can never fail the parent write.
 import { openai } from "@ai-sdk/openai";
-import { RAG } from "@convex-dev/rag";
+import { defaultChunker, RAG } from "@convex-dev/rag";
 import { literals } from "convex-helpers/validators";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
@@ -33,6 +33,7 @@ import {
   type PassageSearchResult as SharedPassageSearchResult,
   type PassageSourceType,
   passageSourceText,
+  wellFormedChunks,
 } from "./shared/passages";
 import { redactError } from "./shared/redactError";
 
@@ -233,6 +234,31 @@ async function removeEntries(ctx: ActionCtx, sourceId: Id<"sources">) {
   });
 }
 
+/**
+ * Best-effort cleanup after a failed add. On a source's first index the
+ * component makes chunks searchable while the entry is still pending, and a
+ * later successful add does not remove an abandoned pending entry.
+ */
+async function removePendingEntries(ctx: ActionCtx, sourceId: Id<"sources">) {
+  const namespace = await rag.getNamespace(ctx, {
+    namespace: PASSAGE_NAMESPACE,
+  });
+  if (!namespace) return;
+  let cursor: string | null = null;
+  for (let page = 0; page < 10; page++) {
+    const result = await rag.list(ctx, {
+      namespaceId: namespace.namespaceId,
+      status: "pending",
+      paginationOpts: { cursor, numItems: 100 },
+    });
+    for (const entry of result.page)
+      if (entry.key === sourceId)
+        await rag.delete(ctx, { entryId: entry.entryId });
+    if (result.isDone) return;
+    cursor = result.continueCursor;
+  }
+}
+
 async function hasCurrentEntry(
   ctx: ActionCtx,
   sourceId: Id<"sources">,
@@ -284,7 +310,7 @@ async function indexOne(
       title: source.title,
       filterValues: [{ name: "type", value: source.type }],
       metadata: { sourceId },
-      text: source.text,
+      chunks: wellFormedChunks(defaultChunker(source.text)),
     });
     if (result.replacedEntry && result.replacedEntry.entryId !== result.entryId)
       await rag.delete(ctx, { entryId: result.replacedEntry.entryId });
@@ -301,6 +327,13 @@ async function indexOne(
     console.warn(
       `Passage indexing skipped for ${sourceId}: ${redactError(error)}`,
     );
+    try {
+      await removePendingEntries(ctx, sourceId);
+    } catch (cleanupError) {
+      console.warn(
+        `Pending passage cleanup failed for ${sourceId}: ${redactError(cleanupError)}`,
+      );
+    }
     return "failed";
   }
 }
@@ -384,8 +417,12 @@ async function searchPassages(
       value: type,
     })),
   });
+  // Only a ready entry is the source's current text: an abandoned pending
+  // first index can leave searchable chunks behind.
   const keyByEntry = new Map(
-    entries.flatMap((entry) => (entry.key ? [[entry.entryId, entry.key]] : [])),
+    entries.flatMap((entry) =>
+      entry.key && entry.status === "ready" ? [[entry.entryId, entry.key]] : [],
+    ),
   );
   const live = new Map(
     (

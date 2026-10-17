@@ -55,6 +55,41 @@ export function passageSourceText(source: {
   return source.rawText || source.transcript || "";
 }
 
+const HIGH_SURROGATE_MIN = 0xd800;
+const HIGH_SURROGATE_MAX = 0xdbff;
+const LONE_SURROGATE =
+  /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+
+function endsWithHighSurrogate(text: string): boolean {
+  const last = text.charCodeAt(text.length - 1);
+  return last >= HIGH_SURROGATE_MIN && last <= HIGH_SURROGATE_MAX;
+}
+
+/**
+ * Repair chunk boundaries that split a surrogate pair. The RAG default chunker
+ * bisects over-long lines by UTF-16 index, and Convex rejects lone surrogates.
+ * A split pair is rejoined in the later chunk; anything still unpaired becomes
+ * U+FFFD.
+ */
+export function wellFormedChunks(chunks: readonly string[]): string[] {
+  const repaired: string[] = [];
+  let carry = "";
+  for (const raw of chunks) {
+    let chunk = carry + raw;
+    carry = "";
+    if (endsWithHighSurrogate(chunk)) {
+      carry = chunk.slice(-1);
+      chunk = chunk.slice(0, -1);
+    }
+    if (chunk) repaired.push(chunk.replaceAll(LONE_SURROGATE, "\uFFFD"));
+  }
+  if (carry) {
+    const last = repaired.pop() ?? "";
+    repaired.push(`${last}\uFFFD`);
+  }
+  return repaired;
+}
+
 export type PassageHit<SourceId extends string = string> = {
   sourceId: SourceId;
   title?: string;
@@ -95,8 +130,7 @@ export function boundPassages<SourceId extends string>(
     if (passages.length === 0) {
       let room = Math.max(maxChars - PASSAGE_TRUNCATION_MARKER.length, 0);
       // Never split a surrogate pair: a lone surrogate is not a valid string.
-      const last = hit.text.charCodeAt(room - 1);
-      if (last >= 0xd800 && last <= 0xdbff) room--;
+      if (endsWithHighSurrogate(hit.text.slice(0, room))) room--;
       passages.push({
         ...hit,
         text: `${hit.text.slice(0, room)}${PASSAGE_TRUNCATION_MARKER}`,
