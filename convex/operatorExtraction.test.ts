@@ -889,6 +889,7 @@ describe("concept linking", () => {
     );
   }, 60000);
 
+  // ~2,500 sequential mutation ticks take 44–60 s on CI runners; 60 s flaked.
   test("backfill resumes unlinked topics before advancing to the next Extraction", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const topics = Array.from(
@@ -965,7 +966,7 @@ describe("concept linking", () => {
     expect(Object.values(linkedGraph.mentions)).toEqual(
       Array.from({ length: 2501 }, () => 1),
     );
-  }, 60000);
+  }, 180_000);
 
   test("large backfill rows drain through separate transactions", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
