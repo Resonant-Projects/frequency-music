@@ -1,4 +1,8 @@
 #!/usr/bin/env -S vpx tsx
+// Varlock resolves LANGSMITH_API_KEY before the client is built. Running this
+// script uploads golden rows to LangSmith Cloud; it is operator-approved only.
+// oxlint-disable-next-line import/no-unassigned-import -- Varlock must load before env access.
+import "varlock/auto-load";
 import { readFile } from "node:fs/promises";
 import { Client } from "langsmith";
 import {

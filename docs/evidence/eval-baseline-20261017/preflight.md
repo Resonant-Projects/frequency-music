@@ -1,5 +1,13 @@
 # Plan 008 preflight — 2026-10-17
 
+> **Resolution, 2026-10-17 (later the same day):** runner findings 1–4 and
+> the `promote.ts` and `upload-datasets.ts` items in finding 5 were repaired
+> before any baseline was recorded. The runners now call Anthropic directly,
+> so they need `ANTHROPIC_API_KEY` rather than `OPENROUTER_API_KEY`. The cost
+> estimate and the manual failure checks in step 2 below describe the
+> pre-repair runner. See [`runner-repair.md`](runner-repair.md). This file is
+> otherwise kept as recorded.
+
 Preflight for [plan 008](../../../plans/008-eval-baseline-sweep.md) at base
 `ec04c7c`. **No eval ran and no score was recorded.** No dataset was uploaded,
 no paid call was made, and nothing in `scripts/langsmith/` changed. The sweep

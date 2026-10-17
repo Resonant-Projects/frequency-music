@@ -17,20 +17,21 @@ const PROMPTS: Record<string, EvalPrompt> = {
           typeof input.sourceUrl === "string" ? input.sourceUrl : undefined,
         content: stringifyPromptValue(input.rawText),
       }),
+    task: "extract_v3",
   },
   v2: {
     system:
       "Extract structured claims, composition parameters, topics, and open questions from a research source. Return strict JSON.",
     user: (input) =>
       `Title: ${stringifyPromptValue(input.sourceTitle)}\nType: ${stringifyPromptValue(input.sourceType)}\n\n${stringifyPromptValue(input.rawText).slice(0, 30000)}`,
+    task: "extract_v2",
   },
 };
 
-await runEval({
+process.exitCode = await runEval({
   prompts: PROMPTS,
   defaultVersion: "v3",
   data: "resonant-extractions-golden",
   evaluators: [extractionSchemaEvaluator, parameterSpecificityEvaluator],
   experimentPrefix: "extraction",
-  maxOutputTokens: 4096,
 });

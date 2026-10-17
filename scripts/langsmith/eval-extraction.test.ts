@@ -14,6 +14,10 @@ test("the default v3 evaluation uses the deployed extraction prompt", async () =
   const options = runEval.mock.calls[0]?.[0];
   expect(options.defaultVersion).toBe("v3");
   expect(options.prompts.v3.system).toBe(EXTRACT_SYSTEM_PROMPT);
+  // Model and output cap come from the deployed extraction task.
+  expect(options.prompts.v3.task).toBe("extract_v3");
+  expect(options.prompts.v2.task).toBe("extract_v2");
+  expect(options).not.toHaveProperty("maxOutputTokens");
   const input = {
     sourceTitle: "Fourier textbook",
     sourceUrl: "https://example.org",

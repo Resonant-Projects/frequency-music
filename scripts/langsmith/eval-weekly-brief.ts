@@ -72,10 +72,12 @@ const PROMPTS: Record<string, EvalPrompt> = {
       "You are a research studio editor. Write a weekly brief that surfaces active theses, recommends concrete studio actions grounded in the cited hypotheses and recipes, names at least one contradiction or low-yield/weak path from the failure archive, and states the compositional stake in musical terms.",
     user: (input) =>
       `Week of: ${stringifyPromptValue(input.weekOf)}\nHypotheses: ${JSON.stringify(input.hypotheses)}\nRecipes: ${JSON.stringify(input.recipes)}\nActive theses: ${JSON.stringify(input.theses)}\nFailure archive: ${JSON.stringify(input.failures)}\n\nReturn JSON: {bodyMd, studioPrompts, todo}. bodyMd must include Thesis, Recommendations, Studio, and Todo sections.`,
+    // The simplified v1 prompt runs on the deployed brief task's model and cap.
+    task: "brief_v2",
   },
 };
 
-await runEval({
+process.exitCode = await runEval({
   prompts: PROMPTS,
   defaultVersion: "v1",
   data: "resonant-weekly-briefs-golden",
@@ -86,5 +88,4 @@ await runEval({
     makeJudgeEvaluator(),
   ],
   experimentPrefix: "weekly-brief",
-  maxOutputTokens: 4000,
 });
