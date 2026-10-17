@@ -12,11 +12,10 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Skip bot-authored PRs (Renovate, Dependabot). The action refuses
+    # non-human actors and fails the check, and allowing bots would spend a
+    # paid review on every dependency bump.
+    if: github.event.pull_request.user.type != 'Bot'
 
     # Claude Code Action's Bun runtime currently crashes on the GARM pool's
     # non-AVX CPU profile, so keep this automation on a hosted runner.
