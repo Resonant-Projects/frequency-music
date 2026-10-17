@@ -90,6 +90,21 @@ export function wellFormedChunks(chunks: readonly string[]): string[] {
   return repaired;
 }
 
+/**
+ * The entry an add leaves behind for deletion: its own entry when a newer run
+ * for the source won (first-index vectors would otherwise linger), otherwise
+ * the ready entry it replaced.
+ */
+export function supersededEntryId<EntryId extends string>(result: {
+  entryId: EntryId;
+  status: "pending" | "ready" | "replaced";
+  replacedEntry: { entryId: EntryId } | null;
+}): EntryId | null {
+  if (result.status === "replaced") return result.entryId;
+  const replaced = result.replacedEntry?.entryId;
+  return replaced && replaced !== result.entryId ? replaced : null;
+}
+
 export type PassageHit<SourceId extends string = string> = {
   sourceId: SourceId;
   title?: string;

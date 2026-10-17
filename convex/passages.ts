@@ -4,6 +4,7 @@
 // runs inline, so an indexing failure can never fail the parent write.
 import { openai } from "@ai-sdk/openai";
 import { defaultChunker, RAG } from "@convex-dev/rag";
+import { embedMany } from "ai";
 import { literals } from "convex-helpers/validators";
 import { ConvexError, v } from "convex/values";
 import { components, internal } from "./_generated/api";
@@ -33,6 +34,7 @@ import {
   type PassageSearchResult as SharedPassageSearchResult,
   type PassageSourceType,
   passageSourceText,
+  supersededEntryId,
   wellFormedChunks,
 } from "./shared/passages";
 import { redactError } from "./shared/redactError";
@@ -57,6 +59,7 @@ const PAGE_SIZE = 10;
 // distinct hit source is one document read during hydration.
 const SEARCH_OVERFETCH = 2;
 const SEARCH_MAX_CANDIDATES = 12;
+const EMBED_BATCH_SIZE = 100;
 
 const sourceTypeValidator = literals(...PASSAGE_SOURCE_TYPES);
 
@@ -235,28 +238,28 @@ async function removeEntries(ctx: ActionCtx, sourceId: Id<"sources">) {
 }
 
 /**
- * Best-effort cleanup after a failed add. On a source's first index the
- * component makes chunks searchable while the entry is still pending, and a
- * later successful add does not remove an abandoned pending entry.
+ * Chunk and embed a source's text before any RAG entry exists, so a provider
+ * failure leaves nothing behind. On a first index the component makes chunk
+ * batches searchable while the entry is still pending, and a later add never
+ * removes an abandoned pending entry. Batches of 100 match the component's
+ * own batching and stay under the provider's per-request token limit.
  */
-async function removePendingEntries(ctx: ActionCtx, sourceId: Id<"sources">) {
-  const namespace = await rag.getNamespace(ctx, {
-    namespace: PASSAGE_NAMESPACE,
-  });
-  if (!namespace) return;
-  let cursor: string | null = null;
-  for (let page = 0; page < 10; page++) {
-    const result = await rag.list(ctx, {
-      namespaceId: namespace.namespaceId,
-      status: "pending",
-      paginationOpts: { cursor, numItems: 100 },
+async function embedChunks(text: string) {
+  const texts = wellFormedChunks(defaultChunker(text));
+  const chunks: { text: string; embedding: number[] }[] = [];
+  for (let start = 0; start < texts.length; start += EMBED_BATCH_SIZE) {
+    const batch = texts.slice(start, start + EMBED_BATCH_SIZE);
+    const { embeddings } = await embedMany({
+      model: rag.options.textEmbeddingModel,
+      values: batch.map((chunk) => chunk.trim() || "<empty>"),
     });
-    for (const entry of result.page)
-      if (entry.key === sourceId)
-        await rag.delete(ctx, { entryId: entry.entryId });
-    if (result.isDone) return;
-    cursor = result.continueCursor;
+    batch.forEach((chunk, index) => {
+      const embedding = embeddings[index];
+      if (!embedding) throw new Error("Embedding response was incomplete");
+      chunks.push({ text: chunk, embedding });
+    });
   }
+  return chunks;
 }
 
 async function hasCurrentEntry(
@@ -310,10 +313,10 @@ async function indexOne(
       title: source.title,
       filterValues: [{ name: "type", value: source.type }],
       metadata: { sourceId },
-      chunks: wellFormedChunks(defaultChunker(source.text)),
+      chunks: await embedChunks(source.text),
     });
-    if (result.replacedEntry && result.replacedEntry.entryId !== result.entryId)
-      await rag.delete(ctx, { entryId: result.replacedEntry.entryId });
+    const stale = supersededEntryId(result);
+    if (stale) await rag.delete(ctx, { entryId: stale });
     // A concurrent write or delete may have landed while this one embedded.
     const latest = await ctx.runQuery(internal.passages.sourceForIndex, {
       sourceId,
@@ -327,13 +330,6 @@ async function indexOne(
     console.warn(
       `Passage indexing skipped for ${sourceId}: ${redactError(error)}`,
     );
-    try {
-      await removePendingEntries(ctx, sourceId);
-    } catch (cleanupError) {
-      console.warn(
-        `Pending passage cleanup failed for ${sourceId}: ${redactError(cleanupError)}`,
-      );
-    }
     return "failed";
   }
 }
@@ -417,8 +413,8 @@ async function searchPassages(
       value: type,
     })),
   });
-  // Only a ready entry is the source's current text: an abandoned pending
-  // first index can leave searchable chunks behind.
+  // Only a ready entry is the source's current text; an add interrupted
+  // between chunk batches can leave a pending entry's vectors searchable.
   const keyByEntry = new Map(
     entries.flatMap((entry) =>
       entry.key && entry.status === "ready" ? [[entry.entryId, entry.key]] : [],

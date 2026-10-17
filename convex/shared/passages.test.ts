@@ -8,6 +8,7 @@ import {
   PASSAGE_TRUNCATION_MARKER,
   type PassageHit,
   passageSourceText,
+  supersededEntryId,
   wellFormedChunks,
 } from "./passages";
 
@@ -84,6 +85,37 @@ describe("passage search bounds", () => {
       "\uFFFDc",
     ]);
     expect(wellFormedChunks(["end\uD83C"])).toEqual(["end\uFFFD"]);
+  });
+
+  test("deletes a superseded run's own entry, else the entry it replaced", () => {
+    expect(
+      supersededEntryId({
+        entryId: "mine",
+        status: "replaced",
+        replacedEntry: null,
+      }),
+    ).toBe("mine");
+    expect(
+      supersededEntryId({
+        entryId: "mine",
+        status: "ready",
+        replacedEntry: { entryId: "old" },
+      }),
+    ).toBe("old");
+    expect(
+      supersededEntryId({
+        entryId: "mine",
+        status: "ready",
+        replacedEntry: { entryId: "mine" },
+      }),
+    ).toBeNull();
+    expect(
+      supersededEntryId({
+        entryId: "mine",
+        status: "ready",
+        replacedEntry: null,
+      }),
+    ).toBeNull();
   });
 
   test("indexes rawText before transcript, matching rawTextSha256", () => {
