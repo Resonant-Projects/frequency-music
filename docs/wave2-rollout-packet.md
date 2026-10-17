@@ -150,7 +150,8 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 2. **Read the deployed state again.** Rerun the inspection and
    `scripts/convex-module-identities.ts`. Any difference from the evidence
    record means someone has deployed since; stop and reconcile.
-3. **Dry run.** `vp run convex:deploy:dry-run` from a clean checkout of the
+3. **Dry run.** Blocked until every [open decision](#open-decision) item
+   holds. `vp run convex:deploy:dry-run` from a clean checkout of the
    pinned commit (no `.env` or `.env.local`). This uploads bundles and starts
    schema and index preparation. Stop on any removal, required-field change,
    unexpected component change or an authentication prompt.
@@ -224,18 +225,18 @@ Gates that stay closed: `DECISION_SIGNERS_ENABLED`,
 
 ### Open decision
 
-Repository-side preparation is complete. The deploy stays blocked by the
-[supported procedure](frequency-supported-deployment-rollback.md)'s gate
-until both of these hold:
+Repository-side preparation is complete. Step 3 and every later backend
+mutation stay blocked until each item of the supported procedure's
+[approval packet](frequency-supported-deployment-rollback.md#approval-packet-before-any-backend-mutation)
+holds. This work order adds no exception to it.
 
-1. The user approves the five activation effects, including the
-   irreversible legacy normalization (#118), which retires superseded Claims
-   within minutes.
-2. The recovery owner delivers the [restore receipt](wave2-restore-receipt-work-order.md)
-   and the coordinator approves restore as the rollback mechanism, with its
-   write-loss window. Part A, a disposable-guest rehearsal, and part B, an
-   on-demand archive in the window, each write infrastructure and need their
-   own approval first.
+| Approval packet item | Status |
+| --- | --- |
+| 1. Release binding | Candidate named: `91cb304701f5a96b06251bda3f34ff6e0407c37a`, run 38998580987, artifact 12087908946, manifest SHA-256 `1f9dd07b…`, attestation verified. A clean detached checkout at that commit (Node 24.22.0, Convex CLI 1.46.0, frozen lockfile) rebuilt the manifest offline byte-identical to the attested artifact. Open: preserve the candidate's full schemas, component definitions and bundles for review, beyond the root-only attestation. |
+| 2. Protected current-to-candidate comparison | Partial: root module delta, offline `schema.export()` comparison, the six coverage groups and the new crons are recorded above. Open: the complete comparison of validators, visibility, HTTP routes, authentication, component definitions, arguments and state, Node runtime and dependencies, and every root and component cron schedule. |
+| 3. Rollback receipt and backend identity | Open: the [restore receipt](wave2-restore-receipt-work-order.md), parts A and B, each needing its own approval because each writes infrastructure. The backend image is declared (`d715e9ec…`, `precompiled-2026-09-28-5c7cb5b`) but not observed; `/version` returns `unknown`. Read the running container's image digest under the recovery owner's read-only access. |
+| 4. Maintenance protocol | Open: step 1 pauses agent claims and direct execution only. The deployed `81150337` crons, workpool recovery and scheduled work keep running, and after activation so do effects 1, 2 and 4. The backend coordinator must supply verified controls, or an approved protocol for producers, scheduled execution and active work, before step 3. |
+| 5. Named approval | Open: operator, target, candidate, maintenance interval, rollback criteria and the approved rollback mechanism (restore). Approve schema preparation (step 3) and activation (step 4) separately, or approve one ordinary deploy that explicitly covers both phases. Include approval of the five activation effects, among them the irreversible #118 normalization. |
 
 Every live step after that (claims pause, dry run, deploy, `homelab-infra`
 merge, media replacement, resume, backfill) still needs its own approval.

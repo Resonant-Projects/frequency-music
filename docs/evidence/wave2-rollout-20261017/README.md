@@ -111,7 +111,7 @@ All ran locally without network access to production.
 
 ## Release attestation and second reads
 
-Taken from 03:23 to 03:36 UTC on the same host. The only GitHub write was one
+Taken from 03:23 to 03:48 UTC on the same host. The only GitHub write was one
 dispatch of the offline packaging workflow, which deploys nothing and starts
 no worker. Production reads used the same `op run` reference-only file as
 above. Nothing mutated production or infrastructure.
@@ -142,6 +142,7 @@ written and no token was printed.
 | 03:27 to 03:34 | Offline: the proposed init command in the agent image, run twice as UID 1001 with a read-only root | `/data/outbox` created `1001:1001 700`; the second run is a no-op | none |
 | 03:27 to 03:34 | `ssh ai-5090-02`: SHA-256 of `/srv/frequency-media/{compose.yaml,deploy.sh}`, and `.env`'s `MEDIA_IMAGE_TAG` line (its only non-empty line) | Both files equal `homelab-infra` `main`; `MEDIA_IMAGE_TAG=sha-4f016f83…@sha256:a3144acc…` | none |
 | 03:35 | Anonymous `GET https://convex.resonantprojects.art/version` | `unknown`; the endpoint does not identify the backend image | none |
+| 03:48 | Offline: `scripts/convex-provenance-build.ts` in a clean detached worktree of `91cb3047` (no `.env` or `.env.local`, `bun install --frozen-lockfile`, Node 24.22.0, Convex CLI 1.46.0) | exit 0; 249 identities; output byte-identical to `release-manifest-91cb3047.json` (SHA-256 `1f9dd07b…`) | none |
 | offline | `scripts/convex-module-delta.ts release-manifest-91cb3047.json deployed-module-identities.json` | 249 release, 177 deployed: 56 unchanged, 78 changed, 115 added, 43 removed. All 43 removed paths are `_deps/` bundle chunks; no function module is removed. | `root-delta-vs-91cb3047-release.json` |
 
 The verify script compares stored root module identities only. It does not
