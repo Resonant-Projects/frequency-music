@@ -14,6 +14,7 @@ import { css, cx } from "../../styled-system/css";
 import { createKeyedRows } from "../lib/keyed-rows";
 import { AudioFeedbackQueue } from "../components/audio-feedback";
 import { AudioPlayer } from "../components/audio-player";
+import { StudioComparisons } from "../components/studio-comparison";
 import { parsePodcastFeed, type PodcastEpisode } from "../lib/podcast-feed";
 import {
   DateTime,
@@ -332,6 +333,8 @@ export function ListenPage() {
           )}
         </Show>
       </div>
+
+      <StudioComparisons />
     </section>
   );
 }

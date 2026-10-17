@@ -32,9 +32,9 @@ import {
 } from "./ui";
 
 type QueueItem = FunctionReturnType<typeof api.audioFeedback.queue>[number];
-type Method = "headphones" | "monitors" | "car" | "phone speaker";
+export type Method = "headphones" | "monitors" | "car" | "phone speaker";
 
-const SCORE_LABELS: Record<AudioScoreKey, string> = {
+export const SCORE_LABELS: Record<AudioScoreKey, string> = {
   overall: "Overall",
   clarity: "Clarity",
   naturalness: "Naturalness",
@@ -47,7 +47,12 @@ const SCORE_LABELS: Record<AudioScoreKey, string> = {
   expandability: "Expandability",
 };
 const KIND_LABELS = { episode: "Episode", litmusRender: "Litmus render" };
-const METHODS: Method[] = ["headphones", "monitors", "car", "phone speaker"];
+export const METHODS: Method[] = [
+  "headphones",
+  "monitors",
+  "car",
+  "phone speaker",
+];
 
 /** Stable per attempt; a transport retry reuses it so the server can dedupe. */
 export function newRequestId(): string {

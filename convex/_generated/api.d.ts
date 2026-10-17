@@ -78,6 +78,7 @@ import type * as recipes from "../recipes.js";
 import type * as recipesInternal from "../recipesInternal.js";
 import type * as renders from "../renders.js";
 import type * as settings from "../settings.js";
+import type * as studioComparisons from "../studioComparisons.js";
 import type * as shared_agentContract from "../shared/agentContract.js";
 import type * as shared_agentRunClaim from "../shared/agentRunClaim.js";
 import type * as shared_agentToolArgs from "../shared/agentToolArgs.js";
@@ -190,6 +191,7 @@ declare const fullApi: ApiFromModules<{
   recipesInternal: typeof recipesInternal;
   renders: typeof renders;
   settings: typeof settings;
+  studioComparisons: typeof studioComparisons;
   "shared/agentContract": typeof shared_agentContract;
   "shared/agentRunClaim": typeof shared_agentRunClaim;
   "shared/agentToolArgs": typeof shared_agentToolArgs;

@@ -50,7 +50,10 @@ import {
   SOURCE_BLOCKED_REASONS,
   SOURCE_STATUSES,
 } from "./shared/statuses";
-import { audioArtifactFieldsValidator } from "./shared/audioArtifacts";
+import {
+  audioArtifactFieldsValidator,
+  blindGroupPurposeValidator,
+} from "./shared/audioArtifacts";
 import { audioRatingValidator } from "./shared/audioFeedback";
 import {
   mediaJobInputValidator,
@@ -944,7 +947,9 @@ export default defineSchema({
     .index("by_storageId", ["storageId"]),
 
   blindGroups: defineTable({
-    purpose: v.union(v.literal("voiceShootout"), v.literal("studyFamily")),
+    // studioComparison pairs one machine litmus baseline with one human
+    // studio render of the same plan (plan 11 step 3; studioComparisons.ts).
+    purpose: blindGroupPurposeValidator,
     // Immutable after creation. memberId is an opaque random handle.
     members: v.array(
       v.object({

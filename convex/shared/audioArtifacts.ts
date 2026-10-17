@@ -106,6 +106,16 @@ export const audioArtifactInputZ = audioArtifactFieldsZ.omit({
 export type AudioArtifactInput = z.infer<typeof audioArtifactInputZ>;
 
 export const audioArtifactFieldsValidator = zodToConvex(audioArtifactFieldsZ);
+
+export const BLIND_GROUP_PURPOSES = [
+  "voiceShootout",
+  "studyFamily",
+  "studioComparison",
+] as const;
+export type BlindGroupPurpose = (typeof BLIND_GROUP_PURPOSES)[number];
+export const blindGroupPurposeValidator = zodToConvex(
+  z.enum(BLIND_GROUP_PURPOSES),
+);
 export const audioArtifactInputValidator = zodToConvex(audioArtifactInputZ);
 export const audioEncodingValidator = zodToConvex(audioEncodingZ);
 export const audioAnalysisValidator = zodToConvex(audioAnalysisZ);

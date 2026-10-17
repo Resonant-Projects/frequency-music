@@ -11,6 +11,7 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { createLitmusCompositions } from "./mediaJobEffects";
+import { blindGroupPurposeValidator } from "./shared/audioArtifacts";
 
 // Total members including X. Eight is the most a listener can hold in one
 // blind comparison without losing track of the earlier takes.
@@ -23,7 +24,7 @@ const memberInput = v.object({
 
 const projectionReturn = v.object({
   groupId: v.id("blindGroups"),
-  purpose: v.union(v.literal("voiceShootout"), v.literal("studyFamily")),
+  purpose: blindGroupPurposeValidator,
   revealed: v.boolean(),
   members: v.array(
     v.object({
@@ -38,7 +39,7 @@ const projectionReturn = v.object({
 
 export const create = internalMutation({
   args: {
-    purpose: v.union(v.literal("voiceShootout"), v.literal("studyFamily")),
+    purpose: blindGroupPurposeValidator,
     members: v.array(memberInput),
     xMember: v.optional(
       v.object({
@@ -98,6 +99,9 @@ export const create = internalMutation({
     // Contract: members are minted by media jobs and grouped in the same
     // completion that marks them ready, so no playback URL is ever issued for
     // a member before it is grouped; nothing pre-issued survives grouping.
+    // A studio comparison keeps the same guarantee: its studio member is
+    // marked ready in the grouping mutation and its machine member is a fresh
+    // storage copy (studioComparisons.ts).
     for (const member of all) {
       const row = await ctx.db.get(member.artifactId);
       if (!row || row.status !== "ready") {
@@ -182,6 +186,9 @@ async function project(ctx: QueryCtx, groupId: Id<"blindGroups">) {
   const revealed = group.revealedAt !== undefined;
   const members = [];
   const labels: Record<string, Id<"audioArtifacts">> = {};
+  // A studio render and a machine render differ in measured length by a few
+  // milliseconds, enough to tell them apart; the comparison shows none.
+  const showDuration = revealed || group.purpose !== "studioComparison";
   for (const member of group.members) {
     const artifact = await ctx.db.get(member.artifactId);
     if (!artifact?.storageId) continue;
@@ -190,7 +197,7 @@ async function project(ctx: QueryCtx, groupId: Id<"blindGroups">) {
     members.push({
       memberId: member.memberId,
       label: member.label,
-      durationSecs: artifact.durationSecs,
+      ...(showDuration ? { durationSecs: artifact.durationSecs } : {}),
       playbackUrl,
     });
     labels[member.memberId] = member.artifactId;
