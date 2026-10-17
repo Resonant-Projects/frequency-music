@@ -28,18 +28,23 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # HIGH/CRITICAL CVEs in Debian packages (util-linux, gzip, pcre2, sqlite …).
 # Bump DEBIAN_SECURITY_REFRESH to rebuild this layer when a fix lands after
 # the build cache was populated; the floor check fails a stale mirror rather
-# than publishing an unpatched OpenSSL (CVE-2026-75804, CVE-2026-84782).
-ARG DEBIAN_SECURITY_REFRESH=2026-10-01
+# than publishing an unpatched OpenSSL (CVE-2026-75804, CVE-2026-84782) or
+# expat (CVE-2026-66046, CVE-2026-76956, CVE-2026-76957, CVE-2026-77214,
+# CVE-2026-93990).
+ARG DEBIAN_SECURITY_REFRESH=2026-10-17
 ARG OPENSSL_FLOOR=3.5.7-1~deb13u3
+ARG EXPAT_FLOOR=2.9.0-1~deb13u1
 RUN echo "security refresh ${DEBIAN_SECURITY_REFRESH}" \
     && apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
        supercollider-server supercollider-language \
-    && for pkg in libssl3t64 openssl; do \
+    && for check in "libssl3t64 $OPENSSL_FLOOR" "openssl $OPENSSL_FLOOR" \
+         "libexpat1 $EXPAT_FLOOR"; do \
+         read -r pkg floor <<< "$check"; \
          installed="$(dpkg-query -W -f='${Version}' "$pkg")"; \
-         dpkg --compare-versions "$installed" ge "$OPENSSL_FLOOR" \
-           || { echo "$pkg $installed is below $OPENSSL_FLOOR" >&2; exit 1; }; \
+         dpkg --compare-versions "$installed" ge "$floor" \
+           || { echo "$pkg $installed is below $floor" >&2; exit 1; }; \
        done \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

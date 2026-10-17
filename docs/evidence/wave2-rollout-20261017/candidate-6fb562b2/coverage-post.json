@@ -1,0 +1,52 @@
+{
+  "inspectedAt": "2026-10-17T18:37:23.995Z",
+  "groups": [
+    {
+      "id": "recovery-118",
+      "description": "Pipeline recovery and legacy extraction history (#118)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "wave2-138",
+      "description": "Wave 2 docket, signed decisions and revision backfill (#138)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "audio-feedback-141",
+      "description": "General audio ratings and signed deferral (#141)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "rendering-140",
+      "description": "Litmus render jobs (#140)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "tournament-142",
+      "description": "Hypothesis tournament persistence (#142)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "passages-153",
+      "description": "Passage index, RAG component and searchSourcePassages (#153)",
+      "deployed": true,
+      "missing": []
+    },
+    {
+      "id": "studio-comparison",
+      "description": "Human studio renders rated blind against machine litmus renders (plan 11 step 3; unmerged candidate)",
+      "deployed": true,
+      "missing": []
+    }
+  ],
+  "webCalls": {
+    "checked": 120,
+    "missing": []
+  },
+  "complete": true
+}

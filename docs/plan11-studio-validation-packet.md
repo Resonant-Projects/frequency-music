@@ -13,7 +13,7 @@ change `renderValidation`. The go or no-go decision remains Keith's.
 | --- | --- |
 | 1. Bounded spike: three kits with the litmus engine | Done on 2026-10-13 (4-second renders, [SC README](../media/src/engines/sc/README.md)). Repeated on 2026-10-17 at 30 seconds with the published media image; see evidence below. |
 | 2. Pitch check under 0.5 cents | Done on 2026-10-13 for six sustained notes; on 2026-10-17 every distinct key of the three 30-second renders measured within 0.01 cent of the packet's pitch table. Necessary, not sufficient. |
-| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The path that carries them into a blind group on `/listen` merged in #155 (`16ed588`) and is not deployed; see [Comparison path](#comparison-path). |
+| 3. Human versus machine listening, rated blind | Needs Keith's studio renders. The path that carries them into a blind group on `/listen` merged in #155 (`16ed588`) and is deployed since 2026-10-17 (`6fb562b2`); see [Comparison path](#comparison-path). |
 | 4. Contamination assessment and go or no-go | Keith's decision, written up in `docs/plans/` as the plan 11 outcome. |
 
 ## The three kits
