@@ -5,15 +5,21 @@ import { describe, expect, test, vi } from "vite-plus/test";
 // `.env.local`/1Password and make these tests environment-dependent.
 vi.mock("varlock/auto-load", () => ({}));
 
+import type { SpawnSyncReturns } from "node:child_process";
 import {
   averageMeans,
+  completeMeans,
   evaluateRubric,
   extractMeans,
   parseArgs,
   parseBaselinesDoc,
-  parseExperimentName,
+  readMeansForExperiment,
   renderBaselineDiff,
+  runExperiment,
+  runnerCommand,
+  TARGETS,
 } from "./promote";
+import { formatCompletionMarker } from "./run-guard";
 
 describe("parseArgs", () => {
   test("parses target/candidate and applies defaults", () => {
@@ -33,20 +39,6 @@ describe("parseArgs", () => {
   test("recognizes --help", () => {
     expect(parseArgs(["--help"]).help).toBe(true);
     expect(parseArgs(["-h"]).help).toBe(true);
-  });
-});
-
-describe("parseExperimentName", () => {
-  test("extracts the langsmith experiment name", () => {
-    expect(
-      parseExperimentName(
-        "Starting evaluation of experiment: hypothesis-v2-1a2b3c4d\nmore logs",
-      ),
-    ).toBe("hypothesis-v2-1a2b3c4d");
-  });
-
-  test("returns null when absent", () => {
-    expect(parseExperimentName("no experiment here")).toBeNull();
   });
 });
 
@@ -141,6 +133,16 @@ describe("evaluateRubric", () => {
     expect(r.pass).toBe(false);
   });
 
+  test("FAIL when an evaluator is missing on one side", () => {
+    const r = evaluateRubric({
+      baselineMeans: { why_this_matters: 0.8, judge: 0.7 },
+      candidateMeans: { why_this_matters: 0.9 },
+      judgeKey: "judge",
+      threshold: 0.02,
+    });
+    expect(r.pass).toBe(false);
+  });
+
   test("degrades gracefully when the judge evaluator did not run", () => {
     const r = evaluateRubric({
       baselineMeans: { why_this_matters: 0.8 },
@@ -174,5 +176,117 @@ describe("renderBaselineDiff", () => {
     expect(out).toContain("## hypothesis (v2)");
     expect(out).toContain("| judge | 0.7500 |");
     expect(out).toContain("| why_this_matters | 0.8123 |");
+  });
+});
+
+describe("extraction baseline default", () => {
+  test("matches the runner default v3", () => {
+    expect(TARGETS.extraction.defaultBaseline).toBe("v3");
+  });
+});
+
+const completed = {
+  experiment: "hypothesis-v2-abc",
+  examples: 4,
+  evaluatorKeys: ["why_this_matters"],
+};
+
+function spawnResult(
+  overrides: Partial<SpawnSyncReturns<string>>,
+): SpawnSyncReturns<string> {
+  return {
+    pid: 1,
+    output: [],
+    stdout: "",
+    stderr: "",
+    status: 0,
+    signal: null,
+    ...overrides,
+  };
+}
+
+describe("runExperiment", () => {
+  vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+
+  test("invokes the runner through vpx tsx with the version flag", () => {
+    expect(runnerCommand("/r/eval-hypothesis.ts", "v2")).toEqual({
+      command: "vpx",
+      args: ["tsx", "/r/eval-hypothesis.ts", "--version", "v2"],
+    });
+    const spawn = vi.fn(() =>
+      spawnResult({ stdout: `${formatCompletionMarker(completed)}\n` }),
+    );
+    expect(runExperiment("/r/eval-hypothesis.ts", "v2", spawn)).toEqual(
+      completed,
+    );
+    expect(spawn).toHaveBeenCalledWith(
+      "vpx",
+      ["tsx", "/r/eval-hypothesis.ts", "--version", "v2"],
+      expect.objectContaining({ encoding: "utf8" }),
+    );
+  });
+
+  test.each([
+    ["a nonzero exit", { status: 1 }, "status 1"],
+    ["a signal", { status: null, signal: "SIGTERM" as const }, "SIGTERM"],
+    [
+      "a spawn error",
+      { status: null, error: new Error("spawn vpx ENOENT") },
+      "ENOENT",
+    ],
+    [
+      "a missing completion marker",
+      { status: 0, stdout: "done" },
+      "completion marker",
+    ],
+  ])("throws on %s", (_name, overrides, message) => {
+    const spawn = vi.fn(() => spawnResult(overrides));
+    expect(() => runExperiment("/r/x.ts", "v2", spawn)).toThrow(message);
+  });
+
+  test("a marker on a failed runner is still refused", () => {
+    const spawn = vi.fn(() =>
+      spawnResult({ status: 1, stdout: formatCompletionMarker(completed) }),
+    );
+    expect(() => runExperiment("/r/x.ts", "v2", spawn)).toThrow("status 1");
+  });
+});
+
+describe("completeMeans / readMeansForExperiment", () => {
+  test("returns means only when every key has one score per example", () => {
+    expect(
+      completeMeans({ why_this_matters: { avg: 0, n: 4 } }, completed),
+    ).toEqual({ means: { why_this_matters: 0 } });
+    expect(
+      completeMeans({ why_this_matters: { avg: 0.5, n: 3 } }, completed),
+    ).toEqual({ missing: ["why_this_matters: 3/4 scores"] });
+    expect(completeMeans({}, completed)).toEqual({
+      missing: ["why_this_matters: no mean"],
+    });
+  });
+
+  test("throws on partial feedback instead of returning partial means", async () => {
+    const client = {
+      readProject: vi.fn(async () => ({
+        feedback_stats: { why_this_matters: { avg: 0.9, n: 2 } },
+      })),
+    };
+    await expect(
+      readMeansForExperiment(client as never, completed, 3, 0),
+    ).rejects.toThrow("refusing partial scores");
+    expect(client.readProject).toHaveBeenCalledTimes(3);
+  });
+
+  test("waits for complete feedback", async () => {
+    const readProject = vi
+      .fn()
+      .mockResolvedValueOnce({ feedback_stats: {} })
+      .mockResolvedValueOnce({
+        feedback_stats: { why_this_matters: { avg: 0.75, n: 4 } },
+      });
+    await expect(
+      readMeansForExperiment({ readProject } as never, completed, 3, 0),
+    ).resolves.toEqual({ why_this_matters: 0.75 });
   });
 });

@@ -11,7 +11,10 @@
  *            AND the judge score improves or holds (when a judge evaluator ran).
  *
  * Because LLM-as-judge scores are noisy, each experiment is run at least twice
- * (`--trials`, default 2) and EVERY trial must pass.
+ * (`--trials`, default 2) and EVERY trial must pass. A trial counts only when
+ * its runner exits 0 and prints the validated-completion marker, and when
+ * LangSmith reports one score per example for every evaluator; a failed,
+ * incomplete or partially scored experiment fails the gate.
  *
  * On PASS this prints (a) a diff to apply to docs/eval-baselines.md and (b) the
  * version-flip a human should commit. It never auto-commits and never edits any
@@ -22,8 +25,9 @@
  * of truth) and the doc read degrades gracefully with a clear message.
  *
  * Usage:
- *   LANGSMITH_API_KEY=... OPENROUTER_API_KEY=... \
- *     bun scripts/langsmith/promote.ts --target hypothesis --candidate v2
+ *   vpx tsx scripts/langsmith/promote.ts --target hypothesis --candidate v2
+ *
+ * Varlock loads LANGSMITH_API_KEY and ANTHROPIC_API_KEY (used by the runners).
  *
  * Flags:
  *   --target <hypothesis|recipe|brief|extraction>  required
@@ -34,11 +38,16 @@
  *   --help                                         print this help and exit
  */
 import "varlock/auto-load";
-import { spawnSync } from "node:child_process";
+import {
+  spawnSync,
+  type SpawnSyncOptionsWithStringEncoding,
+  type SpawnSyncReturns,
+} from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { Client } from "langsmith";
+import { type CompletedExperiment, parseCompletionMarker } from "./run-guard";
 
 // ---------------------------------------------------------------------------
 // Target configuration
@@ -60,7 +69,7 @@ export interface TargetConfig {
 export const TARGETS: Record<Target, TargetConfig> = {
   extraction: {
     runner: "eval-extraction.ts",
-    defaultBaseline: "v2",
+    defaultBaseline: "v3",
     judgeKey: "judge",
     goldenPath: "data/eval/extractions-golden.jsonl",
   },
@@ -137,24 +146,61 @@ export function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-/** Extract the experiment name langsmith prints when an evaluation starts. */
-export function parseExperimentName(output: string): string | null {
-  const m = output.match(/Starting evaluation of experiment:\s*(\S+)/);
-  return m ? m[1]! : null;
-}
-
 /** Pull per-evaluator means out of a LangSmith `feedback_stats` object. */
 export function extractMeans(feedbackStats: unknown): Record<string, number> {
   const out: Record<string, number> = {};
+  for (const [key, stat] of Object.entries(extractStats(feedbackStats))) {
+    out[key] = stat.avg;
+  }
+  return out;
+}
+
+/** Per-evaluator mean and feedback count from `feedback_stats`. */
+export function extractStats(
+  feedbackStats: unknown,
+): Record<string, { avg: number; n: number | null }> {
+  const out: Record<string, { avg: number; n: number | null }> = {};
   if (feedbackStats && typeof feedbackStats === "object") {
     for (const [key, value] of Object.entries(
       feedbackStats as Record<string, unknown>,
     )) {
-      const avg = (value as { avg?: unknown } | null)?.avg;
-      if (typeof avg === "number" && Number.isFinite(avg)) out[key] = avg;
+      const { avg, n } = (value ?? {}) as { avg?: unknown; n?: unknown };
+      if (typeof avg === "number" && Number.isFinite(avg)) {
+        out[key] = {
+          avg,
+          n: typeof n === "number" && Number.isFinite(n) ? n : null,
+        };
+      }
     }
   }
   return out;
+}
+
+/**
+ * Means for a validated experiment, or the reasons its feedback is not yet
+ * complete. Complete means every evaluator key the runner validated has a
+ * finite mean over at least one score per example.
+ */
+export function completeMeans(
+  feedbackStats: unknown,
+  experiment: CompletedExperiment,
+): { means: Record<string, number> } | { missing: string[] } {
+  const stats = extractStats(feedbackStats);
+  const missing: string[] = [];
+  const means: Record<string, number> = {};
+  for (const key of experiment.evaluatorKeys) {
+    const stat = stats[key];
+    if (!stat) {
+      missing.push(`${key}: no mean`);
+    } else if (stat.n === null || stat.n < experiment.examples) {
+      missing.push(
+        `${key}: ${stat.n ?? "unknown"}/${experiment.examples} scores`,
+      );
+    } else {
+      means[key] = stat.avg;
+    }
+  }
+  return missing.length > 0 ? { missing } : { means };
 }
 
 /**
@@ -242,8 +288,10 @@ export function evaluateRubric(opts: {
     const isJudge = key === judgeKey;
 
     if (b === null || c === null) {
+      // A score present on only one side means an incomplete experiment.
+      pass = false;
       notes.push(
-        `Evaluator "${key}" missing on one side (baseline=${b}, candidate=${c}); cannot compare — skipped.`,
+        `Evaluator "${key}" missing on one side (baseline=${b}, candidate=${c}); cannot compare — FAIL.`,
       );
       rows.push({
         key,
@@ -323,7 +371,7 @@ experiments, and prints PASS/FAIL per the shipping rubric. Each experiment is
 run at least twice (judge scores are noisy) and every trial must pass.
 
 Usage:
-  bun scripts/langsmith/promote.ts --target <t> --candidate <version> [options]
+  vpx tsx scripts/langsmith/promote.ts --target <t> --candidate <version> [options]
 
 Required:
   --target <hypothesis|recipe|brief|extraction>
@@ -331,7 +379,7 @@ Required:
 
 Options:
   --baseline <version>           current shipping version (default per target:
-                                   extraction=v2, hypothesis=v1, brief=v1, recipe=v1)
+                                   extraction=v3, hypothesis=v1, brief=v1, recipe=v1)
   --trials <n>                   experiments per side; default 2, minimum 2
   --threshold <float>            max allowed per-evaluator regression; default 0.02
   --help, -h                     show this help
@@ -339,10 +387,12 @@ Options:
 Rubric (PASS):
   no non-judge evaluator regresses by more than --threshold, AND the judge
   evaluator (plan-02 "${TARGETS.hypothesis.judgeKey}" key) improves or holds when present, on EVERY trial.
+  A runner that exits nonzero, omits its completion marker, or leaves any
+  evaluator without one score per example fails the gate.
 
 Environment:
   LANGSMITH_API_KEY   read experiment feedback stats (required)
-  OPENROUTER_API_KEY  used by the eval runners to call the model (required)
+  ANTHROPIC_API_KEY   used by the eval runners to call the model (required)
 
 Notes:
   - docs/eval-baselines.md (a plan-02 deliverable) is read for reference if it
@@ -358,52 +408,89 @@ function resolveRunner(config: TargetConfig): string {
   return `${RUNNER_DIR}${config.runner}`;
 }
 
-/** Run one eval experiment as a subprocess; return its LangSmith experiment name. */
-export function runExperiment(runnerPath: string, version: string): string {
-  const result = spawnSync("bun", [runnerPath, "--version", version], {
+type SpawnFn = (
+  command: string,
+  args: string[],
+  options: SpawnSyncOptionsWithStringEncoding,
+) => SpawnSyncReturns<string>;
+
+/** The runner command line, following the repository `vpx tsx` convention. */
+export function runnerCommand(runnerPath: string, version: string) {
+  return {
+    command: "vpx",
+    args: ["tsx", runnerPath, "--version", version],
+  };
+}
+
+/**
+ * Run one eval experiment as a subprocess. Returns the experiment only when
+ * the runner exits 0 and prints its validated-completion marker; any spawn
+ * failure, signal, nonzero exit or missing marker throws.
+ */
+export function runExperiment(
+  runnerPath: string,
+  version: string,
+  spawn: SpawnFn = spawnSync,
+): CompletedExperiment {
+  const { command, args } = runnerCommand(runnerPath, version);
+  const result = spawn(command, args, {
     encoding: "utf8",
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 64 * 1024 * 1024,
   });
-  const combined = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
+  if (result.error) {
+    throw new Error(
+      `Runner for version "${version}" could not run: ${result.error.message}`,
+    );
+  }
   if (result.status !== 0) {
     throw new Error(
-      `Runner exited with status ${result.status} for version "${version}". See output above.`,
+      `Runner exited with ${result.signal ? `signal ${result.signal}` : `status ${result.status}`} for version "${version}". See output above.`,
     );
   }
-  const name = parseExperimentName(combined);
-  if (!name) {
+  const completed = parseCompletionMarker(result.stdout ?? "");
+  if (!completed) {
     throw new Error(
-      `Could not parse experiment name from runner output for version "${version}".`,
+      `Runner for version "${version}" exited 0 without a validated completion marker; refusing its scores.`,
     );
   }
-  return name;
+  return completed;
 }
 
-/** Poll LangSmith until the experiment's feedback_stats are populated. */
+/**
+ * Poll LangSmith until the experiment's feedback_stats cover every validated
+ * evaluator with one score per example. Throws rather than returning partial
+ * means.
+ */
 export async function readMeansForExperiment(
-  client: Client,
-  experimentName: string,
+  client: Pick<Client, "readProject">,
+  experiment: CompletedExperiment,
   attempts = 6,
   delayMs = 2500,
 ): Promise<Record<string, number>> {
-  let lastMeans: Record<string, number> = {};
+  let missing: string[] = ["no feedback stats read"];
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const project = await client.readProject({
-        projectName: experimentName,
+        projectName: experiment.experiment,
         includeStats: true,
       });
-      lastMeans = extractMeans(project.feedback_stats);
-      if (Object.keys(lastMeans).length > 0) return lastMeans;
+      const outcome = completeMeans(project.feedback_stats, experiment);
+      if ("means" in outcome) return outcome.means;
+      missing = outcome.missing;
     } catch (error) {
       if (attempt === attempts - 1) throw error;
     }
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    if (attempt < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   }
-  return lastMeans;
+  throw new Error(
+    `Experiment ${experiment.experiment} feedback is incomplete after ${attempts} reads (${missing.join("; ")}); refusing partial scores.`,
+  );
 }
 
 function formatRubric(result: RubricResult): string {

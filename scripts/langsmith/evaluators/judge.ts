@@ -1,16 +1,23 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import type { Example, Run } from "langsmith";
+import { MODELS, TOKEN_BUDGETS } from "../../../convex/llm";
 import {
+  type GenerateTextFn,
+  generateModelText,
   parseJsonObjectFromText,
-  requireOpenRouterApiKey,
+  requireAnthropicApiKey,
 } from "../eval-helper";
+import { EvalInfrastructureError } from "../run-guard";
 
-// Standing cost decision: judging always runs through Claude Haiku via
-// OpenRouter. Do NOT route judging through Codex or any evaluated provider —
-// keeping the judge independent of what it scores avoids self-preference bias
-// and keeps per-row cost bounded. This matches convex/llm.ts MODELS.haiku.
-const JUDGE_MODEL = "anthropic/claude-haiku-4.5";
+// Standing cost decision: judging always runs on the registered bounded Haiku
+// model, called directly through Anthropic like the deployed generators. Do
+// NOT route judging through Codex or any evaluated provider — keeping the
+// judge independent of what it scores avoids self-preference bias and keeps
+// per-row cost bounded.
+export const JUDGE_MODEL = MODELS.haiku;
+// Adaptive thinking tokens count against the output cap, so the judge shares
+// the bounded Haiku classification budget instead of its former 500 tokens.
+export const JUDGE_MAX_OUTPUT_TOKENS = TOKEN_BUDGETS.concept_classifier_v1;
+export const JUDGE_TIMEOUT_MS = 120_000;
 
 // The four rubric dimensions. Keys mirror the JSON the judge is asked to emit.
 export const JUDGE_DIMENSIONS = [
@@ -35,45 +42,53 @@ export interface JudgeScores {
   rationale: string;
 }
 
-const SAFE_DEFAULT: JudgeScores = {
-  grounding: 0,
-  actionability: 0,
-  stakeClarity: 0,
-  nonRepetition: 0,
-  rationale: "unparseable judge response",
-};
+function clamp01(value: number): number {
+  if (value < 0) return 0;
+  if (value > 1) return 1;
+  return value;
+}
 
-function clamp01(value: unknown): number {
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return 0;
-  if (n < 0) return 0;
-  if (n > 1) return 1;
-  return n;
+function dimensionScore(obj: Record<string, unknown>, key: JudgeDimension) {
+  const raw = obj[key];
+  const n =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw.trim().length > 0
+        ? Number(raw)
+        : Number.NaN;
+  if (!Number.isFinite(n)) {
+    throw new EvalInfrastructureError(
+      `judge response has no numeric ${key} score`,
+    );
+  }
+  return clamp01(n);
 }
 
 /**
  * PURE parser: extract the four 0..1 dimension scores and the rationale from
  * whatever the judge model returned (raw JSON, fenced ```json blocks, or prose
- * with an embedded object). Never throws; returns a safe all-zero default when
- * no JSON object can be recovered. Mirrors evaluators/why-matters.ts robustness.
+ * with an embedded object). Numeric strings are coerced and out-of-range
+ * numbers clamped. A response with no JSON object or a missing or non-numeric
+ * dimension throws `EvalInfrastructureError`: an unparseable verdict is a
+ * failed judgment, not a zero score. Explicit zeros remain valid scores.
  */
 export function parseJudgeResponse(text: string): JudgeScores {
   if (typeof text !== "string" || text.trim().length === 0) {
-    return { ...SAFE_DEFAULT };
+    throw new EvalInfrastructureError("judge response is empty");
   }
   const obj = parseJsonObjectFromText(text);
-  if (Object.keys(obj).length === 0) {
-    return { ...SAFE_DEFAULT };
+  if (!obj) {
+    throw new EvalInfrastructureError("judge response is not a JSON object");
   }
   const rationale =
     typeof obj.rationale === "string" && obj.rationale.trim().length > 0
       ? obj.rationale.trim()
       : "";
   return {
-    grounding: clamp01(obj.grounding),
-    actionability: clamp01(obj.actionability),
-    stakeClarity: clamp01(obj.stakeClarity),
-    nonRepetition: clamp01(obj.nonRepetition),
+    grounding: dimensionScore(obj, "grounding"),
+    actionability: dimensionScore(obj, "actionability"),
+    stakeClarity: dimensionScore(obj, "stakeClarity"),
+    nonRepetition: dimensionScore(obj, "nonRepetition"),
     rationale,
   };
 }
@@ -135,36 +150,31 @@ export interface JudgeEvaluatorOptions {
    */
   fewShot?: string[];
   env?: Record<string, string | undefined>;
+  /** Test seam for the model call. */
+  generate?: GenerateTextFn;
 }
 
 /**
  * Async LLM-as-judge evaluator. Compatible with langsmith evaluate()'s async
  * evaluator signature. Returns an aggregate score with a per-dimension +
- * rationale comment.
+ * rationale comment. A failed call or unparseable verdict throws, and the
+ * runner's guard turns that into a failed run rather than a zero score.
  */
 export function makeJudgeEvaluator(options: JudgeEvaluatorOptions = {}) {
-  const openrouter = createOpenRouter({
-    apiKey: requireOpenRouterApiKey(options.env),
-  });
-  return async (run: Run, example?: Example) => {
-    let scores: JudgeScores;
-    try {
-      const { text } = await generateText({
-        model: openrouter(JUDGE_MODEL),
+  const apiKey = requireAnthropicApiKey(options.env);
+  return async function judge(run: Run, example?: Example) {
+    const text = await generateModelText(
+      {
+        apiKey,
+        model: JUDGE_MODEL,
         system: JUDGE_SYSTEM,
         prompt: buildJudgeUser(run, example, options.fewShot ?? []),
-        maxOutputTokens: 500,
-        temperature: 0,
-        abortSignal: AbortSignal.timeout(30_000),
-      });
-      scores = parseJudgeResponse(text);
-    } catch (error) {
-      return {
-        key: "judge",
-        score: 0,
-        comment: `judge call failed: ${(error as Error).message}`,
-      };
-    }
+        maxOutputTokens: JUDGE_MAX_OUTPUT_TOKENS,
+        abortSignal: AbortSignal.timeout(JUDGE_TIMEOUT_MS),
+      },
+      options.generate,
+    );
+    const scores = parseJudgeResponse(text);
     const score = aggregateJudgeScore(scores);
     const comment = [
       `grounding=${scores.grounding.toFixed(2)}`,

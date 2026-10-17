@@ -86,7 +86,7 @@ trivial merge. 011/012/013 touch disjoint files and parallelize freely.
 | 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
 | 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
 | 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
-| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | BLOCKED 2026-10-17 — preflight STOP 1 (keys unresolvable in worker env) and STOP 4 (hypothesis 4 / brief 2 rows); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) |
+| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | BLOCKED 2026-10-17 — preflight STOP 1 (keys unresolvable in worker env) and STOP 4 (hypothesis 4 / brief 2 rows); no scores. Runner defects repaired the same day ([runner repair](../docs/evidence/eval-baseline-20261017/runner-repair.md)); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) |
 | 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | DONE — [Open questions](../docs/recipe-export-v1-design.md#6-open-questions) |
 | 010 | Spike: autonomous ingest design + URL-fetch prototype | P3 | M | — (see its STOP 1 re: arch plan 06) | DONE — see `docs/autonomous-ingest-design.md` §7 build slices |
 
@@ -112,8 +112,11 @@ action in `convex/ingest.ts` — don't run 004 and 010 concurrently).
   registry plan's seam-handoff rules).
 - **Deferred dep upgrades** (see 007 maintenance notes): AI SDK v6→v7 must wait
   for arch plan 2026-07-03-03 (archived).
-- **008** needs `OPENROUTER_API_KEY` + `LANGSMITH_API_KEY`. Human dataset
-  curation is complete (`d2487c1`); it STOPs cleanly if either key is missing.
+- **008** needs `ANTHROPIC_API_KEY` + `LANGSMITH_API_KEY` through Varlock, a
+  fresh cost estimate approved before the first paid run, and upload approval.
+  Human dataset curation was ratified in `d2487c1`, but hypothesis (4) and
+  weekly brief (2) sit under STOP 4's 5-row floor; adding rows is Keith's call.
+  It STOPs cleanly if either key is missing.
 
 ## Audit findings that did NOT become plans
 
@@ -237,8 +240,8 @@ not an executor task. Listed so they're captured:
   discovery driven by graph gaps; zero code, but the correspondence `conjectured`
   lifecycle + domain registry + agent plumbing now exist. Needs a design/spike
   first (no design doc yet). Effort L.
-- **DIR-04 — run the eval baseline sweep**: this is Wave-1 **plan 008** (still
-  TODO); tooling staged (`scripts/export-eval-datasets.ts`, `docs/eval-baselines.md`
+- **DIR-04 — run the eval baseline sweep**: this is Wave-1 **plan 008** (BLOCKED
+  2026-10-17; see its row); tooling staged (`scripts/export-eval-datasets.ts`, `docs/eval-baselines.md`
   skeleton). Operator-gated on live API keys. Without a baseline every generator
   prompt/model change is unmeasured.
 
