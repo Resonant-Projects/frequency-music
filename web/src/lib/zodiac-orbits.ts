@@ -2,7 +2,11 @@
 // Sources (r=160), Extractions (r=128), Hypotheses (r=92), Recipes (r=58).
 
 import * as THREE from "three";
-import { type ConceptSectors, itemSector } from "./item-sectors";
+import {
+  type ConceptSectors,
+  itemSector,
+  sourceTopicNames,
+} from "./item-sectors";
 import { COLORS, R, SECTORS, STATUS_COLORS } from "./zodiac-data";
 import type { ItemRelation, PipelineItems } from "./zodiac-types";
 
@@ -131,12 +135,13 @@ export function buildOrbitalItemGroups(
   items: PipelineItems,
   conceptSectors: ConceptSectors = new Map(),
 ): OrbitalItemGroups {
+  const sourceTopics = sourceTopicNames(items.extractions);
   return {
     sources: items.sources.map((s) => ({
       id: s._id,
       title: s.title ?? "Untitled",
       status: s.status,
-      sectorId: itemSector(s.topics, conceptSectors),
+      sectorId: itemSector(sourceTopics(s), conceptSectors),
     })),
     extractions: items.extractions.map((e) => ({
       id: e._id,

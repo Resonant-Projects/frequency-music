@@ -208,11 +208,39 @@ it("places pipeline items in the domain of their classified concepts", () => {
     graph.nodes.find((node) => node.id === id)?.domain;
   expect(domainOf("source:s1")).toBe("geometry");
   expect(domainOf("hypothesis:h1")).toBe("geometry");
-  // No topics and no classified concept: the keyword fallback's default.
-  expect(domainOf("extraction:e1")).toBe("music");
+  // No topics at all: unplaced rather than defaulted into Music.
+  expect(domainOf("extraction:e1")).toBeUndefined();
   // Recipes carry no topics and stay outside the domain sectors.
   expect(domainOf("recipe:r1")).toBeUndefined();
   expect(connectedIds(graph, "domain:geometry").has("source:s1")).toBe(true);
+});
+it("places an extracted source by its current extraction's topics", () => {
+  // Extraction topics live on the extraction row and the source's concept
+  // edges; sources.topics is usually unset once a source is extracted.
+  const graph = buildAtlas(
+    [],
+    [],
+    {
+      ...pipeline,
+      sources: [
+        { ...pipeline.sources[0], topics: undefined },
+        {
+          _id: "s2" as Id<"sources">,
+          title: "Unextracted",
+          status: "text_ready",
+          createdAt: 0,
+        },
+      ],
+      extractions: [{ ...pipeline.extractions[0], topics: ["Tonnetz"] }],
+    },
+    new Map([["tonnetz", "geometry"]]),
+  );
+  const domainOf = (id: string) =>
+    graph.nodes.find((node) => node.id === id)?.domain;
+  expect(domainOf("source:s1")).toBe("geometry");
+  // No topics anywhere: unplaced, so no domain lists or highlights it.
+  expect(domainOf("source:s2")).toBeUndefined();
+  expect(connectedIds(graph, "domain:music").has("source:s2")).toBe(false);
 });
 it("falls back to topic keywords for items without classified concepts", () => {
   const graph = buildAtlas([], [], pipeline);

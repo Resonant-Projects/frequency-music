@@ -495,12 +495,21 @@ describe("dashboard editorial signals", () => {
 });
 
 describe("dashboard concept sectors", () => {
-  const concept = (name: string, domain: string, classifiedAt?: number) => ({
+  // The classifier writes "on"/"off" only for an accepted classification.
+  const concept = (
+    name: string,
+    domain: string,
+    classifiedAt?: number,
+    missionRelevance: "on" | "off" | "unreviewed" = classifiedAt === undefined
+      ? "unreviewed"
+      : "on",
+  ) => ({
     name,
     displayName: name,
     aliases: [],
     domain,
     classifiedAt,
+    missionRelevance,
     mentionCount: 1,
     hypothesisCount: 0,
     createdAt: 1,
@@ -543,6 +552,58 @@ describe("dashboard concept sectors", () => {
       { name: "chladni plate", sector: "wave" },
       { name: "timbre", sector: "synthesis" },
     ]);
+  });
+
+  test("omits a concept whose latest classification was not accepted", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      // A forced reclassification that proposed an unknown domain refreshes
+      // classifiedAt and marks the concept unreviewed, but keeps its old domain.
+      await ctx.db.insert(
+        "concepts",
+        concept("chladni plate", "cymatics", 9, "unreviewed"),
+      );
+      await ctx.db.insert(
+        "concepts",
+        concept("vocoder", "ml-audio-engineering", 9, "off"),
+      );
+    });
+
+    const result = await t.query(api.dashboard.conceptSectors, {
+      names: ["chladni plate", "vocoder"],
+    });
+
+    expect(result).toEqual([{ name: "vocoder", sector: "music" }]);
+  });
+
+  test("honors a requested domain's curated sector however large the registry grows", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 600; i++) {
+        await ctx.db.insert("conceptDomains", {
+          name: `provisional-${i}`,
+          status: "provisional",
+          introducedBy: "system",
+          createdAt: i,
+          updatedAt: i,
+        });
+      }
+      await ctx.db.insert("conceptDomains", {
+        name: "earth-energy",
+        status: "known",
+        introducedBy: "system",
+        sectorMapping: "wave",
+        createdAt: 600,
+        updatedAt: 600,
+      });
+      await ctx.db.insert("concepts", concept("schumann", "earth-energy", 5));
+    });
+
+    const result = await t.query(api.dashboard.conceptSectors, {
+      names: ["schumann"],
+    });
+
+    expect(result).toEqual([{ name: "schumann", sector: "wave" }]);
   });
 
   test("rejects a lookup larger than its bound", async () => {

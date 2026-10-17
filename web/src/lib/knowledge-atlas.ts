@@ -1,5 +1,9 @@
 import { inferDisplaySectorFromDomain } from "../../../convex/shared/domainMappings";
-import { type ConceptSectors, itemSector } from "./item-sectors";
+import {
+  type ConceptSectors,
+  itemSector,
+  sourceTopicNames,
+} from "./item-sectors";
 import { SECTORS } from "./zodiac-data";
 import type {
   ConstellationConcept,
@@ -105,6 +109,7 @@ export function buildAtlas(
       if (to) edges.push({ from: id, to, label });
     }
   }
+  const sourceTopics = sourceTopicNames(pipeline?.extractions ?? []);
   for (const source of pipeline?.sources ?? []) {
     const id = atlasId("source", source._id);
     nodes.set(id, {
@@ -112,7 +117,7 @@ export function buildAtlas(
       recordId: source._id,
       title: source.title || "Untitled source",
       kind: "source",
-      domain: itemSector(source.topics, conceptSectors),
+      domain: itemSector(sourceTopics(source), conceptSectors),
       status: source.status,
     });
     tags(id, source.topics, "tagged with");

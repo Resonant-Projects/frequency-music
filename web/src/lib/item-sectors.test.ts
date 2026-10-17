@@ -36,7 +36,11 @@ describe("item sectors", () => {
     expect(itemSector(["Frequency ratio"], classified)).toBe("math");
     expect(itemSector(["perception of beating"], new Map())).toBe("psycho");
     expect(itemSector(["unrelated"], classified)).toBe("music");
-    expect(itemSector(undefined, classified)).toBe("music");
+  });
+
+  it("leaves an item with no topics at all unplaced", () => {
+    expect(itemSector(undefined, classified)).toBeUndefined();
+    expect(itemSector([], classified)).toBeUndefined();
   });
 });
 

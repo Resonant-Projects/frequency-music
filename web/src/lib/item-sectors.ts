@@ -11,14 +11,16 @@ const normalizeName = (name: string) => name.toLowerCase().trim();
 /**
  * The sector most of an item's classified concepts share; a tie goes to the
  * sector of its first classified concept. An item with no classified concept
- * falls back to topic keywords.
+ * falls back to topic keywords. An item with no topics at all has no sector:
+ * nothing places it, so no domain claims it.
  */
 export function itemSector(
   names: readonly string[] | undefined,
   conceptSectors: ConceptSectors,
-): string {
+): string | undefined {
+  if (!names?.length) return undefined;
   const votes = new Map<string, number>();
-  for (const name of names ?? []) {
+  for (const name of names) {
     const sector = conceptSectors.get(normalizeName(name));
     if (sector) votes.set(sector, (votes.get(sector) ?? 0) + 1);
   }
@@ -27,7 +29,25 @@ export function itemSector(
     // Map order is first-vote order, so a strict comparison keeps the tie-break.
     if (best === undefined || count > votes.get(best)!) best = sector;
   }
-  return best ?? inferSectorFromTopics(names ?? []);
+  return best ?? inferSectorFromTopics(names);
+}
+
+/**
+ * A source's topic names. An extracted source's topics live on its current
+ * extraction (and the concept edges linked from it), not on the source row,
+ * so they are joined in from the extractions at hand.
+ */
+export function sourceTopicNames(
+  extractions: ReadonlyArray<{ sourceId: string; topics: readonly string[] }>,
+): (source: { _id: string; topics?: readonly string[] }) => string[] {
+  const bySource = new Map<string, string[]>();
+  for (const { sourceId, topics } of extractions) {
+    bySource.set(sourceId, [...(bySource.get(sourceId) ?? []), ...topics]);
+  }
+  return (source) => [
+    ...(source.topics ?? []),
+    ...(bySource.get(source._id) ?? []),
+  ];
 }
 
 /**

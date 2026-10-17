@@ -8,8 +8,9 @@ export type DisplaySectorId =
 
 /**
  * The most concept names one `dashboard.conceptSectors` lookup accepts. Each
- * concept read carries its embedding (~12 KB), so 500 names stay well inside
- * one query's 16 MiB read budget and 4,096 index ranges.
+ * concept read carries its embedding (~12 KB), so 500 names, plus at most one
+ * registry read per concept, stay well inside one query's 16 MiB read budget
+ * and 4,096 index ranges.
  */
 export const MAX_CONCEPT_SECTOR_NAMES = 500;
 
