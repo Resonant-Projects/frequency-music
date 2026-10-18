@@ -3,8 +3,10 @@
 Activation and acceptance sequence for [plan 15](../../plans/2026-08-01-15-passage-index.md),
 whose implementation merged in PR #153 (merge `6f33238`, on `main` at `57f7c90`).
 G-deploy and Stages 1 to 5 ran on 2026-10-17 and 18 UTC and are recorded
-below. Indexing is enabled and the index converged. The Stage 6 probes and
-G-keep have not run.
+below. Indexing is enabled and the index converged. The first full apply
+failed two sources on write throughput, and Keith accepted a resumed run (see
+[Recorded exception](#recorded-exception-2026-10-18)). The Stage 6 probes,
+Keith's ruling on criterion 6 and G-keep remain.
 
 ## Local preflight (no production contact)
 
@@ -203,6 +205,34 @@ Acceptance holds only when all of these are recorded:
 
 Any other outcome is a failed acceptance: roll back with R1 and report it.
 
+### Recorded exception, 2026-10-18
+
+The first full apply (Stage 4) exited 1 with `failed=2`. Both sources were
+skipped because the deployment hit its write limit of 4 MiB per second, not
+because of a key, embedding or component fault. As written, that is a failed
+acceptance and calls for R1. Keith instead chose, in chat on 2026-10-18, to
+rerun the apply with `--batch-size 3` and stated: "I accept a resumed run for
+criterion 3 since the failure was write throughput." R1 was not applied, and
+indexing remains enabled.
+
+This exception amends criterion 3 for this run only: a resumed apply that ends
+with `failed=0` meets it when every earlier failure was a write-throughput
+skip and the rerun indexed each failed source. It does not amend criterion 6.
+
+Status of each criterion for this run:
+
+| # | Status |
+| --- | --- |
+| 1 | Met (Stage 1) |
+| 2 | Met: $18 cap, $17.61 ceiling |
+| 3 | Met under the exception above: the canary had `failed=0`, the first full apply `failed=2` (exit 1), and the rerun `failed=0` (exit 0) |
+| 4 | Met (Stage 5) |
+| 5 | Open: the Stage 6 probes have not run |
+| 6 | **Not met as written:** the two `Passage indexing skipped for` lines are the Stage 4 failures. The 23:45–23:51 canary window was not captured. Whether the exception covers them is Keith's decision |
+
+Acceptance is therefore not yet complete. It needs the Stage 6 probes and
+Keith's ruling on criterion 6, or R1 if he does not extend the exception.
+
 ## Rollback
 
 - **R1. Stop paid indexing.** Pass: the second command prints `false`.
@@ -237,8 +267,8 @@ Fill each row with the UTC time, the operator, and the named report lines.
 | G-budget | before 23:45 | Keith | $18, approved in chat; at or above the $17.61 ceiling | yes |
 | 2 Enable | 23:45:19–23:45:31 | Claude Opus 5.5 on `MacBook-Max` | `setIndexingEnabled` returned; `indexingEnabled` printed `true` | yes |
 | 3 Canary | 23:45:41–23:48:44 | Claude Opus 5.5 on `MacBook-Max` | Apply exit 0: `scope=partial batches=1 (canary stopped at the first page with pending work)`, `sources: scanned=10 textBearing=10 pending=10 indexed=10 failed=0`. Dry run exit 0: `sources: scanned=7842 textBearing=7688 pending=7678` (down 10) | yes |
-| 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput | yes (resumed run, Keith) |
+| 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 1 (`backfillExitCode` returns 1 for an apply with `failed` above 0); `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput; see [Recorded exception](#recorded-exception-2026-10-18) | First apply failed; criterion 3 met only under Keith's exception |
 | 5 Convergence | 01:26:23–01:28:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=0 indexed=0 failed=0`; `converged=yes`. `textBearing` unchanged since Stage 1 | yes |
 | 6 Probes | | | Header line and table per run; by-eye verdict | |
-| Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | Two write-throughput skips, both healed by the rerun |
+| Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | **no** as written (criterion 6); the two lines are the Stage 4 failures, both healed |
 | G-keep | | Keith | Enabled or disabled | |
