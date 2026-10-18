@@ -665,7 +665,15 @@ describe("dashboard pipeline source concepts", () => {
     // bound covers any extraction with up to 32 topics.
     const linkedNames = conceptsOf("linked") ?? [];
     expect(linkedNames).toHaveLength(32);
-    expect(linkedNames.every((name) => /^concept \d+$/.test(name))).toBe(true);
+    // linkExtraction skips a topic that already has a manual mention edge, so
+    // manual mentions count too; other relationships do not.
+    expect(linkedNames).toContain("hand linked");
+    expect(linkedNames).not.toContain("neighbor");
+    expect(
+      linkedNames.every(
+        (name) => name === "hand linked" || /^concept \d+$/.test(name),
+      ),
+    ).toBe(true);
     expect(conceptsOf("other")).toEqual(["elsewhere"]);
   });
 });
