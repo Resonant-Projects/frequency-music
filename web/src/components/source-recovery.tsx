@@ -7,7 +7,10 @@ import {
   RECOVERY_TEXT_MAX_CHARS,
   type RecoveryKind,
 } from "../../../convex/shared/sourceRecovery";
-import { pdfRecoveryReason } from "../../../convex/shared/pdfCapture";
+import {
+  pdfRecoveryReason,
+  readsPdfText,
+} from "../../../convex/shared/pdfCapture";
 import { unextractableTextReason } from "../../../convex/shared/sourceText";
 import { isMissingTextBlock } from "../../../convex/shared/statuses";
 import { css } from "../../styled-system/css";
@@ -63,7 +66,7 @@ export function needsSourceText(source: RecoverySource) {
 }
 
 function recoveryReason(source: RecoverySource) {
-  if (source.type === "pdf")
+  if (readsPdfText(source))
     return pdfRecoveryReason(source.metadata?.pdfCapture);
   const detail =
     source.blockedDetails ??

@@ -3,6 +3,7 @@ import { currentExtractions } from "./extractions";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { readStat } from "./dashboard";
+import { readsPdfText } from "./shared/pdfCapture";
 import { isMissingTextBlock } from "./shared/statuses";
 import { publicSource, sourceReturnValidator } from "./validators";
 
@@ -21,6 +22,7 @@ function nextActionForSource(source: {
   blockedReason?: string;
   pdfStorageId?: string;
   canonicalUrl?: string;
+  metadata?: { pdfCapture?: unknown };
 }) {
   if (isMissingTextBlock(source.blockedReason)) {
     return "Paste excerpt or mark as blocked";
@@ -30,10 +32,10 @@ function nextActionForSource(source: {
   }
 
   if (source.status === "ingested") {
+    if (readsPdfText(source) && (source.pdfStorageId || source.canonicalUrl))
+      return "Extracting PDF text";
     if (source.type === "url" || source.type === "rss") return "Fetch text";
     if (source.type === "youtube") return "Fetch transcript";
-    if (source.type === "pdf" && (source.pdfStorageId || source.canonicalUrl))
-      return "Extracting PDF text";
     return "Add missing content";
   }
 

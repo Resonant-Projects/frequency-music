@@ -271,8 +271,8 @@ export const createFromPdfUrl = mutation({
 
 /**
  * An existing Source a newly submitted PDF should give text to: a textless
- * page or PDF Source without stored bytes that is blocked for missing text,
- * or ingested with no capture running.
+ * page or PDF Source without stored bytes that is blocked for missing text
+ * (the states sourceForRecovery accepts), or ingested with no capture running.
  */
 function needsTextFromPdf(source: Doc<"sources">): boolean {
   return (
@@ -280,7 +280,7 @@ function needsTextFromPdf(source: Doc<"sources">): boolean {
     !source.rawText &&
     !source.transcript &&
     !source.pdfStorageId &&
-    ((source.status === "review_needed" &&
+    (((source.status === "review_needed" || source.status === "extracted") &&
       isMissingTextBlock(source.blockedReason)) ||
       (source.status === "ingested" && !pdfCaptureRunning(source)))
   );

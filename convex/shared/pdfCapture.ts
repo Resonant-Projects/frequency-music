@@ -219,6 +219,17 @@ export function classifyFirecrawlResponse(
 }
 
 /** The recovery panel's sentence for a PDF Source that still has no text. */
+/**
+ * Whether a Source's text comes from a PDF: a PDF Source, or a page Source
+ * that a PDF intake attached a capture run to.
+ */
+export function readsPdfText(source: {
+  type: string;
+  metadata?: { pdfCapture?: unknown };
+}): boolean {
+  return source.type === "pdf" || source.metadata?.pdfCapture !== undefined;
+}
+
 export function pdfRecoveryReason(
   capture: { state?: string; code?: string; detail?: string } | undefined,
 ): string {

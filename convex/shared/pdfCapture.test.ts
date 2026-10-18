@@ -9,6 +9,7 @@ import {
   pdfFailureDetail,
   pdfRecoveryReason,
   pdfUploadProblem,
+  readsPdfText,
   sha256ToHex,
 } from "./pdfCapture";
 import { SOURCE_TEXT_MAX_CHARS } from "./sourceText";
@@ -302,5 +303,19 @@ describe("pdfRecoveryReason", () => {
     expect(pdfRecoveryReason(undefined)).toBe(
       "This PDF has no text yet. Provide its text, or choose Access changed to try again.",
     );
+  });
+});
+
+describe("readsPdfText", () => {
+  test("covers PDF Sources and any Source with a PDF capture run", () => {
+    expect(readsPdfText({ type: "pdf" })).toBe(true);
+    expect(
+      readsPdfText({
+        type: "url",
+        metadata: { pdfCapture: { state: "queued" } },
+      }),
+    ).toBe(true);
+    expect(readsPdfText({ type: "url", metadata: {} })).toBe(false);
+    expect(readsPdfText({ type: "rss" })).toBe(false);
   });
 });

@@ -307,8 +307,37 @@ describe("PDF URL intake", () => {
         url: pdfUrl,
       }),
     ).toEqual({ id, created: false, pdfQueued: true });
+    const rows = await t.query(api.inbox.list, {});
+    expect(rows.find((row) => row._id === id)?.nextAction).toBe(
+      "Extracting PDF text",
+    );
     const { plan } = await startAttempt(t, id);
     expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+  });
+
+  test("a PDF URL captures text for an extracted Source blocked without text", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        dedupeKey: "arxiv:1706.03762",
+        canonicalUrl: "https://arxiv.org/abs/1706.03762",
+        tags: [],
+        metadata: {},
+        status: "extracted",
+        blockedReason: "no_text",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: "https://arxiv.org/pdf/1706.03762",
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    expect(await source(t, id)).toMatchObject({ status: "ingested" });
   });
 
   test("a PDF URL captures text for a textless PDF Source that never had a capture", async () => {
