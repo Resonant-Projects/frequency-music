@@ -30,7 +30,7 @@ backend rejected above 30,000.
 | 12:49:40 | Queue evidence before the pause | complete; 0 queued, 0 running, 3 needs_review, 249 completed, 1 failed; `claimsPaused: false` |
 | 12:49:50 | `convex env set FREQUENCY_WORKER_CLAIMS_PAUSED true` | set; queue evidence `claimsPaused: true`, 0 running |
 | 12:50 | Worker | no log line in the previous 30 min; Argo `frequency-worker` Synced, Healthy |
-| 12:50:16 | On-demand CT113 archive on prox5 (`systemd-run`, snapshot mode, zstd, `nas-docker`) | `nas-docker:backup/vzdump-lxc-113-2026_10_18-08_50_16.tar.zst`, 35,618,010,088 bytes, SHA-256 `f63e30d10eb8a3065f515a618934bde141eb3382a0958f0a23f4c20dccc008aa`, `zstd -t` OK; finished in 4 min 0 s; no lock or snapshot left on CT113. Its capture time starts the write-loss window. |
+| 12:50:16 | On-demand CT113 archive on prox5 (`systemd-run`, snapshot mode, zstd, `nas-docker`) | `nas-docker:backup/vzdump-lxc-113-2026_10_18-08_50_16.tar.zst`, 35,618,010,088 bytes, SHA-256 `f63e30d10eb8a3065f515a618934bde141eb3382a0958f0a23f4c20dccc008aa`, `zstd -t` OK; embedded `pct.conf` lists `rootfs` and `mp0` (`/srv/app-data`, `backup=1`); finished in 4 min 0 s; no lock or snapshot left on CT113. Its capture time starts the write-loss window. |
 | 12:5x | Deployed module identities again | equal to the first capture (256 modules, 6fb562b2) |
 | 13:01 | `scripts/convex-deploy.ts --dry-run` from a clean detached checkout of `e1a2fb0a` | exit 0: no index deleted, two index additions (`authFailureCounters.by_key`, `sources.by_pdfStorageId`), no component change, no authentication prompt; the Node.js action version line has no old or new value, as on 2026-10-17 |
 | 13:07:57 | Queue evidence | `claimsPaused: true`, 0 queued, 0 running |
@@ -55,8 +55,12 @@ The window page said PDF capture fails closed until the Convex environment sets
 `FIRECRAWL_API_URL` on the Lab Firecrawl, though no deployed 6fb562b2 code read
 it. Activation therefore enabled PDF capture, contrary to Keith's "leave it
 off" decision. At 13:10:42Z, about a minute after activation, the operator set
-the flag to exact `false`. Only `convex/pdfCaptureNode.ts` reads it, so no
-other path changed. The function logs show no PDF capture in that minute.
+the flag to exact `false`. In the Convex deployment, only
+`convex/pdfCaptureNode.ts` reads it. The worker's
+`agent/src/tools/crawlTool.ts` reads a variable of the same name from the pod
+environment (`deployment.yaml`), which this Convex setting does not reach, so
+worker page capture is unchanged. The function logs show no PDF capture in
+that minute.
 Turning PDF capture on is a separate decision: set the flag back to `true`.
 
 ## Open after the window
