@@ -2,9 +2,9 @@
 
 Activation and acceptance sequence for [plan 15](../../plans/2026-08-01-15-passage-index.md),
 whose implementation merged in PR #153 (merge `6f33238`, on `main` at `57f7c90`).
-**Nothing in this file has run against production.** No deploy, gate change,
-dry run, backfill, embedding or probe was performed. The evidence slots at the
-end are empty until an operator fills them.
+G-deploy and Stages 1 to 5 ran on 2026-10-17 and 18 UTC and are recorded
+below. Indexing is enabled and the index converged. The Stage 6 probes and
+G-keep have not run.
 
 ## Local preflight (no production contact)
 
@@ -230,15 +230,15 @@ Fill each row with the UTC time, the operator, and the named report lines.
 
 | Stage | UTC time | Operator | Report lines | Pass |
 | --- | --- | --- | --- | --- |
-| G-deploy | | | Deployed revision and parent confirmation | |
-| 1.1 Gate state | | | | |
-| 1.2 `OPENAI_API_KEY` | | | | |
-| 1.3 Dry run | | | `indexing=`, `scope=`, `sources:`, `estimate:`, `ceiling:`, `converged=` | |
-| G-budget | | Keith | Approved cap | |
-| 2 Enable | | | | |
-| 3 Canary | | | Apply `scope=`/`sources:`; dry run `sources:` | |
-| 4 Full apply | | | `scope=`, `sources:`, exit code | |
-| 5 Convergence | | | `scope=`, `sources:`, `converged=` | |
+| G-deploy | 18:37:14 | Claude Opus 5.5 on `devbox` | `6fb562b2` deployed with `rag`, `rag/workpool`, `rag/workpool/batchWorker` active; provenance verify `rootModuleArtifactMatches: true` at 18:37:36; window closed 19:49:31 ([window record](../wave2-rollout-20261017/candidate-6fb562b2/window.md)). No other production operation was running at Stage 1. | yes |
+| 1.1 Gate state | 22:26:19 | Claude Opus 5.5 on `MacBook-Max` | `false` | yes |
+| 1.2 `OPENAI_API_KEY` | 22:26:28 | Claude Opus 5.5 on `MacBook-Max` | `present` | yes |
+| 1.3 Dry run | 22:29:17–22:30:11 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `indexing=disabled`; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7688 indexed=0 failed=0`; `estimate: chars=45151717 tokens≈11287930 cost≈$1.4674`; `ceiling: tokens≤135455151 cost≤$17.6092`; `converged=no`. A first run at 22:26:38 printed the same lines; its exit code was not captured. | yes |
+| G-budget | before 23:45 | Keith | $18, approved in chat; at or above the $17.61 ceiling | yes |
+| 2 Enable | 23:45:19–23:45:31 | Claude Opus 5.5 on `MacBook-Max` | `setIndexingEnabled` returned; `indexingEnabled` printed `true` | yes |
+| 3 Canary | 23:45:41–23:48:44 | Claude Opus 5.5 on `MacBook-Max` | Apply exit 0: `scope=partial batches=1 (canary stopped at the first page with pending work)`, `sources: scanned=10 textBearing=10 pending=10 indexed=10 failed=0`. Dry run exit 0: `sources: scanned=7842 textBearing=7688 pending=7678` (down 10) | yes |
+| 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput | yes (resumed run, Keith) |
+| 5 Convergence | 01:26:23–01:28:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=0 indexed=0 failed=0`; `converged=yes`. `textBearing` unchanged since Stage 1 | yes |
 | 6 Probes | | | Header line and table per run; by-eye verdict | |
-| Logs | | | Count of skip/removal-failure lines | |
+| Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | Two write-throughput skips, both healed by the rerun |
 | G-keep | | Keith | Enabled or disabled | |
