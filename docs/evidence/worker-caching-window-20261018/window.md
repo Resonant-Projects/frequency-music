@@ -63,9 +63,29 @@ worker page capture is unchanged. The function logs show no PDF capture in
 that minute.
 Turning PDF capture on is a separate decision: set the flag back to `true`.
 
+## Cache-read probe
+
+An Evidence Hunter run enqueued at 13:29:54Z (`md7dtss450d07q3cqf99yrz05x8ghq9g`)
+was claimed by the new pod and finished, but `pick_targets` found no
+correspondence to hunt, so it made no model call and its LangSmith trace has no
+token usage.
+
+At 13:5x the operator ran the shipped judge from a checkout of `e1a2fb0a`
+against the Anthropic API instead: `createStructuredJudge(stanceOutputSchema)`
+(Haiku 5.5, adaptive thinking) with `stanceJudgePrompt(target, claim, true)`
+for two claims of one fixture target, sequentially, with LangSmith tracing off.
+The shared prefix was 4,002 characters.
+
+| Call | input_tokens | cache_creation | cache_read |
+| --- | --- | --- | --- |
+| 1 | 1,908 | 1,753 | 0 |
+| 2 | 1,888 | 0 | 1,753 |
+
+The second call read the whole shared prefix from the cache.
+
 ## Open after the window
 
-- Cache-read acceptance for #173 needs the first runs on the new worker:
+- Production cache-read acceptance for #173 still needs the first runs on the new worker that make judge calls:
   `enqueue-correspondence-miner` (05:00Z daily, no breakpoints) and
   `enqueue-evidence-hunter` (06:00Z daily). Source Scout runs Wednesday 16:00Z.
   The check reads `cache_creation_input_tokens` and `cache_read_input_tokens`
