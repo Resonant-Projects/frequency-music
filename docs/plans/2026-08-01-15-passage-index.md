@@ -15,7 +15,7 @@ Done, in order:
 3. A full dry run: 7,688 text-bearing sources pending, estimate $1.47, ceiling $17.61.
 4. Keith's budget cap: $18.
 5. Gate enabled (23:45 UTC); the canary indexed 10 of 10 with `failed=0`.
-6. The full apply indexed 7,676 and failed 2 on the deployment's 4 MiB-per-second write limit (exit 1). A `--batch-size 3` rerun indexed both with `failed=0`, which Keith accepted for criterion 3 as a recorded exception. The convergence dry run read `scope=full pending=0 converged=yes`.
+6. The full apply indexed 7,676 and failed 2 on the deployment's 4 MiB-per-second write limit (exit 1). A `--batch-size 3` rerun indexed 2 pending sources with `failed=0`, which Keith accepted for criterion 3 as a recorded exception; a read-only check that those were the two failed IDs is still pending. The convergence dry run read `scope=full pending=0 converged=yes`.
 
 Remaining evidence:
 

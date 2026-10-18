@@ -237,14 +237,14 @@ Status of each criterion for this run:
 | # | Status |
 | --- | --- |
 | 1 | Met (Stage 1) |
-| 2 | Met: $18 cap, $17.61 ceiling |
-| 3 | Met under the exception above: the canary had `failed=0`, the first full apply `failed=2` (exit 1), and the rerun `failed=0` (exit 0) |
+| 2 | Met: $18 cap. The Stage 1 ceiling ($17.6092) excludes re-embedding, so the bound for everything this run could have bought is the sum of each apply's own ceiling: canary $0.0883 + full apply $17.5210 + rerun $0.0968 (`chars=248089`) = **$17.7061**, under the cap. The matching estimates sum to $1.4756 ($0.0074 + $1.4601 + $0.0081). The two re-embedded sources are inside the rerun's ceiling |
+| 3 | **Open until a per-ID check:** the canary had `failed=0`, the first full apply `failed=2` (exit 1), and the rerun `pending=2 indexed=2 failed=0` (exit 0). The rerun report gives counts, not source IDs, and 01:02–01:09 was not logged, so it does not show that its two sources were the two that failed. A read-only check that each failed ID's current text hash has a `ready` entry closes this; it is pending because 1Password timed out at 01:51 UTC |
 | 4 | Met (Stage 5) |
 | 5 | Open: the Stage 6 probes have not run |
-| 6 | **Open.** The captured windows (23:51–01:02 and 01:09–01:28) are met under the extended exception: their only two `Passage indexing skipped for` lines name the Stage 4 failures, which the rerun indexed, and they hold 0 `Passage removal failed for` lines. 23:45–23:51 and 01:02–01:09 were not captured and need recovered logs or Keith's waiver |
+| 6 | **Open.** The captured windows (23:51–01:02 and 01:09–01:28) are met under the extended exception: their only two `Passage indexing skipped for` lines name the Stage 4 failures (whether the rerun indexed those two IDs is the criterion 3 check), and they hold 0 `Passage removal failed for` lines. 23:45–23:51 and 01:02–01:09 were not captured and need recovered logs or Keith's waiver |
 
-Acceptance is therefore not yet complete. It needs the Stage 6 probes
-(criterion 5), recovered logs or Keith's waiver for the two uncaptured
+Acceptance is therefore not yet complete. It needs the per-ID check
+(criterion 3), the Stage 6 probes (criterion 5), recovered logs or Keith's waiver for the two uncaptured
 intervals (criterion 6), and G-keep.
 
 ## Rollback
@@ -278,10 +278,10 @@ Fill each row with the UTC time, the operator, and the named report lines.
 | 1.1 Gate state | 22:26:19 | Claude Opus 5.5 on `MacBook-Max` | `false` | yes |
 | 1.2 `OPENAI_API_KEY` | 22:26:28 | Claude Opus 5.5 on `MacBook-Max` | `present` | yes |
 | 1.3 Dry run | 22:29:17–22:30:11 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `indexing=disabled`; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7688 indexed=0 failed=0`; `estimate: chars=45151717 tokens≈11287930 cost≈$1.4674`; `ceiling: tokens≤135455151 cost≤$17.6092`; `converged=no`. A first run at 22:26:38 printed the same lines; its exit code was not captured. | yes |
-| G-budget | before 23:45 | Keith | $18, approved in chat; at or above the $17.61 ceiling | yes |
+| G-budget | before 23:45 | Keith | $18, approved in chat; at or above the $17.61 Stage 1 ceiling and the $17.71 combined ceiling including the rerun (criterion 2) | yes |
 | 2 Enable | 23:45:19–23:45:31 | Claude Opus 5.5 on `MacBook-Max` | `setIndexingEnabled` returned; `indexingEnabled` printed `true` | yes |
 | 3 Canary | 23:45:41–23:48:44 | Claude Opus 5.5 on `MacBook-Max` | Apply exit 0: `scope=partial batches=1 (canary stopped at the first page with pending work)`, `sources: scanned=10 textBearing=10 pending=10 indexed=10 failed=0`. Dry run exit 0: `sources: scanned=7842 textBearing=7688 pending=7678` (down 10) | yes |
-| 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 1 (`backfillExitCode` returns 1 for an apply with `failed` above 0); `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput; see [Recorded exception](#recorded-exception-2026-10-18) | First apply failed; criterion 3 met only under Keith's exception |
+| 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 1 (`backfillExitCode` returns 1 for an apply with `failed` above 0); `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput; see [Recorded exception](#recorded-exception-2026-10-18) | First apply failed; criterion 3 open until the per-ID check |
 | 5 Convergence | 01:26:23–01:28:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=0 indexed=0 failed=0`; `converged=yes`. `textBearing` unchanged since Stage 1 | yes |
 | 6 Probes | | | Header line and table per run; by-eye verdict | |
 | Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | Captured windows met under Keith's extended exception; 23:45–23:51 and 01:02–01:09 not captured, so criterion 6 is open |
