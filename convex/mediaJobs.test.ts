@@ -1231,6 +1231,7 @@ test("operator resume leaves an existing live lease intact and concurrent resume
   expect((await t.run((ctx) => ctx.db.get(first.jobId)))?.attempts).toBe(2);
 });
 
+// ~1 s locally, but slow CI runners passed 5 s.
 test("operator lookup is bounded with a backlog of large parked snapshots", async () => {
   const t = convexTest({ schema, modules, transactionLimits: true });
   const input: MediaJobInput = {
@@ -1250,7 +1251,7 @@ test("operator lookup is bounded with a backlog of large parked snapshots", asyn
       resumeOperatorPublication: true,
     }),
   ).toEqual({ jobId: latest, created: false });
-});
+}, 20_000);
 
 test("standard renderer jobs cannot opt into operator publication resume", async () => {
   const t = convexTest({ schema, modules, transactionLimits: true });

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vite-plus/test";
 import {
   getSeedConceptDomainEntries,
   isConceptDomainRegistrySeeded,
+  resolveDomainSector,
   resolveDomainsForSector,
 } from "./domainMappings";
 
@@ -78,5 +79,24 @@ describe("domain mappings", () => {
       specificDomains: ["mathematics", "topology"],
       usedFallback: false,
     });
+  });
+
+  test("a registry sectorMapping overrides the default domain sector", () => {
+    const registry = [
+      { name: "cymatics", sectorMapping: "wave" },
+      { name: "earth-energy", sectorMapping: "phys" },
+    ];
+    expect(resolveDomainSector("cymatics", registry)).toBe("wave");
+    expect(resolveDomainSector(" Earth-Energy ", registry)).toBe("wave");
+  });
+
+  test("an unmapped registry domain takes the default domain sector", () => {
+    const registry = [{ name: "geometric-music-theory" }];
+    expect(resolveDomainSector("geometric-music-theory", registry)).toBe(
+      "geometry",
+    );
+    expect(resolveDomainSector("mathematical-music-theory", [])).toBe("math");
+    expect(resolveDomainSector("psychoacoustics", [])).toBe("psycho");
+    expect(resolveDomainSector("music-production", [])).toBe("synthesis");
   });
 });

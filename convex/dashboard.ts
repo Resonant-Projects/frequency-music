@@ -9,7 +9,11 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { resolveDomainsForSector } from "./domainMappings";
+import {
+  MAX_CONCEPT_SECTOR_NAMES,
+  resolveDomainSector,
+  resolveDomainsForSector,
+} from "./domainMappings";
 import { scoreEditorialSignals } from "./phase2";
 import { activityFeedItemValidator } from "./validators";
 
@@ -514,6 +518,14 @@ export const domainSubTopics = query({
 // PIPELINE ITEMS (Phase 3 — Planetary Orrery)
 // ============================================================================
 
+// Concept names read per sampled source for its domain sector.
+// Reconciliation keeps a source's automatic mention edges equal to its current
+// extraction's topic set (less any topic a manual mention edge already
+// links), so this covers any extraction with up to 32 topics and mentions.
+// Edges keep the order concepts were first linked, which is not necessarily
+// the current topic order. 200 sources × 32 small edges is ~2 MB.
+const MAX_SOURCE_CONCEPT_NAMES = 32;
+
 export const pipelineItems = query({
   args: {},
   returns: v.object({
@@ -523,6 +535,7 @@ export const pipelineItems = query({
         title: v.optional(v.string()),
         status: v.string(),
         topics: v.optional(v.array(v.string())),
+        conceptNames: v.optional(v.array(v.string())),
         createdAt: v.number(),
       }),
     ),
@@ -558,13 +571,37 @@ export const pipelineItems = query({
       ctx.db.query("hypotheses").order("desc").take(100),
       ctx.db.query("recipes").order("desc").take(100),
     ]);
+    // An extracted source's topics live on its current extraction, and only
+    // 100 current extractions are sampled against 200 sources. The source's
+    // mention edges are that extraction's concept set (automatic edges are
+    // reconciled when the extraction changes), so read them per source: one
+    // index range and at most MAX_SOURCE_CONCEPT_NAMES small edges each.
+    // Manual mentions count too: linkExtraction skips a topic that already has
+    // one, so the automatic edges alone can miss a current topic.
+    const conceptNames = await Promise.all(
+      sources.map(async (source) =>
+        (
+          await ctx.db
+            .query("edges")
+            .withIndex("by_source_concept_projection", (q) =>
+              q
+                .eq("fromType", "source")
+                .eq("fromId", source._id)
+                .eq("toType", "concept")
+                .eq("relationship", "mentions"),
+            )
+            .take(MAX_SOURCE_CONCEPT_NAMES)
+        ).map((edge) => edge.toId),
+      ),
+    );
 
     return {
-      sources: sources.map((s) => ({
+      sources: sources.map((s, index) => ({
         _id: s._id,
         title: s.title,
         status: s.status,
         topics: s.topics,
+        conceptNames: conceptNames[index],
         createdAt: s.createdAt,
       })),
       extractions: extractions.map((e) => ({
@@ -586,6 +623,70 @@ export const pipelineItems = query({
         status: r.status,
       })),
     };
+  },
+});
+
+/**
+ * Display sectors for the named concepts, so the atlas can place pipeline
+ * items by their classified concepts. Only an accepted classification counts:
+ * the classifier writes `missionRelevance` "on" or "off" with the domains it
+ * assigns, and marks a rejected proposal "unreviewed" while leaving the old
+ * domain in place. Unclassified concepts and the "general" default are
+ * omitted too; they carry no domain signal, and the caller falls back for them.
+ */
+export const conceptSectors = query({
+  args: { names: v.array(v.string()) },
+  returns: v.array(v.object({ name: v.string(), sector: v.string() })),
+  handler: async (ctx, args) => {
+    const names = [
+      ...new Set(
+        args.names.map((name) => name.toLowerCase().trim()).filter(Boolean),
+      ),
+    ];
+    if (names.length > MAX_CONCEPT_SECTOR_NAMES) {
+      throw new Error(
+        `conceptSectors accepts at most ${MAX_CONCEPT_SECTOR_NAMES} names; received ${names.length}`,
+      );
+    }
+    const concepts = (
+      await Promise.all(
+        names.map((name) =>
+          ctx.db
+            .query("concepts")
+            .withIndex("by_name", (q) => q.eq("name", name))
+            .first(),
+        ),
+      )
+    ).filter(
+      (concept): concept is Doc<"concepts"> =>
+        concept !== null &&
+        concept.classifiedAt !== undefined &&
+        (concept.missionRelevance === "on" ||
+          concept.missionRelevance === "off") &&
+        concept.domain !== "general",
+    );
+    // Point-read only the requested domains' registry rows, so a curated
+    // sectorMapping is found however many provisional rows the registry holds.
+    // At most one read per concept keeps the query within its index budget.
+    const domains = [
+      ...new Set(
+        concepts.map((concept) => concept.domain.toLowerCase().trim()),
+      ),
+    ];
+    const registry = (
+      await Promise.all(
+        domains.map((name) =>
+          ctx.db
+            .query("conceptDomains")
+            .withIndex("by_name", (q) => q.eq("name", name))
+            .first(),
+        ),
+      )
+    ).filter((entry) => entry !== null);
+    return concepts.map((concept) => ({
+      name: concept.name,
+      sector: resolveDomainSector(concept.domain, registry),
+    }));
   },
 });
 
