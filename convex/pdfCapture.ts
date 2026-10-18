@@ -43,7 +43,8 @@ export type PdfCaptureState = {
   tries: number;
   provider: "firecrawl";
   endpoint: PdfEndpoint;
-  // The PDF URL a non-PDF Source (an arXiv abstract page, say) is read from.
+  // The PDF URL to read when it is not the Source's canonicalUrl: a later
+  // submission for the same dedupe key (an arXiv abstract's PDF, say).
   url?: string;
   code?: PdfFailureCode;
   httpStatus?: number;
@@ -232,12 +233,12 @@ export const createFromPdfUrl = mutation({
         !existing.transcript &&
         !existing.pdfStorageId;
       if (pdfQueued) {
-        // A PDF Source keeps reading its own URL; another type reads this one.
+        // The stored URL already failed; read the one just submitted.
         const pdfCapture = await queuePdfCapture(
           ctx,
           existing._id,
           existing,
-          existing.type === "pdf" ? undefined : url,
+          url,
         );
         await ctx.db.patch("sources", existing._id, {
           status: "ingested",

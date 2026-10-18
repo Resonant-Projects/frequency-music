@@ -220,6 +220,28 @@ describe("PDF URL intake", () => {
     });
   });
 
+  test("a corrected PDF URL is read for a blocked PDF Source", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+      url: "https://arxiv.org/abs/1706.03762",
+    });
+    const first = await startAttempt(t, id);
+    await t.mutation(internal.pdfCapture.recordPdfCapture, {
+      sourceId: id,
+      seq: first.seq,
+      outcome: "failed",
+      code: "pdf_not_pdf",
+    });
+    const pdfUrl = "https://arxiv.org/pdf/1706.03762";
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: pdfUrl,
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    const { plan } = await startAttempt(t, id);
+    expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+  });
+
   test("a PDF URL leaves an existing Source that has text alone", async () => {
     const t = convexTest(schema, modules);
     const id = await t.run((ctx) =>

@@ -13,8 +13,9 @@ approved the design on 2026-10-17 (Postplan draft `tzak0v5h9k77`, version 3).
 
 When a PDF URL's key already belongs to a Source that is blocked for missing text (an
 arXiv abstract page behind a bot wall, say), intake reads that Source's text from the PDF
-instead of creating a duplicate: `metadata.pdfCapture.url` holds the PDF URL, and the
-Source keeps its type and `canonicalUrl`. A Source that has text is left alone.
+instead of creating a duplicate: `metadata.pdfCapture.url` holds the submitted URL, and
+the Source keeps its type and `canonicalUrl`. This holds for a blocked PDF Source too, so a
+corrected URL replaces one that failed. A Source that has text is left alone.
 
 `pdfCaptureNode.capturePdf` (a Node action) calls Firecrawl. It never fetches a
 user-supplied URL itself: Firecrawl's egress proxy blocks private, LAN and metadata
