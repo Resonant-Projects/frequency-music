@@ -5,8 +5,8 @@ whose implementation merged in PR #153 (merge `6f33238`, on `main` at `57f7c90`)
 G-deploy and Stages 1 to 5 ran on 2026-10-17 and 18 UTC and are recorded
 below. Indexing is enabled and the index converged. The first full apply
 failed two sources on write throughput, and Keith accepted a resumed run (see
-[Recorded exception](#recorded-exception-2026-10-18)). The Stage 6 probes,
-Keith's ruling on criterion 6 and G-keep remain.
+[Recorded exception](#recorded-exception-2026-10-18)). Keith extended that
+exception to the log criterion. The Stage 6 probes and G-keep remain.
 
 ## Local preflight (no production contact)
 
@@ -217,7 +217,14 @@ indexing remains enabled.
 
 This exception amends criterion 3 for this run only: a resumed apply that ends
 with `failed=0` meets it when every earlier failure was a write-throughput
-skip and the rerun indexed each failed source. It does not amend criterion 6.
+skip and the rerun indexed each failed source.
+
+Later on 2026-10-18 Keith extended the exception to criterion 6: "the two
+skip lines are the same write-throughput failures the rerun healed." Criterion
+6 is met for this run when every `Passage indexing skipped for` line in the
+window names a source that the rerun then indexed. The extension does not
+cover the canary window, 23:45 to 23:51, which no log stream captured; the
+canary's own report has `failed=0`.
 
 Status of each criterion for this run:
 
@@ -228,10 +235,10 @@ Status of each criterion for this run:
 | 3 | Met under the exception above: the canary had `failed=0`, the first full apply `failed=2` (exit 1), and the rerun `failed=0` (exit 0) |
 | 4 | Met (Stage 5) |
 | 5 | Open: the Stage 6 probes have not run |
-| 6 | **Not met as written:** the two `Passage indexing skipped for` lines are the Stage 4 failures. The 23:45–23:51 canary window was not captured. Whether the exception covers them is Keith's decision |
+| 6 | Met under the extended exception: the only two `Passage indexing skipped for` lines name the Stage 4 failures, which the rerun indexed; 0 `Passage removal failed for` lines. The 23:45–23:51 canary window was not captured |
 
-Acceptance is therefore not yet complete. It needs the Stage 6 probes and
-Keith's ruling on criterion 6, or R1 if he does not extend the exception.
+Acceptance is therefore not yet complete. It needs the Stage 6 probes
+(criterion 5) and G-keep.
 
 ## Rollback
 
@@ -270,5 +277,5 @@ Fill each row with the UTC time, the operator, and the named report lines.
 | 4 Full apply | 23:48:52–01:00:39 | Claude Opus 5.5 on `MacBook-Max` | exit 1 (`backfillExitCode` returns 1 for an apply with `failed` above 0); `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=7678 indexed=7676 failed=2`. Both failures logged `Passage indexing skipped for <id>: Too many writes per second … limited to 4 MiB bytes written per 1 second`: `jx78enw8wn6xsnwx5sb7pjsm3s8db3h3`, `jx7ben1c3c2ne75zq87ezk2bw98fesf8`. Rerun 01:09:39–01:26:02 with `--batch-size 3`: exit 0, `scope=full batches=2615`, `sources: scanned=7842 textBearing=7688 pending=2 indexed=2 failed=0`. Keith accepted the resumed run for criterion 3 because the failure was write throughput; see [Recorded exception](#recorded-exception-2026-10-18) | First apply failed; criterion 3 met only under Keith's exception |
 | 5 Convergence | 01:26:23–01:28:39 | Claude Opus 5.5 on `MacBook-Max` | exit 0; `scope=full batches=785`; `sources: scanned=7842 textBearing=7688 pending=0 indexed=0 failed=0`; `converged=yes`. `textBearing` unchanged since Stage 1 | yes |
 | 6 Probes | | | Header line and table per run; by-eye verdict | |
-| Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | **no** as written (criterion 6); the two lines are the Stage 4 failures, both healed |
+| Logs | 23:51–01:02 | Claude Opus 5.5 on `MacBook-Max` | Streamed `convex logs --jsonl` (about 59,000 events): 2 `Passage indexing skipped for` lines (the two above), 0 `Passage removal failed for`. The stream started after the canary, so 23:45–23:51 is not covered. A second stream over the rerun and Stage 5 (01:09–01:28, about 26,000 events) held 0 of either line. | Criterion 6 met under Keith's extended exception; canary window not captured |
 | G-keep | | Keith | Enabled or disabled | |

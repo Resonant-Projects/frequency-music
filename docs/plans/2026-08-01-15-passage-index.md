@@ -20,8 +20,9 @@ Done, in order:
 Remaining evidence:
 
 7. Probes within bounds (1–8 passages, at most 12,000 chars, none archived), with a by-eye verdict that a cross-domain phrase returns both article prose and a transcript passage.
-8. Keith's ruling on criterion 6: the log window holds the two `Passage indexing skipped for` lines from step 6, and the canary window was not captured.
-9. Keith's decision to keep indexing enabled.
+8. Keith's decision to keep indexing enabled.
+
+Keith extended the step 6 exception to the log criterion: the window's only two `Passage indexing skipped for` lines are the failures the rerun healed. The canary window was not captured.
 
 Found-state adaptations:
 
