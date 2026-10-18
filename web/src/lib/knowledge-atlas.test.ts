@@ -242,6 +242,27 @@ it("places an extracted source by its current extraction's topics", () => {
   expect(domainOf("source:s2")).toBeUndefined();
   expect(connectedIds(graph, "domain:music").has("source:s2")).toBe(false);
 });
+it("places a source by its linked concepts when its extraction is outside the sample", () => {
+  const graph = buildAtlas(
+    [],
+    [],
+    {
+      ...pipeline,
+      sources: [
+        {
+          ...pipeline.sources[0],
+          topics: undefined,
+          conceptNames: ["tonnetz"],
+        },
+      ],
+      extractions: [],
+    },
+    new Map([["tonnetz", "geometry"]]),
+  );
+  expect(graph.nodes.find((node) => node.id === "source:s1")?.domain).toBe(
+    "geometry",
+  );
+});
 it("falls back to topic keywords for items without classified concepts", () => {
   const graph = buildAtlas([], [], pipeline);
   expect(graph.nodes.find((node) => node.id === "source:s1")?.domain).toBe(

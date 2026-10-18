@@ -32,6 +32,7 @@ import {
 import {
   type ConceptSectors,
   conceptSectorLookupNames,
+  pipelineItemNames,
 } from "../lib/item-sectors";
 import type { ConstellationConcept } from "../lib/zodiac-types";
 import { useSpaceNavigation } from "../lib/space-navigation";
@@ -122,11 +123,7 @@ export function Zodiac3D() {
       const items = itemsQ.data();
       const names = items
         ? conceptSectorLookupNames(
-            [
-              ...items.sources.map((source) => source.topics),
-              ...items.extractions.map((extraction) => extraction.topics),
-              ...items.hypotheses.map((hypothesis) => hypothesis.concepts),
-            ],
+            pipelineItemNames(items),
             MAX_CONCEPT_SECTOR_NAMES,
           )
         : [];

@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it } from "vite-plus/test";
-import { conceptSectorLookupNames, itemSector } from "./item-sectors";
+import type { Id } from "../../../convex/_generated/dataModel";
+import {
+  conceptSectorLookupNames,
+  itemSector,
+  pipelineItemNames,
+} from "./item-sectors";
 
 const classified = new Map([
   ["tonnetz", "geometry"],
@@ -68,5 +73,45 @@ describe("concept sector lookup names", () => {
         4,
       ),
     ).toEqual(["a1", "b1", "c1", "a2"]);
+  });
+});
+
+describe("pipeline item names", () => {
+  it("looks up a source's linked concepts and its extraction's topics", () => {
+    expect(
+      pipelineItemNames({
+        sources: [
+          {
+            _id: "s1" as Id<"sources">,
+            title: "Plates",
+            status: "extracted",
+            topics: ["Plates"],
+            conceptNames: ["chladni plate"],
+            createdAt: 0,
+          },
+        ],
+        extractions: [
+          {
+            _id: "e1" as Id<"extractions">,
+            sourceId: "s1" as Id<"sources">,
+            confidence: 0.9,
+            topics: ["standing wave"],
+          },
+        ],
+        hypotheses: [
+          {
+            _id: "h1" as Id<"hypotheses">,
+            title: "Lattice",
+            status: "draft",
+            concepts: ["tonnetz"],
+          },
+        ],
+        recipes: [],
+      }),
+    ).toEqual([
+      ["Plates", "chladni plate", "standing wave"],
+      ["standing wave"],
+      ["tonnetz"],
+    ]);
   });
 });

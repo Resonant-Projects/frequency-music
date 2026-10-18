@@ -20,7 +20,10 @@ export interface ZodiacSubTopic {
 export type OrbitalSource = Pick<
   Doc<"sources">,
   "_id" | "title" | "status" | "topics" | "createdAt"
->;
+> & {
+  /** The source's linked concept names, from `api.dashboard.pipelineItems`. */
+  conceptNames?: string[];
+};
 
 export type OrbitalExtraction = Pick<
   Doc<"extractions">,

@@ -3,6 +3,8 @@
 // the classified ones to sectors through the shared domain→sector contract in
 // `convex/shared/domainMappings.ts`.
 
+import type { PipelineItems } from "./zodiac-types";
+
 /** Normalized concept name → display sector, for classified concepts only. */
 export type ConceptSectors = ReadonlyMap<string, string>;
 
@@ -35,19 +37,37 @@ export function itemSector(
 
 /**
  * A source's topic names. An extracted source's topics live on its current
- * extraction (and the concept edges linked from it), not on the source row,
- * so they are joined in from the extractions at hand.
+ * extraction, not on the source row. The source's linked concept names
+ * (`conceptNames`, read per source) carry them for every sampled source; the
+ * extractions at hand add any topics not linked yet.
  */
 export function sourceTopicNames(
   extractions: ReadonlyArray<{ sourceId: string; topics: readonly string[] }>,
-): (source: { _id: string; topics?: readonly string[] }) => string[] {
+): (source: {
+  _id: string;
+  topics?: readonly string[];
+  conceptNames?: readonly string[];
+}) => string[] {
   const bySource = new Map<string, string[]>();
   for (const { sourceId, topics } of extractions) {
     bySource.set(sourceId, [...(bySource.get(sourceId) ?? []), ...topics]);
   }
   return (source) => [
     ...(source.topics ?? []),
+    ...(source.conceptNames ?? []),
     ...(bySource.get(source._id) ?? []),
+  ];
+}
+
+/** Each placeable item's topic names: sources, then extractions, then hypotheses. */
+export function pipelineItemNames(
+  items: PipelineItems,
+): Array<string[] | undefined> {
+  const sourceTopics = sourceTopicNames(items.extractions);
+  return [
+    ...items.sources.map(sourceTopics),
+    ...items.extractions.map((extraction) => extraction.topics),
+    ...items.hypotheses.map((hypothesis) => hypothesis.concepts),
   ];
 }
 
