@@ -21,7 +21,7 @@ backend rejected above 30,000.
 | Source | `e1a2fb0affe9a7d64d6552295424945859b4a3e8` (merge of #173) |
 | Convex manifest | `convex-provenance` run 39128262577, attestation verified; offline builds in the dev and release checkouts byte-equal to it (265 root modules); Node 26.12.0, Convex 1.46.0 |
 | Agent image | `registry.rproj.art/frequency-music/frequency-music-agent@sha256:41885e83a2c1da9e5208280a36a15677e1e4b68836b5fb8b6a38806ec926dd7b` (`publish-agent-image` run 39127250271; GHCR and Harbor equal; `gh attestation verify` passed against the workflow, source digest and `refs/heads/main`) |
-| Delta from 6fb562b2 | 100 modules changed, 5 added (`authFailures`, `pdfCapture`, `pdfCaptureNode`, `shared/authFailures`, `shared/pdfCapture`), 0 removed. Schema additive: table `authFailureCounters`, optional `sources.pdfStorageId`, two indexes. Crons, components, HTTP routes and runtime dependencies unchanged. |
+| Delta from 6fb562b2 | Root modules 256 → 265. Named modules 142 → 147: 5 added (`authFailures`, `pdfCapture`, `pdfCaptureNode`, `shared/authFailures`, `shared/pdfCapture`), 0 removed. Bundler `_deps/` chunks 114 → 118 (69 added, 65 removed: content-hashed names that change with each build). Schema additive: table `authFailureCounters`, optional `sources.pdfStorageId`, two indexes. Crons, components, HTTP routes and runtime dependencies unchanged. |
 
 ## Timeline
 
