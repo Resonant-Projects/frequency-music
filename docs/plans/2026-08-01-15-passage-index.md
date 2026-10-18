@@ -4,20 +4,23 @@
 > **Found-state rule:** adapt to found state; schemas, interfaces, gates binding.
 > **Session decisions (grilling 2026-08-01, Keith):** see `docs/adr/0001-split-embedding-spaces-for-passages.md` and the **Passage** entry in `GLOSSARY.md`. This plan is wave one of the passage-retrieval program (foundation + agent tool). Follow-on waves — hypothesis context, extraction full-text fix, recipe context — are **not** in scope here.
 
-## Status (2026-10-17)
+## Status (2026-10-18)
 
-**Implementation merged, live acceptance pending.** PR #153 merged to `main` (merge `6f33238`). Nothing has been deployed, enabled, backfilled or probed in production. The activation sequence, its gates, zero-failure criteria, rollback and evidence slots are in [`docs/evidence/passage-index-20261017/acceptance.md`](../evidence/passage-index-20261017/acceptance.md).
+**Deployed, enabled and backfilled; acceptance incomplete.** PR #153 merged to `main` (merge `6f33238`) and was deployed on 2026-10-17 in `6fb562b2`, with the `rag` component active. The activation sequence, its gates, zero-failure criteria, rollback and evidence are in [`docs/evidence/passage-index-20261017/acceptance.md`](../evidence/passage-index-20261017/acceptance.md).
 
-Remaining evidence, in order:
+Done, in order:
 
-1. The coordinated backend deploy includes #153 (deployment lane), and the parent confirms it.
-2. Read-only checks: the gate reads `false` and `OPENAI_API_KEY` is present in the deployment environment.
-3. A full dry run: `textBearing`, `pending`, chars, the estimate and the ceiling.
-4. Keith's budget cap, at or above the dry run's ceiling.
-5. Gate enabled, then a canary apply (`--canary`, at most one page of pending work) with `indexed` equal to its `pending`, at least 1, and `failed=0`.
-6. A full apply with `failed=0`, and a convergence dry run with `scope=full pending=0 converged=yes`.
+1. The deploy that includes #153 (`6fb562b2`, 2026-10-17 18:37 UTC).
+2. Read-only checks: the gate read `false` and `OPENAI_API_KEY` was present.
+3. A full dry run: 7,688 text-bearing sources pending, estimate $1.47, ceiling $17.61.
+4. Keith's budget cap: $18.
+5. Gate enabled (23:45 UTC); the canary indexed 10 of 10 with `failed=0`.
+6. The full apply indexed 7,676 and failed 2 on the deployment's 4 MiB-per-second write limit (exit 1). A `--batch-size 3` rerun indexed 2 pending sources with `failed=0`, which Keith accepted for criterion 3 as a recorded exception; a read-only per-ID check on 2026-10-18 confirmed both failed IDs have `ready` entries for their current text. The convergence dry run read `scope=full pending=0 converged=yes`.
+
+Remaining evidence:
+
 7. Probes within bounds (1–8 passages, at most 12,000 chars, none archived), with a by-eye verdict that a cross-domain phrase returns both article prose and a transcript passage.
-8. No `Passage indexing skipped for` or `Passage removal failed for` line in the Convex logs for the window.
+8. Logs for 23:45–23:51 and 01:02–01:09 UTC, which no log stream captured, or Keith's waiver for them. Keith extended his criterion 3 exception to criterion 6 (logs) for the two `Passage indexing skipped for` lines in the captured windows, which name the failures the rerun healed.
 9. Keith's decision to keep indexing enabled.
 
 Found-state adaptations:
