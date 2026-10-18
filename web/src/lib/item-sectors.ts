@@ -3,6 +3,8 @@
 // the classified ones to sectors through the shared domain→sector contract in
 // `convex/shared/domainMappings.ts`.
 
+import { type Accessor, createMemo } from "solid-js";
+import { sameIds } from "./keyed-rows";
 import type { PipelineItems } from "./zodiac-types";
 
 /** Normalized concept name → display sector, for classified concepts only. */
@@ -131,4 +133,25 @@ function inferSectorFromTopics(topics: readonly string[]): string {
   )
     return "synthesis";
   return "music";
+}
+
+/**
+ * The lookup names for live pipeline items, as a memo that keeps its identity
+ * while they are unchanged. The items re-emit on every pipeline change, and a
+ * new names array would re-query up to MAX_CONCEPT_SECTOR_NAMES concepts.
+ */
+export function createConceptSectorLookupNames(
+  items: Accessor<PipelineItems | undefined>,
+  limit: number,
+): Accessor<string[]> {
+  return createMemo(
+    () => {
+      const current = items();
+      return current
+        ? conceptSectorLookupNames(pipelineItemNames(current), limit)
+        : [];
+    },
+    [],
+    { equals: sameIds },
+  );
 }

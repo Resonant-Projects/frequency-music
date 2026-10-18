@@ -31,8 +31,7 @@ import {
 } from "../lib/knowledge-atlas-scene";
 import {
   type ConceptSectors,
-  conceptSectorLookupNames,
-  pipelineItemNames,
+  createConceptSectorLookupNames,
 } from "../lib/item-sectors";
 import type { ConstellationConcept } from "../lib/zodiac-types";
 import { useSpaceNavigation } from "../lib/space-navigation";
@@ -117,16 +116,14 @@ export function Zodiac3D() {
       : "skip",
   );
   const itemsQ = createQueryWithStatus(api.dashboard.pipelineItems);
+  const lookupNames = createConceptSectorLookupNames(
+    itemsQ.data,
+    MAX_CONCEPT_SECTOR_NAMES,
+  );
   const conceptSectorsQ = createQueryWithStatus(
     api.dashboard.conceptSectors,
     () => {
-      const items = itemsQ.data();
-      const names = items
-        ? conceptSectorLookupNames(
-            pipelineItemNames(items),
-            MAX_CONCEPT_SECTOR_NAMES,
-          )
-        : [];
+      const names = lookupNames();
       return names.length ? { names } : "skip";
     },
   );

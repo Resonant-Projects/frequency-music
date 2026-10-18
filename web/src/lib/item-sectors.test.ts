@@ -1,11 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from "vite-plus/test";
+import { createComputed, createRoot, createSignal } from "solid-js";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
   conceptSectorLookupNames,
+  createConceptSectorLookupNames,
   itemSector,
   pipelineItemNames,
 } from "./item-sectors";
+import type { PipelineItems } from "./zodiac-types";
 
 const classified = new Map([
   ["tonnetz", "geometry"],
@@ -113,5 +116,38 @@ describe("pipeline item names", () => {
       ["standing wave"],
       ["tonnetz"],
     ]);
+  });
+});
+
+describe("concept sector lookup", () => {
+  const items = (topics: string[]): PipelineItems => ({
+    sources: [],
+    extractions: [
+      {
+        _id: "e1" as Id<"extractions">,
+        sourceId: "s1" as Id<"sources">,
+        confidence: 0.9,
+        topics,
+      },
+    ],
+    hypotheses: [],
+    recipes: [],
+  });
+
+  it("keeps its identity while a refreshed item list asks for the same names", () => {
+    createRoot((dispose) => {
+      const [current, setCurrent] = createSignal<PipelineItems | undefined>();
+      const names = createConceptSectorLookupNames(current, 10);
+      const seen: string[][] = [];
+      createComputed(() => seen.push(names()));
+
+      setCurrent(items(["Tonnetz"]));
+      // A live query re-emits fresh objects with the same content.
+      setCurrent(items([" tonnetz "]));
+      setCurrent(items(["tonnetz", "timbre"]));
+
+      expect(seen).toEqual([[], ["tonnetz"], ["tonnetz", "timbre"]]);
+      dispose();
+    });
   });
 });
