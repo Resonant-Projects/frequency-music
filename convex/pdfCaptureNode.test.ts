@@ -170,6 +170,31 @@ describe("capturePdf: uploads", () => {
     });
   });
 
+  test("a connection that breaks while the body is read waits for a retry", async () => {
+    const t = convexTest(schema, modules);
+    const id = await uploaded(t);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init: RequestInit) => {
+        calls.push({ url: String(url), init });
+        const body = new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"success":tr'));
+            controller.error(new TypeError("terminated"));
+          },
+        });
+        return new Response(body, { status: 200 });
+      }),
+    );
+    await capture(t, id);
+    expect(await source(t, id)).toMatchObject({
+      status: "ingested",
+      metadata: {
+        pdfCapture: { state: "waiting", code: "pdf_fetch_network", tries: 2 },
+      },
+    });
+  });
+
   test("a network failure waits for a retry", async () => {
     const t = convexTest(schema, modules);
     const id = await uploaded(t);
@@ -245,6 +270,14 @@ describe("capturePdf: configuration", () => {
     ["no Firecrawl URL", { FIRECRAWL_API_URL: "" }],
     ["egress not guarded", { FIRECRAWL_SCRAPE_EGRESS_GUARDED: "false" }],
     ["Firecrawl Cloud", { FIRECRAWL_API_URL: "https://api.firecrawl.dev" }],
+    [
+      "Firecrawl Cloud over http",
+      { FIRECRAWL_API_URL: "http://api.firecrawl.dev" },
+    ],
+    [
+      "Firecrawl Cloud with a port and root dot",
+      { FIRECRAWL_API_URL: "https://API.firecrawl.dev.:443/" },
+    ],
   ])("%s blocks without a call", async (_label, env) => {
     for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
     const t = convexTest(schema, modules);

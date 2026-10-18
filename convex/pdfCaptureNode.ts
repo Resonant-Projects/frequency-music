@@ -17,7 +17,7 @@ import {
 // POST /v2/scrape with a public URL. Its egress proxy blocks private and
 // metadata targets after DNS and on redirects, so Convex never fetches a
 // user-supplied URL itself. Firecrawl Cloud is never called.
-const FIRECRAWL_CLOUD_ORIGIN = "https://api.firecrawl.dev";
+const FIRECRAWL_CLOUD_HOST = "api.firecrawl.dev";
 const SCRAPE_TIMEOUT_MS = 45_000;
 // Firecrawl refuses a long PDF up front when its page count needs more time
 // than the request allows; such a PDF gets one retry with this budget.
@@ -36,21 +36,26 @@ function firecrawlBaseUrl(): string | null {
   if (process.env.FIRECRAWL_SCRAPE_EGRESS_GUARDED !== "true" || !baseUrl)
     return null;
   try {
-    if (new URL(baseUrl).origin === FIRECRAWL_CLOUD_ORIGIN) return null;
+    // Any scheme or port of the Cloud host would send it uploaded bytes.
+    const host = new URL(baseUrl).hostname.replace(/\.$/, "");
+    if (host === FIRECRAWL_CLOUD_HOST) return null;
   } catch {
     return null;
   }
   return baseUrl;
 }
 
-async function readCappedJson(response: Response): Promise<unknown> {
+class ResponseTooLarge extends Error {}
+
+/** The response body as text, refusing more than MAX_RESPONSE_BYTES. */
+async function readCappedText(response: Response): Promise<string> {
   if (
     Number(response.headers.get("content-length") ?? 0) > MAX_RESPONSE_BYTES
   ) {
     await response.body?.cancel().catch(() => undefined);
-    throw new Error("Firecrawl response too large");
+    throw new ResponseTooLarge();
   }
-  if (!response.body) return JSON.parse(await response.text());
+  if (!response.body) return await response.text();
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -60,11 +65,11 @@ async function readCappedJson(response: Response): Promise<unknown> {
     total += value.byteLength;
     if (total > MAX_RESPONSE_BYTES) {
       await reader.cancel().catch(() => undefined);
-      throw new Error("Firecrawl response too large");
+      throw new ResponseTooLarge();
     }
     chunks.push(value);
   }
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 async function callFirecrawl(
@@ -79,7 +84,26 @@ async function callFirecrawl(
     redirect: "error",
     signal: AbortSignal.timeout(timeoutMs),
   });
-  const body = await readCappedJson(response).catch(() => undefined);
+  let text: string;
+  try {
+    text = await readCappedText(response);
+  } catch (error) {
+    if (error instanceof ResponseTooLarge)
+      return {
+        ok: false,
+        code: "pdf_firecrawl_error",
+        httpStatus: response.status,
+      };
+    // A broken connection or timeout mid-body is a network failure: retry.
+    throw error;
+  }
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    // An error page (for example the proxy's 413 HTML) has no JSON body.
+    body = undefined;
+  }
   return classifyFirecrawlResponse(endpoint, response.status, body);
 }
 

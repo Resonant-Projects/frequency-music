@@ -62,9 +62,10 @@ export const PDF_FAILURES = {
     retryable: "http",
     detail: "Firecrawl returned HTTP {status}.",
   },
+  // Scrape engines also fail on fetch timeouts, so a 5xx failure retries.
   pdf_scrape_failed: {
     reason: "no_text",
-    retryable: false,
+    retryable: "http",
     detail: "Firecrawl could not fetch or read the PDF at this URL.",
   },
   pdf_action_stale: {
@@ -180,11 +181,12 @@ export function classifyFirecrawlResponse(
   };
   if (payload.code === "SCRAPE_PDF_INSUFFICIENT_TIME_ERROR")
     return { ok: false, code: "needs_more_time" };
+  // For uploaded bytes this is deterministic (scanned, damaged or truncated
+  // files all give it); for a URL it can also be a fetch timeout.
   if (payload.code === "SCRAPE_ALL_ENGINES_FAILED")
-    return {
-      ok: false,
-      code: endpoint === "parse" ? "pdf_unreadable" : "pdf_scrape_failed",
-    };
+    return endpoint === "parse"
+      ? { ok: false, code: "pdf_unreadable" }
+      : { ok: false, code: "pdf_scrape_failed", httpStatus };
   if (httpStatus === 413) return { ok: false, code: "pdf_too_large" };
   if (
     httpStatus < 200 ||

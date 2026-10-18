@@ -188,13 +188,19 @@ describe("classifyFirecrawlResponse", () => {
     ).toEqual({ ok: false, code: "pdf_unreadable" });
   });
 
-  test("maps a scrape that all engines failed to pdf_scrape_failed", () => {
-    expect(
-      classifyFirecrawlResponse("scrape", 500, {
-        success: false,
-        code: "SCRAPE_ALL_ENGINES_FAILED",
-      }),
-    ).toEqual({ ok: false, code: "pdf_scrape_failed" });
+  test("maps a scrape that all engines failed to a retryable pdf_scrape_failed", () => {
+    const result = classifyFirecrawlResponse("scrape", 500, {
+      success: false,
+      code: "SCRAPE_ALL_ENGINES_FAILED",
+    });
+    expect(result).toEqual({
+      ok: false,
+      code: "pdf_scrape_failed",
+      httpStatus: 500,
+    });
+    // Engines also fail on fetch timeouts, so a 5xx scrape failure retries.
+    expect(isRetryablePdfFailure("pdf_scrape_failed", 500)).toBe(true);
+    expect(isRetryablePdfFailure("pdf_scrape_failed", 400)).toBe(false);
   });
 
   test("asks for the longer budget when Firecrawl needs more time", () => {
