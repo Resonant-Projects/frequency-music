@@ -12,6 +12,9 @@ export default defineConfig({
     // Frozen one-shot reference scripts — never run their suites.
     exclude: ["**/node_modules/**", "scripts/archive/**"],
     environment: "node",
+    // CI runners share an incus host; under load the suite runs 2-3x slower
+    // and ~1 s tests passed vitest's 5 s default.
+    testTimeout: 30_000,
   },
   lint: {
     categories: {
