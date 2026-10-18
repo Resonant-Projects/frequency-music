@@ -40,10 +40,10 @@ still open after 12 minutes.
 
 | Outcome | Source |
 | --- | --- |
-| Text | `text_ready`; the passage index is scheduled |
+| Text | `text_ready`; the passage index is scheduled, and open capture failures for the Source's dedupe key are settled |
 | Firecrawl cannot read the PDF, near-empty text (scanned pages), not a PDF (a scrape must report `application/pdf`), over 25 MB | `review_needed` + `blockedReason: "pdf_parse_error"`, at once |
 | Firecrawl or the source server fails (network, 408, 429, 5xx) | Retries after 1 and 5 minutes, then `review_needed` + `no_text` |
-| 404 or another 4xx, capture off, file missing | `review_needed` + `no_text`, at once |
+| 404 or another 4xx, capture off, file missing | `review_needed` + `no_text`, at once. A missing stored file's id is cleared, so a re-upload of the same PDF attaches |
 
 `isMissingTextBlock()` treats `pdf_parse_error` like `no_text`. "Provide text" and
 Archive work as they do for other Sources, and "Access changed" starts a new capture run,

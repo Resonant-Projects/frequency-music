@@ -146,6 +146,35 @@ describe("PDF upload intake", () => {
     expect(plan).toEqual({ endpoint: "parse", storageId });
   });
 
+  test("a missing stored file is cleared, so a replacement upload recovers the Source", async () => {
+    const t = convexTest(schema, modules);
+    const { id, storageId } = await upload(t);
+    await t.run((ctx) => ctx.storage.delete(storageId));
+    const { seq } = await startAttempt(t, id);
+    await t.mutation(internal.pdfCapture.recordPdfCapture, {
+      sourceId: id,
+      seq,
+      outcome: "failed",
+      code: "pdf_file_missing",
+    });
+    const blocked = (await source(t, id))!;
+    expect(blocked).toMatchObject({
+      status: "review_needed",
+      blockedReason: "no_text",
+    });
+    expect(blocked.pdfStorageId).toBeUndefined();
+    const replacement = await upload(t);
+    expect(replacement).toMatchObject({
+      id,
+      created: false,
+      pdfQueued: true,
+    });
+    expect(await source(t, id)).toMatchObject({
+      pdfStorageId: replacement.storageId,
+      status: "ingested",
+    });
+  });
+
   test("submitting the same storage id twice keeps the stored file", async () => {
     const t = convexTest(schema, modules);
     const first = await upload(t);
@@ -313,6 +342,61 @@ describe("PDF URL intake", () => {
     );
     const { plan } = await startAttempt(t, id);
     expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+  });
+
+  test("PDF text settles the Source's open Scout capture failures", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        dedupeKey: "arxiv:1706.03762",
+        canonicalUrl: "https://arxiv.org/abs/1706.03762",
+        tags: [],
+        metadata: { scoutedBy: { query: "attention" } },
+        status: "review_needed",
+        blockedReason: "no_text",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const failureId = await t.run((ctx) =>
+      ctx.db.insert("operationFailures", {
+        operationId: "capture:arxiv:1706.03762",
+        causeKey: "capture:bot_wall",
+        target: {
+          kind: "capture",
+          input: {
+            url: "https://arxiv.org/abs/1706.03762",
+            query: "attention",
+            rationale: "Scout",
+          },
+        },
+        captureDedupeKey: "arxiv:1706.03762",
+        message: "Bot wall",
+        status: "needsReview",
+        attempts: 3,
+        nextAttemptAt: 0,
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+      url: "https://arxiv.org/pdf/1706.03762",
+    });
+    const { seq } = await startAttempt(t, id);
+    await t.mutation(internal.pdfCapture.recordPdfCapture, {
+      sourceId: id,
+      seq,
+      outcome: "captured",
+      text: prose,
+      chars: prose.length,
+      truncated: false,
+    });
+    expect(await t.run((ctx) => ctx.db.get(failureId))).toMatchObject({
+      status: "resolved",
+    });
   });
 
   test("a PDF URL captures text for an extracted Source blocked without text", async () => {

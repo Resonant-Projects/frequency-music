@@ -9,6 +9,7 @@ import {
 } from "./_generated/server";
 import { type AppIdentity, requireAuth } from "./auth";
 import { assertPublicHttpUrl } from "./ingest";
+import { settleCaptureFailures } from "./operationFailures";
 import { schedulePassageIndex } from "./passages";
 import {
   isRetryablePdfFailure,
@@ -455,7 +456,14 @@ async function recordFailure(
     });
     return;
   }
+  // A stored file that no longer exists is not the Source's: clearing it lets
+  // a replacement upload attach, and stops "Access changed" re-reading it.
+  const fileGone =
+    code === "pdf_file_missing" &&
+    source.pdfStorageId !== undefined &&
+    !(await ctx.db.system.get(source.pdfStorageId));
   await ctx.db.patch("sources", source._id, {
+    ...(fileGone ? { pdfStorageId: undefined } : {}),
     status: "review_needed",
     blockedReason: PDF_FAILURES[code].reason,
     blockedDetails:
@@ -537,6 +545,12 @@ export const recordPdfCapture = internalMutation({
       updatedAt: advanceSourceVersion(source.updatedAt, now),
     });
     await schedulePassageIndex(ctx, source._id);
+    // Captured text settles failures of earlier captures of this Source, as
+    // canonical Scout intake does.
+    await settleCaptureFailures(ctx, {
+      dedupeKey: source.dedupeKey,
+      capturedAt: now,
+    });
     return { updated: true };
   },
 });
