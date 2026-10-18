@@ -38,8 +38,10 @@
   },
   "overrides": {
     "hono": "4.13.13",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0",
-    "ws": "^8.21.0"
+    "viem": {
+      "ws": "^8.21.0"
+    },
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.2.0"
   },
   "packageManager": "bun@1.4.2"
 }
