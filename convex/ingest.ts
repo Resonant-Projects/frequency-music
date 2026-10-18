@@ -3,6 +3,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { action, internalAction } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { SOURCE_TEXT_MAX_CHARS } from "./shared/sourceText";
 import { extractYouTubeVideoId, generateDedupeKey } from "./sourceUtils";
 
 // ============================================================================
@@ -27,7 +28,8 @@ async function fetchWithTimeout(
 }
 
 const JINA_READER_URL = "https://r.jina.ai";
-export const MAX_URL_TEXT_CHARS = 100_000;
+// One cap for automatically captured text; PDF capture uses the same constant.
+export const MAX_URL_TEXT_CHARS = SOURCE_TEXT_MAX_CHARS;
 
 export type UrlTextFetchResult =
   | { ok: true; text: string; status: number }

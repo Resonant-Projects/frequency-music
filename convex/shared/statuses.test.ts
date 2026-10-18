@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
 import {
   HYPOTHESIS_STATUSES,
+  isMissingTextBlock,
   RECIPE_STATUSES,
   SOURCE_BLOCKED_REASONS,
   SOURCE_STATUSES,
@@ -19,6 +20,26 @@ describe("shared status arrays", () => {
       "promoted_public",
       "archived",
     ]);
+  });
+
+  test("blocked reasons include pdf_parse_error after the existing reasons", () => {
+    expect(SOURCE_BLOCKED_REASONS).toEqual([
+      "no_text",
+      "copyright",
+      "needs_metadata",
+      "needs_tagging",
+      "ai_error",
+      "needs_human_review",
+      "duplicate",
+      "pdf_parse_error",
+    ]);
+  });
+
+  test("text recovery resolves no_text and pdf_parse_error blocks only", () => {
+    expect(isMissingTextBlock("no_text")).toBe(true);
+    expect(isMissingTextBlock("pdf_parse_error")).toBe(true);
+    expect(isMissingTextBlock("ai_error")).toBe(false);
+    expect(isMissingTextBlock(undefined)).toBe(false);
   });
 
   test("all arrays are duplicate-free", () => {

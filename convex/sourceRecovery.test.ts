@@ -603,7 +603,7 @@ describe("source recovery from the Action Queue", () => {
         expectedUpdatedAt: 2,
         note: "I can open it in my browser.",
       }),
-    ).toEqual({ transcriptQueued: false });
+    ).toEqual({ transcriptQueued: false, pdfQueued: false });
     expect((await t.query(api.sources.get, { id }))?.status).toBe(
       "review_needed",
     );

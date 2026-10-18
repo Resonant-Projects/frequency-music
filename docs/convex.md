@@ -108,12 +108,11 @@ Payload:
 - Store transcript in `rawText`
 - status -> `text_ready` or blocked `no_text`
 
-### extractPdfText(sourceId)
+### pdfCaptureNode.capturePdf(sourceId, seq)
 
-- Pull from UploadThing URL
-- Extract text (service/library)
-- Store `rawText`
-- status -> `text_ready` or blocked `no_text|copyright`
+- Lab Firecrawl reads the uploaded file (`/v2/parse`) or the public URL (`/v2/scrape`)
+- Store `rawText` (first 100,000 characters)
+- status -> `text_ready` or blocked `pdf_parse_error|no_text`; see `docs/pdf-capture.md`
 
 ### runExtraction(sourceId, promptVersion="extract_v1")
 

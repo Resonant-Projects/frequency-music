@@ -151,8 +151,10 @@ audit found several items further along than the roadmap assumes:
 
 - **Phase A — Autonomous ingest** (design: [autonomous-ingest-design.md](../autonomous-ingest-design.md),
   build slices S1–S5). URL fetch and YouTube transcripts are already wired into
-  Convex; **the real gap is PDF extraction** (still script-only) and the
-  blocked-state/retry surfaces.
+  Convex. PDF extraction (S5) now runs in Convex through Lab Firecrawl, with
+  `pdf_parse_error` and retry states ([pdf-capture.md](../pdf-capture.md)); it is
+  operator-gated on deploy and Convex env. The remaining gap is the general
+  blocked-state/retry surface (S1–S2).
 - **Phase B — Canonical control surface**: parameter actionability flags (not
   started), first-class experiment model (protocol exists as a recipe field,
   not a table), structured revision diffs (lineage fields exist; diffs are

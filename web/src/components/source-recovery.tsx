@@ -7,7 +7,9 @@ import {
   RECOVERY_TEXT_MAX_CHARS,
   type RecoveryKind,
 } from "../../../convex/shared/sourceRecovery";
+import { pdfRecoveryReason } from "../../../convex/shared/pdfCapture";
 import { unextractableTextReason } from "../../../convex/shared/sourceText";
+import { isMissingTextBlock } from "../../../convex/shared/statuses";
 import { css } from "../../styled-system/css";
 import { createMutation, describeError } from "../integrations/convex";
 import {
@@ -38,6 +40,12 @@ export type RecoverySource = {
       lastAttemptDetail?: string;
       attempts?: number;
     };
+    pdfCapture?: {
+      state?: string;
+      code?: string;
+      detail?: string;
+      lastAttemptAt?: number;
+    };
     sourceRecovery?: {
       accessChangedAt?: number;
       accessNote?: string;
@@ -50,11 +58,13 @@ export function needsSourceText(source: RecoverySource) {
   return (
     source.status === "ingested" ||
     (["review_needed", "extracted"].includes(source.status) &&
-      source.blockedReason === "no_text")
+      isMissingTextBlock(source.blockedReason))
   );
 }
 
 function recoveryReason(source: RecoverySource) {
+  if (source.type === "pdf")
+    return pdfRecoveryReason(source.metadata?.pdfCapture);
   const detail =
     source.blockedDetails ??
     source.metadata?.transcriptCapture?.lastAttemptDetail ??
@@ -229,7 +239,9 @@ export function SourceRecovery(props: {
         props.onNotice(
           result.transcriptQueued
             ? "Transcript recovery requested. The capture worker will try again; browser sign-in is not shared with that worker."
-            : "Access update saved. The source still needs text recovery in the signed-in browser.",
+            : result.pdfQueued
+              ? "PDF capture requested. Lab Firecrawl will read the PDF again; browser sign-in is not shared with it."
+              : "Access update saved. The source still needs text recovery in the signed-in browser.",
         );
       }
       setMode(null);
@@ -292,7 +304,12 @@ export function SourceRecovery(props: {
       </Show>
       <Show when={needsSourceText(props.source)}>
         <p class={reasonClass}>{recoveryReason(props.source)}</p>
-        <Show when={props.source.metadata?.transcriptCapture?.lastAttemptAt}>
+        <Show
+          when={
+            props.source.metadata?.transcriptCapture?.lastAttemptAt ??
+            props.source.metadata?.pdfCapture?.lastAttemptAt
+          }
+        >
           {(date) => (
             <p class={helperClass}>
               Last automatic attempt{" "}

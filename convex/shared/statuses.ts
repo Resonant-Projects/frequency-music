@@ -24,8 +24,15 @@ export const SOURCE_BLOCKED_REASONS = [
   "ai_error",
   "needs_human_review",
   "duplicate",
+  // A PDF whose bytes gave no usable text (scanned, damaged, not a PDF).
+  "pdf_parse_error",
 ] as const;
 export type SourceBlockedReason = (typeof SOURCE_BLOCKED_REASONS)[number];
+
+/** Blocks that source-text recovery (provide text, access changed, archive) resolves. */
+export function isMissingTextBlock(reason?: string): boolean {
+  return reason === "no_text" || reason === "pdf_parse_error";
+}
 
 export const HYPOTHESIS_STATUSES = [
   "draft",

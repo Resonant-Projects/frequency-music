@@ -36,6 +36,8 @@ import {
   extractionInputHash,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
+import { isMissingTextBlock } from "./shared/statuses";
+import { awaitsPdfText, queuePdfCapture } from "./pdfCapture";
 import {
   advanceSourceVersion,
   publicSourceUrl,
@@ -392,9 +394,9 @@ export const updateStatus = mutation({
     if (
       (source.status === "archived" &&
         args.status !== "archived" &&
-        (args.blockedReason === "no_text" ||
+        (isMissingTextBlock(args.blockedReason) ||
           args.expectedUpdatedAt === undefined)) ||
-      (args.blockedReason === "no_text" &&
+      (isMissingTextBlock(args.blockedReason) &&
         (source.metadata?.sourceRecovery?.providedAt !== undefined ||
           source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
         args.expectedUpdatedAt === undefined)
@@ -479,7 +481,7 @@ export const updateText = mutation({
       transcript: args.transcript,
       rawTextSha256,
       status: "text_ready",
-      ...(source.blockedReason === "no_text" && text.trim()
+      ...(isMissingTextBlock(source.blockedReason) && text.trim()
         ? { blockedReason: undefined, blockedDetails: undefined }
         : {}),
       updatedAt: advanceSourceVersion(source.updatedAt),
@@ -514,7 +516,7 @@ async function sourceForRecovery(
     !source ||
     source.visibility !== "private" ||
     !["ingested", "review_needed", "extracted"].includes(source.status) ||
-    (source.status !== "ingested" && source.blockedReason !== "no_text")
+    (source.status !== "ingested" && !isMissingTextBlock(source.blockedReason))
   ) {
     throw new ConvexError({
       code: "INVALID_STATE",
@@ -677,7 +679,7 @@ export const requestSourceRecovery = mutation({
     note: v.string(),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({ transcriptQueued: v.boolean() }),
+  returns: v.object({ transcriptQueued: v.boolean(), pdfQueued: v.boolean() }),
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const source = await sourceForRecovery(
@@ -698,15 +700,22 @@ export const requestSourceRecovery = mutation({
       !source.rawText &&
       !source.transcript &&
       Boolean(resolveYouTubeVideoId(source));
+    // A PDF with stored bytes or a URL gets a fresh capture run.
+    const pdfQueued = awaitsPdfText({ ...source, status: "ingested" });
+    const pdfCapture = pdfQueued
+      ? await queuePdfCapture(ctx, source._id, source)
+      : undefined;
+    const queued = transcriptQueued || pdfQueued;
     await ctx.db.patch("sources", source._id, {
-      status: transcriptQueued ? "ingested" : "review_needed",
-      blockedReason: transcriptQueued ? undefined : "no_text",
-      blockedDetails: transcriptQueued
+      status: queued ? "ingested" : "review_needed",
+      blockedReason: queued ? undefined : "no_text",
+      blockedDetails: queued
         ? undefined
         : "Access updated. Source text still needs recovery.",
       updatedAt: now,
       metadata: {
         ...source.metadata,
+        ...(pdfCapture ? { pdfCapture } : {}),
         ...(transcriptQueued
           ? {
               transcriptCapture: {
@@ -732,7 +741,7 @@ export const requestSourceRecovery = mutation({
         internal.transcriptCapture.enqueueIfNeeded,
         {},
       );
-    return { transcriptQueued };
+    return { transcriptQueued, pdfQueued };
   },
 });
 
@@ -1456,7 +1465,7 @@ export function keepsDedupeKey(
   const rank = (s: DedupeStanding) => [
     s.hasExtraction ? 1 : 0,
     s.hasText ? 1 : 0,
-    s.status === "review_needed" && s.blockedReason === "no_text"
+    s.status === "review_needed" && isMissingTextBlock(s.blockedReason)
       ? 0
       : (DEDUPE_PROGRESS[s.status] ?? 0),
   ];

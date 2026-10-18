@@ -74,6 +74,8 @@ export const modules: Record<string, () => Promise<unknown>> = {
   "./renders.ts": () => import("../convex/renders"),
   "./schema.ts": () => import("../convex/schema"),
   "./passages.ts": () => import("../convex/passages"),
+  "./pdfCapture.ts": () => import("../convex/pdfCapture"),
+  "./pdfCaptureNode.ts": () => import("../convex/pdfCaptureNode"),
   "./settings.ts": () => import("../convex/settings"),
   "./studioComparisons.ts": () => import("../convex/studioComparisons"),
   "./sources.ts": () => import("../convex/sources"),

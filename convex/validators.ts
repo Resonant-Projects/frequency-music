@@ -73,6 +73,7 @@ export const sourceReturnValidator = v.object({
   feedUrl: v.optional(v.string()),
   youtubeVideoId: v.optional(v.string()),
   uploadThingUrl: v.optional(v.string()),
+  pdfStorageId: v.optional(v.id("_storage")),
   rawText: v.optional(v.string()),
   rawTextSha256: v.optional(v.string()),
   transcript: v.optional(v.string()),
