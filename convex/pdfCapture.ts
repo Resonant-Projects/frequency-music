@@ -78,6 +78,12 @@ export function awaitsPdfText(source: Doc<"sources">): boolean {
   );
 }
 
+/** A capture run is scheduled, in flight, or waiting to retry. */
+function pdfCaptureRunning(source: Doc<"sources">): boolean {
+  const state = captureOf(source)?.state;
+  return state === "queued" || state === "parsing" || state === "waiting";
+}
+
 /**
  * Start a fresh capture run (attempt 1) and schedule it. Returns the
  * metadata.pdfCapture value the caller must store in the same mutation.
@@ -243,7 +249,7 @@ export const createFromPdfUrl = mutation({
         !existing.pdfStorageId &&
         ((existing.status === "review_needed" &&
           isMissingTextBlock(existing.blockedReason)) ||
-          (existing.status === "ingested" && !awaitsPdfText(existing)));
+          (existing.status === "ingested" && !pdfCaptureRunning(existing)));
       if (pdfQueued) {
         // The stored URL already failed; read the one just submitted.
         const pdfCapture = await queuePdfCapture(

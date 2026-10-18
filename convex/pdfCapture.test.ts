@@ -268,6 +268,33 @@ describe("PDF URL intake", () => {
     expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
   });
 
+  test("a PDF URL captures text for a textless PDF Source that never had a capture", async () => {
+    const t = convexTest(schema, modules);
+    const pdfUrl = "https://example.org/score.pdf";
+    const { generateDedupeKey } = await import("./sourceUtils");
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "pdf",
+        dedupeKey: generateDedupeKey("url", { canonicalUrl: pdfUrl }),
+        canonicalUrl: pdfUrl,
+        tags: [],
+        metadata: {},
+        status: "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: pdfUrl,
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    const { plan } = await startAttempt(t, id);
+    expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+  });
+
   test("a PDF URL does not queue capture for a YouTube Source", async () => {
     const t = convexTest(schema, modules);
     const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
