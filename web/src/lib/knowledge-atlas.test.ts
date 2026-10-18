@@ -263,6 +263,35 @@ it("places a source by its linked concepts when its extraction is outside the sa
     "geometry",
   );
 });
+it("breaks a source's tie by its current extraction's topic order, not link order", () => {
+  // Edges keep the order concepts were first linked; a re-extraction that
+  // reorders the topics leaves them as they were.
+  const graph = buildAtlas(
+    [],
+    [],
+    {
+      ...pipeline,
+      sources: [
+        {
+          ...pipeline.sources[0],
+          topics: undefined,
+          conceptNames: ["timbre", "tonnetz"],
+        },
+      ],
+      extractions: [
+        { ...pipeline.extractions[0], topics: ["tonnetz", "timbre"] },
+      ],
+    },
+    new Map([
+      ["timbre", "synthesis"],
+      ["tonnetz", "geometry"],
+    ]),
+  );
+  const domainOf = (id: string) =>
+    graph.nodes.find((node) => node.id === id)?.domain;
+  expect(domainOf("extraction:e1")).toBe("geometry");
+  expect(domainOf("source:s1")).toBe("geometry");
+});
 it("falls back to topic keywords for items without classified concepts", () => {
   const graph = buildAtlas([], [], pipeline);
   expect(graph.nodes.find((node) => node.id === "source:s1")?.domain).toBe(

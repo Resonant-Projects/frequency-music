@@ -37,9 +37,11 @@ export function itemSector(
 
 /**
  * A source's topic names. An extracted source's topics live on its current
- * extraction, not on the source row. The source's linked concept names
- * (`conceptNames`, read per source) carry them for every sampled source; the
- * extractions at hand add any topics not linked yet.
+ * extraction, not on the source row. A sampled extraction's topics come first,
+ * in their current order, so the tie-break agrees with the extraction itself.
+ * The source's linked concept names (`conceptNames`, read per source) cover
+ * every sampled source; their order is the order concepts were first linked,
+ * which stands in for topic order only when the extraction is not sampled.
  */
 export function sourceTopicNames(
   extractions: ReadonlyArray<{ sourceId: string; topics: readonly string[] }>,
@@ -53,9 +55,9 @@ export function sourceTopicNames(
     bySource.set(sourceId, [...(bySource.get(sourceId) ?? []), ...topics]);
   }
   return (source) => [
+    ...(bySource.get(source._id) ?? []),
     ...(source.topics ?? []),
     ...(source.conceptNames ?? []),
-    ...(bySource.get(source._id) ?? []),
   ];
 }
 

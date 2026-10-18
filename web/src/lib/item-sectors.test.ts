@@ -109,7 +109,7 @@ describe("pipeline item names", () => {
         recipes: [],
       }),
     ).toEqual([
-      ["Plates", "chladni plate", "standing wave"],
+      ["standing wave", "Plates", "chladni plate"],
       ["standing wave"],
       ["tonnetz"],
     ]);

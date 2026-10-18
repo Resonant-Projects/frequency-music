@@ -616,7 +616,7 @@ describe("dashboard concept sectors", () => {
 });
 
 describe("dashboard pipeline source concepts", () => {
-  test("returns each sampled source's linked concept names, bounded and in link order", async () => {
+  test("returns each sampled source's linked concept names, bounded", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       const source = (title: string) =>
@@ -651,7 +651,7 @@ describe("dashboard pipeline source concepts", () => {
         });
       // No extraction row at all: the source's concept edges alone place it,
       // as for a source whose current extraction is outside the sample.
-      for (let i = 0; i < 25; i++) await edge(linked, `concept ${i}`);
+      for (let i = 0; i < 40; i++) await edge(linked, `concept ${i}`);
       await edge(linked, "hand linked", "mentions", false);
       await edge(linked, "neighbor", "related_to");
       await edge(other, "elsewhere");
@@ -661,9 +661,11 @@ describe("dashboard pipeline source concepts", () => {
     const conceptsOf = (title: string) =>
       result.sources.find((source) => source.title === title)?.conceptNames;
 
-    expect(conceptsOf("linked")).toEqual(
-      Array.from({ length: 20 }, (_, i) => `concept ${i}`),
-    );
+    // Reconciliation keeps these edges equal to the current topic set, so the
+    // bound covers any extraction with up to 32 topics.
+    const linkedNames = conceptsOf("linked") ?? [];
+    expect(linkedNames).toHaveLength(32);
+    expect(linkedNames.every((name) => /^concept \d+$/.test(name))).toBe(true);
     expect(conceptsOf("other")).toEqual(["elsewhere"]);
   });
 });

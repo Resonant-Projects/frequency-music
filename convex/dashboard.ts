@@ -518,9 +518,12 @@ export const domainSubTopics = query({
 // PIPELINE ITEMS (Phase 3 — Planetary Orrery)
 // ============================================================================
 
-// Concept names read per sampled source for its domain sector. Links follow
-// the extraction's topic order, so the leading topics are kept.
-const MAX_SOURCE_CONCEPT_NAMES = 20;
+// Concept names read per sampled source for its domain sector.
+// Reconciliation keeps a source's automatic mention edges equal to its current
+// extraction's topic set, so this covers any extraction with up to 32 topics.
+// Edges keep the order concepts were first linked, which is not necessarily
+// the current topic order. 200 sources × 32 small edges is ~2 MB.
+const MAX_SOURCE_CONCEPT_NAMES = 32;
 
 export const pipelineItems = query({
   args: {},
@@ -569,9 +572,9 @@ export const pipelineItems = query({
     ]);
     // An extracted source's topics live on its current extraction, and only
     // 100 current extractions are sampled against 200 sources. The automatic
-    // mention edges are that extraction's concept projection (reconciled when
-    // the extraction changes), so read them per source: one index range and
-    // at most MAX_SOURCE_CONCEPT_NAMES small edge documents each.
+    // mention edges are that extraction's concept set (reconciled when the
+    // extraction changes), so read them per source: one index range and at
+    // most MAX_SOURCE_CONCEPT_NAMES small edge documents each.
     const conceptNames = await Promise.all(
       sources.map(async (source) =>
         (
