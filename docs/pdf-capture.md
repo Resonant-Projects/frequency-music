@@ -11,6 +11,11 @@ approved the design on 2026-10-17 (Postplan draft `tzak0v5h9k77`, version 3).
 | Uploaded file (`/ingest`, 25 MB at most) | `pdfCapture.createFromPdfUpload`. The browser uploads to Convex storage first. The Source keeps the blob in `sources.pdfStorageId`. Dedupe key: `pdf:<sha256 hex>` | `POST $FIRECRAWL_API_URL/v2/parse` with the stored bytes |
 | Public PDF URL | `pdfCapture.createFromPdfUrl`. Dedupe key: the URL key, so `arxiv:` and `doi:` identity holds | `POST $FIRECRAWL_API_URL/v2/scrape` |
 
+When a PDF URL's key already belongs to a Source that is blocked for missing text (an
+arXiv abstract page behind a bot wall, say), intake reads that Source's text from the PDF
+instead of creating a duplicate: `metadata.pdfCapture.url` holds the PDF URL, and the
+Source keeps its type and `canonicalUrl`. A Source that has text is left alone.
+
 `pdfCaptureNode.capturePdf` (a Node action) calls Firecrawl. It never fetches a
 user-supplied URL itself: Firecrawl's egress proxy blocks private, LAN and metadata
 targets after DNS and on redirects. Crawl4AI is not used, because it has no PDF text
@@ -33,7 +38,9 @@ still open after 12 minutes.
 | 404 or another 4xx, capture off, file missing | `review_needed` + `no_text`, at once |
 
 `isMissingTextBlock()` treats `pdf_parse_error` like `no_text`. "Provide text" and
-Archive work as they do for other Sources, and "Access changed" starts a new capture run.
+Archive work as they do for other Sources, and "Access changed" starts a new capture run,
+except for an uploaded file blocked with `pdf_parse_error`: its bytes have not changed, so
+it stays blocked until its text is provided or a copy with a text layer is uploaded.
 
 ## Operator enablement
 

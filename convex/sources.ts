@@ -700,15 +700,18 @@ export const requestSourceRecovery = mutation({
       !source.rawText &&
       !source.transcript &&
       Boolean(resolveYouTubeVideoId(source));
-    // A PDF with stored bytes or a URL gets a fresh capture run.
-    const pdfQueued = awaitsPdfText({ ...source, status: "ingested" });
+    // A PDF with stored bytes or a URL gets a fresh capture run, except
+    // uploaded bytes that already failed to parse: they have not changed.
+    const pdfQueued =
+      awaitsPdfText({ ...source, status: "ingested" }) &&
+      !(source.pdfStorageId && source.blockedReason === "pdf_parse_error");
     const pdfCapture = pdfQueued
       ? await queuePdfCapture(ctx, source._id, source)
       : undefined;
     const queued = transcriptQueued || pdfQueued;
     await ctx.db.patch("sources", source._id, {
       status: queued ? "ingested" : "review_needed",
-      blockedReason: queued ? undefined : "no_text",
+      blockedReason: queued ? undefined : (source.blockedReason ?? "no_text"),
       blockedDetails: queued
         ? undefined
         : "Access updated. Source text still needs recovery.",

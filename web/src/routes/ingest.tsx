@@ -295,7 +295,7 @@ export function IngestPage() {
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean);
-      let result: { created: boolean };
+      let result: { created: boolean; pdfQueued?: boolean };
       if (file) {
         const uploadUrl = await generatePdfUploadUrl({});
         const response = await fetch(uploadUrl, {
@@ -321,7 +321,9 @@ export function IngestPage() {
       setNotice(
         result.created
           ? "PDF source ingested into private inbox. Lab Firecrawl is reading its text."
-          : "This PDF is already a source; nothing new was queued.",
+          : result.pdfQueued
+            ? "This PDF is already a source without text. Lab Firecrawl is reading its text now."
+            : "This PDF is already a source; nothing new was queued.",
       );
       setPdfFile(null);
       if (pdfFileInput) pdfFileInput.value = "";

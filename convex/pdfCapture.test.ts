@@ -159,8 +159,94 @@ describe("PDF URL intake", () => {
       await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
         url: "https://arxiv.org/abs/1706.03762",
       }),
-    ).toEqual({ id, created: false });
+    ).toEqual({ id, created: false, pdfQueued: false });
     expect(await scheduled(t)).toHaveLength(1);
+  });
+
+  test("a PDF URL captures text for an existing Source blocked without text", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        dedupeKey: "arxiv:1706.03762",
+        canonicalUrl: "https://arxiv.org/abs/1706.03762",
+        tags: [],
+        metadata: { scoutedBy: { query: "attention" } },
+        status: "review_needed",
+        blockedReason: "no_text",
+        blockedDetails: "Captured text is a bot wall or browser check.",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const pdfUrl = "https://arxiv.org/pdf/1706.03762";
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: pdfUrl,
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    const queued = (await source(t, id))!;
+    expect(queued).toMatchObject({
+      type: "url",
+      canonicalUrl: "https://arxiv.org/abs/1706.03762",
+      status: "ingested",
+      metadata: {
+        scoutedBy: { query: "attention" },
+        pdfCapture: {
+          state: "queued",
+          seq: 1,
+          endpoint: "scrape",
+          url: pdfUrl,
+        },
+      },
+    });
+    expect(queued.blockedReason).toBeUndefined();
+    expect(queued.updatedAt).toBeGreaterThan(1);
+    const { seq, plan } = await startAttempt(t, id);
+    expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+    await t.mutation(internal.pdfCapture.recordPdfCapture, {
+      sourceId: id,
+      seq,
+      outcome: "captured",
+      text: prose,
+      chars: prose.length,
+      truncated: false,
+    });
+    expect(await source(t, id)).toMatchObject({
+      status: "text_ready",
+      rawText: prose.trim(),
+    });
+  });
+
+  test("a PDF URL leaves an existing Source that has text alone", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        dedupeKey: "arxiv:1706.03762",
+        canonicalUrl: "https://arxiv.org/abs/1706.03762",
+        rawText: prose,
+        tags: [],
+        metadata: {},
+        status: "text_ready",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: "https://arxiv.org/pdf/1706.03762",
+      }),
+    ).toEqual({ id, created: false, pdfQueued: false });
+    expect(await source(t, id)).toMatchObject({
+      status: "text_ready",
+      updatedAt: 1,
+    });
+    expect(await scheduled(t)).toHaveLength(0);
   });
 
   test("refuses private and malformed URLs", async () => {
@@ -385,22 +471,33 @@ describe("PDF capture attempts", () => {
 });
 
 describe("PDF recovery", () => {
-  test("Access changed starts a fresh capture run for a blocked PDF", async () => {
-    const t = convexTest(schema, modules);
+  async function blockUpload(
+    t: T,
+    code: "pdf_unreadable" | "pdf_capture_unconfigured",
+  ) {
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.mutation(internal.pdfCapture.recordPdfCapture, {
       sourceId: id,
       seq,
       outcome: "failed",
-      code: "pdf_unreadable",
+      code,
     });
-    const blocked = (await source(t, id))!;
+    return { id, seq, blocked: (await source(t, id))! };
+  }
+
+  test("Access changed starts a fresh capture run for an upload that failed to reach Firecrawl", async () => {
+    const t = convexTest(schema, modules);
+    const { id, seq, blocked } = await blockUpload(
+      t,
+      "pdf_capture_unconfigured",
+    );
+    expect(blocked.blockedReason).toBe("no_text");
     expect(
       await reader(t).mutation(api.sources.requestSourceRecovery, {
         id,
         expectedUpdatedAt: blocked.updatedAt,
-        note: "Uploaded a copy with a text layer elsewhere; retry.",
+        note: "Lab Firecrawl is enabled now; retry.",
       }),
     ).toEqual({ transcriptQueued: false, pdfQueued: true });
     const row = (await source(t, id))!;
@@ -414,6 +511,51 @@ describe("PDF recovery", () => {
     expect((await scheduled(t)).at(-1)!.args[0]).toEqual({
       sourceId: id,
       seq: seq + 1,
+    });
+  });
+
+  test("Access changed does not re-parse uploaded bytes that failed to parse", async () => {
+    const t = convexTest(schema, modules);
+    const { id, seq, blocked } = await blockUpload(t, "pdf_unreadable");
+    const before = (await scheduled(t)).length;
+    expect(
+      await reader(t).mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: blocked.updatedAt,
+        note: "Try again.",
+      }),
+    ).toEqual({ transcriptQueued: false, pdfQueued: false });
+    expect(await source(t, id)).toMatchObject({
+      status: "review_needed",
+      blockedReason: "pdf_parse_error",
+      metadata: { pdfCapture: { state: "blocked", seq } },
+    });
+    expect(await scheduled(t)).toHaveLength(before);
+  });
+
+  test("Access changed re-reads a PDF URL that failed to parse", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+      url: "https://example.org/score.pdf",
+    });
+    const { seq } = await startAttempt(t, id);
+    await t.mutation(internal.pdfCapture.recordPdfCapture, {
+      sourceId: id,
+      seq,
+      outcome: "failed",
+      code: "pdf_unreadable",
+    });
+    const blocked = (await source(t, id))!;
+    expect(
+      await reader(t).mutation(api.sources.requestSourceRecovery, {
+        id,
+        expectedUpdatedAt: blocked.updatedAt,
+        note: "The publisher replaced the file.",
+      }),
+    ).toEqual({ transcriptQueued: false, pdfQueued: true });
+    expect(await source(t, id)).toMatchObject({
+      status: "ingested",
+      metadata: { pdfCapture: { state: "queued", seq: seq + 1 } },
     });
   });
 

@@ -24,6 +24,7 @@ import {
   sha256ToHex,
 } from "./shared/pdfCapture";
 import { advanceSourceVersion } from "./shared/sourceRecovery";
+import { isMissingTextBlock } from "./shared/statuses";
 import {
   SOURCE_TEXT_MAX_CHARS,
   unextractableTextReason,
@@ -42,6 +43,8 @@ export type PdfCaptureState = {
   tries: number;
   provider: "firecrawl";
   endpoint: PdfEndpoint;
+  // The PDF URL a non-PDF Source (an arXiv abstract page, say) is read from.
+  url?: string;
   code?: PdfFailureCode;
   httpStatus?: number;
   detail?: string;
@@ -62,14 +65,15 @@ function endpointOf(source: Pick<Doc<"sources">, "pdfStorageId">): PdfEndpoint {
   return source.pdfStorageId ? "parse" : "scrape";
 }
 
-/** A PDF Source that still has no text and something to read it from. */
+/** A PDF Source, or a Source given a PDF URL, that still has no text and something to read it from. */
 export function awaitsPdfText(source: Doc<"sources">): boolean {
+  const url = captureOf(source)?.url;
   return (
-    source.type === "pdf" &&
+    (source.type === "pdf" || Boolean(url)) &&
     source.status === "ingested" &&
     !source.rawText &&
     !source.transcript &&
-    Boolean(source.pdfStorageId || source.canonicalUrl)
+    Boolean(source.pdfStorageId || url || source.canonicalUrl)
   );
 }
 
@@ -81,14 +85,17 @@ export async function queuePdfCapture(
   ctx: MutationCtx,
   sourceId: Id<"sources">,
   source: Pick<Doc<"sources">, "pdfStorageId" | "metadata">,
+  url?: string,
 ): Promise<PdfCaptureState> {
   const previous = source.metadata?.pdfCapture as PdfCaptureState | undefined;
+  const pdfUrl = url ?? previous?.url;
   const capture: PdfCaptureState = {
     state: "queued",
     seq: (previous?.seq ?? 0) + 1,
     tries: 1,
     provider: "firecrawl",
     endpoint: endpointOf(source),
+    ...(pdfUrl ? { url: pdfUrl } : {}),
   };
   await ctx.scheduler.runAfter(0, internal.pdfCaptureNode.capturePdf, {
     sourceId,
@@ -186,7 +193,8 @@ export const createFromPdfUpload = mutation({
 
 /**
  * Create a PDF Source for a public PDF URL. It keeps the URL dedupe key, so
- * an arXiv or DOI PDF shares identity with its landing page.
+ * an arXiv or DOI PDF shares identity with its landing page. An existing
+ * Source blocked for missing text is read from this PDF instead.
  */
 export const createFromPdfUrl = mutation({
   args: {
@@ -195,7 +203,11 @@ export const createFromPdfUrl = mutation({
     tags: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({ id: v.id("sources"), created: v.boolean() }),
+  returns: v.object({
+    id: v.id("sources"),
+    created: v.boolean(),
+    pdfQueued: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const url = args.url.trim();
@@ -212,7 +224,31 @@ export const createFromPdfUrl = mutation({
       .query("sources")
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
-    if (existing) return { id: existing._id, created: false };
+    if (existing) {
+      const pdfQueued =
+        existing.status === "review_needed" &&
+        isMissingTextBlock(existing.blockedReason) &&
+        !existing.rawText &&
+        !existing.transcript &&
+        !existing.pdfStorageId;
+      if (pdfQueued) {
+        // A PDF Source keeps reading its own URL; another type reads this one.
+        const pdfCapture = await queuePdfCapture(
+          ctx,
+          existing._id,
+          existing,
+          existing.type === "pdf" ? undefined : url,
+        );
+        await ctx.db.patch("sources", existing._id, {
+          status: "ingested",
+          blockedReason: undefined,
+          blockedDetails: undefined,
+          updatedAt: advanceSourceVersion(existing.updatedAt),
+          metadata: { ...existing.metadata, pdfCapture },
+        });
+      }
+      return { id: existing._id, created: false, pdfQueued };
+    }
     return {
       id: await insertPdfSource(ctx, {
         dedupeKey,
@@ -222,6 +258,7 @@ export const createFromPdfUrl = mutation({
         createdBy: await creatorOf(ctx, identity),
       }),
       created: true,
+      pdfQueued: true,
     };
   },
 });
@@ -303,7 +340,10 @@ export const startPdfAttempt = internalMutation({
     );
     return source.pdfStorageId
       ? { endpoint: "parse" as const, storageId: source.pdfStorageId }
-      : { endpoint: "scrape" as const, url: source.canonicalUrl! };
+      : {
+          endpoint: "scrape" as const,
+          url: capture.url ?? source.canonicalUrl!,
+        };
   },
 });
 
