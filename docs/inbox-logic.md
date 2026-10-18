@@ -20,7 +20,7 @@ Return sources where:
 - status=ingested:
   - if type=url|rss → “Fetch text”
   - if type=youtube → “Fetch transcript”
-  - if type=pdf and uploadThingUrl exists → “Extract PDF text”
+  - if type=pdf with a stored file or URL → “Extracting PDF text” (Lab Firecrawl runs on its own)
   - else → “Add missing content”
 - status=text_ready:
   - “Run extraction”
@@ -31,7 +31,7 @@ Return sources where:
     - create recipe
     - archive
     - promote to followers
-- blockedReason=no_text:
+- blockedReason=no_text or pdf_parse_error:
   - “Paste excerpt / add manual notes / mark copyright”
 - blockedReason=ai_error:
   - “Retry extraction” (or downgrade model / shorten text)

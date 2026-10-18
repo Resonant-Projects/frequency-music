@@ -30,7 +30,8 @@ Fields:
 - `author?: string`
 - `publishedAt?: number`
 - `canonicalUrl?: string` (normalized if possible)
-- `uploadThingUrl?: string` (pdf/file)
+- `uploadThingUrl?: string` (legacy; no writer)
+- `pdfStorageId?: Id<_storage>` (uploaded PDF bytes; see `docs/pdf-capture.md`)
 - `notionPageId?: string`
 - `rssGuid?: string`
 - `feedUrl?: string`
@@ -43,7 +44,7 @@ Fields:
 "promoted_followers" | "promoted_public" | "archived"`
 - `blockedReason?:
 "no_text" | "copyright" | "needs_metadata" | "needs_tagging" |
-"ai_error" | "needs_human_review" | "duplicate"`
+"ai_error" | "needs_human_review" | "duplicate" | "pdf_parse_error"`
 - `blockedDetails?: string`
 - `openQuestions?: string[]`
 - `tags?: string[]` (fast filter; e.g. ["ResonantProjects"])

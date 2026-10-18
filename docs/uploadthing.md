@@ -1,3 +1,5 @@
+> Superseded: PDF uploads use Convex storage and Lab Firecrawl. See [pdf-capture.md](./pdf-capture.md).
+
 # UploadThing Integration — Concrete Flow
 
 ## App flow (SolidJS)

@@ -3,7 +3,9 @@ import { currentExtractions } from "./extractions";
 import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { readStat } from "./dashboard";
-import { sourceReturnValidator } from "./validators";
+import { readsPdfText } from "./shared/pdfCapture";
+import { isMissingTextBlock } from "./shared/statuses";
+import { publicSource, sourceReturnValidator } from "./validators";
 
 type InboxStatus = "ingested" | "text_ready" | "extracted" | "review_needed";
 
@@ -18,9 +20,11 @@ function nextActionForSource(source: {
   status: string;
   type: string;
   blockedReason?: string;
-  uploadThingUrl?: string;
+  pdfStorageId?: string;
+  canonicalUrl?: string;
+  metadata?: { pdfCapture?: unknown };
 }) {
-  if (source.blockedReason === "no_text") {
+  if (isMissingTextBlock(source.blockedReason)) {
     return "Paste excerpt or mark as blocked";
   }
   if (source.blockedReason === "ai_error") {
@@ -28,10 +32,10 @@ function nextActionForSource(source: {
   }
 
   if (source.status === "ingested") {
+    if (readsPdfText(source) && (source.pdfStorageId || source.canonicalUrl))
+      return "Extracting PDF text";
     if (source.type === "url" || source.type === "rss") return "Fetch text";
     if (source.type === "youtube") return "Fetch transcript";
-    if (source.type === "pdf" && source.uploadThingUrl)
-      return "Extract PDF text";
     return "Add missing content";
   }
 
@@ -125,7 +129,7 @@ export const list = query({
         ).first();
 
         return {
-          ...source,
+          ...publicSource(source),
           nextAction: nextActionForSource(source),
           extractionPreview: latestExtraction
             ? {

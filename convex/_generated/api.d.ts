@@ -73,6 +73,8 @@ import type * as mediaToolsInternal from "../mediaToolsInternal.js";
 import type * as narration from "../narration.js";
 import type * as narrationPrompt from "../narrationPrompt.js";
 import type * as passages from "../passages.js";
+import type * as pdfCapture from "../pdfCapture.js";
+import type * as pdfCaptureNode from "../pdfCaptureNode.js";
 import type * as phase2 from "../phase2.js";
 import type * as podcast from "../podcast.js";
 import type * as recipes from "../recipes.js";
@@ -187,6 +189,8 @@ declare const fullApi: ApiFromModules<{
   narration: typeof narration;
   narrationPrompt: typeof narrationPrompt;
   passages: typeof passages;
+  pdfCapture: typeof pdfCapture;
+  pdfCaptureNode: typeof pdfCaptureNode;
   phase2: typeof phase2;
   podcast: typeof podcast;
   recipes: typeof recipes;

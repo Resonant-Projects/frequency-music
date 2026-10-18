@@ -174,6 +174,28 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     crons: [],
     components: [],
   },
+  {
+    // Undeployed candidate: reported missing until its own release ships.
+    // The sources.pdfStorageId field and index ship in the same schema push.
+    id: "pdf-capture",
+    description:
+      "PDF upload and URL text capture through Lab Firecrawl (autonomous ingest S5; unmerged candidate)",
+    functions: [
+      ...fn(
+        "pdfCapture",
+        "generatePdfUploadUrl",
+        "createFromPdfUpload",
+        "createFromPdfUrl",
+        "startPdfAttempt",
+        "recordPdfCapture",
+        "expirePdfAttempt",
+      ),
+      ...fn("pdfCaptureNode", "capturePdf"),
+    ],
+    httpRoutes: [],
+    crons: [],
+    components: [],
+  },
 ]);
 
 const API_REFERENCE = /\bapi\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\b/g;

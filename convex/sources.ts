@@ -36,6 +36,8 @@ import {
   extractionInputHash,
 } from "./shared/extractionPrompt";
 import { unextractableTextReason } from "./shared/sourceText";
+import { isMissingTextBlock } from "./shared/statuses";
+import { awaitsPdfText, queuePdfCapture } from "./pdfCapture";
 import {
   advanceSourceVersion,
   publicSourceUrl,
@@ -43,7 +45,7 @@ import {
   RECOVERY_NOTE_MAX_CHARS,
   RECOVERY_TEXT_MAX_CHARS,
 } from "./shared/sourceRecovery";
-import { sourceReturnValidator } from "./validators";
+import { publicSource, sourceReturnValidator } from "./validators";
 
 // ============================================================================
 // QUERIES
@@ -60,11 +62,12 @@ export const listByStatus = query({
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
       .order("desc")
       .take(limit);
+    return rows.map(publicSource);
   },
 });
 
@@ -226,10 +229,11 @@ export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .order("desc")
       .take(args.limit ?? 50);
+    return rows.map(publicSource);
   },
 });
 
@@ -250,11 +254,12 @@ export const listByType = query({
   },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .withIndex("by_type_updatedAt", (q) => q.eq("type", args.type))
       .order("desc")
       .take(args.limit ?? 50);
+    return rows.map(publicSource);
   },
 });
 
@@ -265,7 +270,8 @@ export const get = query({
   args: { id: v.id("sources") },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get("sources", args.id);
+    const source = await ctx.db.get("sources", args.id);
+    return source && publicSource(source);
   },
 });
 
@@ -276,10 +282,11 @@ export const getByDedupeKey = query({
   args: { dedupeKey: v.string() },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const source = await ctx.db
       .query("sources")
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
       .first();
+    return source && publicSource(source);
   },
 });
 
@@ -392,9 +399,9 @@ export const updateStatus = mutation({
     if (
       (source.status === "archived" &&
         args.status !== "archived" &&
-        (args.blockedReason === "no_text" ||
+        (isMissingTextBlock(args.blockedReason) ||
           args.expectedUpdatedAt === undefined)) ||
-      (args.blockedReason === "no_text" &&
+      (isMissingTextBlock(args.blockedReason) &&
         (source.metadata?.sourceRecovery?.providedAt !== undefined ||
           source.metadata?.sourceRecovery?.accessChangedAt !== undefined) &&
         args.expectedUpdatedAt === undefined)
@@ -479,7 +486,7 @@ export const updateText = mutation({
       transcript: args.transcript,
       rawTextSha256,
       status: "text_ready",
-      ...(source.blockedReason === "no_text" && text.trim()
+      ...(isMissingTextBlock(source.blockedReason) && text.trim()
         ? { blockedReason: undefined, blockedDetails: undefined }
         : {}),
       updatedAt: advanceSourceVersion(source.updatedAt),
@@ -514,7 +521,7 @@ async function sourceForRecovery(
     !source ||
     source.visibility !== "private" ||
     !["ingested", "review_needed", "extracted"].includes(source.status) ||
-    (source.status !== "ingested" && source.blockedReason !== "no_text")
+    (source.status !== "ingested" && !isMissingTextBlock(source.blockedReason))
   ) {
     throw new ConvexError({
       code: "INVALID_STATE",
@@ -677,7 +684,7 @@ export const requestSourceRecovery = mutation({
     note: v.string(),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({ transcriptQueued: v.boolean() }),
+  returns: v.object({ transcriptQueued: v.boolean(), pdfQueued: v.boolean() }),
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const source = await sourceForRecovery(
@@ -698,15 +705,25 @@ export const requestSourceRecovery = mutation({
       !source.rawText &&
       !source.transcript &&
       Boolean(resolveYouTubeVideoId(source));
+    // A PDF with stored bytes or a URL gets a fresh capture run, except
+    // uploaded bytes that already failed to parse: they have not changed.
+    const pdfQueued =
+      awaitsPdfText({ ...source, status: "ingested" }) &&
+      !(source.pdfStorageId && source.blockedReason === "pdf_parse_error");
+    const pdfCapture = pdfQueued
+      ? await queuePdfCapture(ctx, source._id, source)
+      : undefined;
+    const queued = transcriptQueued || pdfQueued;
     await ctx.db.patch("sources", source._id, {
-      status: transcriptQueued ? "ingested" : "review_needed",
-      blockedReason: transcriptQueued ? undefined : "no_text",
-      blockedDetails: transcriptQueued
+      status: queued ? "ingested" : "review_needed",
+      blockedReason: queued ? undefined : (source.blockedReason ?? "no_text"),
+      blockedDetails: queued
         ? undefined
         : "Access updated. Source text still needs recovery.",
       updatedAt: now,
       metadata: {
         ...source.metadata,
+        ...(pdfCapture ? { pdfCapture } : {}),
         ...(transcriptQueued
           ? {
               transcriptCapture: {
@@ -732,7 +749,7 @@ export const requestSourceRecovery = mutation({
         internal.transcriptCapture.enqueueIfNeeded,
         {},
       );
-    return { transcriptQueued };
+    return { transcriptQueued, pdfQueued };
   },
 });
 
@@ -1456,7 +1473,7 @@ export function keepsDedupeKey(
   const rank = (s: DedupeStanding) => [
     s.hasExtraction ? 1 : 0,
     s.hasText ? 1 : 0,
-    s.status === "review_needed" && s.blockedReason === "no_text"
+    s.status === "review_needed" && isMissingTextBlock(s.blockedReason)
       ? 0
       : (DEDUPE_PROGRESS[s.status] ?? 0),
   ];

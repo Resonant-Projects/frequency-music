@@ -2,9 +2,13 @@
 // Extraction. Feed excerpts and bot walls cost a model call and yield no
 // claims: 92% of Nautilus teaser Extractions returned none (2026-10-02 audit).
 import { looksLikeBotChallenge } from "./agentContract";
+import { EXTRACTION_CONTENT_MAX_CHARS } from "./extractionPrompt";
 
 // Below this many words there is nothing to extract.
 export const MIN_EXTRACTABLE_WORDS = 25;
+// One cap for automatically captured source text (URL fetches and PDFs):
+// the most text Extraction reads, so capture never stores unread text.
+export const SOURCE_TEXT_MAX_CHARS = EXTRACTION_CONTENT_MAX_CHARS;
 // A truncated feed excerpt is short; full articles that end in an ellipsis are not.
 const EXCERPT_MAX_WORDS = 150;
 const EXCERPT_MARKERS = [

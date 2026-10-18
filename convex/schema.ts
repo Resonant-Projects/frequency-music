@@ -529,6 +529,8 @@ export default defineSchema({
     feedUrl: v.optional(v.string()),
     youtubeVideoId: v.optional(v.string()),
     uploadThingUrl: v.optional(v.string()),
+    // Uploaded PDF bytes; mediaSweeper treats a referenced blob as owned.
+    pdfStorageId: v.optional(v.id("_storage")),
 
     // Content
     rawText: v.optional(v.string()),
@@ -562,6 +564,7 @@ export default defineSchema({
     .index("by_visibility_updatedAt", ["visibility", "updatedAt"])
     .index("by_type_updatedAt", ["type", "updatedAt"])
     .index("by_dedupeKey", ["dedupeKey"])
+    .index("by_pdfStorageId", ["pdfStorageId"])
     .index("by_notionPageId", ["notionPageId"])
     .index("by_canonicalUrl", ["canonicalUrl"])
     .index("by_createdAt", ["createdAt"]),

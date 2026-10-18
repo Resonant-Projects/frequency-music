@@ -250,6 +250,7 @@ describe("wave 2 deployment coverage", () => {
       "passages-153",
       "studio-comparison",
       "zodiac-domain-sectors",
+      "pdf-capture",
     ]);
     expect(report.groups.every((group) => !group.deployed)).toBe(true);
     const passages = report.groups.find((g) => g.id === "passages-153");
@@ -290,17 +291,23 @@ describe("wave 2 deployment coverage", () => {
       .map((call) => `${call.module}:${call.name}`);
     expect(studioCalls.length).toBeGreaterThan(0);
     for (const call of studioCalls) expect(studioNames).toContain(call);
+    // Every pdfCapture call the web makes belongs to the PDF capture group.
+    const pdf = COVERAGE_GROUPS.find((g) => g.id === "pdf-capture")!;
+    const pdfNames = pdf.functions.map((f) => `${f.module}:${f.name}`);
+    const pdfCalls = web
+      .filter((call) => call.module === "pdfCapture")
+      .map((call) => `${call.module}:${call.name}`);
+    expect(pdfCalls.length).toBeGreaterThan(0);
+    for (const call of pdfCalls) expect(pdfNames).toContain(call);
     // Without the later candidates' calls, the web skew is exactly the ten
     // functions recorded against this inspection.
     const domainSectorCalls = ["dashboard:conceptSectors"];
     expect(report.webCalls.missing).toEqual(
       expect.arrayContaining(domainSectorCalls),
     );
+    const candidateCalls = [...studioCalls, ...pdfCalls, ...domainSectorCalls];
     expect(
-      report.webCalls.missing.filter(
-        (call) =>
-          !studioCalls.includes(call) && !domainSectorCalls.includes(call),
-      ),
+      report.webCalls.missing.filter((call) => !candidateCalls.includes(call)),
     ).toEqual(recorded.webCalls.missing);
     expect(recorded.webCalls.missing).toHaveLength(10);
     expect(report.webCalls.missing).toEqual(

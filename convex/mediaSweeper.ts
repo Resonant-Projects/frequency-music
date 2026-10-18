@@ -194,10 +194,16 @@ export const sweep = internalMutation({
         if (blob._id === cursor.blobId) cursorSeen = true;
         continue;
       }
-      const referenced = await ctx.db
-        .query("audioArtifacts")
-        .withIndex("by_storageId", (q) => q.eq("storageId", blob._id))
-        .first();
+      // Owners of _storage blobs: audio artifacts and uploaded PDF Sources.
+      const referenced =
+        (await ctx.db
+          .query("audioArtifacts")
+          .withIndex("by_storageId", (q) => q.eq("storageId", blob._id))
+          .first()) ??
+        (await ctx.db
+          .query("sources")
+          .withIndex("by_pdfStorageId", (q) => q.eq("pdfStorageId", blob._id))
+          .first());
       if (referenced) continue;
       await ctx.storage.delete(blob._id);
       blobsDeleted++;

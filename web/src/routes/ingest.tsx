@@ -29,6 +29,10 @@ import {
   describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import {
+  PDF_CONTENT_TYPE,
+  pdfUploadProblem,
+} from "../../../convex/shared/pdfCapture";
 
 // Every grid column is `minmax(0, 1fr)`: a bare `1fr` keeps an `auto`
 // minimum, so one nowrap feed URL would widen the page past a phone viewport.
@@ -131,6 +135,12 @@ export function IngestPage() {
   const [ytTranscript, setYtTranscript] = createSignal("");
   const [ytTags, setYtTags] = createSignal("");
 
+  const [pdfFile, setPdfFile] = createSignal<File | null>(null);
+  const [pdfUrl, setPdfUrl] = createSignal("");
+  const [pdfTitle, setPdfTitle] = createSignal("");
+  const [pdfTags, setPdfTags] = createSignal("");
+  let pdfFileInput: HTMLInputElement | undefined;
+
   const [feedName, setFeedName] = createSignal("");
   const [feedUrl, setFeedUrl] = createSignal("");
   const [feedType, setFeedType] = createSignal("rss");
@@ -140,11 +150,19 @@ export function IngestPage() {
   const [isAddingFeed, setIsAddingFeed] = createSignal(false);
   const [isIngestingUrl, setIsIngestingUrl] = createSignal(false);
   const [isIngestingYouTube, setIsIngestingYouTube] = createSignal(false);
+  const [isIngestingPdf, setIsIngestingPdf] = createSignal(false);
 
   const createFromUrlInput = createAction(api.sources.createFromUrlAndQueue);
   const createFromYouTubeInput = createAction(
     api.sources.createFromYouTubeAndQueue,
   );
+  const generatePdfUploadUrl = createMutation(
+    api.pdfCapture.generatePdfUploadUrl,
+  );
+  const createFromPdfUpload = createMutation(
+    api.pdfCapture.createFromPdfUpload,
+  );
+  const createFromPdfUrl = createMutation(api.pdfCapture.createFromPdfUrl);
   const createFeed = createMutation(api.admin.createFeed);
   const setFeedEnabled = createMutation(api.admin.setFeedEnabled);
   const pollFeedsNow = createAction(api.admin.pollFeedsNow);
@@ -241,6 +259,81 @@ export function IngestPage() {
       setNoticeError(`YouTube ingest failed: ${describeError(error)}`);
     } finally {
       setIsIngestingYouTube(false);
+    }
+  }
+
+  async function submitPdf(event: SubmitEvent) {
+    event.preventDefault();
+    if (isIngestingPdf()) return;
+
+    const file = pdfFile();
+    const url = pdfUrl().trim();
+    const problem =
+      file && url
+        ? "Choose a PDF file or a PDF URL, not both."
+        : !file && !url
+          ? "A PDF file or a PDF URL is required."
+          : file
+            ? pdfUploadProblem({
+                size: file.size,
+                contentType: file.type || undefined,
+              })
+            : null;
+    if (problem) {
+      setNotice(null);
+      setNoticeError(problem);
+      return;
+    }
+
+    setIsIngestingPdf(true);
+    setNotice(null);
+    setNoticeError(null);
+
+    try {
+      const title = pdfTitle().trim() || undefined;
+      const tags = pdfTags()
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+      let result: { created: boolean; pdfQueued?: boolean };
+      if (file) {
+        const uploadUrl = await generatePdfUploadUrl({});
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": PDF_CONTENT_TYPE },
+          body: file,
+        });
+        if (!response.ok)
+          throw new Error(`the upload returned HTTP ${response.status}`);
+        const { storageId } = (await response.json()) as {
+          storageId: Id<"_storage">;
+        };
+        result = await createFromPdfUpload({
+          storageId,
+          fileName: file.name,
+          title,
+          tags,
+        });
+      } else {
+        result = await createFromPdfUrl({ url, title, tags });
+      }
+
+      setNotice(
+        result.created
+          ? "PDF source ingested into private inbox. Lab Firecrawl is reading its text."
+          : result.pdfQueued
+            ? "This PDF is already a source without text. Lab Firecrawl is reading its text now."
+            : "This PDF is already a source; nothing new was queued.",
+      );
+      setPdfFile(null);
+      if (pdfFileInput) pdfFileInput.value = "";
+      setPdfUrl("");
+      setPdfTitle("");
+      setPdfTags("");
+    } catch (error) {
+      setNoticeError(`PDF ingest failed: ${describeError(error)}`);
+    } finally {
+      setIsIngestingPdf(false);
     }
   }
 
@@ -540,6 +633,67 @@ export function IngestPage() {
               aria-busy={isIngestingYouTube()}
             >
               Ingest YouTube
+            </UIButton>
+          </div>
+        </UICard>
+
+        <UICard as="form" onSubmit={submitPdf} aria-busy={isIngestingPdf()}>
+          <h2 class={sectionTitleClass}>PDF Ingest</h2>
+
+          <label class={fieldLabelClass} for="pdf-input-file">
+            PDF file (25 MB at most)
+          </label>
+          <UIInput
+            id="pdf-input-file"
+            ref={pdfFileInput}
+            type="file"
+            accept={`${PDF_CONTENT_TYPE},.pdf`}
+            onChange={(event) =>
+              setPdfFile(event.currentTarget.files?.[0] ?? null)
+            }
+          />
+
+          <label class={fieldLabelClass} for="pdf-input-url">
+            Or a PDF URL
+          </label>
+          <UIInput
+            id="pdf-input-url"
+            value={pdfUrl()}
+            onInput={(event) => setPdfUrl(event.currentTarget.value)}
+            placeholder="https://example.org/paper.pdf"
+          />
+
+          <label class={fieldLabelClass} for="pdf-input-title">
+            Optional Title
+          </label>
+          <UIInput
+            id="pdf-input-title"
+            value={pdfTitle()}
+            onInput={(event) => setPdfTitle(event.currentTarget.value)}
+            placeholder="Tuning, Timbre, Spectrum, Scale"
+          />
+
+          <label class={fieldLabelClass} for="pdf-input-tags">
+            Tags (comma separated)
+          </label>
+          <UIInput
+            id="pdf-input-tags"
+            value={pdfTags()}
+            onInput={(event) => setPdfTags(event.currentTarget.value)}
+            placeholder="tuning, timbre"
+          />
+
+          <p class={helperClass}>
+            Lab Firecrawl reads the text. Scanned PDFs need pasted text.
+          </p>
+
+          <div class={formFooterClass}>
+            <UIButton
+              type="submit"
+              variant="outline"
+              aria-busy={isIngestingPdf()}
+            >
+              Ingest PDF
             </UIButton>
           </div>
         </UICard>

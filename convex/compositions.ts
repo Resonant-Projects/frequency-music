@@ -13,6 +13,7 @@ import {
   compositionLineageValidator,
   compositionReturnValidator,
   listeningSessionReturnValidator,
+  publicSource,
   recipeReturnValidator,
 } from "./validators";
 
@@ -128,9 +129,11 @@ export const getLineage = query({
               ctx.db.get("sources", sourceId),
             ),
           )
-        ).filter(
-          (source): source is NonNullable<typeof source> => source !== null,
         )
+          .filter(
+            (source): source is NonNullable<typeof source> => source !== null,
+          )
+          .map(publicSource)
       : [];
     const extractions = hypothesis
       ? await loadExtractionsForHypothesisSourceIds(
