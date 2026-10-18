@@ -1,8 +1,16 @@
+import type { ModelPrompt } from "../../models/promptCache.js";
 import type { ModelRequest } from "./types.js";
+
+/** The last top-level request key, where repeated calls start to differ:
+ * the three scoring judges for a candidate differ only in `judgeIndex`.
+ * Other kinds never repeat a prefix reliably, so they carry no breakpoint. */
+const CACHE_SPLIT_KEY: Partial<Record<ModelRequest["kind"], string>> = {
+  scoring: "judgeIndex",
+};
 
 /** Optional adapter prompt builder. Model routing and adaptive effort belong to
  * shared policy/the caller. No temperature override is applied here. */
-export function tournamentPrompt(request: ModelRequest): string {
+export function tournamentPrompt(request: ModelRequest): ModelPrompt {
   const instructions: Record<ModelRequest["kind"], string> = {
     generation:
       "Draft one hypothesis: title, question, statement, rationale, whyThisMatters, concepts. Design a 30-90 second micro-study varying exactly ONE controllable musical variable. Make a falsifiable prediction with a concrete studio stake. Do not invent evidence or IDs.",
@@ -26,5 +34,9 @@ export function tournamentPrompt(request: ModelRequest): string {
       key === "statementEmbedding" || key === "agentRunId" ? undefined : value,
     2,
   );
-  return `${instructions[request.kind]}\n\n${context}`;
+  const text = `${instructions[request.kind]}\n\n${context}`;
+  const key = CACHE_SPLIT_KEY[request.kind];
+  // Two-space indent marks a top-level key; JSON escapes newlines in values.
+  const cut = key === undefined ? -1 : text.lastIndexOf(`,\n  "${key}":`);
+  return cut < 0 ? text : { shared: text.slice(0, cut), rest: text.slice(cut) };
 }

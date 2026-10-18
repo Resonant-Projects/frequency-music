@@ -1,3 +1,4 @@
+import { type ModelPrompt, splitPrompt } from "../../models/promptCache.js";
 import type {
   ScoutQuery,
   ScoutSearchHit,
@@ -62,8 +63,13 @@ Gap census:
 ${JSON.stringify(targets, null, 2)}`;
 }
 
-export function resultJudgePrompt(hit: ScoutSearchHit): string {
-  return `You judge a web-search result for Frequency Music need-directed source discovery.
+/** Every result in a run shares everything before "Motivating gap:".
+ * `reused` is true when the run judges more than one result. */
+export function resultJudgePrompt(
+  hit: ScoutSearchHit,
+  reused = false,
+): ModelPrompt {
+  const shared = `You judge a web-search result for Frequency Music need-directed source discovery.
 
 Classify it as:
 - source: a relevant individual research input worth canonical intake;
@@ -76,8 +82,13 @@ Accept a useful foundational or contrary source even if it is not a new journal 
 
 The targetGap must repeat the exact motivating gap shown below. Give a short grounded relevanceNote. evidenceLevelGuess is optional and must remain a guess based only on the result metadata.
 
-Motivating gap: ${hit.query.targetGap}
+`;
+  return splitPrompt(
+    shared,
+    `Motivating gap: ${hit.query.targetGap}
 Query rationale: ${hit.query.rationale}
 Search result:
-${JSON.stringify({ ...hit.result, providerUrl: undefined }, null, 2)}`;
+${JSON.stringify({ ...hit.result, providerUrl: undefined }, null, 2)}`,
+    reused,
+  );
 }

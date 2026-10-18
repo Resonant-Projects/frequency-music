@@ -7,6 +7,11 @@ import {
   TOURNAMENT_TOKEN_BUDGETS,
 } from "../../../../convex/shared/llmPolicy.js";
 import { createOpenRouterAnthropicModel } from "../../models/openRouterAnthropic.js";
+import {
+  type ModelPrompt,
+  promptText,
+  toModelInput,
+} from "../../models/promptCache.js";
 import { BudgetExhausted } from "./budget.js";
 import { tournamentPrompt } from "./prompts.js";
 import type { CallContext, Metered, ModelRequest } from "./types.js";
@@ -66,10 +71,10 @@ const REQUEST_OVERHEAD_TOKENS = 256;
 
 /** A strict upper bound on input tokens: no tokenizer emits more than one
  * token per UTF-8 byte, so bytes of prompt plus schema bound the input. */
-export function inputTokenBound(prompt: string, schema: z.ZodType) {
+export function inputTokenBound(prompt: ModelPrompt, schema: z.ZodType) {
   const bytes = (text: string) => new TextEncoder().encode(text).length;
   return (
-    bytes(prompt) +
+    bytes(promptText(prompt)) +
     bytes(JSON.stringify(z.toJSONSchema(schema))) +
     REQUEST_OVERHEAD_TOKENS
   );
@@ -83,7 +88,7 @@ export type StructuredInvoker = (input: {
   model: string;
   maxTokens: number;
   schema: z.ZodType;
-  prompt: string;
+  prompt: ModelPrompt;
   signal: AbortSignal;
 }) => Promise<StructuredResult>;
 
@@ -102,7 +107,7 @@ const invokeAnthropic: StructuredInvoker = async ({
     requireDirectAnthropic: true,
   })
     .withStructuredOutput(schema, { method: "jsonSchema", includeRaw: true })
-    .invoke(prompt, { signal })) as StructuredResult;
+    .invoke(toModelInput(prompt), { signal })) as StructuredResult;
 
 function providerStatus(error: unknown): number | undefined {
   const status = (error as { status?: unknown } | null)?.status;

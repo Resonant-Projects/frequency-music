@@ -133,7 +133,11 @@ export function createJudgeStanceNode(
       for (const claim of search.claims) {
         const judged = await invokeJudgeOrError({
           judge,
-          prompt: stanceJudgePrompt(search.target, claim),
+          prompt: stanceJudgePrompt(
+            search.target,
+            claim,
+            search.claims.length > 1,
+          ),
           callTool,
           agentRunId: state.agentRunId,
           traceUrl: state.traceUrl,

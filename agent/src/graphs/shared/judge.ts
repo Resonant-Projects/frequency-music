@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { ANTHROPIC_MODELS } from "../../../../convex/shared/llmPolicy.js";
 import { getResearchModel } from "../../models/index.js";
+import { type ModelPrompt, toModelInput } from "../../models/promptCache.js";
 import { redactError } from "../../shared/redactError.js";
 import {
   appendRemoteAuditEvent,
@@ -14,7 +15,7 @@ type JudgeConfig = {
 };
 
 export type StructuredJudge<Verdict> = {
-  invoke: (prompt: string, options: JudgeConfig) => Promise<Verdict>;
+  invoke: (prompt: ModelPrompt, options: JudgeConfig) => Promise<Verdict>;
 };
 
 export function createStructuredJudge<Schema extends z.ZodType>(
@@ -29,14 +30,18 @@ export function createStructuredJudge<Schema extends z.ZodType>(
   // Native JSON-schema output, not a forced tool call: Sonnet 5.5 rejects
   // forced tool_choice and refuses to disable reasoning, which is what the
   // default tool-calling method sends.
-  return getResearchModel({
+  const runnable = getResearchModel({
     ...options,
     requiresToolBinding: true,
     model,
     temperature: 0,
   }).withStructuredOutput(schema, {
     method: "jsonSchema",
-  }) as unknown as StructuredJudge<z.infer<Schema>>;
+  });
+  return {
+    invoke: async (prompt, config) =>
+      (await runnable.invoke(toModelInput(prompt), config)) as z.infer<Schema>,
+  };
 }
 
 type JudgeError = { reason: "judge_error"; message: string };
@@ -47,7 +52,7 @@ type JudgeResult<Verdict> =
 
 export async function invokeJudgeOrError<Verdict>(args: {
   judge: StructuredJudge<Verdict>;
-  prompt: string;
+  prompt: ModelPrompt;
   callTool: ToolCaller;
   agentRunId?: string;
   traceUrl?: string;
