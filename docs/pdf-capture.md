@@ -16,7 +16,10 @@ missing text, or ingested with no capture running; an arXiv abstract page behind
 wall, say), intake reads that Source's text from the PDF
 instead of creating a duplicate: `metadata.pdfCapture.url` holds the submitted URL, and
 the Source keeps its type and `canonicalUrl`. This holds for a blocked PDF Source too, so a
-corrected URL replaces one that failed. A Source that has text is left alone.
+corrected URL replaces one that failed. Uploads work the same way: an upload whose hash
+matches a textless PDF Source without stored bytes (a manifest import, say) is kept on that
+Source and parsed. A Source that has text is left alone, and a duplicate upload for it is
+deleted.
 
 Public Source queries never return `pdfStorageId` (`publicSource()` in
 `convex/validators.ts`): the id alone is enough to download the file from Convex storage.

@@ -124,9 +124,9 @@ async function creatorOf(
   return user?._id ?? "system";
 }
 
-// Source types whose text a PDF URL can supply; a YouTube or podcast Source
-// keeps its transcript path.
-const PDF_URL_READABLE_TYPES = new Set<Doc<"sources">["type"]>([
+// Source types whose text a submitted PDF can supply; a YouTube or podcast
+// Source keeps its transcript path.
+const PDF_READABLE_TYPES = new Set<Doc<"sources">["type"]>([
   "url",
   "rss",
   "pdf",
@@ -139,6 +139,13 @@ function fileTitle(fileName?: string): string | undefined {
     .trim();
   return name || undefined;
 }
+
+const intakeResultValidator = v.object({
+  id: v.id("sources"),
+  created: v.boolean(),
+  // A capture run was queued for the returned Source.
+  pdfQueued: v.boolean(),
+});
 
 export const generatePdfUploadUrl = mutation({
   args: { devBypassSecret: v.optional(v.string()) },
@@ -161,7 +168,7 @@ export const createFromPdfUpload = mutation({
     tags: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({ id: v.id("sources"), created: v.boolean() }),
+  returns: intakeResultValidator,
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const file = await ctx.db.system.get(args.storageId);
@@ -174,7 +181,7 @@ export const createFromPdfUpload = mutation({
       .query("sources")
       .withIndex("by_pdfStorageId", (q) => q.eq("pdfStorageId", args.storageId))
       .first();
-    if (owner) return { id: owner._id, created: false };
+    if (owner) return { id: owner._id, created: false, pdfQueued: false };
 
     // A refused upload stays unreferenced; mediaSweeper deletes it after 24 h.
     // (Deleting it here would roll back with the thrown error.)
@@ -190,8 +197,14 @@ export const createFromPdfUpload = mutation({
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
     if (existing) {
+      // A textless Source with this hash (a manifest PDF, say) keeps these
+      // bytes and is read from them; otherwise the copy is not needed.
+      if (needsTextFromPdf(existing)) {
+        await requeueWithPdf(ctx, existing, { pdfStorageId: args.storageId });
+        return { id: existing._id, created: false, pdfQueued: true };
+      }
       await ctx.storage.delete(args.storageId);
-      return { id: existing._id, created: false };
+      return { id: existing._id, created: false, pdfQueued: false };
     }
     return {
       id: await insertPdfSource(ctx, {
@@ -202,6 +215,7 @@ export const createFromPdfUpload = mutation({
         createdBy: await creatorOf(ctx, identity),
       }),
       created: true,
+      pdfQueued: true,
     };
   },
 });
@@ -209,7 +223,7 @@ export const createFromPdfUpload = mutation({
 /**
  * Create a PDF Source for a public PDF URL. It keeps the URL dedupe key, so
  * an arXiv or DOI PDF shares identity with its landing page. An existing
- * Source blocked for missing text is read from this PDF instead.
+ * textless Source with that key is read from this PDF instead.
  */
 export const createFromPdfUrl = mutation({
   args: {
@@ -218,11 +232,7 @@ export const createFromPdfUrl = mutation({
     tags: v.optional(v.array(v.string())),
     devBypassSecret: v.optional(v.string()),
   },
-  returns: v.object({
-    id: v.id("sources"),
-    created: v.boolean(),
-    pdfQueued: v.boolean(),
-  }),
+  returns: intakeResultValidator,
   handler: async (ctx, args) => {
     const identity = await requireAuth(ctx, args);
     const url = args.url.trim();
@@ -240,32 +250,9 @@ export const createFromPdfUrl = mutation({
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
     if (existing) {
-      // A textless page or PDF Source that is blocked, or ingested without a
-      // capture already running, is read from this PDF.
-      const pdfQueued =
-        PDF_URL_READABLE_TYPES.has(existing.type) &&
-        !existing.rawText &&
-        !existing.transcript &&
-        !existing.pdfStorageId &&
-        ((existing.status === "review_needed" &&
-          isMissingTextBlock(existing.blockedReason)) ||
-          (existing.status === "ingested" && !pdfCaptureRunning(existing)));
-      if (pdfQueued) {
-        // The stored URL already failed; read the one just submitted.
-        const pdfCapture = await queuePdfCapture(
-          ctx,
-          existing._id,
-          existing,
-          url,
-        );
-        await ctx.db.patch("sources", existing._id, {
-          status: "ingested",
-          blockedReason: undefined,
-          blockedDetails: undefined,
-          updatedAt: advanceSourceVersion(existing.updatedAt),
-          metadata: { ...existing.metadata, pdfCapture },
-        });
-      }
+      // The stored URL, if any, already failed; read the one just submitted.
+      const pdfQueued = needsTextFromPdf(existing);
+      if (pdfQueued) await requeueWithPdf(ctx, existing, { url });
       return { id: existing._id, created: false, pdfQueued };
     }
     return {
@@ -281,6 +268,46 @@ export const createFromPdfUrl = mutation({
     };
   },
 });
+
+/**
+ * An existing Source a newly submitted PDF should give text to: a textless
+ * page or PDF Source without stored bytes that is blocked for missing text,
+ * or ingested with no capture running.
+ */
+function needsTextFromPdf(source: Doc<"sources">): boolean {
+  return (
+    PDF_READABLE_TYPES.has(source.type) &&
+    !source.rawText &&
+    !source.transcript &&
+    !source.pdfStorageId &&
+    ((source.status === "review_needed" &&
+      isMissingTextBlock(source.blockedReason)) ||
+      (source.status === "ingested" && !pdfCaptureRunning(source)))
+  );
+}
+
+/** Attach the submitted bytes or URL to an existing Source and start a capture run. */
+async function requeueWithPdf(
+  ctx: MutationCtx,
+  source: Doc<"sources">,
+  pdf: { pdfStorageId: Id<"_storage"> } | { url: string },
+): Promise<void> {
+  const pdfStorageId = "pdfStorageId" in pdf ? pdf.pdfStorageId : undefined;
+  const pdfCapture = await queuePdfCapture(
+    ctx,
+    source._id,
+    { ...source, ...(pdfStorageId ? { pdfStorageId } : {}) },
+    "url" in pdf ? pdf.url : undefined,
+  );
+  await ctx.db.patch("sources", source._id, {
+    ...(pdfStorageId ? { pdfStorageId } : {}),
+    status: "ingested",
+    blockedReason: undefined,
+    blockedDetails: undefined,
+    updatedAt: advanceSourceVersion(source.updatedAt),
+    metadata: { ...source.metadata, pdfCapture },
+  });
+}
 
 async function insertPdfSource(
   ctx: MutationCtx,

@@ -94,7 +94,11 @@ describe("PDF upload intake", () => {
     const t = convexTest(schema, modules);
     const first = await upload(t);
     const second = await upload(t, "text", "copy.pdf");
-    expect(second).toMatchObject({ id: first.id, created: false });
+    expect(second).toMatchObject({
+      id: first.id,
+      created: false,
+      pdfQueued: false,
+    });
     expect(
       await t.run((ctx) => ctx.db.system.get(second.storageId)),
     ).toBeNull();
@@ -103,13 +107,52 @@ describe("PDF upload intake", () => {
     ).not.toBeNull();
   });
 
+  test("an upload gives its bytes to a textless manifest PDF Source with the same hash", async () => {
+    const t = convexTest(schema, modules);
+    const storageId = await t.run((ctx) => ctx.storage.store(pdfBytes()));
+    const file = await t.run((ctx) => ctx.db.system.get(storageId));
+    const hex = Array.from(atob(file!.sha256), (c) =>
+      c.charCodeAt(0).toString(16).padStart(2, "0"),
+    ).join("");
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "pdf",
+        dedupeKey: `pdf:${hex}`,
+        title: "Manifest PDF",
+        tags: [],
+        metadata: {},
+        status: "review_needed",
+        blockedReason: "no_text",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUpload, {
+        storageId,
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    const row = (await source(t, id))!;
+    expect(row).toMatchObject({
+      pdfStorageId: storageId,
+      status: "ingested",
+      metadata: { pdfCapture: { state: "queued", endpoint: "parse" } },
+    });
+    expect(row.blockedReason).toBeUndefined();
+    expect(await t.run((ctx) => ctx.db.system.get(storageId))).not.toBeNull();
+    const { plan } = await startAttempt(t, id);
+    expect(plan).toEqual({ endpoint: "parse", storageId });
+  });
+
   test("submitting the same storage id twice keeps the stored file", async () => {
     const t = convexTest(schema, modules);
     const first = await upload(t);
     const again = await reader(t).mutation(api.pdfCapture.createFromPdfUpload, {
       storageId: first.storageId,
     });
-    expect(again).toEqual({ id: first.id, created: false });
+    expect(again).toEqual({ id: first.id, created: false, pdfQueued: false });
     expect(
       await t.run((ctx) => ctx.db.system.get(first.storageId)),
     ).not.toBeNull();
