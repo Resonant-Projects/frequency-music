@@ -13,10 +13,7 @@ import { requireAuth, type AppIdentity } from "./auth";
 import { pairKey } from "./shared/correspondenceKey";
 import { correspondenceStatusValidator } from "./shared/correspondences";
 import { correspondenceReturnValidator } from "./validators";
-import {
-  inferDisplaySectorFromDomain,
-  normalizeSectorId,
-} from "./domainMappings";
+import { type DisplaySectorId, resolveDomainSector } from "./domainMappings";
 import {
   BOOTSTRAP_RESEARCH_DOMAINS,
   RESEARCH_AREAS,
@@ -81,7 +78,7 @@ function clampLimit(limit: number | undefined): number {
 }
 
 type ThinDomain = ScoutThinDomain & {
-  sectorMapping: ReturnType<typeof inferDisplaySectorFromDomain>;
+  sectorMapping: DisplaySectorId;
 };
 
 type StarvedConjecture = {
@@ -160,9 +157,7 @@ async function computeThinDomains(ctx: QueryCtx): Promise<ThinDomain[]> {
     }
     domainCounts.push({
       domain: domain.name,
-      sectorMapping: domain.sectorMapping
-        ? normalizeSectorId(domain.sectorMapping)
-        : inferDisplaySectorFromDomain(domain.name),
+      sectorMapping: resolveDomainSector(domain.name, [domain]),
       onMissionConceptCount: concepts.length,
       sourceCount: sourceIds.size,
     });

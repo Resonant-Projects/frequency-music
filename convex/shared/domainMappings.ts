@@ -6,6 +6,14 @@ export type DisplaySectorId =
   | "geometry"
   | "synthesis";
 
+/**
+ * The most concept names one `dashboard.conceptSectors` lookup accepts. Each
+ * concept read carries its embedding (~12 KB), so 500 names, plus at most one
+ * registry read per concept, stay well inside one query's 16 MiB read budget
+ * and 4,096 index ranges.
+ */
+export const MAX_CONCEPT_SECTOR_NAMES = 500;
+
 export type ConceptDomainRegistryEntry = {
   name: string;
   sectorMapping?: string;
@@ -105,10 +113,7 @@ export function resolveDomainsForSector(
         const name = entry.name.toLowerCase().trim();
         if (!name) return [];
         if (name === "general") return ["general"];
-        const entrySector = entry.sectorMapping
-          ? normalizeSectorId(entry.sectorMapping)
-          : inferDisplaySectorFromDomain(name);
-        return entrySector === sector ? [name] : [];
+        return resolveDomainSector(name, [entry]) === sector ? [name] : [];
       }),
     ),
   );
@@ -119,6 +124,24 @@ export function resolveDomainsForSector(
     specificDomains: registryDomains.filter((domain) => domain !== "general"),
     usedFallback: false,
   };
+}
+
+/**
+ * The display sector for a concept domain. This is the one domain→sector
+ * contract: a registry row's curated `sectorMapping` wins, and any other
+ * domain takes the default mapping below.
+ */
+export function resolveDomainSector(
+  domain: string,
+  entries: ConceptDomainRegistryEntry[],
+): DisplaySectorId {
+  const name = domain.toLowerCase().trim();
+  const sectorMapping = entries.find(
+    (entry) => entry.name.toLowerCase().trim() === name,
+  )?.sectorMapping;
+  return sectorMapping
+    ? normalizeSectorId(sectorMapping)
+    : inferDisplaySectorFromDomain(name);
 }
 
 export function inferDisplaySectorFromDomain(domain?: string): DisplaySectorId {

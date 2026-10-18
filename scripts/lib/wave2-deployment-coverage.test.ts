@@ -249,6 +249,7 @@ describe("wave 2 deployment coverage", () => {
       "tournament-142",
       "passages-153",
       "studio-comparison",
+      "zodiac-domain-sectors",
     ]);
     expect(report.groups.every((group) => !group.deployed)).toBe(true);
     const passages = report.groups.find((g) => g.id === "passages-153");
@@ -269,7 +270,7 @@ describe("wave 2 deployment coverage", () => {
     );
   });
 
-  test("the saved 2026-10-17 inspection: the recorded web skew holds and the studio calls are their own group", () => {
+  test("the saved 2026-10-17 inspection: the recorded web skew holds and later calls are their own groups", () => {
     const evidence = join(repoRoot, "docs/evidence/wave2-rollout-20261017");
     const saved = JSON.parse(
       readFileSync(join(evidence, "deployment-inspection.json"), "utf8"),
@@ -289,10 +290,17 @@ describe("wave 2 deployment coverage", () => {
       .map((call) => `${call.module}:${call.name}`);
     expect(studioCalls.length).toBeGreaterThan(0);
     for (const call of studioCalls) expect(studioNames).toContain(call);
-    // Without the candidate's calls, the web skew is exactly the ten functions
-    // recorded against this inspection.
+    // Without the later candidates' calls, the web skew is exactly the ten
+    // functions recorded against this inspection.
+    const domainSectorCalls = ["dashboard:conceptSectors"];
+    expect(report.webCalls.missing).toEqual(
+      expect.arrayContaining(domainSectorCalls),
+    );
     expect(
-      report.webCalls.missing.filter((call) => !studioCalls.includes(call)),
+      report.webCalls.missing.filter(
+        (call) =>
+          !studioCalls.includes(call) && !domainSectorCalls.includes(call),
+      ),
     ).toEqual(recorded.webCalls.missing);
     expect(recorded.webCalls.missing).toHaveLength(10);
     expect(report.webCalls.missing).toEqual(

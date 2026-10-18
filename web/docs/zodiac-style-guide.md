@@ -16,7 +16,7 @@ The ZODIAC design distills the frequency-music project's aesthetic into an astro
 
 The current home route uses the atlas implementation. Its geometry supersedes this guide's older disc measurements, node taxonomy, Z-depth mapping, renderer setup, and automatic rotation defaults for `/` only. The earlier sections remain reference for the original zodiac scene. Root `DESIGN.md` continues to own the shared visual identity and tokens.
 
-- `web/src/lib/knowledge-atlas.ts` owns stable positions and graph relationships. Six domain clusters surround inner research orbits. The scene uses X/Z for the orbital plane and Y for height.
+- `web/src/lib/knowledge-atlas.ts` owns stable positions and graph relationships. Six domain clusters surround inner research orbits. The scene uses X/Z for the orbital plane and Y for height. `web/src/lib/item-sectors.ts` assigns sources, extractions, and hypotheses to a domain from their classified concepts; the domain→sector mapping itself is `resolveDomainSector` in `convex/shared/domainMappings.ts`.
 - `web/src/lib/knowledge-atlas-scene.ts` owns rings, tick marks, node meshes, connection curves, camera behavior, and projected HTML labels. Domains use icosahedra, concepts and hypotheses use differently sized octahedra, sources use spheres, extractions use tetrahedra, and recipes use cubes. Consult this file for dimensions; the current scene does not use the older CSS3DRenderer or bloom pipeline.
 - `web/src/routes/zodiac-3d.tsx` and `web/src/routes/knowledge-atlas.css` own the full viewport space, sliding inspector, controls, and responsive layout. The global header owns search through `site-search.tsx` and `site-search-results.tsx`. Rotation is opt-in and respects reduced motion.
 
