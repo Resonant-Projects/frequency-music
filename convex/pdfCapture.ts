@@ -118,6 +118,14 @@ async function creatorOf(
   return user?._id ?? "system";
 }
 
+// Source types whose text a PDF URL can supply; a YouTube or podcast Source
+// keeps its transcript path.
+const PDF_URL_READABLE_TYPES = new Set<Doc<"sources">["type"]>([
+  "url",
+  "rss",
+  "pdf",
+]);
+
 function fileTitle(fileName?: string): string | undefined {
   const name = fileName
     ?.trim()
@@ -226,12 +234,16 @@ export const createFromPdfUrl = mutation({
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", dedupeKey))
       .first();
     if (existing) {
+      // A textless page or PDF Source that is blocked, or ingested without a
+      // capture already running, is read from this PDF.
       const pdfQueued =
-        existing.status === "review_needed" &&
-        isMissingTextBlock(existing.blockedReason) &&
+        PDF_URL_READABLE_TYPES.has(existing.type) &&
         !existing.rawText &&
         !existing.transcript &&
-        !existing.pdfStorageId;
+        !existing.pdfStorageId &&
+        ((existing.status === "review_needed" &&
+          isMissingTextBlock(existing.blockedReason)) ||
+          (existing.status === "ingested" && !awaitsPdfText(existing)));
       if (pdfQueued) {
         // The stored URL already failed; read the one just submitted.
         const pdfCapture = await queuePdfCapture(

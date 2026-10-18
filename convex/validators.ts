@@ -58,6 +58,17 @@ const sourceTypeValidator = v.union(
   v.literal("podcast"),
 );
 
+/**
+ * A Source as public queries return it. The uploaded PDF's storage id stays
+ * server-side: it alone would let any caller download the file.
+ */
+export function publicSource<T extends { pdfStorageId?: unknown }>(
+  source: T,
+): Omit<T, "pdfStorageId"> {
+  const { pdfStorageId: _pdfStorageId, ...rest } = source;
+  return rest;
+}
+
 export const sourceReturnValidator = v.object({
   activeExtractionAttemptId: v.optional(v.id("extractionAttempts")),
   lastExtractionAttemptId: v.optional(v.id("extractionAttempts")),
@@ -73,7 +84,6 @@ export const sourceReturnValidator = v.object({
   feedUrl: v.optional(v.string()),
   youtubeVideoId: v.optional(v.string()),
   uploadThingUrl: v.optional(v.string()),
-  pdfStorageId: v.optional(v.id("_storage")),
   rawText: v.optional(v.string()),
   rawTextSha256: v.optional(v.string()),
   transcript: v.optional(v.string()),

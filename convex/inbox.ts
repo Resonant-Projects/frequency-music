@@ -4,7 +4,7 @@ import type { Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { readStat } from "./dashboard";
 import { isMissingTextBlock } from "./shared/statuses";
-import { sourceReturnValidator } from "./validators";
+import { publicSource, sourceReturnValidator } from "./validators";
 
 type InboxStatus = "ingested" | "text_ready" | "extracted" | "review_needed";
 
@@ -127,7 +127,7 @@ export const list = query({
         ).first();
 
         return {
-          ...source,
+          ...publicSource(source),
           nextAction: nextActionForSource(source),
           extractionPreview: latestExtraction
             ? {

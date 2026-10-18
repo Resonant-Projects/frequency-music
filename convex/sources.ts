@@ -45,7 +45,7 @@ import {
   RECOVERY_NOTE_MAX_CHARS,
   RECOVERY_TEXT_MAX_CHARS,
 } from "./shared/sourceRecovery";
-import { sourceReturnValidator } from "./validators";
+import { publicSource, sourceReturnValidator } from "./validators";
 
 // ============================================================================
 // QUERIES
@@ -62,11 +62,12 @@ export const listByStatus = query({
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
       .order("desc")
       .take(limit);
+    return rows.map(publicSource);
   },
 });
 
@@ -228,10 +229,11 @@ export const listRecent = query({
   args: { limit: v.optional(v.number()) },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .order("desc")
       .take(args.limit ?? 50);
+    return rows.map(publicSource);
   },
 });
 
@@ -252,11 +254,12 @@ export const listByType = query({
   },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const rows = await ctx.db
       .query("sources")
       .withIndex("by_type_updatedAt", (q) => q.eq("type", args.type))
       .order("desc")
       .take(args.limit ?? 50);
+    return rows.map(publicSource);
   },
 });
 
@@ -267,7 +270,8 @@ export const get = query({
   args: { id: v.id("sources") },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get("sources", args.id);
+    const source = await ctx.db.get("sources", args.id);
+    return source && publicSource(source);
   },
 });
 
@@ -278,10 +282,11 @@ export const getByDedupeKey = query({
   args: { dedupeKey: v.string() },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const source = await ctx.db
       .query("sources")
       .withIndex("by_dedupeKey", (q) => q.eq("dedupeKey", args.dedupeKey))
       .first();
+    return source && publicSource(source);
   },
 });
 

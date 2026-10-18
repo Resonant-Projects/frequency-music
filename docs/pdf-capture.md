@@ -11,11 +11,15 @@ approved the design on 2026-10-17 (Postplan draft `tzak0v5h9k77`, version 3).
 | Uploaded file (`/ingest`, 25 MB at most) | `pdfCapture.createFromPdfUpload`. The browser uploads to Convex storage first. The Source keeps the blob in `sources.pdfStorageId`. Dedupe key: `pdf:<sha256 hex>` | `POST $FIRECRAWL_API_URL/v2/parse` with the stored bytes |
 | Public PDF URL | `pdfCapture.createFromPdfUrl`. Dedupe key: the URL key, so `arxiv:` and `doi:` identity holds | `POST $FIRECRAWL_API_URL/v2/scrape` |
 
-When a PDF URL's key already belongs to a Source that is blocked for missing text (an
-arXiv abstract page behind a bot wall, say), intake reads that Source's text from the PDF
+When a PDF URL's key already belongs to a page or PDF Source with no text (blocked for
+missing text, or ingested with no capture running; an arXiv abstract page behind a bot
+wall, say), intake reads that Source's text from the PDF
 instead of creating a duplicate: `metadata.pdfCapture.url` holds the submitted URL, and
 the Source keeps its type and `canonicalUrl`. This holds for a blocked PDF Source too, so a
 corrected URL replaces one that failed. A Source that has text is left alone.
+
+Public Source queries never return `pdfStorageId` (`publicSource()` in
+`convex/validators.ts`): the id alone is enough to download the file from Convex storage.
 
 `pdfCaptureNode.capturePdf` (a Node action) calls Firecrawl. It never fetches a
 user-supplied URL itself: Firecrawl's egress proxy blocks private, LAN and metadata
@@ -34,7 +38,7 @@ still open after 12 minutes.
 | Outcome | Source |
 | --- | --- |
 | Text | `text_ready`; the passage index is scheduled |
-| Firecrawl cannot read the PDF, near-empty text (scanned pages), not a PDF, over 25 MB | `review_needed` + `blockedReason: "pdf_parse_error"`, at once |
+| Firecrawl cannot read the PDF, near-empty text (scanned pages), not a PDF (a scrape must report `application/pdf`), over 25 MB | `review_needed` + `blockedReason: "pdf_parse_error"`, at once |
 | Firecrawl or the source server fails (network, 408, 429, 5xx) | Retries after 1 and 5 minutes, then `review_needed` + `no_text` |
 | 404 or another 4xx, capture off, file missing | `review_needed` + `no_text`, at once |
 

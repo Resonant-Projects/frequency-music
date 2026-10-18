@@ -11,6 +11,7 @@ import { hypothesisStatusValidator } from "./schema";
 import {
   extractionReturnValidator,
   hypothesisReturnValidator,
+  publicSource,
   sourceReturnValidator,
   thesisReturnValidator,
 } from "./validators";
@@ -168,7 +169,9 @@ export const get = query({
 
     return {
       ...hypothesis,
-      sources: sources.filter((s): s is NonNullable<typeof s> => s !== null),
+      sources: sources
+        .filter((s): s is NonNullable<typeof s> => s !== null)
+        .map(publicSource),
       thesis,
     };
   },

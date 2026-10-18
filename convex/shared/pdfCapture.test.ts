@@ -179,6 +179,27 @@ describe("classifyFirecrawlResponse", () => {
     ).toEqual({ ok: false, code: "pdf_not_pdf" });
   });
 
+  test("refuses a scrape that does not say it read a PDF", () => {
+    for (const contentType of [undefined, 42])
+      expect(
+        classifyFirecrawlResponse(
+          "scrape",
+          200,
+          pdfData("Some page", { contentType }),
+        ),
+      ).toEqual({ ok: false, code: "pdf_firecrawl_error", httpStatus: 200 });
+  });
+
+  test("accepts a parse of uploaded bytes without a content type", () => {
+    expect(
+      classifyFirecrawlResponse(
+        "parse",
+        200,
+        pdfData("Text", { contentType: undefined }),
+      ),
+    ).toEqual({ ok: true, markdown: "Text" });
+  });
+
   test("maps a parse that all engines failed to pdf_unreadable", () => {
     expect(
       classifyFirecrawlResponse("parse", 500, {

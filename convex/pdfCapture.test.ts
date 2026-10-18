@@ -242,6 +242,56 @@ describe("PDF URL intake", () => {
     expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
   });
 
+  test("a PDF URL captures text for an existing ingested Source that has none", async () => {
+    const t = convexTest(schema, modules);
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "url",
+        dedupeKey: "arxiv:1706.03762",
+        canonicalUrl: "https://arxiv.org/abs/1706.03762",
+        tags: [],
+        metadata: {},
+        status: "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    const pdfUrl = "https://arxiv.org/pdf/1706.03762";
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: pdfUrl,
+      }),
+    ).toEqual({ id, created: false, pdfQueued: true });
+    const { plan } = await startAttempt(t, id);
+    expect(plan).toEqual({ endpoint: "scrape", url: pdfUrl });
+  });
+
+  test("a PDF URL does not queue capture for a YouTube Source", async () => {
+    const t = convexTest(schema, modules);
+    const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+    const { generateDedupeKey } = await import("./sourceUtils");
+    const id = await t.run((ctx) =>
+      ctx.db.insert("sources", {
+        type: "youtube",
+        dedupeKey: generateDedupeKey("url", { canonicalUrl: url }),
+        canonicalUrl: url,
+        tags: [],
+        metadata: {},
+        status: "ingested",
+        visibility: "private",
+        createdBy: "system",
+        createdAt: 1,
+        updatedAt: 1,
+      }),
+    );
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, { url }),
+    ).toEqual({ id, created: false, pdfQueued: false });
+    expect(await scheduled(t)).toHaveLength(0);
+  });
+
   test("a PDF URL leaves an existing Source that has text alone", async () => {
     const t = convexTest(schema, modules);
     const id = await t.run((ctx) =>
@@ -620,6 +670,27 @@ describe("PDF recovery", () => {
     expect(rows.find((row) => row._id === id)?.nextAction).toBe(
       "Paste excerpt or mark as blocked",
     );
+  });
+});
+
+describe("PDF storage privacy", () => {
+  test("public Source queries never return the uploaded file's storage id", async () => {
+    const t = convexTest(schema, modules);
+    const { id } = await upload(t);
+    const row = (await source(t, id))!;
+    const results = [
+      await t.query(api.sources.get, { id }),
+      await t.query(api.sources.getByDedupeKey, { dedupeKey: row.dedupeKey }),
+      ...(await t.query(api.sources.listRecent, {})),
+      ...(await t.query(api.sources.listByStatus, { status: "ingested" })),
+      ...(await t.query(api.sources.listByType, { type: "pdf" })),
+      ...(await t.query(api.inbox.list, {})),
+    ];
+    expect(results).toHaveLength(6);
+    for (const result of results) {
+      expect(result).toMatchObject({ _id: id });
+      expect(result).not.toHaveProperty("pdfStorageId");
+    }
   });
 });
 

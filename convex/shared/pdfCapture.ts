@@ -201,6 +201,9 @@ export function classifyFirecrawlResponse(
       code: "pdf_fetch_http",
       httpStatus: metadata.statusCode,
     };
+  // A scrape must say it read a PDF; uploaded bytes were checked before parse.
+  if (endpoint === "scrape" && typeof metadata.contentType !== "string")
+    return { ok: false, code: "pdf_firecrawl_error", httpStatus };
   if (
     typeof metadata.contentType === "string" &&
     !metadata.contentType.toLowerCase().includes(PDF_CONTENT_TYPE)
