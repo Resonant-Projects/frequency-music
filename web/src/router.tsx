@@ -7,22 +7,17 @@ import {
 } from "@tanstack/solid-router";
 import {
   type Component,
-  createEffect,
   createSignal,
   lazy,
   onMount,
   onCleanup,
 } from "solid-js";
 import { AppNavigation } from "./components/app-navigation";
+import { AuthGate } from "./components/auth-gate";
 import { parseDraftReviewSearch } from "./lib/draft-review-search";
 import { appLinks } from "./lib/app-navigation";
 import { SiteSearch } from "./components/site-search";
 import { SpaceNavigationProvider } from "./lib/space-navigation";
-import { UIBadge, UICard } from "./components/ui";
-import {
-  buildHostedSignInUrl,
-  useClerkAuthSnapshot,
-} from "./integrations/clerk";
 import { CompositionsPage } from "./routes/compositions";
 import { CorrespondencesPage } from "./routes/correspondences";
 import { DisplayPage } from "./routes/display";
@@ -184,37 +179,11 @@ const AppShell: Component = () => {
   );
 };
 
-const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
-
-const RootLayout: Component = () => {
-  const auth = useClerkAuthSnapshot();
-
-  createEffect(() => {
-    if (authBypass) return;
-    const state = auth();
-    if (!state.isLoaded || state.isSignedIn) return;
-
-    const returnTo = window.location.href;
-    window.location.assign(buildHostedSignInUrl(returnTo));
-  });
-
-  if (!authBypass && (!auth().isLoaded || !auth().isSignedIn)) {
-    return (
-      <div class="route-placeholder">
-        <UICard class="route-placeholder-card">
-          <UIBadge tone="violet">Authentication</UIBadge>
-          <h1>Redirecting to sign in...</h1>
-          <p>
-            This app requires authentication. You&apos;ll be redirected to
-            login.resonantrhythm.com.
-          </p>
-        </UICard>
-      </div>
-    );
-  }
-
-  return <AppShell />;
-};
+const RootLayout: Component = () => (
+  <AuthGate>
+    <AppShell />
+  </AuthGate>
+);
 
 const rootRoute = createRootRoute({
   component: RootLayout,

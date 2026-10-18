@@ -1,6 +1,6 @@
 export {
+  AppClerkProvider,
   buildHostedSignInUrl,
   createConvexClerkAuthAdapter,
-  initializeClerk,
   useClerkAuthSnapshot,
-} from "./client";
+} from "./provider";

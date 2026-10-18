@@ -2,8 +2,8 @@ import { ConvexClient } from "convex/browser";
 import { render } from "solid-js/web";
 import App from "./App";
 import {
+  AppClerkProvider,
   createConvexClerkAuthAdapter,
-  initializeClerk,
 } from "./integrations/clerk";
 import { ConvexProvider } from "./integrations/convex";
 import "./index.css";
@@ -39,25 +39,25 @@ const convexClient = new ConvexClient(convexUrl, {
 
 const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
 
-async function bootstrap() {
-  if (!authBypass) {
-    await initializeClerk();
-  }
+const ConvexApp = () => (
+  <ConvexProvider
+    client={convexClient}
+    useAuth={authBypass ? undefined : createConvexClerkAuthAdapter}
+  >
+    <App />
+  </ConvexProvider>
+);
 
-  render(
-    () => (
-      <ConvexProvider
-        client={convexClient}
-        useAuth={authBypass ? undefined : createConvexClerkAuthAdapter}
-      >
-        <App />
-      </ConvexProvider>
+// Children are created lazily, so ConvexProvider's auth adapter reads the
+// Clerk context that AppClerkProvider sets up around it.
+render(
+  () =>
+    authBypass ? (
+      <ConvexApp />
+    ) : (
+      <AppClerkProvider>
+        <ConvexApp />
+      </AppClerkProvider>
     ),
-    rootElement,
-  );
-}
-
-void bootstrap().catch((error) => {
-  console.error("Failed to initialize app auth:", error);
-  throw error;
-});
+  rootElement,
+);
