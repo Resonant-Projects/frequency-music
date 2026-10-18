@@ -823,6 +823,7 @@ describe("concept linking", () => {
     ).toEqual({ linked: 0, concepts: [] });
   });
 
+  // Slow CI runners take up to 66 s here; 60 s flaked.
   test("replay of 2500 existing topic edges stays within index-range limits", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const topics = Array.from({ length: 2500 }, (_, index) => `topic ${index}`);
@@ -887,9 +888,9 @@ describe("concept linking", () => {
     expect(Object.values((await graph(t)).mentions)).toEqual(
       topics.map(() => 1),
     );
-  }, 60000);
+  }, 180_000);
 
-  // ~2,500 sequential mutation ticks take 44–60 s on CI runners; 60 s flaked.
+  // ~2,500 sequential mutation ticks: ~50 s on CI, 125 s on slow runners.
   test("backfill resumes unlinked topics before advancing to the next Extraction", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const topics = Array.from(
