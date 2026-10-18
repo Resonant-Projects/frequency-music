@@ -4,6 +4,7 @@
 // May import only convex/values, convex-helpers/validators, or zod.
 import type { SourceBlockedReason } from "./statuses";
 import { SOURCE_TEXT_MAX_CHARS } from "./sourceText";
+import { truncateText } from "./truncateText";
 
 // Lab Firecrawl's proxy accepts a 30 MB upload and refuses 50 MB (2026-10-17);
 // the largest research PDF on hand is 11.8 MB.
@@ -122,9 +123,7 @@ export function capPdfText(markdown: string): {
   truncated: boolean;
 } {
   const full = markdown.trim();
-  let text = full.slice(0, SOURCE_TEXT_MAX_CHARS);
-  const last = text.charCodeAt(text.length - 1);
-  if (last >= 0xd800 && last <= 0xdbff) text = text.slice(0, -1);
+  const text = truncateText(full, SOURCE_TEXT_MAX_CHARS);
   return { text, chars: full.length, truncated: text.length < full.length };
 }
 

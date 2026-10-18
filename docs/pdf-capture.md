@@ -14,8 +14,8 @@ approved the design on 2026-10-17 (Postplan draft `tzak0v5h9k77`, version 3).
 `pdfCaptureNode.capturePdf` (a Node action) calls Firecrawl. It never fetches a
 user-supplied URL itself: Firecrawl's egress proxy blocks private, LAN and metadata
 targets after DNS and on redirects. Crawl4AI is not used, because it has no PDF text
-path. Text is capped at `SOURCE_TEXT_MAX_CHARS` (100,000, shared with
-`MAX_URL_TEXT_CHARS`). A longer PDF keeps its first 100,000 characters, and
+path. Text is capped at `SOURCE_TEXT_MAX_CHARS` (100,000). It derives from
+`EXTRACTION_CONTENT_MAX_CHARS`, and `MAX_URL_TEXT_CHARS` reads it. A longer PDF keeps its first 100,000 characters, and
 `metadata.pdfCapture` records `chars`, `truncated` and `numPages`.
 
 ## States
