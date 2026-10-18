@@ -263,7 +263,7 @@ export function createJudgeResultsNode(
     for (const searchHit of state.searchHits) {
       const judged = await invokeJudgeOrError({
         judge,
-        prompt: resultJudgePrompt(searchHit),
+        prompt: resultJudgePrompt(searchHit, state.searchHits.length > 1),
         callTool,
         agentRunId: state.agentRunId,
         traceUrl: state.traceUrl,
