@@ -1,4 +1,5 @@
 import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
 import solid from "vite-plugin-solid";
 
@@ -19,7 +20,7 @@ export default defineConfig({
       enforce: "pre",
       resolveId(source) {
         if (source === "@clerk/clerk-js/no-rhc")
-          return new URL("./clerk-fixture.ts", import.meta.url).pathname;
+          return fileURLToPath(new URL("./clerk-fixture.ts", import.meta.url));
       },
     },
   ],
