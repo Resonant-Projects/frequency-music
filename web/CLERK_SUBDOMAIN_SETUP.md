@@ -71,8 +71,9 @@ Playwright e2e auth:
 
 How it works:
 
-- The web app always boots Clerk and redirects unauthenticated users to hosted sign in.
+- The web app always boots Clerk through `@resonant-projects/clerk-solidjs`, with clerk-js bundled from `@clerk/clerk-js/no-rhc`, and redirects unauthenticated users to hosted sign in.
 - Playwright signs into Clerk during global setup and reuses the saved storage state.
+- `web/tests/auth` checks the same SDK wiring against a fake clerk-js with no credentials or network: `vp exec playwright test --config tests/auth/playwright.config.ts` from `web/`.
 - Protected Convex CLI mutations/actions may still accept `devBypassSecret`, but only from trusted server-side or CLI callers.
 
 Production safety:
