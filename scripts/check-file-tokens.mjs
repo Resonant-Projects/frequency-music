@@ -196,10 +196,11 @@ function blobSize(spec) {
 }
 
 function stagedCandidates() {
+  // ACMR plus T: a symlink replaced by a regular file is a type change.
   const paths = splitNul(
-    git(["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"]),
+    git(["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z"]),
   );
-  const binary = binaryPaths(["--cached", "--diff-filter=ACMR"]);
+  const binary = binaryPaths(["--cached", "--diff-filter=ACMRT"]);
   const gitlinks = stagedGitlinks();
   return paths
     .filter((path) => !binary.has(path) && !gitlinks.has(path))
