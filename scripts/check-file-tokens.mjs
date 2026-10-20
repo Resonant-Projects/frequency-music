@@ -168,10 +168,26 @@ function binaryPaths(diffArgs) {
   const binary = new Set();
   const output = git(["diff", "--numstat", "--no-renames", "-z", ...diffArgs]);
   for (const entry of splitNul(output)) {
-    const [added, deleted, path] = entry.split("\t");
+    // "added\tdeleted\tpath": split on the first two tabs only, because -z
+    // leaves literal tabs inside a filename unescaped.
+    const [added, deleted, ...rest] = entry.split("\t");
+    const path = rest.join("\t");
     if (added === "-" && deleted === "-" && path) binary.add(path);
   }
   return binary;
+}
+
+const GITLINK_MODE = "160000";
+
+/** Index entries that are submodule pointers (their object is a commit, not a blob). */
+function stagedGitlinks() {
+  const gitlinks = new Set();
+  for (const entry of splitNul(git(["ls-files", "--stage", "-z"]))) {
+    const tab = entry.indexOf("\t");
+    const mode = entry.slice(0, entry.indexOf(" "));
+    if (mode === GITLINK_MODE) gitlinks.add(entry.slice(tab + 1));
+  }
+  return gitlinks;
 }
 
 function blobSize(spec) {
@@ -183,26 +199,37 @@ function stagedCandidates() {
     git(["diff", "--cached", "--name-only", "--diff-filter=ACMR", "-z"]),
   );
   const binary = binaryPaths(["--cached", "--diff-filter=ACMR"]);
+  const gitlinks = stagedGitlinks();
   return paths
-    .filter((path) => !binary.has(path))
-    .map((path) => ({ path, spec: `:${path}` }));
+    .filter((path) => !binary.has(path) && !gitlinks.has(path))
+    .map((path) => ({ path, bytes: () => blobSize(`:${path}`) }));
 }
 
 function trackedCandidates() {
-  const paths = splitNul(git(["ls-files", "-z"]));
+  // Walk HEAD's tree (not the index) so --all measures exactly what is
+  // committed; --long reports each blob's size, so no per-file cat-file.
+  const entries = splitNul(git(["ls-tree", "-r", "-z", "--long", "HEAD"]));
   // Compare HEAD against the empty tree so every tracked file is "added".
   const emptyTree = git(["hash-object", "-t", "tree", "/dev/null"]).trim();
   const binary = binaryPaths([emptyTree, "HEAD"]);
-  return paths
-    .filter((path) => !binary.has(path))
-    .map((path) => ({ path, spec: `HEAD:${path}` }));
+  const candidates = [];
+  for (const entry of entries) {
+    // "<mode> <type> <sha> <size>\t<path>"
+    const tab = entry.indexOf("\t");
+    const [, type, , size] = entry.slice(0, tab).split(/\s+/);
+    const path = entry.slice(tab + 1);
+    if (type !== "blob" || binary.has(path)) continue;
+    const bytes = Number.parseInt(size, 10);
+    candidates.push({ path, bytes: () => bytes });
+  }
+  return candidates;
 }
 
 function findOversized(candidates) {
   const oversized = [];
-  for (const { path, spec } of candidates) {
+  for (const { path, bytes: readBytes } of candidates) {
     if (isIgnored(path)) continue;
-    const bytes = blobSize(spec);
+    const bytes = readBytes();
     if (bytes > MAX_BYTES) {
       oversized.push({
         path,
