@@ -4,6 +4,8 @@
   "type": "module",
   "module": "index.ts",
   "scripts": {
+    "prepare": "vp config --no-agent",
+    "check:file-tokens": "node scripts/check-file-tokens.mjs",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "vp lint convex harness scripts --fix --tsconfig tsconfig.json",

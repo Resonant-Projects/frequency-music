@@ -1,0 +1,11 @@
+# Project-owned Vite+ pre-commit hook. `vp hooks enable` (run by the package.json
+# `prepare` script) installs the dispatcher under .vite-hooks/_ and points
+# core.hooksPath at it; the dispatcher runs this file with `sh -e`.
+# Skip for one commit with `git commit --no-verify`, or per machine with VP_GIT_HOOKS=0.
+
+# Block files over 5,000 estimated tokens (see scripts/check-file-tokens.mjs).
+if command -v node >/dev/null 2>&1; then
+  node scripts/check-file-tokens.mjs
+else
+  vp node scripts/check-file-tokens.mjs
+fi

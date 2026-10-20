@@ -82,6 +82,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - Web: `vp run typecheck:web` and `vp run build:web`
 - Agent: `cd agent && vp run verify && vp test`
 - Everything at once: `vp run verify`.
+- Commits run a pre-commit hook that blocks files over 5,000 estimated tokens (20,000 bytes); `vp install` enables it. See the token-limit guardrail in `AGENTS.md`.
 
 ### Dependency updates
 
