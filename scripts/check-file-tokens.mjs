@@ -144,7 +144,8 @@ function globToRegExp(pattern) {
       source += char;
     }
   }
-  return new RegExp(`^${source}$`);
+  // dotAll so "**" also spans a newline embedded in a filename.
+  return new RegExp(`^${source}$`, "s");
 }
 
 const IGNORE_MATCHERS = IGNORE_PATTERNS.map((pattern) => ({
