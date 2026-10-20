@@ -114,10 +114,21 @@ const IGNORE_PATTERNS = [
   "web/styled-system/**",
 ];
 
+let repoRoot;
+
+/**
+ * Run git from the repository root, so every command reports root-relative
+ * paths even when the checker is started from a subdirectory. Pathspecs are
+ * literal: filenames are never read as globs or magic.
+ */
 function git(args, options = {}) {
-  return execFileSync("git", args, {
+  repoRoot ??= execFileSync("git", ["rev-parse", "--show-toplevel"], {
+    encoding: "utf8",
+  }).trim();
+  return execFileSync("git", ["-C", repoRoot, ...args], {
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, GIT_LITERAL_PATHSPECS: "1" },
     ...options,
   });
 }
@@ -181,23 +192,39 @@ export function parseBinaryNumstat(output) {
 }
 
 /**
- * Paths git treats as binary in the snapshot being checked. `attrSource` is
- * the tree whose .gitattributes apply, so an unstaged working-tree
- * .gitattributes cannot mark a staged file binary. Git before 2.40 lacks
- * --attr-source; fall back to working-tree attributes there.
+ * Which of `paths` git treats as binary in `tree`. Diffing the empty tree
+ * against `tree` judges only the new content, so a binary old version cannot
+ * exempt oversized text. `--attr-source` applies that tree's .gitattributes,
+ * so an unstaged working-tree .gitattributes cannot mark a staged file
+ * binary. Without a tree (unmerged index) or on git before 2.40, fall back to
+ * `--cached` and working-tree attributes.
  */
-function binaryPaths(diffArgs, attrSource) {
-  const diff = ["diff", "--numstat", "--no-renames", "-z", ...diffArgs];
-  if (attrSource) {
+function binaryPaths(paths, tree) {
+  if (paths.length === 0) return new Set();
+  const range = tree ? [emptyTree(), tree] : ["--cached"];
+  const diff = [
+    "diff",
+    "--numstat",
+    "--no-renames",
+    "-z",
+    ...range,
+    "--",
+    ...paths,
+  ];
+  if (tree) {
     try {
       return parseBinaryNumstat(
-        git(["--attr-source", attrSource, ...diff], { stdio: "pipe" }),
+        git(["--attr-source", tree, ...diff], { stdio: "pipe" }),
       );
     } catch {
       // Older git: use the default attribute lookup below.
     }
   }
   return parseBinaryNumstat(git(diff));
+}
+
+function emptyTree() {
+  return git(["hash-object", "-t", "tree", "/dev/null"]).trim();
 }
 
 /** Tree object for the index, or undefined when it cannot be written (e.g. unmerged paths). */
@@ -238,51 +265,54 @@ function stagedCandidates() {
   const paths = splitNul(
     git(["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z"]),
   );
-  const binary = binaryPaths(["--cached", "--diff-filter=ACMRT"], indexTree());
   const index = stagedIndex();
   // Measure by object ID, not "<path>", so unusual filenames never need
   // re-encoding or stage-prefix escaping. Gitlinks point at commits: skip them.
   const candidates = paths.flatMap((path) => {
     const entry = index.get(path);
-    if (!entry || entry.mode === GITLINK_MODE || binary.has(path)) return [];
+    if (!entry || entry.mode === GITLINK_MODE) return [];
     return [{ path, sha: entry.sha }];
   });
   const sizes = objectSizes(candidates.map(({ sha }) => sha));
-  return candidates.map(({ path }, i) => ({ path, bytes: sizes[i] }));
+  return {
+    tree: indexTree(),
+    candidates: candidates.map(({ path }, i) => ({ path, bytes: sizes[i] })),
+  };
 }
 
 function trackedCandidates() {
   // Walk HEAD's tree (not the index) so --all measures exactly what is
   // committed; --long reports each blob's size, so no per-file cat-file.
   const entries = splitNul(git(["ls-tree", "-r", "-z", "--long", "HEAD"]));
-  // Compare HEAD against the empty tree so every tracked file is "added".
-  const emptyTree = git(["hash-object", "-t", "tree", "/dev/null"]).trim();
-  const binary = binaryPaths([emptyTree, "HEAD"], "HEAD");
   const candidates = [];
   for (const entry of entries) {
     // "<mode> <type> <sha> <size>\t<path>"
     const tab = entry.indexOf("\t");
     const [, type, , size] = entry.slice(0, tab).split(/\s+/);
     const path = entry.slice(tab + 1);
-    if (type !== "blob" || binary.has(path)) continue;
+    if (type !== "blob") continue;
     candidates.push({ path, bytes: Number.parseInt(size, 10) });
   }
-  return candidates;
+  return { tree: "HEAD", candidates };
 }
 
-function findOversized(candidates) {
-  const oversized = [];
-  for (const { path, bytes } of candidates) {
-    if (isIgnored(path)) continue;
-    if (bytes > MAX_BYTES) {
-      oversized.push({
-        path,
-        bytes,
-        tokens: Math.ceil(bytes / BYTES_PER_TOKEN),
-      });
-    }
-  }
-  return oversized.toSorted((a, b) => b.bytes - a.bytes);
+/** Over-limit, non-ignored, non-binary files. Binary status is only asked for files already over the limit. */
+function findOversized({ tree, candidates }) {
+  const overLimit = candidates.filter(
+    ({ path, bytes }) => bytes > MAX_BYTES && !isIgnored(path),
+  );
+  const binary = binaryPaths(
+    overLimit.map(({ path }) => path),
+    tree,
+  );
+  return overLimit
+    .filter(({ path }) => !binary.has(path))
+    .map(({ path, bytes }) => ({
+      path,
+      bytes,
+      tokens: Math.ceil(bytes / BYTES_PER_TOKEN),
+    }))
+    .toSorted((a, b) => b.bytes - a.bytes);
 }
 
 function formatRow({ path, tokens, bytes }) {

@@ -1,5 +1,6 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import {
+  mkdirSync,
   mkdtempSync,
   rmSync,
   symlinkSync,
@@ -77,9 +78,9 @@ describe("staged check", () => {
     git("add", "--", path);
   }
 
-  function check() {
+  function check(cwd = repo) {
     return spawnSync(process.execPath, [checker], {
-      cwd: repo,
+      cwd,
       encoding: "utf8",
       env: { ...process.env, APP_ENV: "test" },
     });
@@ -131,6 +132,31 @@ describe("staged check", () => {
     stage("notes.ts", "x\n");
     stage("0:notes.ts", OVER_LIMIT);
     expect(check().stderr).toContain("0:notes.ts");
+  });
+
+  test("checks oversized text that replaces a binary file", () => {
+    init();
+    writeFileSync(join(repo, "data.txt"), Buffer.alloc(30_000, 0));
+    git("add", "data.txt");
+    git("commit", "-qm", "binary");
+    stage("data.txt", OVER_LIMIT);
+    expect(check().status).toBe(1);
+  });
+
+  test("finds staged files when run from a subdirectory", () => {
+    init();
+    mkdirSync(join(repo, "sub"));
+    stage("sub/big.ts", OVER_LIMIT);
+    const result = check(join(repo, "sub"));
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("sub/big.ts");
+  });
+
+  test("skips staged binary files", () => {
+    init();
+    writeFileSync(join(repo, "blob.bin"), Buffer.alloc(30_000, 0));
+    git("add", "blob.bin");
+    expect(check().status).toBe(0);
   });
 
   test("skips staged submodule pointers", () => {
