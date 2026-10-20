@@ -2,8 +2,9 @@
 // Pre-commit guard: block files over MAX_TOKENS estimated tokens.
 //
 // Tokens are estimated as bytes / 4, so the limit is MAX_TOKENS * 4 bytes. The
-// check reads the *staged* blob (`git cat-file -s :0:path`), not the working-tree
-// file, so partially staged files are measured as they will be committed.
+// check reads the *staged* blob (the stage-0 index entry, same as
+// `git cat-file -s :0:path` but batched), not the working-tree file, so
+// partially staged files are measured as they will be committed.
 //
 // Usage:
 //   node scripts/check-file-tokens.mjs        # staged files (pre-commit)
@@ -180,20 +181,26 @@ function binaryPaths(diffArgs) {
 
 const GITLINK_MODE = "160000";
 
-/** Index entries that are submodule pointers (their object is a commit, not a blob). */
-function stagedGitlinks() {
-  const gitlinks = new Set();
+/** Stage-0 index entries by path. Each line is "<mode> <sha> <stage>\t<path>". */
+function stagedIndex() {
+  const index = new Map();
   for (const entry of splitNul(git(["ls-files", "--stage", "-z"]))) {
     const tab = entry.indexOf("\t");
-    const mode = entry.slice(0, entry.indexOf(" "));
-    if (mode === GITLINK_MODE) gitlinks.add(entry.slice(tab + 1));
+    const [mode, sha, stage] = entry.slice(0, tab).split(" ");
+    if (stage === "0") index.set(entry.slice(tab + 1), { mode, sha });
   }
-  return gitlinks;
+  return index;
 }
 
-// Callers pass ":0:<path>" so a filename like "1:x.ts" is never read as a stage number.
-function blobSize(spec) {
-  return Number.parseInt(git(["cat-file", "-s", spec]).trim(), 10);
+/** Sizes for many objects from one git process. Object IDs never contain newlines. */
+function objectSizes(shas) {
+  if (shas.length === 0) return [];
+  return git(["cat-file", "--batch-check=%(objectsize)"], {
+    input: `${shas.join("\n")}\n`,
+  })
+    .trim()
+    .split("\n")
+    .map((size) => Number.parseInt(size, 10));
 }
 
 function stagedCandidates() {
@@ -202,10 +209,16 @@ function stagedCandidates() {
     git(["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z"]),
   );
   const binary = binaryPaths(["--cached", "--diff-filter=ACMRT"]);
-  const gitlinks = stagedGitlinks();
-  return paths
-    .filter((path) => !binary.has(path) && !gitlinks.has(path))
-    .map((path) => ({ path, bytes: () => blobSize(`:0:${path}`) }));
+  const index = stagedIndex();
+  // Measure by object ID, not "<path>", so unusual filenames never need
+  // re-encoding or stage-prefix escaping. Gitlinks point at commits: skip them.
+  const candidates = paths.flatMap((path) => {
+    const entry = index.get(path);
+    if (!entry || entry.mode === GITLINK_MODE || binary.has(path)) return [];
+    return [{ path, sha: entry.sha }];
+  });
+  const sizes = objectSizes(candidates.map(({ sha }) => sha));
+  return candidates.map(({ path }, i) => ({ path, bytes: sizes[i] }));
 }
 
 function trackedCandidates() {
@@ -222,17 +235,15 @@ function trackedCandidates() {
     const [, type, , size] = entry.slice(0, tab).split(/\s+/);
     const path = entry.slice(tab + 1);
     if (type !== "blob" || binary.has(path)) continue;
-    const bytes = Number.parseInt(size, 10);
-    candidates.push({ path, bytes: () => bytes });
+    candidates.push({ path, bytes: Number.parseInt(size, 10) });
   }
   return candidates;
 }
 
 function findOversized(candidates) {
   const oversized = [];
-  for (const { path, bytes: readBytes } of candidates) {
+  for (const { path, bytes } of candidates) {
     if (isIgnored(path)) continue;
-    const bytes = readBytes();
     if (bytes > MAX_BYTES) {
       oversized.push({
         path,
