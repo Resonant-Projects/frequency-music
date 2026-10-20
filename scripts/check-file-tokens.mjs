@@ -2,7 +2,7 @@
 // Pre-commit guard: block files over MAX_TOKENS estimated tokens.
 //
 // Tokens are estimated as bytes / 4, so the limit is MAX_TOKENS * 4 bytes. The
-// check reads the *staged* blob (`git cat-file -s :path`), not the working-tree
+// check reads the *staged* blob (`git cat-file -s :0:path`), not the working-tree
 // file, so partially staged files are measured as they will be committed.
 //
 // Usage:
@@ -191,6 +191,7 @@ function stagedGitlinks() {
   return gitlinks;
 }
 
+// Callers pass ":0:<path>" so a filename like "1:x.ts" is never read as a stage number.
 function blobSize(spec) {
   return Number.parseInt(git(["cat-file", "-s", spec]).trim(), 10);
 }
@@ -204,7 +205,7 @@ function stagedCandidates() {
   const gitlinks = stagedGitlinks();
   return paths
     .filter((path) => !binary.has(path) && !gitlinks.has(path))
-    .map((path) => ({ path, bytes: () => blobSize(`:${path}`) }));
+    .map((path) => ({ path, bytes: () => blobSize(`:0:${path}`) }));
 }
 
 function trackedCandidates() {
