@@ -13,6 +13,8 @@
 // No dependencies: only `node` and `git` on PATH.
 
 import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const MAX_TOKENS = 5000;
 const BYTES_PER_TOKEN = 4;
@@ -120,7 +122,7 @@ function git(args, options = {}) {
   });
 }
 
-function globToRegExp(pattern) {
+export function globToRegExp(pattern) {
   let source = "";
   for (let i = 0; i < pattern.length; i += 1) {
     const char = pattern[i];
@@ -154,7 +156,7 @@ const IGNORE_MATCHERS = IGNORE_PATTERNS.map((pattern) => ({
   basenameOnly: !pattern.includes("/"),
 }));
 
-function isIgnored(path) {
+export function isIgnored(path) {
   const basename = path.slice(path.lastIndexOf("/") + 1);
   return IGNORE_MATCHERS.some(({ regExp, basenameOnly }) =>
     regExp.test(basenameOnly ? basename : path),
@@ -165,10 +167,9 @@ function splitNul(output) {
   return output.split("\0").filter((entry) => entry.length > 0);
 }
 
-/** Paths git reports as binary (numstat prints "-\t-" for them). */
-function binaryPaths(diffArgs) {
+/** Paths that `git diff --numstat -z` reports as binary ("-\t-\t<path>"). */
+export function parseBinaryNumstat(output) {
   const binary = new Set();
-  const output = git(["diff", "--numstat", "--no-renames", "-z", ...diffArgs]);
   for (const entry of splitNul(output)) {
     // "added\tdeleted\tpath": split on the first two tabs only, because -z
     // leaves literal tabs inside a filename unescaped.
@@ -177,6 +178,35 @@ function binaryPaths(diffArgs) {
     if (added === "-" && deleted === "-" && path) binary.add(path);
   }
   return binary;
+}
+
+/**
+ * Paths git treats as binary in the snapshot being checked. `attrSource` is
+ * the tree whose .gitattributes apply, so an unstaged working-tree
+ * .gitattributes cannot mark a staged file binary. Git before 2.40 lacks
+ * --attr-source; fall back to working-tree attributes there.
+ */
+function binaryPaths(diffArgs, attrSource) {
+  const diff = ["diff", "--numstat", "--no-renames", "-z", ...diffArgs];
+  if (attrSource) {
+    try {
+      return parseBinaryNumstat(
+        git(["--attr-source", attrSource, ...diff], { stdio: "pipe" }),
+      );
+    } catch {
+      // Older git: use the default attribute lookup below.
+    }
+  }
+  return parseBinaryNumstat(git(diff));
+}
+
+/** Tree object for the index, or undefined when it cannot be written (e.g. unmerged paths). */
+function indexTree() {
+  try {
+    return git(["write-tree"], { stdio: "pipe" }).trim();
+  } catch {
+    return undefined;
+  }
 }
 
 const GITLINK_MODE = "160000";
@@ -208,7 +238,7 @@ function stagedCandidates() {
   const paths = splitNul(
     git(["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z"]),
   );
-  const binary = binaryPaths(["--cached", "--diff-filter=ACMRT"]);
+  const binary = binaryPaths(["--cached", "--diff-filter=ACMRT"], indexTree());
   const index = stagedIndex();
   // Measure by object ID, not "<path>", so unusual filenames never need
   // re-encoding or stage-prefix escaping. Gitlinks point at commits: skip them.
@@ -227,7 +257,7 @@ function trackedCandidates() {
   const entries = splitNul(git(["ls-tree", "-r", "-z", "--long", "HEAD"]));
   // Compare HEAD against the empty tree so every tracked file is "added".
   const emptyTree = git(["hash-object", "-t", "tree", "/dev/null"]).trim();
-  const binary = binaryPaths([emptyTree, "HEAD"]);
+  const binary = binaryPaths([emptyTree, "HEAD"], "HEAD");
   const candidates = [];
   for (const entry of entries) {
     // "<mode> <type> <sha> <size>\t<path>"
@@ -284,8 +314,8 @@ function printFailure(oversized) {
   process.stderr.write(`${lines.join("\n")}\n`);
 }
 
-function main() {
-  const scanAll = process.argv.includes("--all");
+export function main(argv = process.argv.slice(2)) {
+  const scanAll = argv.includes("--all");
   const oversized = findOversized(
     scanAll ? trackedCandidates() : stagedCandidates(),
   );
@@ -303,4 +333,9 @@ function main() {
   return 1;
 }
 
-process.exitCode = main();
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  process.exitCode = main();
+}
