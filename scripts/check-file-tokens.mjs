@@ -1,0 +1,371 @@
+#!/usr/bin/env node
+// Pre-commit guard: block files over MAX_TOKENS estimated tokens.
+//
+// Tokens are estimated as bytes / 4, so the limit is MAX_TOKENS * 4 bytes. The
+// check reads the *staged* blob (the stage-0 index entry, same as
+// `git cat-file -s :0:path` but batched), not the working-tree file, so
+// partially staged files are measured as they will be committed.
+//
+// Usage:
+//   node scripts/check-file-tokens.mjs        # staged files (pre-commit)
+//   node scripts/check-file-tokens.mjs --all  # every tracked file at HEAD
+//
+// No dependencies: only `node` and `git` on PATH.
+
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const MAX_TOKENS = 5000;
+const BYTES_PER_TOKEN = 4;
+const MAX_BYTES = MAX_TOKENS * BYTES_PER_TOKEN;
+
+// ---------------------------------------------------------------------------
+// Ignore list. Add a line here when a path is genuinely generated, vendored,
+// or binary. Patterns use gitignore-style globs:
+//   - a pattern without "/" matches the file's basename anywhere in the tree
+//   - a pattern with "/" matches the full repo-relative path
+//   - "**" matches any number of directories, "*" never crosses "/"
+// Anything git itself treats as binary is skipped automatically.
+// ---------------------------------------------------------------------------
+const IGNORE_PATTERNS = [
+  // Lockfiles (package managers own these).
+  "bun.lock",
+  "bun.lockb",
+  "package-lock.json",
+  "pnpm-lock.yaml",
+  "yarn.lock",
+  "Cargo.lock",
+  "poetry.lock",
+  "uv.lock",
+  "Gemfile.lock",
+  "go.sum",
+  "composer.lock",
+  "flake.lock",
+
+  // Generated / codegen output.
+  "convex/_generated/**",
+  "**/generated/**",
+  "*.gen.*",
+  "routeTree.gen.ts",
+  "worker-configuration.d.ts",
+  "dist/**",
+  "build/**",
+  "**/dist/**",
+  "**/build/**",
+
+  // Minified bundles and test snapshots.
+  "*.min.*",
+  "**/__snapshots__/**",
+
+  // Binaries and assets (belt-and-braces; git's own binary detection also applies).
+  "*.png",
+  "*.jpg",
+  "*.jpeg",
+  "*.gif",
+  "*.webp",
+  "*.avif",
+  "*.ico",
+  "*.svg",
+  "*.woff",
+  "*.woff2",
+  "*.ttf",
+  "*.otf",
+  "*.eot",
+  "*.zip",
+  "*.gz",
+  "*.tgz",
+  "*.tar",
+  "*.7z",
+  "*.rar",
+  "*.db",
+  "*.sqlite",
+  "*.sqlite3",
+  "*.pdf",
+  "*.mp3",
+  "*.wav",
+  "*.flac",
+  "*.ogg",
+  "*.m4a",
+  "*.mp4",
+  "*.mov",
+  "*.webm",
+  "*.mkv",
+  "*.midi",
+  "*.mid",
+
+  // --- Repo-specific additions (frequency-music) ---
+  // SQLite snapshot and the archived research bundle at the repo root.
+  "frequency.db",
+  "files.zip",
+  // Exported datasets written by scripts, never edited by hand.
+  "data/generated/**",
+  "data/eval/**",
+  "data/pdfs/**",
+  // Essay exports and manifest produced by `vp run essays:publish`.
+  "exports/**",
+  // Operator evidence captures (deployment inspections, receipts, manifests).
+  "docs/evidence/**",
+  // Browser "save page" bundles kept alongside a saved HTML review.
+  "docs/*_files/**",
+  // Frozen reference scripts: read-only by policy (see AGENTS.md).
+  "scripts/archive/**",
+  // Panda CSS output (gitignored, listed for safety).
+  "web/styled-system/**",
+];
+
+let repoRoot;
+
+/**
+ * Run git from the repository root, so every command reports root-relative
+ * paths even when the checker is started from a subdirectory. Pathspecs are
+ * literal: filenames are never read as globs or magic.
+ */
+function git(args, options = {}) {
+  repoRoot ??= execFileSync("git", ["rev-parse", "--show-toplevel"], {
+    encoding: "utf8",
+  }).trim();
+  return execFileSync("git", ["-C", repoRoot, ...args], {
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, GIT_LITERAL_PATHSPECS: "1" },
+    ...options,
+  });
+}
+
+export function globToRegExp(pattern) {
+  let source = "";
+  for (let i = 0; i < pattern.length; i += 1) {
+    const char = pattern[i];
+    if (char === "*") {
+      if (pattern[i + 1] === "*") {
+        // "**/" matches zero or more directories; a trailing "**" matches the rest.
+        if (pattern[i + 2] === "/") {
+          source += "(?:.*/)?";
+          i += 2;
+        } else {
+          source += ".*";
+          i += 1;
+        }
+      } else {
+        source += "[^/]*";
+      }
+    } else if (char === "?") {
+      source += "[^/]";
+    } else if (/[.+^${}()|[\]\\]/.test(char)) {
+      source += `\\${char}`;
+    } else {
+      source += char;
+    }
+  }
+  // dotAll so "**" also spans a newline embedded in a filename.
+  return new RegExp(`^${source}$`, "s");
+}
+
+const IGNORE_MATCHERS = IGNORE_PATTERNS.map((pattern) => ({
+  regExp: globToRegExp(pattern),
+  basenameOnly: !pattern.includes("/"),
+}));
+
+export function isIgnored(path) {
+  const basename = path.slice(path.lastIndexOf("/") + 1);
+  return IGNORE_MATCHERS.some(({ regExp, basenameOnly }) =>
+    regExp.test(basenameOnly ? basename : path),
+  );
+}
+
+function splitNul(output) {
+  return output.split("\0").filter((entry) => entry.length > 0);
+}
+
+/** Paths that `git diff --numstat -z` reports as binary ("-\t-\t<path>"). */
+export function parseBinaryNumstat(output) {
+  const binary = new Set();
+  for (const entry of splitNul(output)) {
+    // "added\tdeleted\tpath": split on the first two tabs only, because -z
+    // leaves literal tabs inside a filename unescaped.
+    const [added, deleted, ...rest] = entry.split("\t");
+    const path = rest.join("\t");
+    if (added === "-" && deleted === "-" && path) binary.add(path);
+  }
+  return binary;
+}
+
+/**
+ * Which of `paths` git treats as binary in `tree`. Diffing the empty tree
+ * against `tree` judges only the new content, so a binary old version cannot
+ * exempt oversized text. `--attr-source` applies that tree's .gitattributes,
+ * so an unstaged working-tree .gitattributes cannot mark a staged file
+ * binary. Without a tree (unmerged index) or on git before 2.40, fall back to
+ * `--cached` and working-tree attributes.
+ */
+function binaryPaths(paths, tree) {
+  if (paths.length === 0) return new Set();
+  const range = tree ? [emptyTree(), tree] : ["--cached"];
+  const diff = [
+    "diff",
+    "--numstat",
+    "--no-renames",
+    "-z",
+    ...range,
+    "--",
+    ...paths,
+  ];
+  if (tree) {
+    try {
+      return parseBinaryNumstat(
+        git(["--attr-source", tree, ...diff], { stdio: "pipe" }),
+      );
+    } catch {
+      // Older git: use the default attribute lookup below.
+    }
+  }
+  return parseBinaryNumstat(git(diff));
+}
+
+function emptyTree() {
+  return git(["hash-object", "-t", "tree", "/dev/null"]).trim();
+}
+
+/** Tree object for the index, or undefined when it cannot be written (e.g. unmerged paths). */
+function indexTree() {
+  try {
+    return git(["write-tree"], { stdio: "pipe" }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+const GITLINK_MODE = "160000";
+
+/** Stage-0 index entries by path. Each line is "<mode> <sha> <stage>\t<path>". */
+function stagedIndex() {
+  const index = new Map();
+  for (const entry of splitNul(git(["ls-files", "--stage", "-z"]))) {
+    const tab = entry.indexOf("\t");
+    const [mode, sha, stage] = entry.slice(0, tab).split(" ");
+    if (stage === "0") index.set(entry.slice(tab + 1), { mode, sha });
+  }
+  return index;
+}
+
+/** Sizes for many objects from one git process. Object IDs never contain newlines. */
+function objectSizes(shas) {
+  if (shas.length === 0) return [];
+  return git(["cat-file", "--batch-check=%(objectsize)"], {
+    input: `${shas.join("\n")}\n`,
+  })
+    .trim()
+    .split("\n")
+    .map((size) => Number.parseInt(size, 10));
+}
+
+function stagedCandidates() {
+  // ACMR plus T: a symlink replaced by a regular file is a type change.
+  const paths = splitNul(
+    git(["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z"]),
+  );
+  const index = stagedIndex();
+  // Measure by object ID, not "<path>", so unusual filenames never need
+  // re-encoding or stage-prefix escaping. Gitlinks point at commits: skip them.
+  const candidates = paths.flatMap((path) => {
+    const entry = index.get(path);
+    if (!entry || entry.mode === GITLINK_MODE) return [];
+    return [{ path, sha: entry.sha }];
+  });
+  const sizes = objectSizes(candidates.map(({ sha }) => sha));
+  return {
+    tree: indexTree(),
+    candidates: candidates.map(({ path }, i) => ({ path, bytes: sizes[i] })),
+  };
+}
+
+function trackedCandidates() {
+  // Walk HEAD's tree (not the index) so --all measures exactly what is
+  // committed; --long reports each blob's size, so no per-file cat-file.
+  const entries = splitNul(git(["ls-tree", "-r", "-z", "--long", "HEAD"]));
+  const candidates = [];
+  for (const entry of entries) {
+    // "<mode> <type> <sha> <size>\t<path>"
+    const tab = entry.indexOf("\t");
+    const [, type, , size] = entry.slice(0, tab).split(/\s+/);
+    const path = entry.slice(tab + 1);
+    if (type !== "blob") continue;
+    candidates.push({ path, bytes: Number.parseInt(size, 10) });
+  }
+  return { tree: "HEAD", candidates };
+}
+
+/** Over-limit, non-ignored, non-binary files. Binary status is only asked for files already over the limit. */
+function findOversized({ tree, candidates }) {
+  const overLimit = candidates.filter(
+    ({ path, bytes }) => bytes > MAX_BYTES && !isIgnored(path),
+  );
+  const binary = binaryPaths(
+    overLimit.map(({ path }) => path),
+    tree,
+  );
+  return overLimit
+    .filter(({ path }) => !binary.has(path))
+    .map(({ path, bytes }) => ({
+      path,
+      bytes,
+      tokens: Math.ceil(bytes / BYTES_PER_TOKEN),
+    }))
+    .toSorted((a, b) => b.bytes - a.bytes);
+}
+
+function formatRow({ path, tokens, bytes }) {
+  return `  ${path}  (~${tokens.toLocaleString("en-US")} tokens, ${bytes.toLocaleString("en-US")} bytes)`;
+}
+
+function printFailure(oversized) {
+  const lines = [
+    "",
+    `✖ ${oversized.length} staged file(s) exceed the ${MAX_TOKENS.toLocaleString("en-US")}-token limit (~${MAX_BYTES.toLocaleString("en-US")} bytes, estimated as bytes / ${BYTES_PER_TOKEN}):`,
+    "",
+    ...oversized.map(formatRow),
+    "",
+    "Large files are hard for people and coding agents to read and edit safely.",
+    "Split each file before committing:",
+    "  1. Split by responsibility into smaller modules, one concern per file.",
+    "  2. Move types, constants, and helpers into their own files.",
+    "  3. Extract components and sub-functions into separate files.",
+    "  4. Re-export from an index.ts if callers need a single import path.",
+    `  5. Keep every new file under ${MAX_TOKENS.toLocaleString("en-US")} tokens (~${MAX_BYTES.toLocaleString("en-US")} bytes).`,
+    "",
+    "Emergency bypass (use sparingly, and say so in the PR):",
+    "  git commit --no-verify",
+    "",
+    "If a file is genuinely generated, vendored, or binary, add its path to",
+    "IGNORE_PATTERNS in scripts/check-file-tokens.mjs instead of bypassing.",
+    "",
+  ];
+  process.stderr.write(`${lines.join("\n")}\n`);
+}
+
+export function main(argv = process.argv.slice(2)) {
+  const scanAll = argv.includes("--all");
+  const oversized = findOversized(
+    scanAll ? trackedCandidates() : stagedCandidates(),
+  );
+
+  if (scanAll) {
+    process.stdout.write(
+      `${oversized.length} tracked file(s) over ${MAX_TOKENS.toLocaleString("en-US")} tokens (ignored paths excluded):\n`,
+    );
+    for (const row of oversized) process.stdout.write(`${formatRow(row)}\n`);
+    return oversized.length === 0 ? 0 : 1;
+  }
+
+  if (oversized.length === 0) return 0;
+  printFailure(oversized);
+  return 1;
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  process.exitCode = main();
+}
