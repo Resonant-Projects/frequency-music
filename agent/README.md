@@ -170,5 +170,6 @@ provides equivalent bounds. Image scans continue to reject High and Critical
 findings without ignore rules or VEX exceptions.
 
 The pinned bgutil token sidecar source also applies exact security overrides
-for `proxy-addr@2.0.8` and `source-map-js@1.2.2` before its locked production
-install. These overrides belong to the sidecar, not the agent package.
+for `follow-redirects@1.16.1`, `proxy-addr@2.0.8`, and `source-map-js@1.2.2`
+before its locked production install. These overrides belong to the sidecar,
+not the agent package.

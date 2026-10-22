@@ -1,11 +1,12 @@
 --- a/server/package.json
 +++ b/server/package.json
-@@ -49,7 +49,9 @@
+@@ -49,7 +49,10 @@
          "typescript-eslint": "^8.71.0"
      },
      "overrides": {
 -        "basic-ftp": "6.2.1"
 +        "basic-ftp": "6.2.1",
++        "follow-redirects": "1.16.1",
 +        "proxy-addr": "2.0.8",
 +        "source-map-js": "1.2.2"
      },
@@ -13,6 +14,19 @@
          "canvas@3.2.3": true,
 --- a/server/package-lock.json
 +++ b/server/package-lock.json
+@@ -2884,9 +2884,9 @@
+             "license": "ISC"
+         },
+         "node_modules/follow-redirects": {
+-            "version": "1.16.0",
+-            "resolved": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz",
+-            "integrity": "sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==",
++            "version": "1.16.1",
++            "resolved": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.1.tgz",
++            "integrity": "sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==",
+             "funding": [
+                 {
+                     "type": "individual",
 @@ -3898,9 +3898,9 @@
              }
          },
