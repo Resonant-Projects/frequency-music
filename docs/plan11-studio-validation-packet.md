@@ -118,12 +118,13 @@ The earlier blocker (no human upload could create a `litmusRender` artifact,
 and nothing grouped a machine render with a human one) is closed in source by
 the [studio comparison contract](studio-comparison-contract.md):
 `convex/studioComparisons.ts`, a `studioComparison` blind-group purpose and a
-studio section on `/listen`. It merged in #155 (`16ed588`) and is not
-deployed. Using it needs its own attested backend release and deploy; the
-[rollout work order](wave2-rollout-packet.md#combined-rollout-work-order-2026-10-17)
-pins `91cb3047`, which does not contain it.
+studio section on `/listen`. It merged in #155 (`16ed588`) and has been
+deployed since 2026-10-17: the rollout pinned `6fb562b2`, which contains it,
+and post-deploy coverage reported the `studio-comparison` group deployed with
+nothing missing
+([window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)).
 
-Once deployed, one comparison runs:
+One comparison runs:
 
 1. **Machine baseline in production.** Save a kit's `render-plan.json` as a
    real recipe's typed plan (`renders.setPlan`) and render it
@@ -184,8 +185,11 @@ Limitations to carry into the outcome report:
   validate a render.
 - **Visual acceptance is incomplete.** The upload form was driven in a real
   local browser against no backend (labels, errors, focus, overflow on
-  desktop and mobile). The comparison, rating and reveal views have only
-  backend tests; no browser has rendered them against real data.
+  desktop and mobile). A signed-in read-only production pass on 2026-10-22
+  also rendered the studio empty state and upload form at both sizes
+  ([receipt](evidence/web-studio-20261022/read-only-browser.md)). Populated
+  comparison, rating and reveal views still have only backend tests;
+  production uploads, ratings and playback remain untested.
 
 The offline fallback stays available if the path is not deployed: someone
 other than the listener assigns A and B to each kit's machine and studio

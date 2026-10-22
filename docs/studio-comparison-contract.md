@@ -136,13 +136,14 @@ The coordinator accepted these for the bounded first version on 2026-10-17.
 
 ## Remaining human steps
 
-1. Release and deploy this backend and web change. The Wave 2 rollout work
-   order pins `91cb3047`, which does not contain it, so it needs its own
-   attested `convex-root-modules` release (or a re-pinned work order) before
-   it is deployed. A checkout that contains it reports a seventh coverage
-   group, `studio-comparison`, missing until then. Merging the web change to
-   `main` publishes the `/listen` section to Vercel production at once, ahead
-   of the backend functions it calls.
+1. Done 2026-10-17: the backend release `6fb562b2` contains this change, and
+   post-deploy coverage reported the seventh group, `studio-comparison`,
+   deployed with nothing missing
+   ([window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)).
+   On 2026-10-22, the same signed-in profile on ubudesk rendered the live
+   studio section and upload form at desktop and mobile sizes. Both lists
+   were empty; populated comparisons, playback, uploads and ratings remain
+   untested ([read-only browser receipt](evidence/web-studio-20261022/read-only-browser.md)).
 2. Save a typed render plan on a real recipe (`renders.setPlan`) and render
    it in production (`renders.request`) with media 0.3.0 on ai-5090-02.
 3. Generate the studio kit from that plan, render in the studio per the kit

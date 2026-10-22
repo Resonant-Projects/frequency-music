@@ -134,6 +134,12 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
     if (current === "loading" || current === "error") return undefined;
     let value: unknown;
     if (name === "listen:shootouts") value = [];
+    // The /listen studio section (#155): no comparisons or machine baselines.
+    else if (
+      name === "studioComparisons:list" ||
+      name === "studioComparisons:machineCandidates"
+    )
+      value = [];
     else if (name === "podcast:subscription")
       value = { configured: false, reason: "missing_token" };
     else if (name === "settings:houseVoice") value = { voiceId: "inworld-max" };
@@ -170,6 +176,17 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
       state() === "error" ? new Error("Authentication required") : null,
     isError: () => state() === "error",
     isLoading: () => state() === "loading",
+  };
+}
+
+// The studio upload form binds an action at mount; the fixture never runs one.
+export function createAction<A extends FunctionReference<"action">>(
+  action: A,
+): (args?: FunctionArgs<A>) => Promise<FunctionReturnType<A>> {
+  const name = getFunctionName(action);
+  return async (args?: FunctionArgs<A>) => {
+    calls.push({ name, args });
+    throw new Error(`Unexpected action ${name}`);
   };
 }
 
