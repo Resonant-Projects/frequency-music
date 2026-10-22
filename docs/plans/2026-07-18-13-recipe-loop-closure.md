@@ -18,9 +18,13 @@ recipe draft comes up for review, the reviewer can shape it:
    structured parameter editing on the review card (extending plan 07's text-level edit mode), and
    `recipes.updateStatus` (approve/deprecate) wired into `recipe-detail`.
 
-**Why:** today `recipes:generateFromHypothesis` is a manual CLI ritual, `recipe-detail.tsx` has zero
-mutations, and `recipes.updateStatus` is unreachable from the UI — the hypothesis→recipe chain is
-where the pipeline stalls after review.
+**Current implementation (2026-10-22):** `/recipes` already offers manual generation through
+`recipes.generateFromHypothesis`. Hypothesis approval does not reserve or schedule a recipe draft;
+`recipe-detail.tsx` still has no recipe mutations, and `recipes.updateStatus` is unreachable there.
+This plan addresses that approval-to-draft loop and promoted-recipe controls, subject to the eval
+prerequisite above. Its proposed approve/deprecate vocabulary still needs an explicit mapping to
+the current `draft` / `in_use` / `archived` statuses and legal transitions before implementation;
+this status note does not choose them.
 
 **Tech stack:** Convex scheduler + existing recipe generator path (`convex/recipes.ts`,
 `convex/llm.ts`); agent-draft door (`convex/agentDrafts.ts`, `agentReviewDrafts` table); SolidJS

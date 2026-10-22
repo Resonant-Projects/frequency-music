@@ -77,9 +77,9 @@ export const setHouseVoiceInternal = internalMutation({
 });
 
 // Explicit human choice; the system never auto-selects the house voice. The
-// first choice also starts narrating recent briefs instead of leaving them for
-// the Saturday reconcile cron; reconcile skips briefs that already have a live
-// narration job, so the backfill never duplicates an episode.
+// first public choice still schedules a one-time 14-day narration backfill.
+// Weekly Turns stay in text and no reconcile-episodes cron is registered.
+// Reconcile skips briefs that already have a live narration job.
 export const setHouseVoice = mutation({
   args: { voiceId: v.string(), devBypassSecret: v.optional(v.string()) },
   returns: v.object({ initialNarrationScheduled: v.boolean() }),
