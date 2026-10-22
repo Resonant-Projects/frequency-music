@@ -1,0 +1,111 @@
+{
+  "source_head": "a9b728466f9254938e40761e012451b4d896825b",
+  "scope": "local evidence checksums; raw paths are local-only",
+  "artifacts": [
+    {
+      "local_path": "scratchpad/feature-map-20261022/install-root.log",
+      "bytes": 673,
+      "sha256": "80b2794073940b5fabf7b89b5841cacec5fd156ef9268085ff0cdc79a68baab9"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/install-web.log",
+      "bytes": 565,
+      "sha256": "dffc0364fcf1ce74120d4d0348e28ea33e732289dfcdf305fe319e20b8d859ba"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/install-agent.log",
+      "bytes": 585,
+      "sha256": "2d6ae988cf217968866d97dcda20df7c1d891219a5935bd1d6356df62bed2bbc"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/install-media.log",
+      "bytes": 244,
+      "sha256": "0369bbcd9fdf79edc9ab7a87d82bd0999cbaf23e6323e841d9639e186cdeb103"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/browser-install.log",
+      "bytes": 169,
+      "sha256": "5ce3e0dc9fffa951663a4b5c7258fb59302ce673235077ac78821fa420268c61"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/build-web.log",
+      "bytes": 53704,
+      "sha256": "4e18fe1ca6097a6b794de95f7ceb72718ff5ba61ae07f091b9fdf3f7ea7a9528"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/verify.log",
+      "bytes": 431279,
+      "sha256": "986044b2493e3e4149fd772e617427da704226793db7c8325cb9037ffbe5b961"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/ui-tests.log",
+      "bytes": 2549,
+      "sha256": "263d08652f37557c71ef37ca07122cfa27adf674d7bef2c29a4918dc836d1863"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/listen-tests.log",
+      "bytes": 912,
+      "sha256": "bcf4af573ff4fcd5ed6912c809898cce403717d2473ef1bd421fc0258406caec"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/auth-tests.log",
+      "bytes": 1389,
+      "sha256": "5d56031e24f24f46e19ad8a20530a9aa127e23f885991f908b7ca3a155f6667a"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/feedback-tests.log",
+      "bytes": 542,
+      "sha256": "cdabfccf825796fe230a1136d1e4582d03312583ff63798e6124645fc0d86193"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/feedback-tests-rerun.log",
+      "bytes": 2512,
+      "sha256": "1553a9c5efe9bc9e0302b99f3198ecb74b928051753823b37c5cba3fa31e7aed"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/feedback-blocker.log",
+      "bytes": 176,
+      "sha256": "9814573674daa4913dd5bcd3bdffc8eb780d8ccb999485faad03930d6f2a7b74"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/feedback-blocker-final.log",
+      "bytes": 2179,
+      "sha256": "746c73110dd1c5da026fbf36e93f46038e6b06c3d08c1f8808c2bb78da540107"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/doctor.log",
+      "bytes": 630,
+      "sha256": "7608eee44082cd99ded44ce6b8e244ccf0bf1af7da335302f2f2a4ec37b5cb43"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/essays.log",
+      "bytes": 1244,
+      "sha256": "14428a42f6a6cc1f1237cd1c911e064aa1f16997fe30bdb4ab3fe3571969b3f6"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/navigation.log",
+      "bytes": 1037,
+      "sha256": "0fa5518919c3e024fee473530138cd9accb008388661f85b547dadf7ce25ffb7"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/search.log",
+      "bytes": 1068,
+      "sha256": "2af1ed48d87d65a760efe2c02b9dad8c9707376e950f387e0b46cdc3d908965b"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/ingest-refusal.log",
+      "bytes": 565,
+      "sha256": "f0cbb48a632d511ed1264caa5376ad4df59bf002d74b3a44b012a3f4d22eba32"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/cleanup.log",
+      "bytes": 2719,
+      "sha256": "dd9b8ef12aca2d5cc25f538b457f9ea5afcea4aa97c24479e3e5867e3df82b15"
+    },
+    {
+      "local_path": "scratchpad/feature-map-20261022/verify-final.log",
+      "bytes": 430852,
+      "sha256": "9fc01fd2b9046c37cb20ded52661f964706afbb5810b964912d96233f19f8f82"
+    }
+  ]
+}

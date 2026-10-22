@@ -1,0 +1,221 @@
+{
+  "source_head": "a9b728466f9254938e40761e012451b4d896825b",
+  "scope": "local evidence checksums; raw paths are local-only",
+  "artifacts": [
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/cleanup.json",
+      "bytes": 3075,
+      "sha256": "0894b78fb537ae0083afdbb7f08ef8d449611a72327e1af6e37fbe7467b62bc2"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-01-archive.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-01-archive.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-actions.jsonl",
+      "bytes": 198,
+      "sha256": "4131f3736c2e8fae842f3dfa2e01796d0d78e2a03e1efe9caf9ccc8620032516"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-console.json",
+      "bytes": 273,
+      "sha256": "17dd35b5347b2322b31c9c964ebb5e1821189fbc1080147954b1589ab88535ea"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-process.json",
+      "bytes": 322,
+      "sha256": "b4d86d5ad62386a6e2b8161190eda1d88fd96a00f736ec161b23bfafa3f01013"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-result.json",
+      "bytes": 56733,
+      "sha256": "393421546f87fed9b7f2b49002777f0a2fff21892eb2096fee7459e9cb2b9e54"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/doctor-trace.zip",
+      "bytes": 312974,
+      "sha256": "7bfbdbcf0ccfe7ce30424004bc8a2b2bbc7dce177b898212453e1e9991068d0f"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-01-archive.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-01-archive.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-02-before-open.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-02-before-open.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-03-detail.aria.txt",
+      "bytes": 14790,
+      "sha256": "529d8815b967c0944cbf5ba058b74e9a465a2488d02cea531e3ccfb735016639"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-03-detail.png",
+      "bytes": 96420,
+      "sha256": "042479d40ad2378762b8586a03f67cbc3733c815d72872066f4029e02ba20c51"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-04-reloaded-detail.aria.txt",
+      "bytes": 14790,
+      "sha256": "529d8815b967c0944cbf5ba058b74e9a465a2488d02cea531e3ccfb735016639"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-04-reloaded-detail.png",
+      "bytes": 96420,
+      "sha256": "042479d40ad2378762b8586a03f67cbc3733c815d72872066f4029e02ba20c51"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-05-before-open.aria.txt",
+      "bytes": 14790,
+      "sha256": "529d8815b967c0944cbf5ba058b74e9a465a2488d02cea531e3ccfb735016639"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-05-before-open.png",
+      "bytes": 96420,
+      "sha256": "042479d40ad2378762b8586a03f67cbc3733c815d72872066f4029e02ba20c51"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-06-detail.aria.txt",
+      "bytes": 14357,
+      "sha256": "e723b4de75fe04598e44a2e3d7525afb86793778f9a1a6debd9332741370bb02"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-06-detail.png",
+      "bytes": 97841,
+      "sha256": "c83b9842539444bee8e158736e7eb5c5340fab5802b459b95c3592c972994198"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-08-before-open.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-08-before-open.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-09-detail.aria.txt",
+      "bytes": 14357,
+      "sha256": "e723b4de75fe04598e44a2e3d7525afb86793778f9a1a6debd9332741370bb02"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-09-detail.png",
+      "bytes": 97841,
+      "sha256": "c83b9842539444bee8e158736e7eb5c5340fab5802b459b95c3592c972994198"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-11-expanded-archive.aria.txt",
+      "bytes": 20560,
+      "sha256": "6d66690cb625886e411fce80581fff05cf69e5dfae893bf8ea6ee6f2bfeb5de8"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-11-expanded-archive.png",
+      "bytes": 123434,
+      "sha256": "9e718f2862118b962c9c3f40051821b40a63694899626647d7d3eeea127ab33a"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-12-before-open.aria.txt",
+      "bytes": 20560,
+      "sha256": "6d66690cb625886e411fce80581fff05cf69e5dfae893bf8ea6ee6f2bfeb5de8"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-12-before-open.png",
+      "bytes": 120550,
+      "sha256": "d52a6f5d127f81b2386fa03c6d0a2d265d2a554de842f711fac1da7b9ec80630"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-13-detail.aria.txt",
+      "bytes": 10131,
+      "sha256": "94fc1665f9bdbc7ab6433fa7750712fe16bd6d70604c3707ed054d64e2e91f4c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-13-detail.png",
+      "bytes": 101723,
+      "sha256": "502485426715c7ad7a59ebddd3173c1b08184c5f0ce1f69442798bc206fcf625"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-15-desktop-entry.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-15-desktop-entry.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-16-mobile-entry.aria.txt",
+      "bytes": 10379,
+      "sha256": "a24a805ca10ed97b018ddd7e147e51ea443e03bef43604a14db0d3bc2d1ca51f"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-16-mobile-entry.png",
+      "bytes": 43195,
+      "sha256": "0a8d6ff8d3af8f9ea871a0bb338a62ba86aeef61abedc7e1484f0f1b31f9a25e"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-17-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-17-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-19-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-19-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-21-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-21-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-23-essay-search-result.aria.txt",
+      "bytes": 10944,
+      "sha256": "210064ba79214c6f926d6cc8b3b9050b22142c0410e01ae727789d9870b773c9"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-23-essay-search-result.png",
+      "bytes": 96025,
+      "sha256": "6f21c7f2bfd06d3f45a3865e20f5abedd66164c8d7df7c4b7c91427ef8a07da2"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-24-search-detail.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    }
+  ]
+}
