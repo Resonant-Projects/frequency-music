@@ -1,0 +1,37 @@
+// Copied only into the disposable deployment, never the application convex/.
+import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
+
+export const seed = mutation({
+  args: {}, returns: v.id("users"),
+  handler: async (ctx) => {
+    if (await ctx.db.query("users").first()) throw new Error("Local seed requires an empty database");
+    const now = Date.now();
+    const id = await ctx.db.insert("users", {
+      clerkUserId: "local-verification", displayName: "Synthetic local operator",
+      role: "admin", createdAt: now, updatedAt: now,
+    });
+    // Existing app writes use the identity subject as a users id. Decision
+    // ownership resolves that same subject through by_clerkUserId.
+    await ctx.db.patch(id, { clerkUserId: id });
+    await ctx.db.insert("sources", {
+      type: "url", dedupeKey: "url:https://example.invalid/local-recovery",
+      canonicalUrl: "https://example.invalid/local-recovery", title: "Local recovery seed",
+      status: "review_needed", blockedReason: "no_text", visibility: "private",
+      createdBy: id, createdAt: now, updatedAt: now,
+    });
+    return id;
+  },
+});
+
+export const snapshot = query({
+  args: {}, returns: v.any(),
+  handler: async (ctx) => ({
+    sources: await ctx.db.query("sources").collect(),
+    hypotheses: await ctx.db.query("hypotheses").collect(),
+    recipes: await ctx.db.query("recipes").collect(),
+    compositions: await ctx.db.query("compositions").collect(),
+    listeningSessions: await ctx.db.query("listeningSessions").collect(),
+    feeds: await ctx.db.query("feeds").collect(),
+  }),
+});
