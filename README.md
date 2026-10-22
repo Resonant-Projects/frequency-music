@@ -29,7 +29,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 ## Key constraints / decisions
 
 - Notion: single `Notes` database + generic tags; create a dedicated tag to isolate project items.
-- Files: **no PDFs in GitHub**; store uploads via **UploadThing** and keep links in Convex.
+- Files: **no PDFs in GitHub**; PDF uploads use **Convex file storage**, referenced by `sources.pdfStorageId`. Lab Firecrawl extracts their text; see [PDF capture](./docs/pdf-capture.md) for admission limits and operator enablement.
 - Weekly output: **doc-style narrative** brief.
 - Feedback: **purely subjective** (for now).
 - Public + login: public-facing app content is readable after login; some content may be truly public later.
@@ -40,7 +40,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - `app.resonantprojects.art` (SolidJS): dashboard, ingestion, briefs, hypotheses/recipes, compositions, feedback
 - Convex backend: data + actions + scheduled jobs
 - Scheduling: Convex crons (feed polling every 6h, batch extraction every 8h, weekly briefs) — see `convex/crons.ts`.
-- Operator extraction: `scripts/operator-extraction.ts` exports `text_ready` Sources in chunks with the same extract_v2 prompt, so an operator session (Claude Code) can write the extraction JSON itself and import it through `extract.storeOperatorExtraction` (recorded as `MODELS.opus`) without the worker or OpenRouter.
+- Operator extraction: `scripts/operator-extraction.ts` exports `text_ready` Sources in chunks using the shared `extract_v3` prompt in `convex/shared/extractionPrompt.ts`. The operator writes the JSON and imports it through `extract.storeOperatorExtraction`, retaining the selected producer model (Opus by default; use the registered `--model` override for another producer). The CLI contacts the deployed backend and pins durable snapshots; it does not invoke the worker or a model provider.
 
 ## Strategic Docs
 
@@ -77,6 +77,8 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 - External agents use the [Agent-Tool HTTP surface](./docs/agent-tool-surface.md).
 
 ### Verification
+
+Full verification needs dependencies in all four packages: run `vp install` in the root, `web/`, `agent/`, and `media/`. These are separate packages; a root install alone does not install their dependencies.
 
 - Convex: `vp test convex`
 - Web: `vp run typecheck:web` and `vp run build:web`
