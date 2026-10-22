@@ -36,7 +36,7 @@
     "@varlock/1password-plugin": "2.0.5"
   },
   "devDependencies": {
-    "@langchain/langgraph-cli": "1.5.3",
+    "@langchain/langgraph-cli": "1.5.4",
     "postcss": "8.5.30",
     "typescript": "^7.0.2"
   },
