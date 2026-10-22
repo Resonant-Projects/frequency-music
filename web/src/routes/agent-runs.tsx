@@ -2,6 +2,7 @@ import { Link } from "@tanstack/solid-router";
 import type { FunctionReturnType } from "convex/server";
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import type { Doc, Id } from "../../../convex/_generated/dataModel";
+import { KNOWN_GRAPH_NAMES } from "../../../convex/shared/agentContract";
 import { css, cx } from "../../styled-system/css";
 import {
   AgentRunEventList,
@@ -49,8 +50,13 @@ const STATUSES: Array<{ value: "" | AgentRunStatus; label: string }> = [
 
 const GRAPHS = [
   { value: "", label: "All graphs" },
-  { value: "research-pipeline", label: "Research Pipeline" },
-  { value: "weekly-brief", label: "Weekly Brief" },
+  ...KNOWN_GRAPH_NAMES.map((value) => ({
+    value,
+    label: value
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" "),
+  })),
 ] as const;
 
 const metricGridClass = css({
