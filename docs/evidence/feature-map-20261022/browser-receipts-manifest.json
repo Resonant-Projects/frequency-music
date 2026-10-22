@@ -1,0 +1,221 @@
+{
+  "source_head": "a9b728466f9254938e40761e012451b4d896825b",
+  "scope": "local evidence checksums; raw paths are local-only",
+  "artifacts": [
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-24-search-detail.png",
+      "bytes": 96420,
+      "sha256": "042479d40ad2378762b8586a03f67cbc3733c815d72872066f4029e02ba20c51"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-25-not-found.aria.txt",
+      "bytes": 328,
+      "sha256": "0d5d57ff9f203a4f576279ef6a58f97dc54e545ca8b9eacef471703c8a448b00"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-25-not-found.png",
+      "bytes": 14834,
+      "sha256": "63721bf75a975dfaadb2ad55554fe86afd4d530041bc3af9723d8f44e5b8307c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-actions.jsonl",
+      "bytes": 4813,
+      "sha256": "00eedea3eb6633b5f07aecbe95bd8ce4398034cd2ad35f350715641a72ccf319"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-console.json",
+      "bytes": 2308,
+      "sha256": "15a152e40f53190e2641ae5d291b35087707811684372e426175c59d7ce80254"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-result.json",
+      "bytes": 457685,
+      "sha256": "3c51bd7eb018d34854b51c700c7f2e809e06ad64213c97b98f778bc7f5e0bd82"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/essays-trace.zip",
+      "bytes": 4436996,
+      "sha256": "88fb8b00ea1ac18603a8ff0977d8cf465e0279be157519924881e6fa50b1b1ae"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/ingest-result.json",
+      "bytes": 331,
+      "sha256": "7319ba48378c4792f31c3e373d5808b2d1a4632c68ca9b32c7ad8d64fb56f385"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/instance.json",
+      "bytes": 814,
+      "sha256": "a390d8ef9fe711f5f4fd8f07fc8096ddfa2adf9595b1cb2dcf983cb30fdc696c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/launch-cleanup.json",
+      "bytes": 172,
+      "sha256": "944ab0fefa467e8dbda6b1df4151a1a1c8c4dd4826dfd3cd64d6fb919927d6a6"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/launch.log",
+      "bytes": 1059,
+      "sha256": "c4b52b0dcea87d569b7f78fa8257750585c86d6acc5ab37b4d86673b73914ecc"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-01-archive.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-01-archive.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-02-group-research.aria.txt",
+      "bytes": 10965,
+      "sha256": "dd93b895aeef33dcf8657c62e53b3db163984e8adedca585e739d3aec0ba9422"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-02-group-research.png",
+      "bytes": 127129,
+      "sha256": "8751045a8849ccceca949b5e85fea5114370902379b2aa797aa91b82faf9e9d6"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-03-group-compose.aria.txt",
+      "bytes": 10850,
+      "sha256": "b8c0d579dc90e451f3550482932d9b63c2c512b24211c5dfe02d88a68c365398"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-03-group-compose.png",
+      "bytes": 120315,
+      "sha256": "c06a14926e9ac65f109a118d70efef1cbb3e134a53a11ac5250b0eefa6d7437e"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-04-group-library.aria.txt",
+      "bytes": 10796,
+      "sha256": "853c78b4260cd53042da3bdd8505df482c6dd7d84c33c87c9b42874a4e4a7cf3"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-04-group-library.png",
+      "bytes": 112100,
+      "sha256": "ad7a1e21748adffe3fc88fd24ae1fc479d435033fe89cbfba9f6fc1175da5bc9"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-05-group-operations.aria.txt",
+      "bytes": 10711,
+      "sha256": "ffd519874c674792c985a096ad154a87567c37a41577a77140340e8401c53eae"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-05-group-operations.png",
+      "bytes": 114027,
+      "sha256": "03623d4439cc4759b21cdede1ffe91c8e35540e8f8bbfabd3ebc2c95dd5b4e4e"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-07-desktop-navigation.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-07-desktop-navigation.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-08-mobile-navigation.aria.txt",
+      "bytes": 10379,
+      "sha256": "a24a805ca10ed97b018ddd7e147e51ea443e03bef43604a14db0d3bc2d1ca51f"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-08-mobile-navigation.png",
+      "bytes": 43195,
+      "sha256": "0a8d6ff8d3af8f9ea871a0bb338a62ba86aeef61abedc7e1484f0f1b31f9a25e"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-actions.jsonl",
+      "bytes": 1444,
+      "sha256": "7605ea1f631e870d5b0dbaf368adf407de1bc9c9454184316a6489f8854f1e5f"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-console.json",
+      "bytes": 813,
+      "sha256": "df816348cd26d6cf60670b06c231363cae6cbc4cda142cdd6ee5fcf08acf84ac"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-result.json",
+      "bytes": 170805,
+      "sha256": "eb61ba9c2b049a42dce30f28ba062efa9f2a559adb395ed5fb11663704df17ce"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/navigation-trace.zip",
+      "bytes": 1881614,
+      "sha256": "cc8d8f507400bdcb7accde96241c0b06fc7f7782ba6c191f812bc2fccb55ad4c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-01-archive.aria.txt",
+      "bytes": 10482,
+      "sha256": "431faba8d4588f5da3d4011fab425ed9273e89030c62179822beea1bc14ab548"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-01-archive.png",
+      "bytes": 111314,
+      "sha256": "4e6253dd9c5c9bd90083f4cb7ecebb7400eb613333fc42f7961cac3e8cf58c4b"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-02-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-02-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-04-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-04-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-06-search-result.aria.txt",
+      "bytes": 15224,
+      "sha256": "b032dfe842eaeca3b163bcda50cc24ef00fa5522217d71e94cbd1122434c209c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-06-search-result.png",
+      "bytes": 84546,
+      "sha256": "77ff85dc5152381ad13b9e431e78cdd9015afaaee05462a4f1889e6573305c72"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-08-search-selection.aria.txt",
+      "bytes": 11215,
+      "sha256": "8a1b285011790c81f1b017fd8fb9b244c83f89b00e75aadac6452a1735dcee4c"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-08-search-selection.png",
+      "bytes": 100371,
+      "sha256": "3e01b021c687a67c35a9f7f81cba6f5bc6c18a84c94932621baac03ced5a05c7"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-actions.jsonl",
+      "bytes": 1725,
+      "sha256": "30209a3d00fcf1f478657cdb528a5ceabf57b3a2b1a584498efaca0ac2f4afe2"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-console.json",
+      "bytes": 1083,
+      "sha256": "b74a36ed623b899ca2465c150113f989a37431831d026de98ed486f3fb00705f"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-result.json",
+      "bytes": 229284,
+      "sha256": "927f3cde193dc025fd841b45a63d489fa9ce1177888bba534d7d0f5d89dcd3a8"
+    },
+    {
+      "local_path": ".cursor/skills/verify-frequency-music/evidence/feature-map-20261022/search-trace.zip",
+      "bytes": 2023920,
+      "sha256": "859eb7217fc809410e494b056f24170e70f7cdd6f0f043d4dce28e6fd70ecb65"
+    }
+  ]
+}
