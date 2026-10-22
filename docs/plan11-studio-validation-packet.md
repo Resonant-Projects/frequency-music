@@ -118,12 +118,13 @@ The earlier blocker (no human upload could create a `litmusRender` artifact,
 and nothing grouped a machine render with a human one) is closed in source by
 the [studio comparison contract](studio-comparison-contract.md):
 `convex/studioComparisons.ts`, a `studioComparison` blind-group purpose and a
-studio section on `/listen`. It merged in #155 (`16ed588`) and is not
-deployed. Using it needs its own attested backend release and deploy; the
-[rollout work order](wave2-rollout-packet.md#combined-rollout-work-order-2026-10-17)
-pins `91cb3047`, which does not contain it.
+studio section on `/listen`. It merged in #155 (`16ed588`) and has been
+deployed since 2026-10-17: the rollout pinned `6fb562b2`, which contains it,
+and post-deploy coverage reported the `studio-comparison` group deployed with
+nothing missing
+([window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)).
 
-Once deployed, one comparison runs:
+One comparison runs:
 
 1. **Machine baseline in production.** Save a kit's `render-plan.json` as a
    real recipe's typed plan (`renders.setPlan`) and render it
