@@ -1,0 +1,97 @@
+[
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/01-url-saved.png",
+    "bytes": 119818,
+    "sha256": "ea8dc4433db51ed581e5913d24550c07127362717148b26774b9e87c0027cb30"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/02-recovery-saved.png",
+    "bytes": 86887,
+    "sha256": "f21e7fb93673f0e166c04bbde0579bb6b8b52b2b392aec486e41da62708e8f54"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/03-hypothesis-saved.png",
+    "bytes": 78877,
+    "sha256": "b4ffbd973b1ba07060c6ab8e154ff407c9a83b1ace51150f5ed90109521382f0"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/04-recipe-saved.png",
+    "bytes": 70941,
+    "sha256": "7a252fd059d09a6e7b7f6cbb78dcd14c66b95dcf32dba4da636f79f0ec931b6c"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/05-composition-saved.png",
+    "bytes": 47939,
+    "sha256": "7a27d49963edf8ec8015a73666140124e44bf4ac432577e6a6cd78de4c77e52d"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/06-listening-saved.png",
+    "bytes": 81385,
+    "sha256": "8d1a2573e793e70f7866c9b0ae7e2919436eb027c3bc7200cfd5f87ae9eac9fc"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/07-lineage.png",
+    "bytes": 63973,
+    "sha256": "2ae152246d72454aa9d4d11cffb9cdf320971ff430c83cdd2ca70df7966ab265"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/08-feed-disabled.png",
+    "bytes": 121152,
+    "sha256": "19572949f197e93a776d3eb2cbceab41de47250a4bdeef9cc39e1cb68d22cae3"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/browser/.last-run.json",
+    "bytes": 45,
+    "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/browser/journeys-URL-intake-and-de-7c511-thout-requesting-generation/trace.zip",
+    "bytes": 1107868,
+    "sha256": "4bd7b560e04ac7ff4db66fbde095323c8a3430a85b763652dbd1c34fbac8fa8e"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/browser/journeys-feed-creation-and-toggling-persist-without-polling/trace.zip",
+    "bytes": 923577,
+    "sha256": "337b277ef7e97f38b096782d0ea7a03a81b772c1343733745df073dad910f2a9"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/browser/journeys-manual-hypothesis-c4ce4-ng-Session-preserve-lineage/trace.zip",
+    "bytes": 2311929,
+    "sha256": "89ef4a402fc8f8a7890f07da54def7998713d266eefc4f483eaf4ca3ca79d253"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/browser/journeys-recover-missing-s-7822a-rough-the-real-Display-form/trace.zip",
+    "bytes": 690042,
+    "sha256": "21800b404960aea96de9887dd2bcb2d1ac42ba48957b6eca97f5384577c4521f"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/cleanup.json",
+    "bytes": 256,
+    "sha256": "72ced3d402ddfd1f31ada716d35fd6bed21835f3b58917d859d82cf9adc718f2"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/instance.json",
+    "bytes": 680,
+    "sha256": "b88a0745b92f46d5fc4e00f9be849cdfb6ffa4351955c68bd5e9f29b64225460"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/snapshot-aa09586c1d16412a1f00-00c0eb02ff54dbb49171.json",
+    "bytes": 1938,
+    "sha256": "bdae5eb90aab6a0f5d8e3a1d3582130e78aa1651b81093e66991e8a7a956b9fd"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/snapshot-aa09586c1d16412a1f00-173b8f16e47306b236a7.json",
+    "bytes": 4657,
+    "sha256": "a75fed93038fc7b5271e008b9b8d4ceaee626c0e096114fa1645c6af79c94fc8"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/snapshot-aa09586c1d16412a1f00-c1cab82b19b635f4bda1.json",
+    "bytes": 1153,
+    "sha256": "03591ba9b684ad5013f7c8f1913bd563128333f8b931ffa8ebe0a3afc4cd2380"
+  },
+  {
+    "path": "web/artifacts/local-convex/gap-local-owned-scratch/snapshot-aa09586c1d16412a1f00-d72b45b791c4db080ff6.json",
+    "bytes": 5021,
+    "sha256": "25ccd49f5f6500a8bc9af889c1ae0f5a3b646a029bb6c0f3ca92a0f774fc2509"
+  }
+]
