@@ -14,6 +14,8 @@ const reader = localClient(run, identity);
 const snapshot = () =>
   reader.query(makeFunctionReference("localVerification:snapshot"), {});
 const title = (kind: string) => `Local ${kind} ${run}`;
+// These journeys share the URL-intake source created by the first test.
+test.describe.configure({ mode: "serial" });
 let forbidden: string[];
 let pageErrors: string[];
 test.beforeEach(async ({ page }) => {
@@ -34,6 +36,7 @@ test.beforeEach(async ({ page }) => {
     ws.close();
   });
 });
+// biome-ignore lint/correctness/noEmptyPattern: Playwright requires the fixtures object pattern.
 test.afterEach(async ({}, testInfo) => {
   writeFileSync(
     resolve(directory, `snapshot-${testInfo.testId}.json`),

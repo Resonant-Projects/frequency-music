@@ -23,7 +23,106 @@ LABEL = "frequency.local-verification"
 def execute(args, **kwargs):
     if args[0] == "docker":
         kwargs["env"] = docker_env()
-    return subprocess.check_output(args, text=True, timeout=30, **kwargs).strip()
+    kwargs.setdefault("timeout", 30)
+    return subprocess.check_output(args, text=True, **kwargs).strip()
+
+
+def _process_group_exists(pid):
+    try:
+        os.killpg(pid, 0)
+    except ProcessLookupError:
+        return False
+    return True
+
+
+def _descendant_pids(root_pid):
+    parents = {root_pid}
+    descendants = set()
+    try:
+        entries = os.listdir("/proc")
+    except OSError:
+        return descendants
+    processes = []
+    for entry in entries:
+        if not entry.isdigit():
+            continue
+        try:
+            tail = Path("/proc") / entry / "stat"
+            fields = tail.read_text().rsplit(")", 1)[1].split()
+            processes.append((int(entry), int(fields[1])))
+        except (OSError, ValueError, IndexError):
+            continue
+    while parents:
+        children = {pid for pid, ppid in processes if ppid in parents}
+        children -= descendants
+        descendants.update(children)
+        parents = children
+    return descendants
+
+
+def _signal_pids(pids, sig):
+    for pid in pids:
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            pass
+
+
+def _stop_process_group(process, known_descendants=None):
+    descendants = set(known_descendants or ()) | _descendant_pids(process.pid)
+    group_alive = _process_group_exists(process.pid)
+    if not group_alive and not descendants:
+        return
+    if group_alive:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    _signal_pids(descendants, signal.SIGTERM)
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        pass
+    descendants |= _descendant_pids(process.pid)
+    if _process_group_exists(process.pid):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    if descendants:
+        _signal_pids(descendants, signal.SIGKILL)
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            pass
+
+
+def _wait_for_process(process, args, timeout, descendants):
+    deadline = time.monotonic() + timeout
+    while True:
+        descendants |= _descendant_pids(process.pid)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(args, timeout)
+        try:
+            return process.wait(timeout=min(0.25, remaining)), descendants
+        except subprocess.TimeoutExpired:
+            continue
+
+
+def _run_bounded(args, *, timeout, **kwargs):
+    process = subprocess.Popen(args, start_new_session=True, **kwargs)
+    descendants = set()
+    try:
+        returncode, descendants = _wait_for_process(process, args, timeout, descendants)
+    except (subprocess.TimeoutExpired, KeyboardInterrupt):
+        descendants |= _descendant_pids(process.pid)
+        _stop_process_group(process, descendants)
+        raise
+    if returncode:
+        _stop_process_group(process, descendants)
+        raise subprocess.CalledProcessError(returncode, args)
+    return subprocess.CompletedProcess(args, returncode)
 
 
 def directory(run):
@@ -33,7 +132,9 @@ def directory(run):
 
 
 def write(path, value):
-    path.write_text(json.dumps(value, indent=2) + "\n")
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(json.dumps(value, indent=2) + "\n")
+    os.replace(temporary, path)
 
 
 def load(run):
@@ -55,7 +156,8 @@ def fingerprint():
     digest = hashlib.sha256()
     for name in sorted(set(filter(None, names))):
         path = REPO / name
-        digest.update(name.encode() + b"\0" + path.read_bytes() + b"\0")
+        content = path.read_bytes() if path.exists() else b"<missing>"
+        digest.update(name.encode() + b"\0" + content + b"\0")
     return digest.hexdigest()
 
 
@@ -89,6 +191,59 @@ def owned(info, kind, name):
     return observed
 
 
+def _resource_is_missing(kind, stderr):
+    message = str(stderr or "").lower()
+    return any(
+        phrase in message
+        for phrase in (
+            f"no such {kind}",
+            "no such object",
+            "not found",
+        )
+    )
+
+
+def _inspect_resource(kind, name):
+    return subprocess.run(
+        ["docker", kind, "inspect", name],
+        env=docker_env(),
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+
+
+def _ensure_image():
+    found = _inspect_resource("image", IMAGE)
+    if found.returncode == 0:
+        return
+    if not _resource_is_missing("image", found.stderr):
+        raise RuntimeError(
+            "Unable to inspect the local Docker image: " + (found.stderr or "unknown error").strip()
+        )
+    execute(["docker", "pull", IMAGE], timeout=900)
+
+
+def _require_fresh_volume(name):
+    found = _inspect_resource("volume", name)
+    if found.returncode == 0:
+        raise RuntimeError(f"Refusing to reuse existing volume: {name}")
+    if not _resource_is_missing("volume", found.stderr):
+        raise RuntimeError(
+            "Unable to inspect the local Docker volume: " + (found.stderr or "unknown error").strip()
+        )
+
+
+def _cleanup_failed_start_relay(relay, info, receipt):
+    if relay is None or info.get("relay_started") is not None:
+        return
+    if relay.poll() is None:
+        _stop_process_group(relay)
+    info["relay_started"] = "<relay-exited-during-start>"
+    write(receipt, info)
+
+
 def start(run):
     out = directory(run)
     out.mkdir(parents=True, exist_ok=False)
@@ -104,16 +259,34 @@ def start(run):
     info = {"repo": str(REPO), "run": run, "owner": owner, "name": name,
             "backend": f"http://127.0.0.1:{ports[0]}",
             "site": f"http://127.0.0.1:{ports[1]}",
-            "frontend": f"http://127.0.0.1:{ports[2]}", "image": IMAGE, "source_sha256": fingerprint()}
+            "frontend": f"http://127.0.0.1:{ports[2]}", "image": IMAGE, "source_sha256": fingerprint(),
+            "created_resources": {"network": False, "volume": False, "container": False}}
     write(out / "instance.json", info)
+    relay = None
     try:
+        _ensure_image()
         execute(["docker", "network", "create", "--internal", "--label", f"{LABEL}={owner}", name])
+        info["created_resources"]["network"] = True
+        write(out / "instance.json", info)
+        _require_fresh_volume(name)
         execute(["docker", "volume", "create", "--label", f"{LABEL}={owner}", name])
-        execute(["docker", "run", "-d", "--name", name, "--label", f"{LABEL}={owner}",
-                 "--network", name, "--mount", f"type=volume,source={name},target=/convex/data",
-                 "-e", f"INSTANCE_NAME={name}", "-e", "DISABLE_BEACON=1",
-                 "-e", f"CONVEX_CLOUD_ORIGIN={info['backend']}",
-                 "-e", f"CONVEX_SITE_ORIGIN={info['site']}", IMAGE])
+        info["created_resources"]["volume"] = True
+        write(out / "instance.json", info)
+        cidfile = out / "container.cid"
+        try:
+            execute(["docker", "run", "-d", "--cidfile", str(cidfile), "--name", name,
+                     "--label", f"{LABEL}={owner}", "--network", name,
+                     "--mount", f"type=volume,source={name},target=/convex/data",
+                     "-e", f"INSTANCE_NAME={name}", "-e", "DISABLE_BEACON=1",
+                     "-e", f"CONVEX_CLOUD_ORIGIN={info['backend']}",
+                     "-e", f"CONVEX_SITE_ORIGIN={info['site']}", IMAGE])
+        finally:
+            try:
+                if cidfile.is_file() and cidfile.read_text().strip():
+                    info["created_resources"]["container"] = True
+                    write(out / "instance.json", info)
+            except OSError:
+                pass
         container = owned(info, "container", name)
         address = container["NetworkSettings"]["Networks"][name]["IPAddress"]
         relay_log = (out / "relay.log").open("w")
@@ -121,6 +294,8 @@ def start(run):
                                   address, str(ports[0]), str(ports[1])],
                                  stdout=relay_log, stderr=subprocess.STDOUT, start_new_session=True)
         info["relay_pid"] = relay.pid
+        info["relay_started"] = None
+        write(out / "instance.json", info)
         info["relay_started"] = execute(["ps", "-p", str(relay.pid), "-o", "lstart="])
         write(out / "instance.json", info)
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -146,7 +321,8 @@ def start(run):
                           "frontend": info["frontend"], "image": IMAGE,
                           "version": info["version"], "internal_network": True}))
     except BaseException:
-        stop(run)
+        _cleanup_failed_start_relay(relay, info, out / "instance.json")
+        stop(run, info)
         raise
 
 
@@ -195,52 +371,132 @@ def exercise(run):
     env = clean_env()
     env["TMPDIR"] = str(directory(run) / "scratch")
     env["LOCAL_CONVEX_RUN"] = run
-    subprocess.run(["node", str(REPO / "scripts/local-convex/seed.mjs"), run],
-                   cwd=REPO, env=env, check=True)
-    subprocess.run([str(REPO / "web/node_modules/.bin/playwright"), "test", "--config",
-                    "tests/local/playwright.config.ts", "--reporter=list"],
-                   cwd=REPO / "web", env=env, check=True)
+    _run_bounded(["node", str(REPO / "scripts/local-convex/seed.mjs"), run],
+                 cwd=REPO, env=env, timeout=120)
+    _run_bounded([str(REPO / "web/node_modules/.bin/playwright"), "test", "--config",
+                  "tests/local/playwright.config.ts", "--reporter=list"],
+                 cwd=REPO / "web", env=env, timeout=900)
     check_source(info)
 
 
-def stop(run):
-    info = load(run)
+def stop(run, info=None):
+    info = info or load(run)
     out = directory(run)
     name = info["name"]
+    errors = []
+    removed = {kind: False for kind in ("container", "volume", "network")}
+
     if "relay_pid" in info:
-        observed = subprocess.run(["ps", "-p", str(info["relay_pid"]), "-o", "lstart="],
-                                  capture_output=True, text=True, check=False)
-        if observed.returncode == 0:
-            if observed.stdout.strip() != info["relay_started"]:
-                raise RuntimeError("Relay PID identity changed; refusing kill")
-            os.killpg(info["relay_pid"], signal.SIGTERM)
+        try:
+            if info.get("relay_started") is None:
+                errors.append("Relay identity was not verified; refusing kill")
+            else:
+                observed = subprocess.run(
+                    ["ps", "-p", str(info["relay_pid"]), "-o", "lstart="],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=30,
+                )
+                if observed.returncode == 0:
+                    if observed.stdout.strip() != info["relay_started"]:
+                        raise RuntimeError("Relay PID identity changed; refusing kill")
+                    os.killpg(info["relay_pid"], signal.SIGTERM)
+                elif observed.stderr.strip():
+                    errors.append("relay probe failed: " + observed.stderr.strip())
+        except subprocess.TimeoutExpired:
+            errors.append("relay probe timed out")
+        except ProcessLookupError:
+            pass
+        except RuntimeError as exc:
+            errors.append(str(exc))
+
+    created_resources = info.get("created_resources", {})
     for kind in ("container", "volume", "network"):
-        found = subprocess.run(["docker", kind, "inspect", name], env=docker_env(), capture_output=True, check=False)
-        if found.returncode:
+        if created_resources.get(kind, True) is False:
             continue
-        owned(info, kind, name)
-        cmd = ["docker", kind, "rm"]
-        if kind == "container":
-            cmd.append("-f")
-        execute(cmd + [name])
+        try:
+            found = _inspect_resource(kind, name)
+        except subprocess.TimeoutExpired:
+            errors.append(f"{kind} inspect timed out")
+            continue
+        except OSError as exc:
+            errors.append(f"{kind} inspect failed: {exc}")
+            continue
+        if found.returncode:
+            if _resource_is_missing(kind, found.stderr):
+                removed[kind] = True
+            else:
+                errors.append(
+                    f"{kind} inspect failed: {(found.stderr or 'unknown error').strip()}"
+                )
+            continue
+        try:
+            owned(info, kind, name)
+        except Exception as exc:
+            if isinstance(exc, RuntimeError) and str(exc).startswith("Refusing foreign"):
+                errors.append(str(exc))
+            else:
+                errors.append(f"{kind} ownership check failed: {exc}")
+            continue
+        try:
+            cmd = ["docker", kind, "rm"]
+            if kind == "container":
+                cmd.append("-f")
+            execute(cmd + [name])
+            removed[kind] = True
+        except Exception as exc:
+            errors.append(f"{kind} removal failed: {exc}")
+
     for _ in range(50):
         released = True
         for key in ("backend", "site"):
-            with socket.socket() as probe:
-                if probe.connect_ex(("127.0.0.1", int(info[key].rsplit(":", 1)[1]))) == 0:
-                    released = False
+            try:
+                with socket.socket() as probe:
+                    probe.settimeout(1)
+                    if probe.connect_ex(("127.0.0.1", int(info[key].rsplit(":", 1)[1]))) == 0:
+                        released = False
+            except OSError as exc:
+                errors.append(f"{key} listener probe failed: {exc}")
         if released:
             break
         time.sleep(0.1)
     else:
-        raise RuntimeError("Owned relay listeners did not stop")
-    for filename in ("local-admin-key", "local.env", "identity.json"):
-        (out / filename).unlink(missing_ok=True)
-    shutil.rmtree(out / "release", ignore_errors=True)
-    shutil.rmtree(out / "scratch", ignore_errors=True)
-    write(out / "cleanup.json", {"status": "pass", "container_removed": name,
-          "volume_removed": name, "network_removed": name, "local_credentials_removed": True})
+        errors.append("Owned relay listeners did not stop")
+
+    for filename in ("local-admin-key", "local.env", "identity.json", "container.cid"):
+        try:
+            (out / filename).unlink(missing_ok=True)
+        except OSError as exc:
+            errors.append(f"credential cleanup failed for {filename}: {exc}")
+    try:
+        shutil.rmtree(out / "release", ignore_errors=False)
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        errors.append(f"release cleanup failed: {exc}")
+    try:
+        shutil.rmtree(out / "scratch", ignore_errors=False)
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        errors.append(f"scratch cleanup failed: {exc}")
+
+    cleanup = {
+        "status": "pass" if not errors else "fail",
+        "container_removed": name if removed["container"] else None,
+        "volume_removed": name if removed["volume"] else None,
+        "network_removed": name if removed["network"] else None,
+        "local_credentials_removed": not any(
+            (out / filename).exists() for filename in ("local-admin-key", "local.env", "identity.json", "container.cid")
+        ),
+    }
+    if errors:
+        cleanup["errors"] = errors
+    write(out / "cleanup.json", cleanup)
     print((out / "cleanup.json").read_text())
+    if errors:
+        raise RuntimeError("Cleanup failed: " + "; ".join(errors))
 
 
 def run_all(run):
