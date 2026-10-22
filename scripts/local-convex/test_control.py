@@ -54,6 +54,15 @@ class LocalBoundary(unittest.TestCase):
             with self.subTest(run=run), self.assertRaises(ValueError):
                 control.directory(run)
 
+    def test_docker_is_pinned_to_local_socket_with_no_inherited_secrets(self):
+        with patch.dict(control.os.environ, {"DOCKER_HOST": "tcp://remote.invalid:2376", "DOCKER_CONTEXT": "foreign",
+                                           "CONVEX_SELF_HOSTED_ADMIN_KEY": "synthetic-foreign-key"}):
+            with patch.object(control.subprocess, "check_output", return_value="local\n") as command:
+                self.assertEqual(control.execute(["docker", "version"]), "local")
+                self.assertEqual(command.call_args.kwargs["env"], {
+                    "PATH": control.os.environ["PATH"], "DOCKER_HOST": "unix:///var/run/docker.sock",
+                })
+
     def test_state_cannot_name_another_checkouts_resources(self):
         for key in ["repo", "owner", "name", "run"]:
             with self.subTest(key=key):

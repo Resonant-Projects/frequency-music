@@ -61,6 +61,9 @@ test("URL intake and dedupe persist without requesting generation", async ({
   await page.locator("#url-input-title").fill(title("Source"));
   await page.locator("#url-input-tags").fill(`local-proof,${run}`);
   await page.getByRole("button", { name: "Ingest URL", exact: true }).click();
+  await expect(
+    page.getByText("URL source ingested into private inbox.", { exact: true }),
+  ).toBeVisible();
   await expect
     .poll(async () =>
       (await snapshot()).sources.filter((r: any) => r.canonicalUrl === url),
@@ -79,6 +82,9 @@ test("URL intake and dedupe persist without requesting generation", async ({
   await page.locator("#url-input-url").fill(url);
   await page.locator("#url-input-title").fill(title("Source"));
   await page.getByRole("button", { name: "Ingest URL", exact: true }).click();
+  await expect(
+    page.getByText("URL unchanged; no new extraction queued.", { exact: true }),
+  ).toBeVisible();
   await expect
     .poll(async () =>
       (await snapshot()).sources

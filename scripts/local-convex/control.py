@@ -21,6 +21,8 @@ LABEL = "frequency.local-verification"
 
 
 def execute(args, **kwargs):
+    if args[0] == "docker":
+        kwargs["env"] = docker_env()
     return subprocess.check_output(args, text=True, timeout=30, **kwargs).strip()
 
 
@@ -73,6 +75,12 @@ def clean_env():
     return {"PATH": os.environ["PATH"], "CI": "1", "APP_ENV": "test", "NO_COLOR": "1"}
 
 
+def docker_env():
+    # This workflow requires the native local Linux daemon, never a selected
+    # remote Docker context. No inherited application secrets reach the CLI.
+    return {"PATH": os.environ["PATH"], "DOCKER_HOST": "unix:///var/run/docker.sock"}
+
+
 def owned(info, kind, name):
     observed = json.loads(execute(["docker", kind, "inspect", name]))[0]
     labels = observed.get("Labels") or observed.get("Config", {}).get("Labels") or {}
@@ -85,6 +93,7 @@ def start(run):
     out = directory(run)
     out.mkdir(parents=True, exist_ok=False)
     os.chmod(out, 0o700)
+    (out / "scratch").mkdir()
     ports = []
     while len(ports) < 3:
         value = port()
@@ -158,6 +167,7 @@ def deploy(run):
     shutil.copyfile(REPO / "scripts/local-convex/seed.ts.txt", release / "convex/localVerification.ts")
     key = (out / "local-admin-key").read_text()
     env = clean_env()
+    env["TMPDIR"] = str(out / "scratch")
     env.update(CONVEX_SELF_HOSTED_URL=info["backend"], CONVEX_SELF_HOSTED_ADMIN_KEY=key,
                CLERK_JWT_ISSUER_DOMAIN="http://127.0.0.1:9")
     cli = str(REPO / "node_modules/.bin/convex")
@@ -183,6 +193,7 @@ def exercise(run):
     if (directory(run) / "identity.json").exists():
         raise RuntimeError("Exercise requires an unseeded deployment; use a fresh run")
     env = clean_env()
+    env["TMPDIR"] = str(directory(run) / "scratch")
     env["LOCAL_CONVEX_RUN"] = run
     subprocess.run(["node", str(REPO / "scripts/local-convex/seed.mjs"), run],
                    cwd=REPO, env=env, check=True)
@@ -204,7 +215,7 @@ def stop(run):
                 raise RuntimeError("Relay PID identity changed; refusing kill")
             os.killpg(info["relay_pid"], signal.SIGTERM)
     for kind in ("container", "volume", "network"):
-        found = subprocess.run(["docker", kind, "inspect", name], capture_output=True, check=False)
+        found = subprocess.run(["docker", kind, "inspect", name], env=docker_env(), capture_output=True, check=False)
         if found.returncode:
             continue
         owned(info, kind, name)
@@ -226,6 +237,7 @@ def stop(run):
     for filename in ("local-admin-key", "local.env", "identity.json"):
         (out / filename).unlink(missing_ok=True)
     shutil.rmtree(out / "release", ignore_errors=True)
+    shutil.rmtree(out / "scratch", ignore_errors=True)
     write(out / "cleanup.json", {"status": "pass", "container_removed": name,
           "volume_removed": name, "network_removed": name, "local_credentials_removed": True})
     print((out / "cleanup.json").read_text())

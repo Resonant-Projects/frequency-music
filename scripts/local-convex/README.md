@@ -31,7 +31,8 @@ owned named volume and `--internal` network. The backend has no external route;
 its telemetry beacon is disabled. A host relay binds only `127.0.0.1` for backend
 and HTTP-action ingress, because internal Docker networks do not publish ports.
 This relay expects a native Linux Docker bridge reachable by the host; Docker
-Desktop networking is not verified.
+Desktop networking is not verified. Docker commands use only the local
+`unix:///var/run/docker.sock`, ignoring inherited remote contexts and credentials.
 
 The run receipt under `web/artifacts/local-convex/<id>/instance.json` records the
 allocated frontend/backend/site loopback origins, image, source digest and process
@@ -43,6 +44,8 @@ The CLI runs in a disposable source copy with an explicit environment containing
 only the local target and generated key. The frontend uses an isolated Vite config
 with its env directory set to the run directory and no podcast proxy. Neither
 process loads checkout `.env` files or inherits deployment/provider variables.
+CLI and browser `TMPDIR` points to the run's owned scratch directory; teardown
+removes it while retaining screenshots, traces and snapshots.
 
 Two deployment exceptions are explicit:
 
