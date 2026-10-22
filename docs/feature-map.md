@@ -81,4 +81,4 @@ Local evidence is dated to the source baseline above. The PR changes only audit 
 
 Recipe loop closure is already planned but gated by eval acceptance; render validation, signers, docket preparation, tournament enablement and passage/generator follow-ons retain their documented gates. CLI-first starter kits, external ingestion and operational tools are not assumed to require new product UI. Proposed UI exposure is classified **needs-decision** when the repository does not settle it. The goal is to make current intent reviewable, not convert every internal maintenance endpoint or old aspiration into a new feature.
 
-[audit]: https://github.com/Resonant-Projects/frequency-music/pulls?q=is%3Apr+head%3Adocs%2Ffeature-map
+[audit]: https://github.com/Resonant-Projects/frequency-music/pull/185
