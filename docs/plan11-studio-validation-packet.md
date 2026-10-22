@@ -185,8 +185,11 @@ Limitations to carry into the outcome report:
   validate a render.
 - **Visual acceptance is incomplete.** The upload form was driven in a real
   local browser against no backend (labels, errors, focus, overflow on
-  desktop and mobile). The comparison, rating and reveal views have only
-  backend tests; no browser has rendered them against real data.
+  desktop and mobile). A signed-in read-only production pass on 2026-10-22
+  also rendered the studio empty state and upload form at both sizes
+  ([receipt](evidence/web-studio-20261022/read-only-browser.md)). Populated
+  comparison, rating and reveal views still have only backend tests;
+  production uploads, ratings and playback remain untested.
 
 The offline fallback stays available if the path is not deployed: someone
 other than the listener assigns A and B to each kit's machine and studio

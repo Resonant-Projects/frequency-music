@@ -140,8 +140,10 @@ The coordinator accepted these for the bounded first version on 2026-10-17.
    post-deploy coverage reported the seventh group, `studio-comparison`,
    deployed with nothing missing
    ([window record](evidence/wave2-rollout-20261017/candidate-6fb562b2/window.md)).
-   No signed-in browser has rendered the `/listen` studio section against
-   production data yet.
+   On 2026-10-22, the same signed-in profile on ubudesk rendered the live
+   studio section and upload form at desktop and mobile sizes. Both lists
+   were empty; populated comparisons, playback, uploads and ratings remain
+   untested ([read-only browser receipt](evidence/web-studio-20261022/read-only-browser.md)).
 2. Save a typed render plan on a real recipe (`renders.setPlan`) and render
    it in production (`renders.request`) with media 0.3.0 on ai-5090-02.
 3. Generate the studio kit from that plan, render in the studio per the kit
