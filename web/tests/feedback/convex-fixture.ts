@@ -133,9 +133,9 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
     const gone = new Set(removed());
     if (current === "loading" || current === "error") return undefined;
     let value: unknown;
-    if (name === "listen:shootouts") value = [];
     // The /listen studio section (#155): no comparisons or machine baselines.
-    else if (
+    if (
+      name === "listen:shootouts" ||
       name === "studioComparisons:list" ||
       name === "studioComparisons:machineCandidates"
     )
