@@ -38,7 +38,7 @@ test.describe("navigation", () => {
           "Triage",
         ],
       ],
-      ["Compose", ["Recipes", "Compositions", "Feedback", "Listen"]],
+      ["Compose", ["Recipes", "Compositions", "Feedback", "Listen", "Docket"]],
       ["Library", ["Essays", "Weekly Turns", "Editorial", "Failures"]],
       ["Operations", ["Agent Runs", "Review Queue", "Admin"]],
     ] as const) {
@@ -52,6 +52,12 @@ test.describe("navigation", () => {
           }),
         ).toBeVisible();
     }
+    await navigation
+      .getByRole("button", { name: "Compose", exact: true })
+      .click();
+    await expect(
+      navigation.getByRole("link", { name: /^Docket/ }),
+    ).toHaveAttribute("href", "/docket");
     await page.keyboard.press("Escape");
     await expect(navigation.locator(".app-menu-panel:visible")).toHaveCount(0);
     await navigation
@@ -393,6 +399,11 @@ test.describe("navigation", () => {
     await expect(
       menu.getByRole("heading", { name: "Research", exact: true }),
     ).toBeVisible();
+    await expect(menu.getByRole("link", { name: /^Docket/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /^Docket/ })).toHaveAttribute(
+      "href",
+      "/docket",
+    );
     await menu.getByRole("link", { name: /^Admin/ }).click();
     await expect(page).toHaveURL(/\/admin$/);
     await expect(menu).toBeHidden();

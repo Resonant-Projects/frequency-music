@@ -227,7 +227,7 @@ async function navigation() {
         "Triage",
       ],
     ],
-    ["Compose", ["Recipes", "Compositions", "Feedback", "Listen"]],
+    ["Compose", ["Recipes", "Compositions", "Feedback", "Listen", "Docket"]],
     ["Library", ["Essays", "Weekly Turns", "Editorial", "Failures"]],
     ["Operations", ["Agent Runs", "Review Queue", "Admin"]],
   ]) {
@@ -236,6 +236,10 @@ async function navigation() {
       await expect(
         nav().getByRole("link", { name: new RegExp(`^${name}`) }),
       ).toBeVisible();
+    if (group === "Compose")
+      await expect(
+        nav().getByRole("link", { name: /^Docket/ }),
+      ).toHaveAttribute("href", "/docket");
     note(`Open ${group}`, { visibleLinks: names });
     await capture(`group-${group.toLowerCase()}`);
     await page.keyboard.press("Escape");
@@ -263,6 +267,12 @@ async function navigation() {
   await capture("desktop-navigation");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(base + detail);
+  await nav().getByRole("button", { name: "Open navigation menu" }).click();
+  const docket = nav().getByRole("link", { name: /^Docket/ });
+  await expect(docket).toBeVisible();
+  await expect(docket).toHaveAttribute("href", "/docket");
+  note("Open mobile Menu", "Docket is visible and targets /docket");
+  await page.keyboard.press("Escape");
   await enterEssays(page, nav(), base, expect, true);
   await archive();
   note(
