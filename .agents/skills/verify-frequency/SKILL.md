@@ -9,7 +9,9 @@ Read [the feature map](../../../docs/feature-map.md), then the relevant stage
 matrix. Use its feature IDs in the verification report. This skill covers the
 four packages and their seams; the existing
 [essay verification skill](../verify-frequency-music/SKILL.md) owns the guarded
-frontend lifecycle and essay/navigation/search driver. Reuse that helper.
+frontend lifecycle and essay/navigation/search driver. This skill exposes that single
+implementation through its `scripts` symlink; run commands from this skill path.
+Evidence still lives in `.cursor/skills/verify-frequency-music/evidence/<run-id>/`.
 
 ## Choose the proof boundary
 
@@ -69,18 +71,18 @@ Choose a fresh run ID and retain the terminal session for this foreground
 supervisor. Its receipt records the allocated loopback port and process group:
 
 ```bash
-python3 .cursor/skills/verify-frequency-music/scripts/control.py launch <run-id>
+python3 .agents/skills/verify-frequency/scripts/control.py launch <run-id>
 ```
 
 In separate terminal calls, require Doctor, drive the selected journeys, then
 clean up after success or failure:
 
 ```bash
-python3 .cursor/skills/verify-frequency-music/scripts/control.py doctor <run-id>
-python3 .cursor/skills/verify-frequency-music/scripts/control.py drive <run-id> essays
-python3 .cursor/skills/verify-frequency-music/scripts/control.py drive <run-id> navigation
-python3 .cursor/skills/verify-frequency-music/scripts/control.py drive <run-id> search
-python3 .cursor/skills/verify-frequency-music/scripts/control.py cleanup <run-id>
+python3 .agents/skills/verify-frequency/scripts/control.py doctor <run-id>
+python3 .agents/skills/verify-frequency/scripts/control.py drive <run-id> essays
+python3 .agents/skills/verify-frequency/scripts/control.py drive <run-id> navigation
+python3 .agents/skills/verify-frequency/scripts/control.py drive <run-id> search
+python3 .agents/skills/verify-frequency/scripts/control.py cleanup <run-id>
 ```
 
 Use the helper's fresh browser context, external-request blocking, WebSocket
