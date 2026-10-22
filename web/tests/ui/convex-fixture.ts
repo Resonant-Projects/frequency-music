@@ -8,6 +8,9 @@ import type {
 import type { QueryStatus } from "../../src/integrations/convex/query";
 export { describeError } from "../../src/integrations/convex/errors";
 
+// Latest arguments observed by the real Agent Runs route's query consumers.
+export const runQueries: Record<string, unknown> = {};
+
 export const [queuePopulated, setQueuePopulated] = createSignal(false);
 export const [intentRejected, setIntentRejected] = createSignal(false);
 export const [retired, setRetired] = createSignal(false);
@@ -42,7 +45,13 @@ export function createQueryWithStatus<Q extends FunctionReference<"query">>(
     const input = resolved();
     if (input === "skip") return undefined;
     let value: unknown;
-    if (name === "agentDrafts:listPending")
+    if (
+      name === "agentRuns:listRecentPublic" ||
+      name === "agentRuns:statusCountsPublic"
+    ) {
+      runQueries[name] = input;
+      value = name === "agentRuns:listRecentPublic" ? [] : {};
+    } else if (name === "agentDrafts:listPending")
       value =
         queuePopulated() && !retired() ? [draft("one"), draft("two")] : [];
     else if (name.includes("countPending"))

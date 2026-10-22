@@ -17,13 +17,19 @@ export default defineConfig({
         server.middlewares.use((request, _response, next) => {
           if (request.url?.split("?")[0] === "/agent-drafts")
             request.url = "/tests/ui/drafts.html";
+          if (request.url?.split("?")[0] === "/agent-runs")
+            request.url = "/tests/ui/agent-runs.html";
           next();
         });
       },
     },
   ],
   optimizeDeps: {
-    entries: ["tests/ui/index.html", "tests/ui/drafts.html"],
+    entries: [
+      "tests/ui/index.html",
+      "tests/ui/drafts.html",
+      "tests/ui/agent-runs.html",
+    ],
     include: [
       "debug",
       "extend",
