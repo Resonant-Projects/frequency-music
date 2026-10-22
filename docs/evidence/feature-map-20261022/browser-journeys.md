@@ -71,7 +71,7 @@ ERROR: ingest failed with exit 1; run cleanup feature-map-20261022
 
 ## Visual inspection and retained artifacts
 
-The archive and rendered essay-body screenshots were opened and visually inspected. They show the Frequency Music shell, archive and actual body paragraphs. Screenshots/traces are local-only in `.cursor/skills/verify-frequency-music/evidence/feature-map-20261022/`; they are not in this PR. Checksums are committed in `browser-journeys-manifest.json and browser-receipts-manifest.json`. Key files:
+The archive and rendered essay-body screenshots were opened and visually inspected. They show the Frequency Music shell, archive and actual body paragraphs. Screenshots/traces are local-only in `.cursor/skills/verify-frequency-music/evidence/feature-map-20261022/`; they are not in this PR. Checksums are committed in `browser-journeys-manifest.json` and `browser-receipts-manifest.json`. Key files:
 
 - `essays-01-archive.png`, `essays-03-detail.png`, `essays-16-mobile-entry.png`, `essays-25-not-found.png` and matching ARIA snapshots.
 - `essays-actions.jsonl`, `navigation-actions.jsonl`, `search-actions.jsonl` and the corresponding trace ZIPs and result JSONs.
