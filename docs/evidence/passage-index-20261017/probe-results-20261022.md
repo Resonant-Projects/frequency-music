@@ -59,13 +59,14 @@ responses are retained privately on devbox under
 `~/.local/state/frequency-parallel/20261022/artifacts/runtime/passage-probes-approved/`.
 They were inspected in full for this judgment.
 
-## Decisions still open
+## Temporary keep-indexing decision
 
 The historical [acceptance record](acceptance.md) is unchanged. Its failure
-rule calls for R1 (disable paid indexing). Keith's approval expressly kept
-the keep-indexing decision separate, so no switch was changed by these
-probes; the coordinator has asked whether to apply R1. This report grants no
-exception to criterion 5 and no approval to keep indexing enabled.
+rule calls for R1 (disable paid indexing). After the coordinator reported the
+failed probes and asked whether to apply R1, Keith explicitly chose:
+“Leave indexing enabled while we investigate.” This is an exception to
+immediate R1 for this investigation; no setting change was needed. It does
+not satisfy criterion 5 or settle the final G-keep decision after acceptance.
 
 The separate criterion 6 log-gap waiver also remains open. No deployment,
 publication, backfill, additional probe or human render validation occurred.
