@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Own a disposable localhost Convex deployment and real UI persistence proof."""
+"""Own a disposable local Convex proof."""
 import argparse
 import json
 import hashlib
@@ -14,6 +14,8 @@ import sys
 import time
 import urllib.request
 
+from processes import _run_bounded, _stop_process_group
+
 REPO = Path(__file__).resolve().parents[2]
 RUNS = REPO / "web/artifacts/local-convex"
 IMAGE = "ghcr.io/convex/convex-backend@sha256:294944b33dc55e8f68b2feda11c5e7b195f7778b9ad2951f1bea2744ad392e5a"
@@ -25,104 +27,6 @@ def execute(args, **kwargs):
         kwargs["env"] = docker_env()
     kwargs.setdefault("timeout", 30)
     return subprocess.check_output(args, text=True, **kwargs).strip()
-
-
-def _process_group_exists(pid):
-    try:
-        os.killpg(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
-
-
-def _descendant_pids(root_pid):
-    parents = {root_pid}
-    descendants = set()
-    try:
-        entries = os.listdir("/proc")
-    except OSError:
-        return descendants
-    processes = []
-    for entry in entries:
-        if not entry.isdigit():
-            continue
-        try:
-            tail = Path("/proc") / entry / "stat"
-            fields = tail.read_text().rsplit(")", 1)[1].split()
-            processes.append((int(entry), int(fields[1])))
-        except (OSError, ValueError, IndexError):
-            continue
-    while parents:
-        children = {pid for pid, ppid in processes if ppid in parents}
-        children -= descendants
-        descendants.update(children)
-        parents = children
-    return descendants
-
-
-def _signal_pids(pids, sig):
-    for pid in pids:
-        try:
-            os.kill(pid, sig)
-        except ProcessLookupError:
-            pass
-
-
-def _stop_process_group(process, known_descendants=None):
-    descendants = set(known_descendants or ()) | _descendant_pids(process.pid)
-    group_alive = _process_group_exists(process.pid)
-    if not group_alive and not descendants:
-        return
-    if group_alive:
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-    _signal_pids(descendants, signal.SIGTERM)
-    try:
-        process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        pass
-    descendants |= _descendant_pids(process.pid)
-    if _process_group_exists(process.pid):
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    if descendants:
-        _signal_pids(descendants, signal.SIGKILL)
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            pass
-
-
-def _wait_for_process(process, args, timeout, descendants):
-    deadline = time.monotonic() + timeout
-    while True:
-        descendants |= _descendant_pids(process.pid)
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise subprocess.TimeoutExpired(args, timeout)
-        try:
-            return process.wait(timeout=min(0.25, remaining)), descendants
-        except subprocess.TimeoutExpired:
-            continue
-
-
-def _run_bounded(args, *, timeout, **kwargs):
-    process = subprocess.Popen(args, start_new_session=True, **kwargs)
-    descendants = set()
-    try:
-        returncode, descendants = _wait_for_process(process, args, timeout, descendants)
-    except (subprocess.TimeoutExpired, KeyboardInterrupt):
-        descendants |= _descendant_pids(process.pid)
-        _stop_process_group(process, descendants)
-        raise
-    if returncode:
-        _stop_process_group(process, descendants)
-        raise subprocess.CalledProcessError(returncode, args)
-    return subprocess.CompletedProcess(args, returncode)
 
 
 def directory(run):
@@ -173,13 +77,10 @@ def port():
 
 
 def clean_env():
-    # No inherited credentials, deployment selection, proxies or service URLs.
     return {"PATH": os.environ["PATH"], "CI": "1", "APP_ENV": "test", "NO_COLOR": "1"}
 
 
 def docker_env():
-    # This workflow requires the native local Linux daemon, never a selected
-    # remote Docker context. No inherited application secrets reach the CLI.
     return {"PATH": os.environ["PATH"], "DOCKER_HOST": "unix:///var/run/docker.sock"}
 
 
@@ -308,7 +209,6 @@ def start(run):
                 time.sleep(0.5)
         else:
             raise RuntimeError("Local backend did not become ready")
-        # Fresh key generated only from the new empty container's own identity.
         key = execute(["docker", "exec", name, "./generate_admin_key.sh"], stderr=subprocess.PIPE)
         secret = out / "local-admin-key"
         secret.write_text(key)
@@ -337,8 +237,6 @@ def deploy(run):
     for filename in ("package.json", "tsconfig.json"):
         shutil.copyfile(REPO / filename, release / filename)
     (release / "node_modules").symlink_to(REPO / "node_modules", target_is_directory=True)
-    # Keep the repo's functions/components/schema. Suppress scheduled producers
-    # only in the disposable copy so a UI proof cannot invoke cron workloads.
     (release / "convex/crons.ts").write_text('import { cronJobs } from "convex/server";\nexport default cronJobs();\n')
     shutil.copyfile(REPO / "scripts/local-convex/seed.ts.txt", release / "convex/localVerification.ts")
     key = (out / "local-admin-key").read_text()
@@ -347,8 +245,6 @@ def deploy(run):
     env.update(CONVEX_SELF_HOSTED_URL=info["backend"], CONVEX_SELF_HOSTED_ADMIN_KEY=key,
                CLERK_JWT_ISSUER_DOMAIN="http://127.0.0.1:9")
     cli = str(REPO / "node_modules/.bin/convex")
-    # env set's inherited env is this explicit local-only dictionary; cwd has no
-    # .env files and never contains credentials from the repository.
     config = out / "local.env"
     config.write_text(f"CONVEX_SELF_HOSTED_URL={info['backend']}\nCONVEX_SELF_HOSTED_ADMIN_KEY={key}\n")
     os.chmod(config, 0o600)

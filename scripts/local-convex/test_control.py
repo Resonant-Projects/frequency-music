@@ -181,55 +181,6 @@ class LocalBoundary(unittest.TestCase):
             control.exercise("proof")
         self.assertEqual([call["timeout"] for call in calls], [120, 900])
 
-    def test_bounded_child_timeout_terminates_and_reaps_the_process_group(self):
-        process = SimpleNamespace(pid=1234, wait=unittest.mock.Mock(return_value=0))
-        with patch.object(control.subprocess, "Popen", return_value=process), \
-             patch.object(control, "_wait_for_process", side_effect=subprocess.TimeoutExpired(["node"], 120)), \
-             patch.object(control, "_descendant_pids", return_value=set()), \
-             patch.object(control, "_process_group_exists", return_value=True), \
-             patch.object(control.os, "killpg") as killpg:
-            with self.assertRaises(subprocess.TimeoutExpired):
-                control._run_bounded(["node", "seed.mjs"], timeout=120)
-        self.assertEqual(killpg.call_count, 2)
-
-    def test_bounded_nonzero_child_terminates_descendants(self):
-        process = SimpleNamespace(pid=1236, wait=unittest.mock.Mock(return_value=0))
-        with patch.object(control.subprocess, "Popen", return_value=process), \
-             patch.object(control, "_wait_for_process", return_value=(3, set())), \
-             patch.object(control, "_process_group_exists", return_value=True), \
-             patch.object(control.os, "killpg") as killpg:
-            with self.assertRaises(subprocess.CalledProcessError):
-                control._run_bounded(["playwright"], timeout=900)
-        self.assertEqual(killpg.call_count, 2)
-
-    def test_bounded_child_kills_detached_descendant_group(self):
-        process = SimpleNamespace(pid=1237, wait=unittest.mock.Mock(return_value=0))
-        with patch.object(control.subprocess, "Popen", return_value=process), \
-             patch.object(control, "_wait_for_process", side_effect=subprocess.TimeoutExpired(["node"], 120)), \
-             patch.object(control, "_descendant_pids", side_effect=[{5678}, {5678}, {5678}]), \
-             patch.object(control, "_process_group_exists", return_value=False), \
-             patch.object(control.os, "kill") as kill:
-            with self.assertRaises(subprocess.TimeoutExpired):
-                control._run_bounded(["playwright"], timeout=900)
-        self.assertEqual(
-            kill.call_args_list,
-            [
-                unittest.mock.call(5678, control.signal.SIGTERM),
-                unittest.mock.call(5678, control.signal.SIGKILL),
-            ],
-        )
-
-    def test_bounded_child_interrupt_terminates_and_reaps_the_process_group(self):
-        process = SimpleNamespace(pid=1235, wait=unittest.mock.Mock(return_value=0))
-        with patch.object(control.subprocess, "Popen", return_value=process), \
-             patch.object(control, "_wait_for_process", side_effect=KeyboardInterrupt()), \
-             patch.object(control, "_descendant_pids", return_value=set()), \
-             patch.object(control, "_process_group_exists", return_value=True), \
-             patch.object(control.os, "killpg") as killpg:
-            with self.assertRaises(KeyboardInterrupt):
-                control._run_bounded(["node", "seed.mjs"], timeout=120)
-        self.assertEqual(killpg.call_count, 2)
-
     def test_failed_start_relay_uses_live_handle_before_signalling(self):
         relay = SimpleNamespace(pid=4322, poll=unittest.mock.Mock(return_value=None), wait=unittest.mock.Mock())
         info = {"relay_started": None}
