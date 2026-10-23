@@ -20,8 +20,8 @@ fixture before execution. Keep existing product decisions and gates intact.
 Do not enable gates, repair gaps, seed a shared backend, or publish as part of
 an audit. Record gaps as **small-fix** or **needs-decision**.
 
-Use only local files, in-process `convex-test` databases, injected fake tools,
-or the explicit isolated browser configs below. `APP_ENV=test` selects the
+Use local files, in-process `convex-test` databases, injected fake tools,
+the isolated browser configs, or the owned local Convex workflow below. `APP_ENV=test` selects the
 committed inert environment for CLI subprocess tests. Do not read credentials.
 `VITE_AUTH_BYPASS=1` is client rendering only, not authenticated backend proof.
 
@@ -30,7 +30,9 @@ and a shared Convex backend, including writes and cleanup. They are outside
 this local workflow. Convex `run`, `dev`, `codegen`, and `deploy` can touch the
 single live deployment. Worker, media, ingestion, operator-extraction, export,
 and paid eval CLIs can also contact services. Do not run them to fill a proof
-gap. A local Vite server can proxy `/podcast/*/feed.xml` to a hosted service;
+gap. The local workflow below is the sole deployment exception: it creates an
+empty localhost instance and its own key. Never point commands or environment
+variables at production or read its admin key. A local Vite server can proxy `/podcast/*/feed.xml` to a hosted service;
 the guarded essay driver blocks that traffic. Do not open that proxy path.
 
 ## Build and checks
@@ -91,6 +93,49 @@ and body screenshots. Its `ingest` journey intentionally refuses before opening
 a browser: no isolated backend exists in this mode. Port 9 supplies no fake
 data. Research loading is not an empty-state pass.
 
+## Persisted local UI journeys
+
+Use the [local Convex workflow](../../../scripts/local-convex/README.md) on Linux
+with Docker and a native bridge reachable by the host. It deploys the real
+functions/schema/components into an empty instance, with crons suppressed only in
+the disposable copy and a synthetic seed/snapshot module. A local-only bootstrap
+authenticates a synthetic user; hosted Clerk/JWT verification is outside this
+boundary. Backend egress is blocked and browser traffic stays on owned loopback
+origins. No checkout `.env` files or inherited credentials are loaded.
+
+After the build/dependency prerequisites above, run from root with a fresh id:
+
+```bash
+python3 scripts/local-convex/control.py run local-proof-01
+```
+
+`run` performs start, deploy, seed/browser proof and teardown in `finally`. To
+inspect between steps, use another fresh id and always stop it afterward:
+
+```bash
+python3 scripts/local-convex/control.py start local-proof-02
+python3 scripts/local-convex/control.py deploy local-proof-02
+python3 scripts/local-convex/control.py exercise local-proof-02
+python3 scripts/local-convex/control.py stop local-proof-02
+python3 scripts/local-convex/test_control.py -v
+```
+
+The receipt records allocated `http://127.0.0.1:<port>` origins, image digest and
+source fingerprint. The scripts reject remote targets before reading the generated
+local key. UI saves are checked through independent real Convex HTTP table reads;
+no adapter or backend response is mocked. Screenshots, traces, synthetic snapshots,
+deploy logs and `cleanup.json` remain in `web/artifacts/local-convex/<id>/`.
+Require cleanup to remove the owned container/volume/network, stop relay listeners,
+and remove local credentials. A retry or source edit requires a new run.
+
+The four journeys cover URL-only admission/dedupe, source-text recovery, manual
+hypothesis → recipe → composition → Listening Session with lineage readback, and
+feed creation/disable. They do not prove automatic capture/extraction, generators,
+real audio/media/renderer operation, signers or publication. Extend coverage
+explicitly; do not promote an entire feature from one saved row.
+
+## Component fixtures
+
 Run the existing isolated fixture suites from `web/`. Each starts its own
 strict-port server and refuses an existing listener; run them sequentially.
 These import actual components/routes over synthetic adapters, not the full
@@ -106,7 +151,8 @@ APP_ENV=test vp exec playwright test --config tests/feedback/playwright.config.t
 
 The feedback fixture is known to fail at the audit baseline: its adapter lacks
 `createAction`, imported by the real Listen page through studio comparison.
-Preserve that failure until a separately authorized fix lands. Do not patch
+The separately authorized repair is [PR #188](https://github.com/Resonant-Projects/frequency-music/pull/188), still unmerged.
+Preserve the baseline finding until that repair lands. Do not patch
 the adapter during an audit. The optional `screenshots.spec.ts` uses
 `SHOTS_DIR`/`SHOTS_LABEL`; unset values skip screenshots and must not count as
 visual proof. An interrupted fixture runner may leave a server: verify exact
@@ -115,8 +161,9 @@ only the process it created. Never use `reuseExistingServer:true` to adopt it.
 
 For other feature IDs, use the stage matrix's named tests and manual recipe.
 Existing full-pipeline specs in `web/tests/e2e/` are intent/reference only here.
-No general isolated full-app backend/seed is provided. Report that missing
-proof environment rather than silently substituting the live service.
+The local backend above supplies an empty deployment, seed and synthetic identity.
+Its manual journeys are bounded coverage; report remaining unexercised seams
+instead of substituting the live service.
 
 ## Pass criteria and report
 
@@ -128,6 +175,9 @@ proof environment rather than silently substituting the live service.
 - **Fixture UI proof:** real controls reach expected states and expected adapter
   calls; expiry, unauthorized, stale, retry, double-submit and loading/error
   states are asserted where applicable. No persistence claim follows.
+- **Persisted local UI proof:** real controls save through the real local client;
+  independent table reads assert content, ownership and lineage; reload verifies
+  readback; no forbidden requests/page errors; teardown receipt passes.
 - **Offline UI proof:** Doctor and selected driver exit 0, screenshot/ARIA/action
   evidence survives, no forbidden requests or page errors, and cleanup confirms
   the owned group stopped, listener released and scratch removed.
