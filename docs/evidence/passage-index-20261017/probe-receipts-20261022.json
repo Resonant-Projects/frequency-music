@@ -1,0 +1,158 @@
+{
+  "target": "https://convex.resonantprojects.art",
+  "query": "432 Hz precise temperament tuning",
+  "approvedCapUsd": 0.01,
+  "conservativeCeilingUsd": 0.00011583,
+  "usageNote": "Ceiling, not a provider usage receipt; probe responses do not expose token usage or retries.",
+  "actionInvocations": 3,
+  "receipts": [
+    {
+      "variant": "all",
+      "startedAt": "2026-10-22T21:05:36.023Z",
+      "finishedAt": "2026-10-22T21:05:39.042Z",
+      "passages": 3,
+      "chars": 10551,
+      "truncated": true,
+      "omitted": 5,
+      "rawReceiptSha256": "77c24b5b9bc52f68a426d006c65e8d24da62081db15b03c553e96c612c69c092",
+      "hits": [
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.657076358795166,
+          "order": 22,
+          "type": "url",
+          "chars": 2875
+        },
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.6469952464103699,
+          "order": 21,
+          "type": "url",
+          "chars": 2856
+        },
+        {
+          "sourceId": "jx73jkcmkw783f8t80379s0h4d81cf22",
+          "title": "Music in Terms of Science",
+          "canonicalUrl": "https://arxiv.org/abs/1209.3767",
+          "status": "triaged",
+          "score": 0.6460148096084595,
+          "order": 28,
+          "type": "pdf",
+          "chars": 4820
+        }
+      ]
+    },
+    {
+      "variant": "youtube",
+      "startedAt": "2026-10-22T21:05:39.042Z",
+      "finishedAt": "2026-10-22T21:05:40.328Z",
+      "passages": 1,
+      "chars": 968,
+      "truncated": true,
+      "omitted": 4,
+      "rawReceiptSha256": "1afdebf8d3d018ef0ebe59fc1a7e0d9cadc5f336c6b52c31a8e7e91e88faab7b",
+      "hits": [
+        {
+          "sourceId": "jx70w7m21c03qngn1r2wktywws8a6g00",
+          "title": "Join the Shiva\u2019s Eye Activation at Tanah Lot, Bali | July 10",
+          "canonicalUrl": "https://www.youtube.com/watch?v=tCZxTuopgr0",
+          "status": "triaged",
+          "score": 0.46992868185043335,
+          "order": 0,
+          "type": "youtube",
+          "chars": 968
+        }
+      ]
+    },
+    {
+      "variant": "url",
+      "startedAt": "2026-10-22T21:05:40.328Z",
+      "finishedAt": "2026-10-22T21:05:40.896Z",
+      "passages": 4,
+      "chars": 11381,
+      "truncated": true,
+      "omitted": 4,
+      "rawReceiptSha256": "1f8a06cead03ebada3a36a45f3d822cc6a94c7f14d27e9995a05fdbe542fc373",
+      "hits": [
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.6570875644683838,
+          "order": 22,
+          "type": "url",
+          "chars": 2875
+        },
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.6470047831535339,
+          "order": 21,
+          "type": "url",
+          "chars": 2856
+        },
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.6371312141418457,
+          "order": 19,
+          "type": "url",
+          "chars": 2852
+        },
+        {
+          "sourceId": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+          "title": "Precise Temperament Tuning",
+          "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+          "status": "triaged",
+          "score": 0.636486291885376,
+          "order": 20,
+          "type": "url",
+          "chars": 2798
+        }
+      ]
+    }
+  ],
+  "sourceMetadata": {
+    "readAt": "2026-10-22T21:06:58.037Z",
+    "sources": [
+      {
+        "id": "jx75s52ym0rvf4e3k6v3r7g1tn81dx13",
+        "type": "url",
+        "status": "triaged",
+        "title": "Precise Temperament Tuning",
+        "canonicalUrl": "https://robertedwardgrant.com/precise-temperament-tuning/",
+        "hasTranscript": false,
+        "hasRawText": true
+      },
+      {
+        "id": "jx73jkcmkw783f8t80379s0h4d81cf22",
+        "type": "pdf",
+        "status": "triaged",
+        "title": "Music in Terms of Science",
+        "canonicalUrl": "https://arxiv.org/abs/1209.3767",
+        "hasTranscript": false,
+        "hasRawText": true
+      },
+      {
+        "id": "jx70w7m21c03qngn1r2wktywws8a6g00",
+        "type": "youtube",
+        "status": "triaged",
+        "title": "Join the Shiva\u2019s Eye Activation at Tanah Lot, Bali | July 10",
+        "canonicalUrl": "https://www.youtube.com/watch?v=tCZxTuopgr0",
+        "hasTranscript": true,
+        "hasRawText": false
+      }
+    ]
+  }
+}
