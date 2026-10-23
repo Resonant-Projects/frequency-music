@@ -75,7 +75,10 @@ evidence. The downloaded image cache remains available for later runs.
 
 Bounded commands require Linux pidfd support and refuse to launch when it is
 unavailable. Cleanup retains descriptors for observed descendants and also finds
-reparented members of the command’s session. Processes that detach and exit their
+reparented members of the command’s session. The root stays unreaped until cleanup
+finishes discovery, keeping its PID reserved while finding descendants. A bounded
+exit-and-rescan drain catches children forked during the final signal phase. Processes
+that detach and exit their
 parent before any scan observes them remain outside this sampling boundary.
 
 Safety checks are offline:
