@@ -120,7 +120,7 @@ class ProcessCleanup(unittest.TestCase):
         send_signal.assert_not_called()
 
     def test_cleanup_paths_signal_and_close_each_identity_once(self):
-        for outcome in (subprocess.TimeoutExpired(['node'], 120), KeyboardInterrupt(), (3, {5678})):
+        for outcome in (subprocess.TimeoutExpired(['node'], 120), KeyboardInterrupt(), (3, {5678: 'child'})):
             with self.subTest(outcome=outcome):
                 process = Mock(pid=1234)
                 process.wait.return_value = 0
@@ -128,7 +128,9 @@ class ProcessCleanup(unittest.TestCase):
                      patch.object(processes, '_wait_for_process') as wait, \
                      patch.object(processes, '_wait_unreaped', return_value=0), \
                      patch.object(processes, '_wait_pidfds'), \
-                     patch.object(processes, '_descendant_pids', return_value={5678}), \
+                     patch.object(processes, '_prune_exited'), \
+                     patch.object(processes, '_descendant_pids', return_value={5678: 'child'}), \
+                     patch.object(processes, '_stat_fields', return_value=['0'] * 19 + ['child']), \
                      patch.object(processes, '_open_pidfd', side_effect=[8, 9, 10]), \
                      patch.object(os, 'close') as close, \
                      patch.object(signal, 'pidfd_send_signal') as send_signal:
@@ -148,7 +150,7 @@ class ProcessCleanup(unittest.TestCase):
 
     def test_success_closes_pidfds_without_signalling(self):
         with patch.object(subprocess, 'Popen', return_value=Mock(pid=1234)), \
-             patch.object(processes, '_wait_for_process', return_value=(0, set())), \
+             patch.object(processes, '_wait_for_process', return_value=(0, {})), \
              patch.object(processes, '_open_pidfd', side_effect=[8, 9]), \
              patch.object(os, 'close') as close, \
              patch.object(signal, 'pidfd_send_signal') as send_signal:
@@ -169,7 +171,8 @@ class ProcessCleanup(unittest.TestCase):
         process = Mock(pid=1234)
         with patch.object(processes, '_wait_unreaped', return_value=0), \
                      patch.object(processes, '_wait_pidfds'), \
-                     patch.object(processes, '_descendant_pids', return_value=set()), \
+                     patch.object(processes, '_prune_exited'), \
+                     patch.object(processes, '_descendant_pids', return_value={}), \
              patch.object(signal, 'pidfd_send_signal') as send_signal:
             processes._stop_process_group(process, identities={1234: (None, None)})
         self.assertEqual(process.send_signal.call_args_list, [call(signal.SIGTERM), call(signal.SIGKILL)])
@@ -181,7 +184,8 @@ class ProcessCleanup(unittest.TestCase):
              patch.object(processes, '_wait_for_process', side_effect=ValueError('wait failed')), \
              patch.object(processes, '_wait_unreaped', return_value=0), \
                      patch.object(processes, '_wait_pidfds'), \
-                     patch.object(processes, '_descendant_pids', return_value=set()), \
+                     patch.object(processes, '_prune_exited'), \
+                     patch.object(processes, '_descendant_pids', return_value={}), \
              patch.object(processes, '_open_pidfd', side_effect=[8, 9]), \
              patch.object(os, 'close') as close, \
              patch.object(signal, 'pidfd_send_signal'):
@@ -193,6 +197,7 @@ class ProcessCleanup(unittest.TestCase):
         process = Mock(pid=1234)
         with patch.object(processes, '_wait_unreaped', return_value=0), \
                      patch.object(processes, '_wait_pidfds'), \
+                     patch.object(processes, '_prune_exited'), \
                      patch.object(processes, '_descendant_pids', side_effect=OSError('proc unavailable')), \
              patch.object(os, 'close') as close, \
              patch.object(signal, 'pidfd_send_signal') as send_signal:
@@ -205,10 +210,11 @@ class ProcessCleanup(unittest.TestCase):
         process = Mock(pid=1234)
         with patch.object(processes, '_wait_unreaped', side_effect=ChildProcessError()), \
              patch.object(processes, '_wait_pidfds'), \
+                     patch.object(processes, '_prune_exited'), \
              patch.object(processes, '_descendant_pids') as discover, \
              patch.object(signal, 'pidfd_send_signal') as send_signal, \
              patch.object(os, 'close'):
-            processes._stop_process_group(process, {5678}, {1234: (None, 9), 5678: ('start', 10)})
+            processes._stop_process_group(process, {5678: 'start'}, {1234: (None, 9), 5678: ('start', 10)})
         discover.assert_not_called()
         self.assertEqual(send_signal.call_count, 4)
 
@@ -252,6 +258,7 @@ class ProcessCleanup(unittest.TestCase):
         process = Mock(pid=1234)
         with patch.object(processes, '_wait_unreaped', return_value=0), \
                      patch.object(processes, '_wait_pidfds'), \
+                     patch.object(processes, '_prune_exited'), \
              patch.object(processes, '_descendant_pids', side_effect=[{}, {}, {5678: 'child'}, {}]), \
              patch.object(processes, '_open_pidfd', return_value=10), \
              patch.object(processes, '_stat_fields', return_value=['0'] * 19 + ['child']), \

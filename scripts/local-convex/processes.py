@@ -1,5 +1,6 @@
 """Bound local commands and signal retained Linux process identities."""
 import os
+import errno
 from pathlib import Path
 import signal
 import select
@@ -24,19 +25,19 @@ def _remember_pids(pids, identities):
             continue
         pidfd = _open_pidfd(pid)
         try:
-            if pidfd is not None and start is not None:
+            retain = pidfd is not None
+            if retain and start is not None:
                 try:
-                    unchanged = _stat_fields(pid)[19] == start
+                    retain = _stat_fields(pid)[19] == start
                 except (FileNotFoundError, ProcessLookupError):
-                    unchanged = False
+                    retain = False
                 except (OSError, ValueError, IndexError) as exc:
                     raise RuntimeError(f"Unable to verify identity for process {pid}") from exc
-                if not unchanged:
-                    continue
             # Only validated descriptors become eligible for signaling. The
             # local finally owns the in-flight descriptor until this transfer.
-            identities[pid] = (start, pidfd)
-            pidfd = None
+            identities[pid] = (start, pidfd if retain else None)
+            if retain:
+                pidfd = None
             if previous is not None and previous[1] is not None:
                 os.close(previous[1])
         finally:
@@ -110,6 +111,24 @@ def _close_pidfds(identities):
             os.close(pidfd)
 
 
+def _prune_exited(identities, root_pid):
+    poller = select.poll()
+    owners = {}
+    for pid, (start, descriptor) in identities.items():
+        if pid != root_pid and descriptor is not None:
+            owners[descriptor] = (pid, start)
+            poller.register(descriptor, select.POLLIN)
+    for descriptor, event in poller.poll(0):
+        if event & (select.POLLERR | select.POLLNVAL):
+            raise RuntimeError("Unable to observe retained process exit")
+        if event & (select.POLLIN | select.POLLHUP):
+            pid, start = owners[descriptor]
+            # Keep the observed generation, but release the exited process's
+            # descriptor. A later start time still triggers fresh acquisition.
+            identities[pid] = (start, None)
+            os.close(descriptor)
+
+
 def _wait_unreaped(process, timeout):
     deadline = time.monotonic() + timeout
     while True:
@@ -141,22 +160,45 @@ def _wait_pidfds(identities, timeout):
             raise RuntimeError("Retained processes did not exit during cleanup")
 
 
-def _drain_children(process, identities):
+def _descriptor_pressure(error):
+    while error is not None:
+        if isinstance(error, OSError) and error.errno == errno.EMFILE:
+            return True
+        error = error.__cause__
+    return False
+
+
+def _observations(pids):
+    return dict(pids or {})
+
+
+def _drain_children(process, identities, observations=None):
+    pending = _observations(observations)
     deadline = time.monotonic() + 10
     while True:
         _wait_pidfds(identities, max(0, deadline - time.monotonic()))
+        # Exited identities no longer need descriptors, including the root:
+        # WNOWAIT still reserves its PID until the final Popen.wait below.
+        _prune_exited(identities, None)
+        root_owned = True
         try:
             _wait_unreaped(process, 0)
         except ChildProcessError:
-            return
-        observed = _descendant_pids(process.pid)
+            root_owned = False
+        if root_owned:
+            pending.update(_observations(_descendant_pids(process.pid)))
         previous = dict(identities)
-        _remember_pids(observed, identities)
-        fresh = {pid for pid in observed if identities.get(pid) != previous.get(pid)}
+        try:
+            _remember_pids(pending, identities)
+        except (OSError, RuntimeError) as exc:
+            if not _descriptor_pressure(exc):
+                raise
+            # Signal the validated partial batch, wait for exit, release its
+            # descriptors, then acquire the remaining observations next pass.
+        fresh = {pid for pid in pending if identities.get(pid) != previous.get(pid)}
         _signal_pids(fresh, signal.SIGKILL, identities)
-        observations = observed.items() if isinstance(observed, dict) else ((pid, None) for pid in observed)
         unresolved = any(pid not in identities or identities[pid][0] != start
-                         for pid, start in observations)
+                         for pid, start in pending.items())
         if not fresh and not unresolved:
             return
         if time.monotonic() >= deadline:
@@ -166,7 +208,7 @@ def _drain_children(process, identities):
 def _stop_process_group(process, known_descendants=None, identities=None):
     supplied = identities is not None
     identities = identities if supplied else {}
-    descendants = set(known_descendants or ())
+    descendants = _observations(known_descendants)
     acquisition_error = None
     try:
         for sig in (signal.SIGTERM, signal.SIGKILL):
@@ -183,8 +225,8 @@ def _stop_process_group(process, known_descendants=None, identities=None):
                 if root_owned and not supplied:
                     _remember_pids({process.pid}, identities)
                 observed = _descendant_pids(process.pid) if root_owned else {}
-                descendants.update(observed)
-                _remember_pids(observed, identities)
+                descendants.update(_observations(observed))
+                _remember_pids(descendants, identities)
             except (OSError, RuntimeError) as exc:
                 # Still stop every retained identity and the unreaped root.
                 acquisition_error = exc
@@ -199,7 +241,7 @@ def _stop_process_group(process, known_descendants=None, identities=None):
             except (subprocess.TimeoutExpired, ChildProcessError):
                 pass
         try:
-            _drain_children(process, identities)
+            _drain_children(process, identities, descendants)
         except (OSError, RuntimeError) as exc:
             acquisition_error = exc
         if acquisition_error is not None:
@@ -216,8 +258,9 @@ def _stop_process_group(process, known_descendants=None, identities=None):
 def _wait_for_process(process, args, timeout, descendants, identities):
     deadline = time.monotonic() + timeout
     while True:
+        _prune_exited(identities, process.pid)
         observed = _descendant_pids(process.pid)
-        descendants.update(observed)
+        descendants.update(_observations(observed))
         _remember_pids(observed, identities)
         remaining = deadline - time.monotonic()
         if remaining <= 0:
@@ -237,7 +280,7 @@ def _run_bounded(args, *, timeout, **kwargs):
         raise RuntimeError("Local verification requires Linux pidfd support")
     os.close(probe)
     process = subprocess.Popen(args, start_new_session=True, **kwargs)
-    descendants = set()
+    descendants = {}
     identities = {}
     try:
         _remember_pids({process.pid}, identities)

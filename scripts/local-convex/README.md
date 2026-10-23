@@ -74,12 +74,17 @@ listeners disappear, removes credentials and the disposable release, and preserv
 evidence. The downloaded image cache remains available for later runs.
 
 Bounded commands require Linux pidfd support and refuse to launch when it is
-unavailable. Cleanup retains descriptors for observed descendants and also finds
+unavailable. Polling releases exited descendants’ descriptors while preserving
+the original root descriptor. Cleanup retains live identities and also finds
 reparented members of the command’s session. The root stays unreaped until cleanup
 finishes discovery, keeping its PID reserved while finding descendants. A bounded
-exit-and-rescan drain catches children forked during the final signal phase. Processes
-that detach and exit their
-parent before any scan observes them remain outside this sampling boundary.
+exit-and-rescan drain catches children forked during the final signal phase and
+reclaims exited descriptors between batches, allowing cleanup to stop more
+concurrent children than its descriptor limit. Observed PID/start-time pairs stay
+available across batches even if detached children reparent during cleanup.
+Processes in detached branches
+that become orphaned before any scan observes them remain outside this sampling
+boundary.
 
 Safety checks are offline:
 
