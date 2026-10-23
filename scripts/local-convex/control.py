@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Own a disposable localhost Convex deployment and real UI persistence proof."""
+"""Own a disposable local Convex proof."""
 import argparse
 import json
 import hashlib
@@ -27,12 +27,18 @@ def execute(args, **kwargs):
     return subprocess.check_output(args, text=True, **kwargs).strip()
 
 
-def _process_group_exists(pid):
+def _open_pidfd(pid):
     try:
-        os.killpg(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+        return os.pidfd_open(pid, 0)
+    except (AttributeError, OSError):
+        return None
+
+
+def _remember_pids(pids, identities):
+    for pid in pids:
+        if pid in identities:
+            continue
+        identities[pid] = _open_pidfd(pid)
 
 
 def _descendant_pids(root_pid):
@@ -60,47 +66,57 @@ def _descendant_pids(root_pid):
     return descendants
 
 
-def _signal_pids(pids, sig):
+def _signal_pids(pids, sig, identities):
     for pid in pids:
+        pidfd = identities.get(pid)
+        if pidfd is None:
+            continue
         try:
-            os.kill(pid, sig)
+            signal.pidfd_send_signal(pidfd, sig, None, 0)
         except ProcessLookupError:
             pass
 
 
-def _stop_process_group(process, known_descendants=None):
+def _close_pidfds(identities):
+    for pidfd in identities.values():
+        if pidfd is not None:
+            try:
+                os.close(pidfd)
+            except OSError:
+                pass
+
+
+def _stop_process_group(process, known_descendants=None, identities=None):
+    identities = identities if identities is not None else {}
+    _remember_pids({process.pid}, identities)
     descendants = set(known_descendants or ()) | _descendant_pids(process.pid)
-    group_alive = _process_group_exists(process.pid)
-    if not group_alive and not descendants:
-        return
-    if group_alive:
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-    _signal_pids(descendants, signal.SIGTERM)
+    _remember_pids(descendants, identities)
     try:
-        process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        pass
-    descendants |= _descendant_pids(process.pid)
-    if _process_group_exists(process.pid):
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    if descendants:
-        _signal_pids(descendants, signal.SIGKILL)
+        if not identities:
+            return
+        _signal_pids({process.pid}, signal.SIGTERM, identities)
+        _signal_pids(descendants, signal.SIGTERM, identities)
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:
             pass
+        descendants |= _descendant_pids(process.pid)
+        _remember_pids(descendants, identities)
+        _signal_pids({process.pid}, signal.SIGKILL, identities)
+        _signal_pids(descendants, signal.SIGKILL, identities)
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            pass
+    finally:
+        _close_pidfds(identities)
 
 
-def _wait_for_process(process, args, timeout, descendants):
+def _wait_for_process(process, args, timeout, descendants, identities):
     deadline = time.monotonic() + timeout
     while True:
         descendants |= _descendant_pids(process.pid)
+        _remember_pids(descendants, identities)
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise subprocess.TimeoutExpired(args, timeout)
@@ -113,15 +129,19 @@ def _wait_for_process(process, args, timeout, descendants):
 def _run_bounded(args, *, timeout, **kwargs):
     process = subprocess.Popen(args, start_new_session=True, **kwargs)
     descendants = set()
+    identities = {}
+    _remember_pids({process.pid}, identities)
     try:
-        returncode, descendants = _wait_for_process(process, args, timeout, descendants)
+        returncode, descendants = _wait_for_process(process, args, timeout, descendants, identities)
     except (subprocess.TimeoutExpired, KeyboardInterrupt):
         descendants |= _descendant_pids(process.pid)
-        _stop_process_group(process, descendants)
+        _remember_pids(descendants, identities)
+        _stop_process_group(process, descendants, identities)
         raise
     if returncode:
-        _stop_process_group(process, descendants)
+        _stop_process_group(process, descendants, identities)
         raise subprocess.CalledProcessError(returncode, args)
+    _close_pidfds(identities)
     return subprocess.CompletedProcess(args, returncode)
 
 
@@ -173,13 +193,10 @@ def port():
 
 
 def clean_env():
-    # No inherited credentials, deployment selection, proxies or service URLs.
     return {"PATH": os.environ["PATH"], "CI": "1", "APP_ENV": "test", "NO_COLOR": "1"}
 
 
 def docker_env():
-    # This workflow requires the native local Linux daemon, never a selected
-    # remote Docker context. No inherited application secrets reach the CLI.
     return {"PATH": os.environ["PATH"], "DOCKER_HOST": "unix:///var/run/docker.sock"}
 
 
@@ -308,7 +325,6 @@ def start(run):
                 time.sleep(0.5)
         else:
             raise RuntimeError("Local backend did not become ready")
-        # Fresh key generated only from the new empty container's own identity.
         key = execute(["docker", "exec", name, "./generate_admin_key.sh"], stderr=subprocess.PIPE)
         secret = out / "local-admin-key"
         secret.write_text(key)
@@ -337,8 +353,6 @@ def deploy(run):
     for filename in ("package.json", "tsconfig.json"):
         shutil.copyfile(REPO / filename, release / filename)
     (release / "node_modules").symlink_to(REPO / "node_modules", target_is_directory=True)
-    # Keep the repo's functions/components/schema. Suppress scheduled producers
-    # only in the disposable copy so a UI proof cannot invoke cron workloads.
     (release / "convex/crons.ts").write_text('import { cronJobs } from "convex/server";\nexport default cronJobs();\n')
     shutil.copyfile(REPO / "scripts/local-convex/seed.ts.txt", release / "convex/localVerification.ts")
     key = (out / "local-admin-key").read_text()
@@ -347,8 +361,6 @@ def deploy(run):
     env.update(CONVEX_SELF_HOSTED_URL=info["backend"], CONVEX_SELF_HOSTED_ADMIN_KEY=key,
                CLERK_JWT_ISSUER_DOMAIN="http://127.0.0.1:9")
     cli = str(REPO / "node_modules/.bin/convex")
-    # env set's inherited env is this explicit local-only dictionary; cwd has no
-    # .env files and never contains credentials from the repository.
     config = out / "local.env"
     config.write_text(f"CONVEX_SELF_HOSTED_URL={info['backend']}\nCONVEX_SELF_HOSTED_ADMIN_KEY={key}\n")
     os.chmod(config, 0o600)
