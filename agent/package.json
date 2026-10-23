@@ -37,13 +37,13 @@
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "1.5.4",
-    "postcss": "8.5.30",
+    "postcss": "8.5.31",
     "typescript": "^7.0.2"
   },
   "overrides": {
     "esbuild": "0.28.2",
     "hono": "4.13.13",
-    "postcss": "8.5.30",
+    "postcss": "8.5.31",
     "ws": "^8.21.0"
   },
   "patchedDependencies": {
