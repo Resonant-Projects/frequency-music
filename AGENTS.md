@@ -8,6 +8,7 @@
 
 ## Guardrails
 
+- Before adding complexity for a speculative or vanishingly unlikely race or security edge case, explain the concrete failure mode, likelihood, and complexity cost to the user and get their buy-in. Do not silently expand scope for theoretical robustness.
 - Convex is one live self-hosted deployment. `run`, `dev`, `codegen`, and `deploy` commands can contact production; confirm the target and effects before running them.
 - Model policy: worker and Convex inference use direct Anthropic with the 1Password-backed `ANTHROPIC_API_KEY`. `convex/shared/llmPolicy.ts` assigns Sonnet 5.5 to extraction/synthesis, Haiku 5.5 to bounded classification, and Opus 5.5 to hypothesis/recipe design. Current-catalog Anthropic calls use adaptive thinking with at least medium effort; Opus uses high. Manual calls may select a registered model override, including GPT-6.1 Sol. Persisted attempts retain their selected model; older Anthropic models keep their original OpenRouter route. Register any new model id in `MODELS` so `scripts/check-model-catalog.ts` verifies it. Llama models are excluded by policy, whatever a provider offers.
 - `AUTH_BYPASS_ENABLED=true` is an intentional standing non-human service identity, not a development misconfiguration.
