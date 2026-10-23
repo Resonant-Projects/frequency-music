@@ -14,6 +14,8 @@ import sys
 import time
 import urllib.request
 
+from processes import _run_bounded, _stop_process_group
+
 REPO = Path(__file__).resolve().parents[2]
 RUNS = REPO / "web/artifacts/local-convex"
 IMAGE = "ghcr.io/convex/convex-backend@sha256:294944b33dc55e8f68b2feda11c5e7b195f7778b9ad2951f1bea2744ad392e5a"
@@ -25,124 +27,6 @@ def execute(args, **kwargs):
         kwargs["env"] = docker_env()
     kwargs.setdefault("timeout", 30)
     return subprocess.check_output(args, text=True, **kwargs).strip()
-
-
-def _open_pidfd(pid):
-    try:
-        return os.pidfd_open(pid, 0)
-    except (AttributeError, OSError):
-        return None
-
-
-def _remember_pids(pids, identities):
-    for pid in pids:
-        if pid in identities:
-            continue
-        identities[pid] = _open_pidfd(pid)
-
-
-def _descendant_pids(root_pid):
-    parents = {root_pid}
-    descendants = set()
-    try:
-        entries = os.listdir("/proc")
-    except OSError:
-        return descendants
-    processes = []
-    for entry in entries:
-        if not entry.isdigit():
-            continue
-        try:
-            tail = Path("/proc") / entry / "stat"
-            fields = tail.read_text().rsplit(")", 1)[1].split()
-            processes.append((int(entry), int(fields[1])))
-        except (OSError, ValueError, IndexError):
-            continue
-    while parents:
-        children = {pid for pid, ppid in processes if ppid in parents}
-        children -= descendants
-        descendants.update(children)
-        parents = children
-    return descendants
-
-
-def _signal_pids(pids, sig, identities):
-    for pid in pids:
-        pidfd = identities.get(pid)
-        if pidfd is None:
-            continue
-        try:
-            signal.pidfd_send_signal(pidfd, sig, None, 0)
-        except ProcessLookupError:
-            pass
-
-
-def _close_pidfds(identities):
-    for pidfd in identities.values():
-        if pidfd is not None:
-            try:
-                os.close(pidfd)
-            except OSError:
-                pass
-
-
-def _stop_process_group(process, known_descendants=None, identities=None):
-    identities = identities if identities is not None else {}
-    _remember_pids({process.pid}, identities)
-    descendants = set(known_descendants or ()) | _descendant_pids(process.pid)
-    _remember_pids(descendants, identities)
-    try:
-        if not identities:
-            return
-        _signal_pids({process.pid}, signal.SIGTERM, identities)
-        _signal_pids(descendants, signal.SIGTERM, identities)
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            pass
-        descendants |= _descendant_pids(process.pid)
-        _remember_pids(descendants, identities)
-        _signal_pids({process.pid}, signal.SIGKILL, identities)
-        _signal_pids(descendants, signal.SIGKILL, identities)
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            pass
-    finally:
-        _close_pidfds(identities)
-
-
-def _wait_for_process(process, args, timeout, descendants, identities):
-    deadline = time.monotonic() + timeout
-    while True:
-        descendants |= _descendant_pids(process.pid)
-        _remember_pids(descendants, identities)
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise subprocess.TimeoutExpired(args, timeout)
-        try:
-            return process.wait(timeout=min(0.25, remaining)), descendants
-        except subprocess.TimeoutExpired:
-            continue
-
-
-def _run_bounded(args, *, timeout, **kwargs):
-    process = subprocess.Popen(args, start_new_session=True, **kwargs)
-    descendants = set()
-    identities = {}
-    _remember_pids({process.pid}, identities)
-    try:
-        returncode, descendants = _wait_for_process(process, args, timeout, descendants, identities)
-    except (subprocess.TimeoutExpired, KeyboardInterrupt):
-        descendants |= _descendant_pids(process.pid)
-        _remember_pids(descendants, identities)
-        _stop_process_group(process, descendants, identities)
-        raise
-    if returncode:
-        _stop_process_group(process, descendants, identities)
-        raise subprocess.CalledProcessError(returncode, args)
-    _close_pidfds(identities)
-    return subprocess.CompletedProcess(args, returncode)
 
 
 def directory(run):

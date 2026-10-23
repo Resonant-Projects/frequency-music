@@ -73,8 +73,13 @@ Docker labels match this checkout/run, stops the recorded relay, checks that its
 listeners disappear, removes credentials and the disposable release, and preserves
 evidence. The downloaded image cache remains available for later runs.
 
+Bounded commands require Linux pidfd support and refuse to launch when it is
+unavailable. Cleanup retains descriptors for observed descendants and also finds
+reparented members of the command’s session. Processes that detach and exit their
+parent before any scan observes them remain outside this sampling boundary.
+
 Safety checks are offline:
 
 ```sh
-python3 scripts/local-convex/test_control.py -v
+python3 -m unittest discover -s scripts/local-convex -p 'test_*.py' -v
 ```
