@@ -86,6 +86,20 @@ export default defineConfig({
   },
   server: {
     port: 4173,
+    // Set only for `vp run dev:clerk`. The TLS proxy on 443 presents this
+    // host, so Vite must allow it and point HMR at the public HTTPS origin.
+    // Default `vp run dev` leaves these unset and stays on localhost:4173.
+    ...(process.env.CLERK_DEV_ORIGIN
+      ? {
+          allowedHosts: [process.env.CLERK_DEV_ORIGIN],
+          origin: `https://${process.env.CLERK_DEV_ORIGIN}`,
+          hmr: {
+            host: process.env.CLERK_DEV_ORIGIN,
+            protocol: "wss" as const,
+            clientPort: 443,
+          },
+        }
+      : {}),
     // Match the same-origin RSS rewrite used by Vercel in production.
     proxy: {
       "^/podcast/[^/]+/feed\\.xml$": {
