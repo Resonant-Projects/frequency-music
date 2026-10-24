@@ -96,12 +96,12 @@ export async function searchPassages(
   // rather than repeating it, so rebuild each window from every range.
   const chunkText = new Map<string, string>();
   for (const result of results)
-    result.content.forEach((chunk, index) =>
+    result.content.forEach((chunk, index) => {
       chunkText.set(
         `${result.entryId}:${result.startOrder + index}`,
         chunk.text,
-      ),
-    );
+      );
+    });
   const windowText = (entryId: string, order: number) =>
     passageContextWindow(
       chunkText.get(`${entryId}:${order}`) ?? "",
@@ -139,7 +139,13 @@ export async function searchPassages(
       score: result.score,
       order: result.order,
     });
-    if (hits.length === limit) break;
   }
-  return packPassages(hits);
+  const packed = packPassages(hits);
+  const passages = packed.passages.slice(0, limit);
+  const omitted = packed.omitted + packed.passages.length - passages.length;
+  return {
+    passages,
+    omitted,
+    truncated: packed.truncated || omitted > 0,
+  };
 }

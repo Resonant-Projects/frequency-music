@@ -415,7 +415,8 @@ describe("searchSourcePassages", () => {
       limit: 3,
     });
     expect(result.passages.length).toBe(3);
-    expect(result.truncated).toBe(false);
+    expect(result.truncated).toBe(true);
+    expect(result.omitted).toBeGreaterThan(0);
     const hit = result.passages.find((passage) => passage.sourceId === article);
     expect(hit).toMatchObject({
       title: "Source article",

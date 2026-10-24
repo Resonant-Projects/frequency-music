@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Sequencing:** after plan 07 (amended review UX) — recipe drafts flow into the same review card and reuse its edit-before-approve machinery. Consumes plan 06's draft-door plumbing.
-> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). **Prerequisite updated 2026-10-24:** Keith accepted the completed extraction/hypothesis stage 1 of plan `plans/008` as sufficient to begin the recipe draft/review workflow. Weekly-brief evaluation remains a separate open task. Recipe-generation quality has no dedicated baseline yet; human approval and explicit generator-quality validation remain required.
+> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). **Prerequisite updated 2026-10-24 ([acceptance record](../evidence/passage-search-repair-20261024.md)):** Keith accepted the completed extraction/hypothesis stage 1 of plan `plans/008` as sufficient to begin the recipe draft/review workflow. Weekly-brief evaluation remains a separate open task. Recipe-generation quality has no dedicated baseline yet; human approval and explicit generator-quality validation remain required.
 
 ## Executor brief
 
