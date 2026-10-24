@@ -11,6 +11,8 @@ import {
   PASSAGE_BATCH_MAX_BYTES,
   PASSAGE_CHUNK_MAX_BYTES,
   passageSourceText,
+  passageContextWindow,
+  PASSAGE_WINDOW_MAX_CHARS,
   splitChunksByBytes,
   supersededEntryId,
   wellFormedChunks,
@@ -25,6 +27,32 @@ const hit = (score: number, chars: number): PassageHit => ({
 });
 
 describe("passage search bounds", () => {
+  test("keeps the matching chunk while bounding long neighboring context", () => {
+    const match = `precise temperament ${"m".repeat(7_900)}`;
+    const result = passageContextWindow(
+      match,
+      "b".repeat(8_000),
+      "a".repeat(8_000),
+    );
+    expect(result.text).toContain(match);
+    expect(result.text.length).toBeLessThanOrEqual(PASSAGE_WINDOW_MAX_CHARS);
+    expect(result.truncated).toBe(true);
+    expect(result.text.endsWith(PASSAGE_TRUNCATION_MARKER)).toBe(true);
+  });
+
+  test("keeps short context verbatim and preserves Unicode at trimmed edges", () => {
+    expect(passageContextWindow("match", "before", "after")).toEqual({
+      text: "before\nmatch\nafter",
+    });
+    const result = passageContextWindow(
+      "m".repeat(8_000),
+      "🎵".repeat(4_000),
+      "🎵".repeat(4_000),
+    );
+    expect(result.text.isWellFormed()).toBe(true);
+    expect(result.text.length).toBeLessThanOrEqual(PASSAGE_WINDOW_MAX_CHARS);
+  });
+
   test("limit defaults to 5 and clamps to 1..8", () => {
     expect(clampPassageLimit(undefined)).toBe(5);
     expect(clampPassageLimit(0)).toBe(1);
@@ -47,11 +75,23 @@ describe("passage search bounds", () => {
       hit(0.7, 2000),
       hit(0.6, 500),
     ]);
-    expect(result.passages.map((passage) => passage.score)).toEqual([0.9, 0.8]);
+    expect(result.passages.map((passage) => passage.score)).toEqual([
+      0.9, 0.8, 0.6,
+    ]);
     expect(result.passages.every((passage) => !passage.truncated)).toBe(true);
-    expect(result).toMatchObject({ truncated: true, omitted: 2 });
+    expect(result).toMatchObject({ truncated: true, omitted: 1 });
     const total = result.passages.reduce((sum, p) => sum + p.text.length, 0);
     expect(total).toBeLessThanOrEqual(PASSAGE_RESPONSE_MAX_CHARS);
+  });
+
+  test("skips a non-fitting passage so a later short hit is retained", () => {
+    const result = boundPassages([
+      hit(0.9, 6_000),
+      hit(0.8, 7_000),
+      hit(0.7, 500),
+    ]);
+    expect(result.passages.map((passage) => passage.score)).toEqual([0.9, 0.7]);
+    expect(result).toMatchObject({ truncated: true, omitted: 1 });
   });
 
   test("cuts only an oversized first passage, visibly", () => {

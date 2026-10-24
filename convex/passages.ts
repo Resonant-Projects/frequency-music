@@ -19,18 +19,14 @@ import {
 } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { readSetting, writeSetting } from "./settings";
+import { searchPassages } from "./passageSearch";
 import {
-  boundPassages,
-  clampPassageLimit,
-  PASSAGE_CHUNK_CONTEXT,
   PASSAGE_EMBEDDING_DIMENSIONS,
   PASSAGE_EMBEDDING_MODEL,
   PASSAGE_INDEXING_ENABLED,
   PASSAGE_INDEXING_SETTING,
   PASSAGE_NAMESPACE,
-  PASSAGE_QUERY_MAX_CHARS,
   PASSAGE_SOURCE_TYPES,
-  type PassageHit,
   type PassageSearchResult as SharedPassageSearchResult,
   type PassageSourceType,
   embeddingBatches,
@@ -57,10 +53,6 @@ export const rag = new RAG<{ type: PassageSourceType }, { sourceId: string }>(
 // Pages and hydrations read whole source documents (up to 1 MiB each), so ten
 // or twelve rows keep one transaction under Convex's 16 MiB read limit.
 const PAGE_SIZE = 10;
-// Archived hits are dropped after search, so fetch extra candidates; each
-// distinct hit source is one document read during hydration.
-const SEARCH_OVERFETCH = 2;
-const SEARCH_MAX_CANDIDATES = 12;
 
 const sourceTypeValidator = literals(...PASSAGE_SOURCE_TYPES);
 
@@ -386,90 +378,6 @@ export const sweep = internalAction({
 // SEARCH
 // ============================================================================
 
-async function searchPassages(
-  ctx: ActionCtx,
-  args: { query: string; limit?: number; types?: PassageSourceType[] },
-): Promise<PassageSearchResult> {
-  const query = args.query.trim();
-  if (!query || query.length > PASSAGE_QUERY_MAX_CHARS) {
-    throw new ConvexError({
-      code: "INVALID_ARGUMENT",
-      message: `Query must be 1-${PASSAGE_QUERY_MAX_CHARS} characters`,
-    });
-  }
-  const limit = clampPassageLimit(args.limit);
-  // An index that was never populated cannot match; skip the paid query embed.
-  const namespace = await rag.getNamespace(ctx, {
-    namespace: PASSAGE_NAMESPACE,
-  });
-  if (!namespace) return { passages: [], truncated: false, omitted: 0 };
-  const { results, entries } = await rag.search(ctx, {
-    namespace: PASSAGE_NAMESPACE,
-    query,
-    limit: Math.min(limit * SEARCH_OVERFETCH, SEARCH_MAX_CANDIDATES),
-    chunkContext: PASSAGE_CHUNK_CONTEXT,
-    filters: [...new Set(args.types ?? [])].map((type) => ({
-      name: "type" as const,
-      value: type,
-    })),
-  });
-  // Only a ready entry is the source's current text; an add interrupted
-  // between chunk batches can leave a pending entry's vectors searchable.
-  const keyByEntry = new Map(
-    entries.flatMap((entry) =>
-      entry.key && entry.status === "ready" ? [[entry.entryId, entry.key]] : [],
-    ),
-  );
-  const live = new Map(
-    (
-      await ctx.runQuery(internal.passages.liveSources, {
-        keys: [...new Set(keyByEntry.values())],
-      })
-    ).map((source) => [source.sourceId as string, source] as const),
-  );
-  // The component gives a hit's neighbouring chunk to an adjacent hit's range
-  // rather than repeating it, so rebuild each window from every range.
-  const chunkText = new Map<string, string>();
-  for (const result of results)
-    result.content.forEach((chunk, index) =>
-      chunkText.set(
-        `${result.entryId}:${result.startOrder + index}`,
-        chunk.text,
-      ),
-    );
-  const windowText = (entryId: string, order: number) =>
-    [
-      order - PASSAGE_CHUNK_CONTEXT.before,
-      order,
-      order + PASSAGE_CHUNK_CONTEXT.after,
-    ]
-      .flatMap((at) => {
-        const text = chunkText.get(`${entryId}:${at}`);
-        return text === undefined ? [] : [text];
-      })
-      .join("\n");
-  const hits: PassageHit<Id<"sources">>[] = [];
-  for (const result of results.toSorted((a, b) => b.score - a.score)) {
-    const key = keyByEntry.get(result.entryId);
-    const source = key ? live.get(key) : undefined;
-    // Live status, never the at-index-time status; archived sources drop out.
-    if (!source || source.status === "archived") continue;
-    hits.push({
-      sourceId: source.sourceId,
-      ...(source.title === undefined ? {} : { title: source.title }),
-      ...(source.canonicalUrl === undefined
-        ? {}
-        : { canonicalUrl: source.canonicalUrl }),
-      status: source.status,
-      text: windowText(result.entryId, result.order),
-      score: result.score,
-      order: result.order,
-    });
-    if (hits.length === limit) break;
-  }
-  return boundPassages(hits);
-}
-
 const searchArgs = {
   query: v.string(),
   limit: v.optional(v.number()),
@@ -481,7 +389,7 @@ export const searchForAgent = internalAction({
   args: searchArgs,
   returns: passageSearchResultValidator,
   handler: (ctx, args): Promise<PassageSearchResult> =>
-    searchPassages(ctx, args),
+    searchPassages(ctx, args, rag),
 });
 
 // ============================================================================
@@ -493,7 +401,7 @@ export const probe = action({
   returns: passageSearchResultValidator,
   handler: async (ctx, args): Promise<PassageSearchResult> => {
     await requireAuth(ctx, args);
-    return await searchPassages(ctx, args);
+    return await searchPassages(ctx, args, rag);
   },
 });
 
