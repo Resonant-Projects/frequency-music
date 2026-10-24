@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development (recommended) or superpowers:executing-plans. Checkbox steps track progress.
 > **Sequencing:** after plan 07 (amended review UX) — recipe drafts flow into the same review card and reuse its edit-before-approve machinery. Consumes plan 06's draft-door plumbing.
-> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). Prerequisite operator item: golden eval datasets curated (plan `plans/008`) **before this plan starts**, so generator changes here are measured against a baseline.
+> **Origin:** 2026-07-18 decision-log entry (Decision Surfaces). **Prerequisite updated 2026-10-24:** Keith accepted the completed extraction/hypothesis stage 1 of plan `plans/008` as sufficient to begin the recipe draft/review workflow. Weekly-brief evaluation remains a separate open task. Recipe-generation quality has no dedicated baseline yet; human approval and explicit generator-quality validation remain required.
 
 ## Executor brief
 
@@ -21,8 +21,8 @@ recipe draft comes up for review, the reviewer can shape it:
 **Current implementation (2026-10-22):** `/recipes` already offers manual generation through
 `recipes.generateFromHypothesis`. Hypothesis approval does not reserve or schedule a recipe draft;
 `recipe-detail.tsx` still has no recipe mutations, and `recipes.updateStatus` is unreachable there.
-This plan addresses that approval-to-draft loop and promoted-recipe controls, subject to the eval
-prerequisite above. Its proposed approve/deprecate vocabulary still needs an explicit mapping to
+This plan addresses that approval-to-draft loop and promoted-recipe controls, with the narrowed
+eval prerequisite above satisfied. Its proposed approve/deprecate vocabulary still needs an explicit mapping to
 the current `draft` / `in_use` / `archived` statuses and legal transitions before implementation;
 this status note does not choose them.
 
