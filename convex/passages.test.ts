@@ -433,6 +433,10 @@ describe("searchSourcePassages", () => {
     const ids = new Set(result.passages.map((passage) => passage.sourceId));
     expect(ids.has(article)).toBe(false);
     expect(ids.has(video)).toBe(true);
+    // One global relevance ranking must beat the first article-family hit,
+    // whose per-batch rank would also be 1 despite discussing only tuning.
+    const single = await searchTool(t, { query: "cymatics", limit: 1 });
+    expect(single.passages[0]?.sourceId).toBe(video);
 
     const videos = await searchTool(t, {
       query: "cymatics",

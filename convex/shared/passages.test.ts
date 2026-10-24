@@ -2,6 +2,7 @@ import { defaultChunker } from "@convex-dev/rag";
 import { describe, expect, test } from "vite-plus/test";
 import {
   boundPassages,
+  packPassages,
   clampPassageLimit,
   estimatePassageEmbedding,
   PASSAGE_RESPONSE_MAX_CHARS,
@@ -27,6 +28,18 @@ const hit = (score: number, chars: number): PassageHit => ({
 });
 
 describe("passage search bounds", () => {
+  test("packs distinct sources before higher-scoring repeated evidence", () => {
+    const article = { ...hit(0.9, 5_000), sourceId: "article" };
+    const transcript = { ...hit(0.7, 6_000), sourceId: "transcript" };
+    const repeated = { ...hit(0.8, 4_000), sourceId: "article", order: 1 };
+    const result = packPassages([article, transcript, repeated]);
+    expect(result.passages.map((passage) => passage.sourceId)).toEqual([
+      "article",
+      "transcript",
+    ]);
+    expect(result.omitted).toBe(1);
+  });
+
   test("keeps the matching chunk while bounding long neighboring context", () => {
     const match = `precise temperament ${"m".repeat(7_900)}`;
     const result = passageContextWindow(

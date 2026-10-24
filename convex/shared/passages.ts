@@ -233,7 +233,17 @@ export function boundPassages<SourceId extends string>(
   maxChars = PASSAGE_RESPONSE_MAX_CHARS,
 ): PassageSearchResult<SourceId> {
   // eslint-disable-next-line unicorn/no-array-sort -- The agent's ES target does not include Array#toSorted.
-  const ranked = [...hits].sort((a, b) => b.score - a.score);
+  return packPassages(
+    [...hits].sort((a, b) => b.score - a.score),
+    maxChars,
+  );
+}
+
+/** Pack an already-prioritized list without undoing source diversity. */
+export function packPassages<SourceId extends string>(
+  ranked: readonly PassageHit<SourceId>[],
+  maxChars = PASSAGE_RESPONSE_MAX_CHARS,
+): PassageSearchResult<SourceId> {
   const passages: PassageHit<SourceId>[] = [];
   let used = 0;
   for (const hit of ranked) {

@@ -7,7 +7,7 @@ import { components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import {
-  boundPassages,
+  packPassages,
   clampPassageLimit,
   passageContextWindow,
   PASSAGE_CHUNK_CONTEXT,
@@ -20,8 +20,9 @@ import {
   type PassageSourceType,
 } from "./shared/passages";
 
-const SEARCH_OVERFETCH = 2;
-const SEARCH_MAX_CANDIDATES = 12;
+const SEARCH_OVERFETCH = 8;
+const SEARCH_MAX_CANDIDATES = 64;
+const SOURCE_HYDRATION_BATCH = 12;
 type SearchResult = PassageSearchResult<Id<"sources">>;
 
 export async function searchPassages(
@@ -42,43 +43,30 @@ export async function searchPassages(
     namespace: PASSAGE_NAMESPACE,
   });
   if (!namespace) return { passages: [], truncated: false, omitted: 0 };
-  // Dense article matches must not consume every candidate slot before a
-  // transcript can be considered. Typed searches keep the requested OR filter.
-  const requestedTypes = [...new Set(args.types ?? [])];
-  const groups: PassageSourceType[][] = requestedTypes.length
-    ? [requestedTypes]
-    : [
-        ["url", "rss", "notion", "pdf"],
-        ["youtube", "podcast"],
-      ];
-  const candidateLimit = Math.min(
-    limit * SEARCH_OVERFETCH,
-    SEARCH_MAX_CANDIDATES,
-  );
+  // Retrieve enough globally ranked chunks to survive repeated windows from
+  // one Source, then select distinct Sources before their additional windows.
   const { embedding } = await embed({
     model: rag.options.textEmbeddingModel,
     value: query,
   });
-  // Reuse one query embedding across both bounded searches. The component's
-  // existing hybrid search combines lexical matches and semantic similarity.
-  const batches = await Promise.all(
-    groups.map((types) =>
-      ctx.runAction(components.rag.search.search, {
-        namespace: PASSAGE_NAMESPACE,
-        modelId: PASSAGE_EMBEDDING_MODEL,
-        dimension: PASSAGE_EMBEDDING_DIMENSIONS,
-        embedding,
-        textQuery: query,
-        limit: candidateLimit,
-        chunkContext: PASSAGE_CHUNK_CONTEXT,
-        vectorWeight: 1,
-        textWeight: 2,
-        filters: types.map((type) => ({ name: "type", value: type })),
-      }),
-    ),
+  const { results, entries } = await ctx.runAction(
+    components.rag.search.search,
+    {
+      namespace: PASSAGE_NAMESPACE,
+      modelId: PASSAGE_EMBEDDING_MODEL,
+      dimension: PASSAGE_EMBEDDING_DIMENSIONS,
+      embedding,
+      textQuery: query,
+      limit: Math.min(limit * SEARCH_OVERFETCH, SEARCH_MAX_CANDIDATES),
+      chunkContext: PASSAGE_CHUNK_CONTEXT,
+      vectorWeight: 1,
+      textWeight: 4,
+      filters: [...new Set(args.types ?? [])].map((type) => ({
+        name: "type",
+        value: type,
+      })),
+    },
   );
-  const results = batches.flatMap((batch) => batch.results);
-  const entries = batches.flatMap((batch) => batch.entries);
   // Only a ready entry is the source's current text; an add interrupted
   // between chunk batches can leave a pending entry's vectors searchable.
   const keyByEntry = new Map(
@@ -87,7 +75,7 @@ export async function searchPassages(
     ),
   );
   // Each hydration reads whole Source rows. Keep every query at twelve rows
-  // even when both source families contributed candidates.
+  // even when the candidate pool contains many distinct Sources.
   const keys = [...new Set(keyByEntry.values())];
   const live = new Map<
     string,
@@ -98,9 +86,9 @@ export async function searchPassages(
       status: string;
     }
   >();
-  for (let start = 0; start < keys.length; start += SEARCH_MAX_CANDIDATES) {
+  for (let start = 0; start < keys.length; start += SOURCE_HYDRATION_BATCH) {
     const rows = await ctx.runQuery(internal.passages.liveSources, {
-      keys: keys.slice(start, start + SEARCH_MAX_CANDIDATES),
+      keys: keys.slice(start, start + SOURCE_HYDRATION_BATCH),
     });
     for (const source of rows) live.set(source.sourceId, source);
   }
@@ -153,5 +141,5 @@ export async function searchPassages(
     });
     if (hits.length === limit) break;
   }
-  return boundPassages(hits);
+  return packPassages(hits);
 }

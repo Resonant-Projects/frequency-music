@@ -15,15 +15,17 @@ No alternate phrase was substituted.
   one transcript, fourteen broad transcript distractors, and a multi-chunk
   article. It fails with the original vector-only path.
 - Article windows can consume every candidate and result slot before a
-  transcript is considered. Unfiltered search now retrieves bounded article
-  (`url`, `rss`, `notion`, `pdf`) and transcript (`youtube`, `podcast`) pools
-  separately. Explicit type filters retain their existing OR meaning.
+  transcript is considered. Search now over-fetches eight times the requested
+  result count, capped at 64 chunks, before selecting distinct Sources.
+  Explicit type filters retain their existing OR meaning.
 - The RAG component's existing hybrid search combines lexical and vector
-  results, with text weight 2 and vector weight 1. The query embedding is
-  computed once and reused. Each pool returns at most twelve candidates;
-  hydration reads at most twelve Source rows per query.
-- Each Source's best candidate is considered before repeated windows from the
-  same Source. The response still returns at most eight passages and 12,000
+  results, with text weight 4 and vector weight 1. One global ranking keeps
+  scores comparable across source types, including a limit-one search.
+  The query embedding is computed once; hydration reads at most twelve Source
+  rows per query.
+- Each Source's best candidate is packed before repeated windows from the
+  same Source. Packing preserves that order rather than re-sorting by score.
+  The response still returns at most eight passages and 12,000
   characters, with live provenance and archived Sources excluded.
 - A context window can grow beyond 10,000 characters around an 8,000-byte
   matched transcript chunk. Neighboring context is now shortened to keep a
@@ -40,7 +42,7 @@ required by the repair.
 
 ## Local verification
 
-`vp test convex/passages.test.ts convex/shared/passages.test.ts` passes 33
+`vp test convex/passages.test.ts convex/shared/passages.test.ts` passes 34
 tests. Coverage includes mixed article/transcript retrieval, phrase-specific
 retrieval despite broad distractors, one query embedding, type filters, live
 provenance, archive exclusion, count limits, context boundaries and packing.
@@ -64,7 +66,7 @@ Selected replay output:
 ```text
 all:     passages=3 chars=11686 article=true expectedTranscript=true
 youtube: passages=2 chars=9968  expectedTranscript=true
-url:     passages=4 chars=10147 article=true
+url:     passages=4 chars=9759  article=true
 ```
 
 The expected transcript contains the precise-temperament phrase. This improves
@@ -72,7 +74,7 @@ on the original live YouTube response, whose sole passage contained only broad
 tuning discussion. Live acceptance remains to be rerun after deployment.
 
 Full `APP_ENV=test vp run verify` passes all ten tasks, including four
-typechecks and 2,429 tests: 1,624 root, 234 harness, 430 agent and 141 media.
+typechecks and 2,430 tests: 1,625 root, 234 harness, 430 agent and 141 media.
 Six real SuperCollider tests remain skipped on this host. Existing lint and
 Panda warnings remain. The offline, network-denied provenance builder produced
 268 root module identities for the candidate.
