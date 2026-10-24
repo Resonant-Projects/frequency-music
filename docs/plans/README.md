@@ -20,7 +20,7 @@ live/operator acceptance is listed below rather than keeping implementation
 specs in the active folder.
 
 The active plan files are now: **008** (next, operator-gated eval baseline
-sweep), **13** (recipe loop closure, blocked on 008), **11** (studio spike; awaiting Keith's comparison
+sweep), **13** (recipe draft/review work cleared on the stage 1 baseline), **11** (studio spike; awaiting Keith's comparison
 and go/no-go), **15** (passage index; merged, live acceptance pending), **16** (deferred WebMCP
 readiness), and the autonomous Proxmox operations plan.
 
@@ -45,7 +45,7 @@ implementation may still have an operator/live acceptance item in §2.
 | 05 | [Candidate generator + miner & evidence-hunter graphs](../archive/plan-waves/2026-07-07-05-loop-miner-graphs.md) | ✅ Implemented in PR #31 (`3600ec5`) — archived; worker/live-run acceptance remains |
 | 06 | [Drafting graph + WIP cap (N=3)](../archive/plan-waves/2026-07-07-06-loop-drafting-graph.md) | ✅ Implemented in PR #32 (`f3556d5`) — archived; first live draft gate remains |
 | 07 | [Review UX + edit-before-approve](../archive/plan-waves/2026-07-07-07-loop-review-ux.md) | ✅ Implemented in PR #33 (`1d69ae4`) — archived; visual/timed acceptance remains |
-| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | ⏸️ **BLOCKED on plan 008.** Golden datasets are ratified, but the required baseline sweep is not recorded yet |
+| 13 | [Recipe loop closure](./2026-07-18-13-recipe-loop-closure.md) | **Draft/review workflow cleared, 2026-10-24.** Keith accepted the completed extraction/hypothesis stage 1 baseline as sufficient to begin this work. Weekly-brief evaluation remains a separate blocked task; recipe-generation quality is not yet baselined, and human approval remains required |
 | 08 | [Weekly brief integration](../archive/plan-waves/2026-07-07-08-loop-weekly-brief.md) | ✅ Implemented in PR #34 (`60cca5e`) — archived; real-brief acceptance remains |
 | 09 | [Source scout](../archive/plan-waves/2026-07-07-09-loop-source-scout.md) | ✅ Implemented in PR #35 (`073cb94`) — archived; first live run remains |
 | 14 | [Decision-surface sweep](../archive/plan-waves/2026-07-18-14-decision-surface-sweep.md) (card-level) | ✅ Implemented in PR #36 (`236e6f0`) — archived; visual acceptance remains |
@@ -107,7 +107,9 @@ retains the earlier capture history and unresolved capture issues.
 
 ## 2. Operator/live acceptance items
 
-Small; several are gate-specific, and item 1 must finish before plan 13 starts.
+Small; several are gate-specific. Plan 13's draft/review workflow may start on
+the completed stage 1 baseline under Keith's 2026-10-24 decision; the remaining
+weekly-brief evaluation is separate.
 
 1. **Eval baseline — stage 1 DONE 2026-10-17; weekly briefs BLOCKED.**
    [`plans/008`](../../plans/008-eval-baseline-sweep.md) stopped at its
@@ -126,8 +128,9 @@ Small; several are gate-specific, and item 1 must finish before plan 13 starts.
    finished the same day. Extraction and hypothesis are now baselined:
    extraction `schema_valid` 1.00 and `parameter_specificity` 0.82, hypothesis
    `why_this_matters` 0.67. It cost $3.48. The weekly-brief baseline (stage 2)
-   is still open, under STOP 4 and pending its own approval. Whether plan 13
-   can start on the stage 1 baseline alone is Keith's call.
+   is still open, under STOP 4 and pending its own approval. On 2026-10-24 Keith
+   accepted stage 1 as sufficient for Plan 13's draft/review workflow. This does
+   not establish recipe quality or authorize weekly-brief evaluation spending.
 2. **Domain triage** — now carded as
    [plan 12](../archive/plan-waves/2026-07-18-12-domain-triage-surface.md): the packet is decided
    *through* the new surface, not hand-applied.

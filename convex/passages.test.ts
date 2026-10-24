@@ -356,6 +356,56 @@ describe("indexSource", () => {
 });
 
 describe("searchSourcePassages", () => {
+  test("retrieves a phrase-specific transcript despite stronger broad vector matches", async () => {
+    const t = setup();
+    await enable(t);
+    const phrase = "432 Hz precise temperament tuning";
+    const specific = await insertSource(t, "precise-transcript", {
+      type: "youtube",
+      transcript: `${"spoken introduction ".repeat(250)}${phrase}.`,
+    });
+    await t.action(internal.passages.indexSource, { sourceId: specific });
+    const article = await insertSource(t, "precise-article", {
+      rawText: Array.from(
+        { length: 14 },
+        () =>
+          `${phrase}. Compare the 432 Hz tuning ratios. ${"tuning ".repeat(100)}`,
+      ).join("\n\n"),
+    });
+    await t.action(internal.passages.indexSource, { sourceId: article });
+    // These passages dominate the simple vector model on the word "tuning",
+    // but do not answer the phrase-specific query.
+    for (let n = 0; n < 14; n++) {
+      const sourceId = await insertSource(t, `broad-tuning-${n}`, {
+        type: "youtube",
+        transcript: `${"tuning ".repeat(100)}general discussion ${n}.`,
+      });
+      await t.action(internal.passages.indexSource, { sourceId });
+    }
+    const result = await searchTool(t, {
+      query: phrase,
+      limit: 8,
+      types: ["youtube"],
+    });
+    expect(
+      result.passages.some((passage) => passage.sourceId === specific),
+    ).toBe(true);
+    expect(
+      result.passages.find((passage) => passage.sourceId === specific)?.text,
+    ).toContain(phrase);
+    expect(
+      result.passages.reduce((sum, passage) => sum + passage.text.length, 0),
+    ).toBeLessThanOrEqual(12_000);
+    const beforeMixedQuery = embedder.calls;
+    const mixed = await searchTool(t, { query: phrase, limit: 8 });
+    expect(embedder.calls - beforeMixedQuery).toBe(1);
+    const mixedSources = new Set(
+      mixed.passages.map((passage) => passage.sourceId),
+    );
+    expect(mixedSources.has(article)).toBe(true);
+    expect(mixedSources.has(specific)).toBe(true);
+  });
+
   test("returns verbatim passages with live provenance through the agent tool", async () => {
     const t = setup();
     const { article } = await indexedCorpus(t);
@@ -365,7 +415,8 @@ describe("searchSourcePassages", () => {
       limit: 3,
     });
     expect(result.passages.length).toBe(3);
-    expect(result.truncated).toBe(false);
+    expect(result.truncated).toBe(true);
+    expect(result.omitted).toBeGreaterThan(0);
     const hit = result.passages.find((passage) => passage.sourceId === article);
     expect(hit).toMatchObject({
       title: "Source article",
@@ -383,6 +434,10 @@ describe("searchSourcePassages", () => {
     const ids = new Set(result.passages.map((passage) => passage.sourceId));
     expect(ids.has(article)).toBe(false);
     expect(ids.has(video)).toBe(true);
+    // One global relevance ranking must beat the first article-family hit,
+    // whose per-batch rank would also be 1 despite discussing only tuning.
+    const single = await searchTool(t, { query: "cymatics", limit: 1 });
+    expect(single.passages[0]?.sourceId).toBe(video);
 
     const videos = await searchTool(t, {
       query: "cymatics",
@@ -397,7 +452,7 @@ describe("searchSourcePassages", () => {
     const t = setup();
     await indexedCorpus(t);
     const result = await searchTool(t, {
-      query: "cymatics markerxx",
+      query: "markerxx",
       limit: 1,
       types: ["url"],
     });

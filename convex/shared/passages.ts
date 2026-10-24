@@ -30,6 +30,39 @@ export const PASSAGE_QUERY_MAX_CHARS = 2000;
 export const PASSAGE_CHUNK_CONTEXT = { before: 1, after: 1 } as const;
 export const PASSAGE_RESPONSE_MAX_CHARS = 12_000;
 export const PASSAGE_TRUNCATION_MARKER = "\n[… passage truncated]";
+// Indexed chunks are at most 8,000 bytes. Keep the whole matching chunk while
+// leaving space for a passage from another source in the 12,000-char response.
+export const PASSAGE_WINDOW_MAX_CHARS = 9_000;
+
+export function passageContextWindow(
+  match: string,
+  before = "",
+  after = "",
+): { text: string; truncated?: true } {
+  const full = [before, match, after].filter(Boolean).join("\n");
+  if (full.length <= PASSAGE_WINDOW_MAX_CHARS) return { text: full };
+  const room = Math.max(
+    0,
+    PASSAGE_WINDOW_MAX_CHARS -
+      match.length -
+      PASSAGE_TRUNCATION_MARKER.length -
+      2,
+  );
+  const beforeRoom = Math.min(before.length, Math.ceil(room / 2));
+  const afterRoom = Math.min(after.length, room - beforeRoom);
+  const leftChars = Math.min(before.length, room - afterRoom);
+  let left = leftChars ? before.slice(-leftChars) : "";
+  let right = after.slice(0, afterRoom);
+  if (left.length && /[\uDC00-\uDFFF]/u.test(left[0] ?? ""))
+    left = left.slice(1);
+  if (endsWithHighSurrogate(right)) right = right.slice(0, -1);
+  return {
+    text:
+      [left, match, right].filter(Boolean).join("\n") +
+      PASSAGE_TRUNCATION_MARKER,
+    truncated: true,
+  };
+}
 
 /** Rough embedding estimate for operator dry runs (about 4 chars per token). */
 export function estimatePassageEmbedding(chars: number): {
@@ -191,14 +224,26 @@ export type PassageSearchResult<SourceId extends string = string> = {
 /**
  * Keep the highest-scored passages within the response character budget.
  * Lower-scored passages are dropped whole; only a first passage that alone
- * exceeds the budget is cut, and then visibly marked.
+ * exceeds the budget is cut, and then visibly marked. A passage that does not
+ * fit after earlier hits is skipped so a later, shorter hit can still use the
+ * remaining budget.
  */
 export function boundPassages<SourceId extends string>(
   hits: readonly PassageHit<SourceId>[],
   maxChars = PASSAGE_RESPONSE_MAX_CHARS,
 ): PassageSearchResult<SourceId> {
   // eslint-disable-next-line unicorn/no-array-sort -- The agent's ES target does not include Array#toSorted.
-  const ranked = [...hits].sort((a, b) => b.score - a.score);
+  return packPassages(
+    [...hits].sort((a, b) => b.score - a.score),
+    maxChars,
+  );
+}
+
+/** Pack an already-prioritized list without undoing source diversity. */
+export function packPassages<SourceId extends string>(
+  ranked: readonly PassageHit<SourceId>[],
+  maxChars = PASSAGE_RESPONSE_MAX_CHARS,
+): PassageSearchResult<SourceId> {
   const passages: PassageHit<SourceId>[] = [];
   let used = 0;
   for (const hit of ranked) {
@@ -216,8 +261,9 @@ export function boundPassages<SourceId extends string>(
         text: `${hit.text.slice(0, room)}${PASSAGE_TRUNCATION_MARKER}`,
         truncated: true,
       });
+      used = maxChars;
     }
-    break;
+    continue;
   }
   const omitted = ranked.length - passages.length;
   return {
