@@ -40,6 +40,9 @@ jobs:
     defaults:
       run:
         working-directory: web
+    env:
+      # Keep cache archives portable across GARM and ARC workspace layouts.
+      BUN_INSTALL_CACHE_DIR: ${{ github.workspace }}/.cache/bun
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -74,6 +77,9 @@ jobs:
     defaults:
       run:
         working-directory: agent
+    env:
+      # Keep cache archives portable across GARM and ARC workspace layouts.
+      BUN_INSTALL_CACHE_DIR: ${{ github.workspace }}/.cache/bun
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
