@@ -1,0 +1,212 @@
+[
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/auth-fixture.log",
+    "bytes": 1395,
+    "sha256": "ec3ef61c71e5aeeb8943fa185f50655eed730d51d648e2a55951267ed9785d0e"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/feedback-fixture.log",
+    "bytes": 2136,
+    "sha256": "de4de36f87238ecd042c04b7403817477a8ba63facb3d9bfd14ca4df6ca502fa"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/listen-fixture.log",
+    "bytes": 918,
+    "sha256": "e6a84da9cf732e52df675d002b97ceef84f4488bf787a9d6322864b3c6cc3db4"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/local-convex.log",
+    "bytes": 12478,
+    "sha256": "e380822df27e4181029cbc0e70ebcafe379e891df7a874c50ba705200a59be0c"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-cleanup.log",
+    "bytes": 2699,
+    "sha256": "c1da89de62f5fc4d9e8ae06b17054bd44b425023f53028b19fa098758edf25aa"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-doctor.log",
+    "bytes": 632,
+    "sha256": "8485165323629e62be1df064a74118dd303b619115744c1c9353fa6a9c50f186"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-essays.log",
+    "bytes": 1246,
+    "sha256": "3379155868aef3a7ef940e9a527370ff34fd8b740d0577bfd7f6ba6ddd64c9a7"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-navigation.log",
+    "bytes": 1074,
+    "sha256": "8d034c85fe40abd461b1ee6970d1855807801e1e5cc6a0fd2c6005e048ab5480"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-search.log",
+    "bytes": 1105,
+    "sha256": "8a4c5a9548fcb922c3c52c13422dcb3b100e4d4b4d3cb7b49dc1056b765b29d2"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/offline-supervisor.log",
+    "bytes": 725,
+    "sha256": "9ea23aad62944e310289b3ca45d3b7772ece584d731401a706a15c0159b34bbf"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/repository-verify.log",
+    "bytes": 448852,
+    "sha256": "d1f303a398933c8374e94200bd4dbb66dad89cc22171cd9e32b264f0ca866a91"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/ui-fixture.log",
+    "bytes": 4073,
+    "sha256": "6550547a6470ba69a130ee95ae842941a725c3426d78c7eda6e937c3721b386d"
+  },
+  {
+    "path": "/tmp/frequency-verify-20261026-ca495094/web-build.log",
+    "bytes": 53694,
+    "sha256": "5f7e3ef8fb8a3470e26b6064b4f0de436b67eb6db3b7d83592e5c0d68be574bd"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/instance.json",
+    "bytes": 815,
+    "sha256": "823976454f1ad6d512d51981bce31eb2a2c282aa506bac9819ad82453176e898"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/doctor-process.json",
+    "bytes": 324,
+    "sha256": "11409a30c71b8a99c400077d97807f794b98ba1d099cf429d65b344fe66df976"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/cleanup.json",
+    "bytes": 3051,
+    "sha256": "81e495581d051deb6bcf0280a1aa1e764809acad93aa10f80f4454ca0296e811"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/essays-result.json",
+    "bytes": 457353,
+    "sha256": "3dc4201eb33de5ed7b21227e2b90074704a0574f87996c48b0299b445a533973"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/navigation-result.json",
+    "bytes": 170733,
+    "sha256": "1327e3e8acb3e8f97fa1073fc491b4bdc8871457ed2f9c2f656fc68fec67c178"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/search-result.json",
+    "bytes": 229158,
+    "sha256": "a41ea9a11ad0f49951ef03d3f1177aeb0da33b54115323e02bad5446e2b5841b"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/essays-01-archive.png",
+    "bytes": 111336,
+    "sha256": "71f9760dcf89428c89a020b837832ef6c37a64f3c79a0e6b2723fec7e158b8ca"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/essays-03-detail.png",
+    "bytes": 96444,
+    "sha256": "1ccbbe7a8a34d3c4800a195d13f7437c61fb640bd05a079a2e93f687ab913b58"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/essays-trace.zip",
+    "bytes": 4865124,
+    "sha256": "baa688e555858d0ff1366fbf0280d65cdb27dc70bb0436a063dd32cde1e2b995"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/navigation-trace.zip",
+    "bytes": 2077960,
+    "sha256": "1c17871cf9d101d814789feb549e39d415fa23559eaf859ad278e1af37d7672c"
+  },
+  {
+    "path": ".cursor/skills/verify-frequency-music/evidence/effect-ca495094-20261026/search-trace.zip",
+    "bytes": 1989561,
+    "sha256": "8d270ad3d357a31b2f797cfdd7395fa4452efa242c61aab0f8b77c5d84f0d87e"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/instance.json",
+    "bytes": 767,
+    "sha256": "12691584443e4a593ed045d301fdeb9d5f13ed169c3db3d09ed4a5dba2bd99ac"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/cleanup.json",
+    "bytes": 259,
+    "sha256": "e023393ffe6bd70a5ef565fbbda757dac1bf8888e1387b192218145598011e29"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/01-url-saved.png",
+    "bytes": 120450,
+    "sha256": "780e20fdc2e8e83c8a77f858f7259038d578c1da704b7c93e08d49fe32c4501b"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/02-recovery-saved.png",
+    "bytes": 87203,
+    "sha256": "f5f3ff9e413631954d710b1b296bac023f7d5df83500e0feb6c9251d9b9fa7d0"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/03-hypothesis-saved.png",
+    "bytes": 68718,
+    "sha256": "0f05eb3c86d1864e1be9491a22adde4add18749742e7774221b4dcc2425688a3"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/04-recipe-saved.png",
+    "bytes": 64145,
+    "sha256": "e35960e7cd22c79224c1e4878cdaf789cc216d7a35569195e7b860be3ae9b154"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/05-composition-saved.png",
+    "bytes": 49129,
+    "sha256": "424dbb22dda60efafabecc51595cf3f2832d1c09f4af2bd4fbb2d08964d94f2a"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/06-listening-saved.png",
+    "bytes": 82321,
+    "sha256": "4768cfc0283df8aa4a2012a61f7d7168f06ebe04b88136bb89bb9c83a8dfe3d2"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/07-lineage.png",
+    "bytes": 66194,
+    "sha256": "30e321e4639fe346d6cf3704e94c78587e19380cfb50ead9ce1272b3d6fd05fb"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/08-feed-disabled.png",
+    "bytes": 122483,
+    "sha256": "87de7bd3c42b7c385dad4af1d11c8c62c87e548dd3449f082f5fb31aa12d279a"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/snapshot-aa09586c1d16412a1f00-00c0eb02ff54dbb49171.json",
+    "bytes": 1942,
+    "sha256": "c11aac0138bffb3b315d521237faf2334b8ea6b4e0a31ebacccb8742c320d4c3"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/snapshot-aa09586c1d16412a1f00-173b8f16e47306b236a7.json",
+    "bytes": 4665,
+    "sha256": "b0373a2683ef25ae278c52fe942629c938fae3aa696dd60fdef08bb7b985f7a0"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/snapshot-aa09586c1d16412a1f00-c1cab82b19b635f4bda1.json",
+    "bytes": 1157,
+    "sha256": "41f187b77b96e3ac3e28d4ffc4c5df4228575228c6ae731271d2dad33cd2f41a"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/snapshot-aa09586c1d16412a1f00-d72b45b791c4db080ff6.json",
+    "bytes": 5032,
+    "sha256": "d3d3c88c2fcae496b2f389f0fbbf62cc1111a214a9f51f2130c93acf0d13176c"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/browser/journeys-URL-intake-and-de-7c511-thout-requesting-generation/trace.zip",
+    "bytes": 1138742,
+    "sha256": "ebae94470c2e64440509cbb44b4b955ca50004a3814128d56bc0b7a5b838dbd2"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/browser/journeys-feed-creation-and-toggling-persist-without-polling/trace.zip",
+    "bytes": 813287,
+    "sha256": "0a6532542d5de4f63ac88d66a78dfd63a4e186519e44b90e97d1e9e7bb102daf"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/browser/journeys-manual-hypothesis-c4ce4-ng-Session-preserve-lineage/trace.zip",
+    "bytes": 2267335,
+    "sha256": "7526e8f7c25a878b64b2eb0020898a4685aba5b0e4c7c4355ec24e90d9d48ae4"
+  },
+  {
+    "path": "web/artifacts/local-convex/effect-ca495094-20261026/browser/journeys-recover-missing-s-7822a-rough-the-real-Display-form/trace.zip",
+    "bytes": 695634,
+    "sha256": "9c6ed767bc51d466dfcaefbe6772835a9a26c79dbe56692a6704a7bc7620792c"
+  }
+]

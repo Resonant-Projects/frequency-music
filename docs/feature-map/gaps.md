@@ -9,6 +9,26 @@ all other questions remain open. No production state or product gate was changed
 or environment choice open. An absent UI for an intentionally operator-only
 capability is not automatically a product defect.
 
+## Current local checkpoint, 2026-10-26
+
+[V26 evidence](../evidence/effect-verification-20261026/README.md) at `ca495094`
+re-exercises the shipped fixes. G01's Docket targets and desktop/mobile navigation,
+G03's 13 feedback/Docket fixtures, and G04's 10 graph-filter fixtures pass. These
+specific proof gaps are resolved in the current checkout. PR #188 merged as
+`ac1c205f5f587e2a00474111cc94d2af6ccc7258` before the audited source; the
+[V26 provenance](../evidence/effect-verification-20261026/README.md#feedback-fixture-source-provenance)
+explains the stale skill baseline. G05's four real local
+persistence journeys pass with independent table reads and owned teardown; wider
+feature coverage remains partial. The old G11 missing-tools boundary is resolved
+on this host: all six real-SC tests ran. Missing analysis/ABX and human acceptance
+remain unchanged. The rows below preserve the original findings and linked work.
+
+Two follow-ups remain classified without implementation: the preceding CI
+reproduction exposed a one-millisecond mixed-clock recovery test flake
+(**small-fix**, compare one transaction clock), while starting handler grace at
+lease loss is a change to existing execution policy (**needs-decision**). The
+current audit passed without altering either test or runtime behavior.
+
 ## Small fixes with established intent
 
 Findings describe the original audit baseline; the final column records proof on
