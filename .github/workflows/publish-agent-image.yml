@@ -316,16 +316,23 @@ jobs:
           import pathlib,re,sys
           digest=sys.argv[1]
           if not re.fullmatch(r'sha256:[0-9a-f]{64}',digest): raise SystemExit('invalid Harbor digest')
-          files=[pathlib.Path('kubernetes/infra/frequency-worker/deployment.yaml'),pathlib.Path('hosts/frequency-process-monitor/check.cjs')]
-          n=0
-          for p,expected in zip(files,(3,1)):
-            s=p.read_text()
-            count=len(re.findall(r'registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:[0-9a-f]{64}',s))
-            if count != expected: raise SystemExit(f'{p}: expected {expected} pins, found {count}')
-            t=re.sub(r'(registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:)[0-9a-f]{64}',r'\g<1>'+digest.removeprefix('sha256:'),s)
-            n += len(re.findall(r'registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:',s))
-            p.write_text(t)
-          if n != 4: raise SystemExit(f'expected 4 digest pins, replaced {n}')
+          files={
+              pathlib.Path('kubernetes/infra/frequency-worker/deployment.yaml'): 3,
+              pathlib.Path('hosts/frequency-process-monitor/check.cjs'): 1,
+              pathlib.Path('kubernetes/infra/frequency-worker/process-monitor.yaml'): 2,
+          }
+          pattern=re.compile(r'registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:[0-9a-f]{64}')
+          originals={p:p.read_text() for p in files}
+          pins=[]
+          for p,expected in files.items():
+              matches=pattern.findall(originals[p])
+              if len(matches) != expected: raise SystemExit(f'{p}: expected {expected} pins, found {len(matches)}')
+              pins.extend(matches)
+          if len(pins) != 6: raise SystemExit(f'expected exactly 6 agent pins, found {len(pins)}')
+          if len(set(pins)) != 1: raise SystemExit('all 6 existing agent pins must agree before promotion')
+          target='registry.rproj.art/frequency-music/frequency-music-agent@'+digest
+          for p,source in originals.items():
+              p.write_text(pattern.sub(lambda match: target,source))
           PY
       - name: Commit and update deploy PR
         working-directory: homelab-infra
@@ -337,7 +344,7 @@ jobs:
           HARBOR_SUMMARY: ${{ needs.harbor.outputs.harbor_summary }}
         run: |
           set -euo pipefail
-          git add kubernetes/infra/frequency-worker/deployment.yaml hosts/frequency-process-monitor/check.cjs
+          git add kubernetes/infra/frequency-worker/deployment.yaml hosts/frequency-process-monitor/check.cjs kubernetes/infra/frequency-worker/process-monitor.yaml
           if ! git diff --cached --quiet; then git commit -m "chore(frequency-worker): pin agent image digest"; fi
           git push --set-upstream origin deploy/frequency-worker-agent
           body=$(mktemp)

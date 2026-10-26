@@ -44,9 +44,13 @@ and `HARBOR_PUBLISH_ROBOT_SECRET` for `robot$frequency-music-publisher`.
 
 After all Harbor gates succeed, the main-only `deploy-pr` job opens or updates
 one PR in `keithce/homelab-infra`, on `deploy/frequency-worker-agent`. It updates
-exactly three agent pins in `kubernetes/infra/frequency-worker/deployment.yaml`
-and one in `hosts/frequency-process-monitor/check.cjs`, failing if either count
-changes. `kubernetes/apps/frequency-worker.yaml` only declares the Argo Application.
+exactly three agent pins in `kubernetes/infra/frequency-worker/deployment.yaml`,
+one in `hosts/frequency-process-monitor/check.cjs`, and two in
+`kubernetes/infra/frequency-worker/process-monitor.yaml` (the embedded monitor
+script and CronJob image). Before writing any file, it requires exactly six
+pins across those locations and requires all six existing references to agree.
+The homelab-infra validation introduced in PR #817 checks agreement of all six
+pins, anonymous Harbor resolution, and cosign verification on the bump PR. `kubernetes/apps/frequency-worker.yaml` only declares the Argo Application.
 
 For an existing branch, the job checks it out, merges current infrastructure main
 into it, commits the digest updates, and pushes normally. A conflict or concurrent
