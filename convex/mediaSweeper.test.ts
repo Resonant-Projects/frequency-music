@@ -254,7 +254,8 @@ describe("mediaSweeper", () => {
     const orphanBlob = await t.run((ctx) =>
       ctx.storage.store(new Blob(["orphan"])),
     );
-    const args = { now: Date.now() + 1, blobAgeMs: 0, scanLimit: 2 };
+    const orphan = (await t.run((ctx) => ctx.db.system.get(orphanBlob)))!;
+    const args = { now: orphan._creationTime + 1, blobAgeMs: 0, scanLimit: 2 };
 
     const first = await t.mutation(internal.mediaSweeper.sweep, args);
     expect(first.blobsDeleted).toBe(0);

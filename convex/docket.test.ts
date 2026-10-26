@@ -236,7 +236,9 @@ test("confirmed deferral changes only docket data and survives rebuilds", async 
   expect(await t.run((ctx) => ctx.db.get(draftId))).toMatchObject({
     status: "pending_review",
   });
-  vi.setSystemTime(Date.now() + 14 * 86400000);
+  const deferred = (await t.run((ctx) => ctx.db.get(card._id)))!;
+  expect(deferred.deferredUntil).toBe(deferred.updatedAt + 14 * 86400000);
+  vi.setSystemTime(deferred.deferredUntil!);
   expect(
     (await t.mutation(internal.docket.list, {})).some(
       (row) => row.targetId === draftId,
@@ -294,7 +296,8 @@ test("delivery admission suppresses crashes, admits changed content and binds co
   expect(
     (await t.mutation(internal.docket.recordDelivery, changedArgs)).admitted,
   ).toBe(false);
-  vi.setSystemTime(Date.now() + 86400000);
+  const posting = (await t.run((ctx) => ctx.db.get(updated.deliveryId!)))!;
+  vi.setSystemTime(posting.postingAt + 86400000);
   expect(
     (await t.mutation(internal.docket.recordDelivery, changedArgs)).admitted,
   ).toBe(true);
