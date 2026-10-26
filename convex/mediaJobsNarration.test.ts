@@ -2,7 +2,6 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runOnce } from "../media/src/runner";
-import type { JobHandler } from "../media/src/jobs/types";
 import type { callTool } from "../media/src/convex";
 import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vite-plus/test";
@@ -287,7 +286,7 @@ describe("mediaJobs narration and operator publication", () => {
           throw new Error(`Unexpected tool ${name}`);
         },
       ) as typeof callTool;
-      const upload = vi.fn(async ({ job }: Parameters<JobHandler>[0]) => {
+      const upload = vi.fn(async () => {
         await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
         const renewal = vi
           .mocked(tool)
