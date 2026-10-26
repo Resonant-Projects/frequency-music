@@ -1,0 +1,58 @@
+{
+  "essays": {
+    "status": "pass",
+    "actions": 25,
+    "pageErrors": [],
+    "externalRequests": [],
+    "blocked_backend_websockets": 9
+  },
+  "navigation": {
+    "status": "pass",
+    "actions": 9,
+    "pageErrors": [],
+    "externalRequests": [],
+    "blocked_backend_websockets": 4
+  },
+  "search": {
+    "status": "pass",
+    "actions": 9,
+    "pageErrors": [],
+    "externalRequests": [],
+    "blocked_backend_websockets": 5
+  },
+  "offline_cleanup": {
+    "status": "pass",
+    "port_released": 49685,
+    "process_group_stopped": 2988776,
+    "scratch_removed": true
+  },
+  "local_cleanup": {
+    "status": "pass",
+    "container_removed": "frequency-verify-effect-ca495094-20261026",
+    "volume_removed": "frequency-verify-effect-ca495094-20261026",
+    "network_removed": "frequency-verify-effect-ca495094-20261026",
+    "local_credentials_removed": true
+  },
+  "persisted": {
+    "counts": {
+      "compositions": 1,
+      "feeds": 1,
+      "hypotheses": 1,
+      "listeningSessions": 1,
+      "recipes": 1,
+      "sources": 2
+    },
+    "url_source_unique": true,
+    "recovery_text_ready": true,
+    "recovery_provenance_prefix": true,
+    "hypothesis_source_link": true,
+    "recipe_hypothesis_link": true,
+    "composition_recipe_link": true,
+    "composition_status_rendered": true,
+    "session_composition_link": true,
+    "same_creator_for_manual_chain": true,
+    "session_private": true,
+    "session_musicality_three": true,
+    "feed_disabled": true
+  }
+}

@@ -83,7 +83,7 @@ The gating condition ("Convex audit tables + narrow audit-write tools") is now m
 `sweepStaleRuns` + `/agent-tools/{claimNextPendingRun,getAgentRun}`) is deployed, and
 the worker runner (`agent/src/worker/runner.ts`, `vp run worker`) is implemented.
 
-Production OpenTofu deployments use the digest-pinned GHCR artifact described in
+Production OpenTofu deployments use the digest-pinned Harbor artifact described in
 [`agent-image-release.md`](agent-image-release.md). Do not restore an in-guest
 `build:` block: build and scan the source once in GitHub Actions, then promote the
 exact digest through the infrastructure repository.

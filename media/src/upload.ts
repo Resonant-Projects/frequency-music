@@ -1,5 +1,7 @@
 // Transport for artifact bytes. Convex storage upload URLs accept a POST with
 // the file body and the content-type header, and answer { storageId }.
+import { Effect } from "effect";
+import { attempt } from "./effects";
 import { readFile } from "node:fs/promises";
 import { callTool } from "./convex";
 import { MAX_UPLOAD_BYTES } from "../../convex/shared/uploadLimits";
@@ -17,25 +19,35 @@ export function assertUnderUploadCap(role: string, bytes: number): void {
   );
 }
 
-export async function uploadBytes(
+export function uploadBytes(
   uploadUrl: string,
   path: string,
   mimeType: string,
   signal?: AbortSignal,
 ): Promise<{ storageId: string }> {
-  const bytes = await readFile(path);
-  const timeout = AbortSignal.timeout(10 * 60 * 1000);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: { "content-type": mimeType },
-    body: bytes,
-    // The upload URL is single-use and same-origin by construction; never
-    // follow a redirect that could carry the bytes elsewhere.
-    redirect: "error",
-    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-  });
-  if (!response.ok) throw new Error(`upload failed: ${response.status}`);
-  return (await response.json()) as { storageId: string };
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const bytes = yield* attempt(() => readFile(path));
+      const timeout = AbortSignal.timeout(10 * 60 * 1000);
+      const response = yield* attempt((fiberSignal) =>
+        fetch(uploadUrl, {
+          method: "POST",
+          headers: { "content-type": mimeType },
+          body: bytes,
+          // The upload URL is single-use and same-origin by construction; never
+          // follow a redirect that could carry the bytes elsewhere.
+          redirect: "error",
+          signal: AbortSignal.any([
+            fiberSignal,
+            timeout,
+            ...(signal ? [signal] : []),
+          ]),
+        }),
+      );
+      if (!response.ok) throw new Error(`upload failed: ${response.status}`);
+      return (yield* attempt(() => response.json())) as { storageId: string };
+    }),
+  );
 }
 
 // Only returns closures; no I/O happens until a method is called. The signal

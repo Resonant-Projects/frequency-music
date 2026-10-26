@@ -4,6 +4,8 @@
 
 Snapshot: `a9b728466f9254938e40761e012451b4d896825b`, 2026-10-22. Backend descriptions below are source findings; only the named evidence establishes execution. Happy paths are acceptance recipes, not claims that every path ran. All rows are covered by the audit PR linked in the parent map; “—” means no gap identified within the stated boundary.
 
+Current selected-row checkpoint: [V26, 2026-10-26](../evidence/effect-verification-20261026/README.md), source `ca495094`, [PR #229](https://github.com/Resonant-Projects/frequency-music/pull/229). It adds fresh local proof without completing unexercised stages. The table below retains its dated baseline except where V26 is named.
+
 | Feature / stage intent | Backend status | UI exposure / entry point | Happy path | Edge cases | How to verify / evidence | Status | Next step / gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <a id="r01"></a>**R01 — URL intake and deduplication** | `sources.createFromUrlAndQueue`, ingest fetch, canonical dedupe; sources. | Research → Ingest → URL form (/ingest). | Submit synthetic URL/text → source/text-ready → extraction queued/read back. | Empty/invalid/private URL, fetch failure, duplicate canonical URL, concurrent text writes. | L1: URL-only admission/dedupe persisted; fetching/extraction unproved. V remains backend/contract evidence. | **partial — local save verified** | G05 |

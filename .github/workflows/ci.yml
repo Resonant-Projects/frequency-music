@@ -25,6 +25,9 @@ jobs:
           cache: true
           run-install: false
       - run: bun install --frozen-lockfile
+      # Root suites import media runner/TTS modules, including media-owned Effect.
+      - run: vp install --frozen-lockfile
+        working-directory: media
       - run: bun audit
       - run: bun audit --prod
       - run: vp run lint:check

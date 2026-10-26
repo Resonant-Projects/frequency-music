@@ -3,7 +3,9 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { ClaimedMediaJob } from "../../convex/shared/mediaJobs";
-import { LEASE_MS } from "../../convex/shared/mediaJobs";
+import { Effect } from "effect";
+import { attempt } from "./effects";
+import { renewLease, runHandler } from "./jobLifetime";
 import type { callTool } from "./convex";
 import type { JobHandler, ToolClient } from "./jobs/types";
 import { log, redactError } from "./log";
@@ -20,7 +22,6 @@ export type RunnerConfig = {
 };
 type Tool = typeof callTool;
 
-const RENEW_EVERY_MS = Math.floor(LEASE_MS / 3);
 // Longest a single handler may run; longer than any render we schedule, short
 // enough that a hung ffmpeg does not hold a lease all night.
 export const JOB_DEADLINE_MS = 30 * 60 * 1000;
@@ -29,168 +30,137 @@ export const JOB_DEADLINE_MS = 30 * 60 * 1000;
 // work dir. Bounded so a handler that ignores the signal cannot hold the slot.
 export const DEADLINE_GRACE_MS = 30 * 1000;
 
-export async function runOnce(
+export function runOnceEffect(
   config: RunnerConfig,
   tool: Tool,
   handlers: Record<string, JobHandler>,
-  // Tests inject fakes; production builds the live client on the job's
-  // abort signal once the controller exists.
   tools?: ToolClient,
-): Promise<"idle" | "done" | "failed"> {
-  const job = await tool<ClaimedMediaJob | null>("claimNextMediaJob", {
-    workerId: config.workerId,
-    kinds: config.kinds,
-    rendererVersion: config.rendererVersion,
-  });
-  if (!job) return "idle";
-  log(`claimed ${job.kind} job ${job.jobId} (attempt ${job.attempts + 1})`);
-  // Scratch-dir creation sits inside the failure path: if it throws, the job
-  // is failed promptly instead of waiting out its lease.
-  let workDir: string | undefined;
-  const abort = new AbortController();
-  let leaseExpiresAt = job.leaseExpiresAt;
-  let renewalFailures = 0;
-  let renewalInFlight = false;
-  const renew = setInterval(() => {
-    if (Date.now() >= leaseExpiresAt) {
-      abort.abort(new Error("Media lease expired"));
-      return;
-    }
-    if (renewalInFlight) return;
-    renewalInFlight = true;
-    tool<{ leaseExpiresAt: number }>("renewMediaJobLease", {
-      jobId: job.jobId,
-      leaseToken: job.leaseToken,
-    })
-      .then((result) => {
-        leaseExpiresAt = result.leaseExpiresAt;
-        renewalFailures = 0;
-      })
-      .catch((error) => {
-        renewalFailures++;
-        if (
-          renewalFailures >= 2 ||
-          Date.now() + RENEW_EVERY_MS >= leaseExpiresAt
-        )
-          abort.abort(new Error("Media lease renewal failed"));
-        log(`lease renewal failed for ${job.jobId}: ${redactError(error)}`);
-      })
-      .finally(() => {
-        renewalInFlight = false;
-      });
-  }, RENEW_EVERY_MS);
-  try {
-    const handler = handlers[job.kind];
-    if (!handler) throw new Error(`no handler for kind ${job.kind}`);
-    // The dedupe key and the result's provenance both name the renderer
-    // version, so a job addressed to another version is failed, not rendered.
-    if (job.input.rendererVersion !== config.rendererVersion) {
-      throw new Error(
-        `renderer version mismatch: job requested ${job.input.rendererVersion}, worker is ${config.rendererVersion}`,
-      );
-    }
-    const retainedDir = join(
-      config.workDir,
-      "retained",
-      retainedKey({
-        jobId: job.jobId,
-        rendererVersion: job.input.rendererVersion,
+) {
+  const program = Effect.gen(function* () {
+    const job = yield* attempt(() =>
+      tool<ClaimedMediaJob | null>("claimNextMediaJob", {
+        workerId: config.workerId,
+        kinds: config.kinds,
+        rendererVersion: config.rendererVersion,
       }),
     );
-    if (
-      job.attempts > 0 &&
-      job.freshStartAllowed !== true &&
-      !(await readCheckpoint(retainedDir, "started"))
-    ) {
-      throw new Error(
-        "Retained job checkpoint missing; automatic recovery cannot safely repeat paid work",
-      );
-    }
-    await writeCheckpoint(
-      retainedDir,
-      "started",
-      { jobId: job.jobId },
-      config.workDir,
-    );
-    const retainedResult = await readCheckpoint<
-      Awaited<ReturnType<JobHandler>>
-    >(retainedDir, "result");
-    if (retainedResult) {
-      await acknowledgeCompletion(tool, job, retainedResult);
-      await removeCompletedCheckpoints(retainedDir);
-      return "done";
-    }
-    workDir = await mkdtemp(join(config.workDir, `${job.kind}-`));
-    const deadlineMs = config.deadlineMs ?? JOB_DEADLINE_MS;
-    const deadlineGraceMs = config.deadlineGraceMs ?? DEADLINE_GRACE_MS;
-    let deadline: NodeJS.Timeout | undefined;
-    const expired = new Promise<never>((_, reject) => {
-      deadline = setTimeout(() => {
-        // Stop renewing so the lease can lapse if the handler is truly hung,
-        // and abort so a running ffmpeg or upload is killed rather than left
-        // to race the next attempt over the deleted work dir.
-        clearInterval(renew);
-        const error = new Error(`job deadline exceeded after ${deadlineMs} ms`);
-        // Reject first: abort listeners run synchronously and could otherwise
-        // settle the race with the handler's own error instead of the deadline.
-        reject(error);
-        abort.abort(error);
-      }, deadlineMs);
-    });
-    let result: Awaited<ReturnType<JobHandler>>;
-    let running: ReturnType<JobHandler> | undefined;
-    try {
-      running = handler({
-        job,
-        workDir,
-        retainedDir,
-        retainedRoot: config.workDir,
-        tools: tools ?? liveTools(abort.signal),
-        rendererVersion: config.rendererVersion,
-        signal: abort.signal,
-      });
-      result = await Promise.race([running, expired]);
-    } catch (error) {
-      if (abort.signal.aborted && running) {
-        // Give the aborted handler a bounded window to settle before the
-        // failure is recorded and the work dir is removed.
-        let grace: NodeJS.Timeout | undefined;
-        await Promise.race([
-          running.catch(() => undefined),
-          new Promise<void>((resolve) => {
-            grace = setTimeout(resolve, deadlineGraceMs);
-          }),
-        ]);
-        clearTimeout(grace);
+    if (!job) return "idle" as const;
+    log(`claimed ${job.kind} job ${job.jobId} (attempt ${job.attempts + 1})`);
+    const abort = new AbortController();
+    const stopRenewal = yield* renewLease(job, tool, abort);
+    const execute = Effect.gen(function* () {
+      const handler = handlers[job.kind];
+      if (!handler)
+        return yield* Effect.fail(new Error(`no handler for kind ${job.kind}`));
+      if (job.input.rendererVersion !== config.rendererVersion) {
+        return yield* Effect.fail(
+          new Error(
+            `renderer version mismatch: job requested ${job.input.rendererVersion}, worker is ${config.rendererVersion}`,
+          ),
+        );
       }
-      throw error;
-    } finally {
-      clearTimeout(deadline);
-    }
-    await writeCheckpoint(retainedDir, "result", result, config.workDir);
-    await acknowledgeCompletion(tool, job, result);
-    await removeCompletedCheckpoints(retainedDir);
-    log(`completed ${job.kind} job ${job.jobId}`);
-    return "done";
-  } catch (error) {
-    const message = redactError(error);
-    log(`job ${job.jobId} failed: ${message}`);
-    try {
-      await tool("failMediaJob", {
-        jobId: job.jobId,
-        leaseToken: job.leaseToken,
-        error: message,
-      });
-    } catch (failError) {
-      log(
-        `could not record failure for ${job.jobId}: ${redactError(failError)}`,
+      const retainedDir = join(
+        config.workDir,
+        "retained",
+        retainedKey({
+          jobId: job.jobId,
+          rendererVersion: job.input.rendererVersion,
+        }),
       );
-    }
-    return "failed";
-  } finally {
-    clearInterval(renew);
-    if (workDir) await rm(workDir, { recursive: true, force: true });
-  }
+      if (
+        job.attempts > 0 &&
+        job.freshStartAllowed !== true &&
+        !(yield* attempt(() => readCheckpoint(retainedDir, "started")))
+      ) {
+        return yield* Effect.fail(
+          new Error(
+            "Retained job checkpoint missing; automatic recovery cannot safely repeat paid work",
+          ),
+        );
+      }
+      yield* attempt(() =>
+        writeCheckpoint(
+          retainedDir,
+          "started",
+          { jobId: job.jobId },
+          config.workDir,
+        ),
+      );
+      const retainedResult = yield* attempt(() =>
+        readCheckpoint<Awaited<ReturnType<JobHandler>>>(retainedDir, "result"),
+      );
+      if (retainedResult) {
+        yield* attempt(() => acknowledgeCompletion(tool, job, retainedResult));
+        yield* attempt(() => removeCompletedCheckpoints(retainedDir));
+        return "done" as const;
+      }
+      const workDir = yield* Effect.acquireRelease(
+        attempt(() => mkdtemp(join(config.workDir, `${job.kind}-`))),
+        (dir) =>
+          attempt(() => rm(dir, { recursive: true, force: true })).pipe(
+            Effect.orDie,
+          ),
+      );
+      const result = yield* runHandler({
+        handler,
+        context: {
+          job,
+          workDir,
+          retainedDir,
+          retainedRoot: config.workDir,
+          tools: tools ?? liveTools(abort.signal),
+          rendererVersion: config.rendererVersion,
+          signal: abort.signal,
+        },
+        abort,
+        stopRenewal,
+        deadlineMs: config.deadlineMs ?? JOB_DEADLINE_MS,
+        graceMs: config.deadlineGraceMs ?? DEADLINE_GRACE_MS,
+      });
+      yield* attempt(() =>
+        writeCheckpoint(retainedDir, "result", result, config.workDir),
+      );
+      yield* attempt(() => acknowledgeCompletion(tool, job, result));
+      yield* attempt(() => removeCompletedCheckpoints(retainedDir));
+      log(`completed ${job.kind} job ${job.jobId}`);
+      return "done" as const;
+    });
+    return yield* execute.pipe(
+      Effect.catch((error) =>
+        Effect.gen(function* () {
+          const message = redactError(error);
+          log(`job ${job.jobId} failed: ${message}`);
+          yield* attempt(() =>
+            tool("failMediaJob", {
+              jobId: job.jobId,
+              leaseToken: job.leaseToken,
+              error: message,
+            }),
+          ).pipe(
+            Effect.catch((failError) =>
+              Effect.sync(() => {
+                log(
+                  `could not record failure for ${job.jobId}: ${redactError(failError)}`,
+                );
+              }),
+            ),
+          );
+          return "failed" as const;
+        }),
+      ),
+      Effect.ensuring(stopRenewal),
+    );
+  }).pipe(Effect.scoped);
+  return program;
+}
+
+export function runOnce(
+  config: RunnerConfig,
+  tool: Tool,
+  handlers: Record<string, JobHandler>,
+  tools?: ToolClient,
+): Promise<"idle" | "done" | "failed"> {
+  return Effect.runPromise(runOnceEffect(config, tool, handlers, tools));
 }
 
 async function acknowledgeCompletion(

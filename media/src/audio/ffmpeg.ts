@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { attempt } from "../effects";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -11,40 +13,58 @@ const EXEC_TIMEOUT = {
 
 export type ExecOptions = { signal?: AbortSignal };
 
-export async function runFfmpeg(
+function execute(
+  executable: string,
+  args: string[],
+  options: ExecOptions,
+  maxBuffer?: number,
+) {
+  return attempt((signal) =>
+    execFileAsync(executable, args, {
+      ...EXEC_TIMEOUT,
+      ...(maxBuffer === undefined ? {} : { maxBuffer }),
+      signal: options.signal
+        ? AbortSignal.any([signal, options.signal])
+        : signal,
+    }),
+  );
+}
+
+export function runFfmpeg(
   args: string[],
   options: ExecOptions = {},
 ): Promise<{ stdout: string; stderr: string }> {
-  try {
-    const { stdout, stderr } = await execFileAsync(
+  return Effect.runPromise(
+    execute(
       "ffmpeg",
       ["-hide_banner", "-nostdin", "-y", ...args],
-      { maxBuffer: 64 * 1024 * 1024, ...EXEC_TIMEOUT, signal: options.signal },
-    );
-    return { stdout, stderr };
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException & { stderr?: string };
-    if (err.code === "ENOENT") throw new Error("ffmpeg not found on PATH");
-    throw new Error(
-      `ffmpeg failed: ${(err.stderr ?? err.message).split("\n").slice(-20).join("\n")}`,
-    );
-  }
+      options,
+      64 * 1024 * 1024,
+    ).pipe(
+      Effect.mapError((error) => {
+        const err = error as NodeJS.ErrnoException & { stderr?: string };
+        if (err.code === "ENOENT") return new Error("ffmpeg not found on PATH");
+        return new Error(
+          `ffmpeg failed: ${(err.stderr ?? err.message).split("\n").slice(-20).join("\n")}`,
+        );
+      }),
+    ),
+  );
 }
 
-export async function runFfprobe(
+export function runFfprobe(
   args: string[],
   options: ExecOptions = {},
 ): Promise<string> {
-  try {
-    const { stdout } = await execFileAsync(
-      "ffprobe",
-      ["-v", "error", ...args],
-      { ...EXEC_TIMEOUT, signal: options.signal },
-    );
-    return stdout;
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
-    if (err.code === "ENOENT") throw new Error("ffprobe not found on PATH");
-    throw error;
-  }
+  return Effect.runPromise(
+    execute("ffprobe", ["-v", "error", ...args], options).pipe(
+      Effect.map(({ stdout }) => stdout),
+      Effect.mapError((error) => {
+        const err = error as NodeJS.ErrnoException;
+        return err.code === "ENOENT"
+          ? new Error("ffprobe not found on PATH")
+          : error;
+      }),
+    ),
+  );
 }
