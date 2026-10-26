@@ -15,4 +15,4 @@ updates:
     groups:
       actions:
         patterns:
-          - '*'
+          - "*"

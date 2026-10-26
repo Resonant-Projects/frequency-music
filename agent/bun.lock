@@ -6,7 +6,7 @@
       "name": "resonant-projects-agent",
       "dependencies": {
         "@langchain/anthropic": "1.5.12",
-        "@langchain/core": "1.3.0",
+        "@langchain/core": "1.2.17",
         "@langchain/langgraph": "1.5.2",
         "@langchain/langgraph-sdk": "1.12.7",
         "@modelcontextprotocol/sdk": "1.32.1",
@@ -17,14 +17,14 @@
         "deepagents": "1.14.2",
         "esbuild": "0.28.2",
         "hono": "4.13.13",
-        "langchain": "1.5.19",
+        "langchain": "1.5.12",
         "langsmith": "0.9.0",
         "tsx": "4.23.15",
         "varlock": "1.22.0",
         "zod": "4.6.7",
       },
       "devDependencies": {
-        "@langchain/langgraph-cli": "1.5.5",
+        "@langchain/langgraph-cli": "1.5.1",
         "@types/node": "26.6.5",
         "postcss": "8.5.31",
         "typescript": "5.9.3",
@@ -136,19 +136,19 @@
 
     "@langchain/anthropic": ["@langchain/anthropic@1.5.12", "", { "dependencies": { "@anthropic-ai/sdk": "^0.122.0", "zod": "^3.25.76 || ^4" }, "peerDependencies": { "@langchain/core": "^1.2.14" } }, "sha512-tVvI94zAtG6isYxBzL7hlbxfbqjmvx/BqBWAov7v+bABKYz3fZHFI2Io1UI5UzU+h/5SuC1qXUV+JxnaqylJJw=="],
 
-    "@langchain/core": ["@langchain/core@1.3.0", "", { "dependencies": { "@cfworker/json-schema": "^4.0.2", "@standard-schema/spec": "^1.1.0", "js-tiktoken": "^1.0.12", "langsmith": ">=0.11.0 <1.0.0", "mustache": "^4.2.0", "p-queue": "^6.6.2", "zod": "^3.25.76 || ^4" } }, "sha512-ZiS8USsHdO8ZVFh0m8Rs6v2BvqBEvfFicG66zxdF4rGgXSJjk0d0sLnnFZCx3RXPUvP8ybTJgPlNfkJGs1J7BA=="],
+    "@langchain/core": ["@langchain/core@1.2.17", "", { "dependencies": { "@cfworker/json-schema": "^4.0.2", "@standard-schema/spec": "^1.1.0", "js-tiktoken": "^1.0.12", "langsmith": ">=0.5.0 <1.0.0", "mustache": "^4.2.0", "p-queue": "^6.6.2", "zod": "^3.25.76 || ^4" } }, "sha512-aLQLSed6oLCMLtJHrINhnFmsu79G2UiDlRslbOx+TSN9NmU+WuDv1OtVxrLpYglhXNy53elSduMVk3XBPG9ulw=="],
 
     "@langchain/langgraph": ["@langchain/langgraph@1.5.2", "", { "dependencies": { "@langchain/langgraph-checkpoint": "^1.2.1", "@langchain/langgraph-sdk": "~1.12.6", "@langchain/protocol": "^0.0.20", "@standard-schema/spec": "1.1.0" }, "peerDependencies": { "@langchain/core": "^1.1.48", "zod": "^3.25.32 || ^4.2.0" } }, "sha512-jfVB9x+FH3CqlOYsYSVyuBoElV/J9pRL2nb7gie9Fb53J6rwNxSjTwxtyH3N8eVbZ94QckuFRxom6KTMlFfMOQ=="],
 
-    "@langchain/langgraph-api": ["@langchain/langgraph-api@1.5.5", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@hono/node-server": "^2.1.0", "@hono/node-ws": "^1.3.0", "@hono/zod-validator": "^0.7.6", "@langchain/langgraph-ui": "1.5.5", "@langchain/protocol": "^0.0.20", "@types/json-schema": "^7.0.15", "@typescript/vfs": "^1.6.0", "dedent": "^1.5.3", "dotenv": "^16.4.7", "exit-hook": "^4.0.0", "hono": "^4.13.5", "langsmith": ">=0.5.19 <1.0.0", "open": "^10.1.0", "semver": "^7.7.1", "stacktrace-parser": "^0.1.10", "superjson": "^2.2.2", "tsx": "^4.19.3", "winston": "^3.17.0", "winston-console-format": "^1.0.8", "zod": "^3.25.76 || ^4" }, "peerDependencies": { "@langchain/core": "^1.1.48", "@langchain/langgraph": "^1.4.18-rc.0", "@langchain/langgraph-checkpoint": "^1.2.0", "@langchain/langgraph-sdk": "^1.12.0-rc.0", "ts-node": "^10.9.2", "typescript": "^5.5.4" }, "optionalPeers": ["@langchain/langgraph-sdk", "ts-node"] }, "sha512-Sunwg8c3DjdEu15/AcE5DQi+eLORk+L+lfhNO3s3a2OCNqaYd6UyI6urP0+pA8omWRMHVswJZnB27QWR5809tg=="],
+    "@langchain/langgraph-api": ["@langchain/langgraph-api@1.5.1", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@hono/node-server": "^2.1.0", "@hono/node-ws": "^1.3.0", "@hono/zod-validator": "^0.7.6", "@langchain/langgraph-ui": "1.5.1", "@langchain/protocol": "^0.0.19", "@types/json-schema": "^7.0.15", "@typescript/vfs": "^1.6.0", "dedent": "^1.5.3", "dotenv": "^16.4.7", "exit-hook": "^4.0.0", "hono": "^4.13.5", "langsmith": ">=0.5.19 <1.0.0", "open": "^10.1.0", "semver": "^7.7.1", "stacktrace-parser": "^0.1.10", "superjson": "^2.2.2", "tsx": "^4.19.3", "winston": "^3.17.0", "winston-console-format": "^1.0.8", "zod": "^3.25.76 || ^4" }, "peerDependencies": { "@langchain/core": "^1.1.48", "@langchain/langgraph": "^1.4.18-rc.0", "@langchain/langgraph-checkpoint": "^1.1.4", "@langchain/langgraph-sdk": "^1.12.0-rc.0", "ts-node": "^10.9.2", "typescript": "^5.5.4" }, "optionalPeers": ["@langchain/langgraph-sdk", "ts-node"] }, "sha512-cAzKlOoCwSA1aYFksuxBdq3TQU0TrPuoZs7l+VW+p5+IsoQ3ULPI4vXQtZnerTkdtS9Yu5xR04IGvH19t0KJyw=="],
 
     "@langchain/langgraph-checkpoint": ["@langchain/langgraph-checkpoint@1.2.1", "", { "peerDependencies": { "@langchain/core": "^1.1.48" } }, "sha512-RD01mi9fYfpIq5fWrW/j2iY7MRUoqKvh1Nj6TMRDBoTGE18E2du75zKDugNxb57N8FWCojaiWGB9Enssnx9Hyg=="],
 
-    "@langchain/langgraph-cli": ["@langchain/langgraph-cli@1.5.5", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@commander-js/extra-typings": "^13.0.0", "@langchain/langgraph-api": "1.5.5", "chokidar": "^4.0.3", "commander": "^13.0.0", "create-langgraph": "1.1.5", "dedent": "^1.5.3", "dotenv": "^16.4.7", "execa": "^9.5.2", "exit-hook": "^4.0.0", "extract-zip": "^2.0.1", "ignore": "^7.0.5", "langsmith": "^0.10.5", "open": "^10.1.0", "package-manager-detector": "^1.3.0", "stacktrace-parser": "^0.1.10", "tar": "^7.5.19", "winston": "^3.17.0", "winston-console-format": "^1.0.8", "yaml": "^2.8.3", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs": "dist/cli/cli.mjs" } }, "sha512-O7r7ULcLGntW5IWuaS+lCbL4sUVEjhf6GC5VtvXsuIllR4xFqVfgp9oBKjDRLDHjmtzkUn7mr3ee8wRM1EGv+Q=="],
+    "@langchain/langgraph-cli": ["@langchain/langgraph-cli@1.5.1", "", { "dependencies": { "@babel/code-frame": "^7.26.2", "@commander-js/extra-typings": "^13.0.0", "@langchain/langgraph-api": "1.5.1", "chokidar": "^4.0.3", "commander": "^13.0.0", "create-langgraph": "1.1.5", "dedent": "^1.5.3", "dotenv": "^16.4.7", "execa": "^9.5.2", "exit-hook": "^4.0.0", "extract-zip": "^2.0.1", "ignore": "^7.0.5", "langsmith": "^0.9.0", "open": "^10.1.0", "package-manager-detector": "^1.3.0", "stacktrace-parser": "^0.1.10", "tar": "^7.5.19", "winston": "^3.17.0", "winston-console-format": "^1.0.8", "yaml": "^2.8.3", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs": "dist/cli/cli.mjs" } }, "sha512-d1LuWC7No2pstFk/uZUXc8QTRvvfhtMuqNoX2Abk6Al1BqC76Rc2/PGkKiuZw4yVHOCknJkVB1D+FX9IrOY4bQ=="],
 
     "@langchain/langgraph-sdk": ["@langchain/langgraph-sdk@1.12.7", "", { "dependencies": { "@langchain/protocol": "^0.0.20", "@types/json-schema": "^7.0.15", "p-queue": "^9.0.1", "p-retry": "^7.1.1" }, "peerDependencies": { "@langchain/core": "^1.1.48", "react": "^18 || ^19", "react-dom": "^18 || ^19" }, "optionalPeers": ["react", "react-dom"] }, "sha512-+tIY6oVDDt9e3LnDKs4Qqe3nFJSY7amDUofro7me0kZ8QbaJhFViQL0LaX30SQhIaHuCLZYMRIluhuFSOPjF8g=="],
 
-    "@langchain/langgraph-ui": ["@langchain/langgraph-ui@1.5.5", "", { "dependencies": { "@commander-js/extra-typings": "^13.0.0", "commander": "^13.0.0", "esbuild": "^0.28.1", "esbuild-plugin-tailwindcss": "^2.0.1", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs-ui": "dist/cli.mjs" } }, "sha512-GCu0JMrXVKXLSv+nuUHnKTSg2eV5ebjErYW9hOQvlhc4dd05ZT6ClRl5LNAMU9qaG1xXr3qG65fw/MI7LASgrQ=="],
+    "@langchain/langgraph-ui": ["@langchain/langgraph-ui@1.5.1", "", { "dependencies": { "@commander-js/extra-typings": "^13.0.0", "commander": "^13.0.0", "esbuild": "^0.28.1", "esbuild-plugin-tailwindcss": "^2.0.1", "zod": "^3.25.76 || ^4" }, "bin": { "langgraphjs-ui": "dist/cli.mjs" } }, "sha512-GP/zqYqTxCX/N40O/0E01XaFJAR6SoMcvg7jxKa8YMIo69UgzQMzWoNogGokUHUyGmawzIC1q/0H52IrC9g8aw=="],
 
     "@langchain/protocol": ["@langchain/protocol@0.0.20", "", {}, "sha512-sxlkDG2/HGyjDFLTJ8B/o3oglRjOv8iLCFgrV0550/Vym3V6RZ0SUjAQFe8jrLQw8ZXjERy3swJp5OODBSrUYA=="],
 
@@ -470,7 +470,7 @@
 
     "kuler": ["kuler@2.0.0", "", {}, "sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A=="],
 
-    "langchain": ["langchain@1.5.19", "", { "dependencies": { "@langchain/langgraph": "^1.4.18", "@langchain/langgraph-checkpoint": "^1.1.5", "langsmith": ">=0.11.0 <1.0.0", "zod": "^3.25.76 || ^4" }, "peerDependencies": { "@langchain/core": "^1.2.20" } }, "sha512-9fcjfjr3EWL6Oj/m0Uygkrq1hiq9gxsWryPHuEquJydmWPnDC8j/kBhrGyGTiQCw3ECdMmUXkWyZT93n8SSyoQ=="],
+    "langchain": ["langchain@1.5.12", "", { "dependencies": { "@langchain/langgraph": "^1.4.13", "@langchain/langgraph-checkpoint": "^1.1.5", "langsmith": ">=0.5.0 <1.0.0", "zod": "^3.25.76 || ^4" }, "peerDependencies": { "@langchain/core": "^1.2.12" } }, "sha512-cWNsKiRLyv0NN1e9IR+0CUyS4cBn1LSJ7OhqTa0RQGK735cb4l1+wd4/lQJz4imJ4sojOl+VfHw6kKZwWFNYlQ=="],
 
     "langsmith": ["langsmith@0.9.0", "", { "dependencies": { "p-queue": "6.6.2" }, "peerDependencies": { "@opentelemetry/api": "*", "@opentelemetry/exporter-trace-otlp-proto": "*", "@opentelemetry/sdk-trace-base": "*", "openai": "*", "ws": ">=7" }, "optionalPeers": ["@opentelemetry/api", "@opentelemetry/exporter-trace-otlp-proto", "@opentelemetry/sdk-trace-base", "openai", "ws"] }, "sha512-tlg/aG7qezAKY6G3fgADSX7PkRj+JKoF3z7QNkCMsAOvwvuzhiwP9Amn1Z+zAIxuKoWuXQdIjtFN0LVmUC1oUQ=="],
 
@@ -726,11 +726,7 @@
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.2", "", { "peerDependencies": { "zod": "^3.25.28 || ^4" } }, "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA=="],
 
-    "@langchain/core/langsmith": ["langsmith@0.11.1", "", { "dependencies": { "p-queue": "6.6.2" }, "peerDependencies": { "@opentelemetry/api": "*", "@opentelemetry/exporter-trace-otlp-proto": "*", "@opentelemetry/sdk-trace-base": "*", "openai": "*", "ws": ">=7" }, "optionalPeers": ["@opentelemetry/api", "@opentelemetry/exporter-trace-otlp-proto", "@opentelemetry/sdk-trace-base", "openai", "ws"] }, "sha512-wcJKmXnJK6sKRTDm/eJ4ZAtsdSyjaQBu2VM9Hw6UZXBFzbICldlpNOcdDFbSIGzWr/kE7deV9kAVuxcE6V5vtg=="],
-
-    "@langchain/langgraph-api/langsmith": ["langsmith@0.11.1", "", { "dependencies": { "p-queue": "6.6.2" }, "peerDependencies": { "@opentelemetry/api": "*", "@opentelemetry/exporter-trace-otlp-proto": "*", "@opentelemetry/sdk-trace-base": "*", "openai": "*", "ws": ">=7" }, "optionalPeers": ["@opentelemetry/api", "@opentelemetry/exporter-trace-otlp-proto", "@opentelemetry/sdk-trace-base", "openai", "ws"] }, "sha512-wcJKmXnJK6sKRTDm/eJ4ZAtsdSyjaQBu2VM9Hw6UZXBFzbICldlpNOcdDFbSIGzWr/kE7deV9kAVuxcE6V5vtg=="],
-
-    "@langchain/langgraph-cli/langsmith": ["langsmith@0.10.13", "", { "dependencies": { "p-queue": "6.6.2" }, "peerDependencies": { "@opentelemetry/api": "*", "@opentelemetry/exporter-trace-otlp-proto": "*", "@opentelemetry/sdk-trace-base": "*", "openai": "*", "ws": ">=7" }, "optionalPeers": ["@opentelemetry/api", "@opentelemetry/exporter-trace-otlp-proto", "@opentelemetry/sdk-trace-base", "openai", "ws"] }, "sha512-v5500fr7rVzQSfQphTBJV2/OrMRDzb2QfLfoO+gvPBY/kER99QF2+wbG6QQUydm0N7ueyJfBOYhq6tqYacXVAA=="],
+    "@langchain/langgraph-api/@langchain/protocol": ["@langchain/protocol@0.0.19", "", {}, "sha512-9hKcRrH7cBX6gfutdfXPoft1OCchHe4FEpALoDJMl5Qu+n/YG5ynZmyu8+8cxORlPwHBoKTxggvXz+76M1yX1Q=="],
 
     "@langchain/langgraph-sdk/p-queue": ["p-queue@9.3.5", "", { "dependencies": { "eventemitter3": "^5.0.4", "p-timeout": "^7.0.0" } }, "sha512-Lki/zhXFVmDhesBUn/yHRLW9Bte7mE7xoFHzTR8sIomV7a2z+LxYAPkGvdfidNiu4fKSfjtawixxSHcZci5QcQ=="],
 
@@ -749,8 +745,6 @@
     "body-parser/content-type": ["content-type@2.1.0", "", {}, "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag=="],
 
     "express/content-type": ["content-type@2.1.0", "", {}, "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag=="],
-
-    "langchain/langsmith": ["langsmith@0.11.1", "", { "dependencies": { "p-queue": "6.6.2" }, "peerDependencies": { "@opentelemetry/api": "*", "@opentelemetry/exporter-trace-otlp-proto": "*", "@opentelemetry/sdk-trace-base": "*", "openai": "*", "ws": ">=7" }, "optionalPeers": ["@opentelemetry/api", "@opentelemetry/exporter-trace-otlp-proto", "@opentelemetry/sdk-trace-base", "openai", "ws"] }, "sha512-wcJKmXnJK6sKRTDm/eJ4ZAtsdSyjaQBu2VM9Hw6UZXBFzbICldlpNOcdDFbSIGzWr/kE7deV9kAVuxcE6V5vtg=="],
 
     "logform/@colors/colors": ["@colors/colors@1.6.0", "", {}, "sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA=="],
 

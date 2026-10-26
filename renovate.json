@@ -44,8 +44,8 @@
       "pinDigests": true
     },
     {
-      "description": "DeepAgents 1.14 requires LangSmith below 0.10; keep its real peer range until upstream supports newer SDKs.",
-      "matchFileNames": ["agent/package.json"],
+      "description": "Keep the single LangSmith version below 0.10 while DeepAgents 1.14 requires its real >=0.7.1 <0.10.0 peer range.",
+      "matchFileNames": ["package.json", "agent/package.json"],
       "matchPackageNames": ["langsmith"],
       "allowedVersions": ">=0.7.1 <0.10.0"
     },
@@ -54,6 +54,24 @@
       "matchFileNames": ["agent/package.json"],
       "matchPackageNames": ["typescript"],
       "allowedVersions": ">=5.5.4 <6"
+    },
+    {
+      "description": "Keep Core compatible with the single LangSmith 0.9 SDK required by DeepAgents; Core 1.2.18+ requires LangSmith >=0.11.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["@langchain/core"],
+      "allowedVersions": ">=1.2.14 <1.2.18"
+    },
+    {
+      "description": "Keep LangChain compatible with the single LangSmith 0.9 SDK required by DeepAgents; newer releases require LangSmith >=0.11.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["langchain"],
+      "allowedVersions": ">=1.5.10 <=1.5.12"
+    },
+    {
+      "description": "Keep the CLI on its real LangSmith ^0.9 range while DeepAgents requires <0.10; CLI 1.5.2+ requires ^0.10.5.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["@langchain/langgraph-cli"],
+      "allowedVersions": ">=1.5.0 <1.5.2"
     }
   ]
 }
