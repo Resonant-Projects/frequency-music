@@ -409,17 +409,18 @@ describe("recovery admission", () => {
         }),
       ).toBeNull();
       expect((await t.run((ctx) => ctx.db.get(failure._id)))?.attempts).toBe(0);
-      const queuedRecovery = await t.run((ctx) =>
-        ctx.db.system
+      const { queuedRecovery, now } = await t.run(async (ctx) => ({
+        queuedRecovery: await ctx.db.system
           .query("_scheduled_functions")
           .filter((q) =>
             q.eq(q.field("name"), "extractInternal:completeExtraction"),
           )
           .order("desc")
           .first(),
-      );
+        now: Date.now(),
+      }));
       expect(queuedRecovery?.args).toEqual([{ attemptId: prepared.attemptId }]);
-      expect(queuedRecovery?.scheduledTime).toBeLessThanOrEqual(Date.now());
+      expect(queuedRecovery?.scheduledTime).toBeLessThanOrEqual(now);
       await t.action(internal.extractInternal.completeExtraction, {
         attemptId: prepared.attemptId,
       });
