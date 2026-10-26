@@ -12,7 +12,8 @@ requests and releases. GitHub-hosted runners build once, with BuildKit provenanc
 `mode=max` and SBOM enabled, and export an OCI archive without pushing anywhere.
 The build records the index digest from the archive's single root descriptor.
 Skopeo loads its linux/amd64 image into Docker for the hardened runtime smoke
-test, and Trivy scans the same archive with `--input`. Trivy blocks all HIGH and
+test, and Trivy scans an extracted layout from the same archive with `--input`.
+The archive remains unchanged for transfer and publication. Trivy blocks all HIGH and
 CRITICAL findings, including unfixed vulnerabilities. `bun audit --prod` remains
 a separate production dependency gate. The OCI archive and coordinate manifest
 are uploaded as an Actions artifact with three-day retention.

@@ -104,10 +104,15 @@ jobs:
           printf '{"source_sha":"%s","image_name":"%s","digest":"%s"}\n' '${{ steps.metadata.outputs.source_sha }}' '${{ steps.metadata.outputs.image_name }}' "$digest" > "$RUNNER_TEMP/agent-artifact.json"
       - name: Smoke-test exact artifact
         run: docker run --rm --entrypoint /bin/sh frequency-agent:smoke -ec 'command -v node; command -v codex; ! command -v npm; test ! -d /usr/local/lib/node_modules/npm; test ! -e node_modules/@typescript/typescript-linux-x64; node_modules/.bin/tsx --version; codex --version'
+      - name: Extract exact OCI artifact for Trivy
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/agent-layout"
+          tar -xf "$RUNNER_TEMP/agent-image.tar" -C "$RUNNER_TEMP/agent-layout"
       - name: Scan exact OCI artifact
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          input: ${{ runner.temp }}/agent-image.tar
+          input: ${{ runner.temp }}/agent-layout
           version: v0.70.0
           format: table
           exit-code: "1"
