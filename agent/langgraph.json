@@ -8,5 +8,6 @@
     "hypothesis-tournament": "./src/graphs/hypothesis-tournament/graph.ts:graph",
     "source-scout": "./src/graphs/source-scout/index.ts:graph"
   },
-  "env": ".env"
+  "env": ".env",
+  "node_version": "24"
 }
