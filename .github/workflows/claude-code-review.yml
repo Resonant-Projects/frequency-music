@@ -57,16 +57,21 @@ jobs:
               print("Review diagnostic: execution report unavailable")
               raise SystemExit(0)
           events = json.loads(path.read_text())
-          # Never print provider responses, prompts, environment, or credentials.
+          # SDK API failures can live on assistant events while the terminal
+          # result only says is_error:true. Inspect both, but never print
+          # provider responses, prompts, environment, or credentials.
           errors = " ".join(
               json.dumps(event).lower() for event in events
-              if event.get("type") == "result" and event.get("is_error")
+              if (event.get("type") == "result" and event.get("is_error"))
+              or (event.get("type") == "assistant" and event.get("error"))
           )
           categories = {
-              "authentication": ["oauth", "unauthorized", "authentication", "invalid api key"],
-              "quota": ["rate limit", "usage limit", "credit balance", "quota"],
+              "authentication": ["oauth", "unauthorized", "authentication", "invalid api key", "not logged in"],
+              "quota": ["rate limit", "rate_limit", "usage limit", "credit balance", "quota", "billing_error"],
               "model": ["model not found", "invalid model", "model is not available"],
               "plugin": ["unknown skill", "unknown slash command", "plugin not found"],
+              "request": ["invalid_request", "bad request"],
+              "provider": ["server_error", "overloaded", "api_error"],
           }
           matched = [name for name, needles in categories.items() if any(n in errors for n in needles)]
           print("Review diagnostic: " + (", ".join(matched) or "unclassified provider/CLI failure"))
