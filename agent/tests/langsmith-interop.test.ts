@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
+import { LangChainTracer } from "@langchain/core/tracers/tracer_langchain";
 import { Client } from "langsmith";
 import { RunTree } from "langsmith/run_trees";
 import { getCurrentRunTree, withRunTree } from "langsmith/traceable";
@@ -12,7 +13,9 @@ test("DeepAgents' compatible SDK and Core's newer SDK share trace provenance", a
   const require = createRequire(import.meta.url);
   const core = createRequire(require.resolve("@langchain/core/package.json"));
   const newer = await import(
-    pathToFileURL(core.resolve("langsmith/traceable")).href
+    pathToFileURL(
+      core.resolve("langsmith/singletons/traceable").replace(/\.js$/, ".mjs"),
+    ).href
   );
   const client = new Client({
     apiKey: "synthetic",
@@ -25,12 +28,14 @@ test("DeepAgents' compatible SDK and Core's newer SDK share trace provenance", a
   vi.stubEnv("LANGSMITH_TRACING", "true");
   await withRunTree(run, async () => {
     expect(newer.getCurrentRunTree()).toBe(run);
+    expect(LangChainTracer.getTraceableRunTree()).toBe(run);
     expect(await resolveCurrentTraceUrl(undefined)).toBe(
       "https://example.test/trace",
     );
   });
   await newer.withRunTree(run, async () => {
     expect(getCurrentRunTree()).toBe(run);
+    expect(LangChainTracer.getTraceableRunTree()).toBe(run);
     expect(await resolveCurrentTraceUrl(undefined)).toBe(
       "https://example.test/trace",
     );

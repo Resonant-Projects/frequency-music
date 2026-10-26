@@ -117,6 +117,8 @@ async function buildImage(): Promise<void> {
     );
     console.log(`Verified LangGraph image: ${target}`);
   } finally {
+    // Drop only this attempt's tag; the verified target keeps the image alive.
+    spawnSync("docker", ["rmi", candidate], { stdio: "ignore" });
     await rm(temporary, { recursive: true, force: true });
   }
 }

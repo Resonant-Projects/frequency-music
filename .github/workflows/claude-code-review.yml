@@ -45,3 +45,29 @@ jobs:
           prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
+
+      - name: Classify review startup failure without exposing response text
+        if: failure() && steps.claude-review.outcome == 'failure'
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, pathlib
+          path = pathlib.Path(os.environ["RUNNER_TEMP"]) / "claude-execution-output.json"
+          if not path.is_file():
+              print("Review diagnostic: execution report unavailable")
+              raise SystemExit(0)
+          events = json.loads(path.read_text())
+          # Never print provider responses, prompts, environment, or credentials.
+          errors = " ".join(
+              json.dumps(event).lower() for event in events
+              if event.get("type") == "result" and event.get("is_error")
+          )
+          categories = {
+              "authentication": ["oauth", "unauthorized", "authentication", "invalid api key"],
+              "quota": ["rate limit", "usage limit", "credit balance", "quota"],
+              "model": ["model not found", "invalid model", "model is not available"],
+              "plugin": ["unknown skill", "unknown slash command", "plugin not found"],
+          }
+          matched = [name for name, needles in categories.items() if any(n in errors for n in needles)]
+          print("Review diagnostic: " + (", ".join(matched) or "unclassified provider/CLI failure"))
+          PYTHON
