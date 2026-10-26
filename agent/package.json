@@ -5,7 +5,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "langgraphjs dev",
-    "build": "langgraphjs build -t resonant-projects-agent:local",
+    "build": "vpx tsx scripts/build-image.ts",
     "up": "langgraphjs up",
     "verify": "vpx tsc --noEmit",
     "smoke:proxmox": "vpx tsx scripts/spike-proxmox.ts",
@@ -27,8 +27,8 @@
     "deepagents": "1.14.2",
     "esbuild": "0.28.2",
     "hono": "4.13.13",
-    "langchain": "1.5.16",
-    "langsmith": "0.11.0",
+    "langchain": "1.5.19",
+    "langsmith": "0.9.0",
     "tsx": "4.23.15",
     "zod": "4.6.7",
     "@modelcontextprotocol/sdk": "1.32.1",
@@ -38,15 +38,21 @@
   "devDependencies": {
     "@langchain/langgraph-cli": "1.5.5",
     "postcss": "8.5.31",
-    "typescript": "^7.0.2"
+    "typescript": "5.9.3",
+    "@types/node": "26.6.5"
   },
   "overrides": {
     "esbuild": "0.28.2",
     "hono": "4.13.13",
     "postcss": "8.5.31",
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "extract-zip": "npm:@electron-internal/extract-zip@1.0.6"
   },
   "patchedDependencies": {
     "braces@3.0.3": "patches/braces@3.0.3.patch"
+  },
+  "//overrides": {
+    "extract-zip": "LangGraph CLI uses extract-zip 2.0.1; Electron-maintained 1.0.6 preserves its API and rejects symlink escape/overwrite attacks. Covered by tests/zip-security.test.ts.",
+    "esbuild, hono, postcss, ws": "Existing security floors; keep CLI and runtime transitive copies on patched versions."
   }
 }

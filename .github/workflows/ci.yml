@@ -25,6 +25,8 @@ jobs:
           cache: true
           run-install: false
       - run: bun install --frozen-lockfile
+      - run: bun audit
+      - run: bun audit --prod
       - run: vp run lint:check
       - run: vp run format:check
       # `vp run test` (= vp test convex scripts) rather than a hardcoded subset,
@@ -67,6 +69,8 @@ jobs:
       - run: bun install --frozen-lockfile
         working-directory: .
       - run: bun install --frozen-lockfile
+      - run: bun audit
+      - run: bun audit --prod
       - run: vpx panda codegen && vpx panda cssgen
       - run: vpx tsc --noEmit
 
@@ -101,6 +105,8 @@ jobs:
       - run: bun install --frozen-lockfile
         working-directory: .
       - run: bun install --frozen-lockfile
+      - run: bun audit
+      - run: bun audit --prod
       - run: vp run verify
       - run: vp test
 
@@ -126,6 +132,10 @@ jobs:
       # node_modules — install root deps too
       - run: bun install --frozen-lockfile
       - run: bun install --frozen-lockfile
+        working-directory: media
+      - run: bun audit
+        working-directory: media
+      - run: bun audit --prod
         working-directory: media
       # The media tests drive real ffmpeg/ffprobe binaries.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg

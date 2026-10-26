@@ -1,0 +1,44 @@
+name: LangGraph API image
+
+on:
+  pull_request:
+    paths:
+      - agent/**
+      - convex/shared/**
+      - .github/workflows/agent-langgraph-image.yml
+  push:
+    branches: [main]
+    paths:
+      - agent/**
+      - convex/shared/**
+      - .github/workflows/agent-langgraph-image.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and smoke LangGraph image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: agent
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.2'
+          no-cache: true
+      - uses: voidzero-dev/setup-vp@68f39c78aaf39be468cabd2afb09c162574c84af # v1.21.2
+        with:
+          node-version: '24'
+          run-install: false
+      - run: bun install --frozen-lockfile
+      # The build wrapper checks a fresh image tag and runs its smoke check
+      # without network access before promoting the final local tag.
+      - run: vp run build
+        env:
+          LANGGRAPH_IMAGE_TAG: frequency-music-langgraph:ci

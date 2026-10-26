@@ -42,6 +42,18 @@
       "description": "Preserve digest-pinned Docker base images.",
       "matchManagers": ["dockerfile"],
       "pinDigests": true
+    },
+    {
+      "description": "DeepAgents 1.14 requires LangSmith below 0.10; keep its real peer range until upstream supports newer SDKs.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["langsmith"],
+      "allowedVersions": ">=0.7.1 <0.10.0"
+    },
+    {
+      "description": "LangGraph API 1.5 requires TypeScript 5; other packages retain their own compiler versions.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": ">=5.5.4 <6"
     }
   ]
 }

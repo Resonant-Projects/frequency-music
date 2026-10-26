@@ -42,7 +42,16 @@
     "viem": {
       "ws": "^8.21.0"
     },
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
+    "@park-ui/panda-preset": {
+      "effect": "^3.20.0"
+    },
+    "@zag-js/core@0.62.1": "0.82.2"
   },
-  "packageManager": "bun@1.4.2"
+  "packageManager": "bun@1.4.2",
+  "//overrides": {
+    "@park-ui/panda-preset > effect": "Upgrade legacy Effect 3.10.15 to patched >=3.20.0; Panda preset uses the compatible Match.value/when/orElse API for radius tokens. Validate with Panda codegen and production build.",
+    "@zag-js/core@0.62.1": "Only Park UI legacy anatomy chain uses 0.62.1; 0.82.2 fixes GHSA-fg4m-w35q-vfg2 while preserving this unused runtime machine surface. Modern Ark UI retains its own 1.x core.",
+    "hono, viem > ws, vite": "Existing security floors and Vite+ alias; preserve the configured toolchain."
+  }
 }
