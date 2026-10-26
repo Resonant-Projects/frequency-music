@@ -2,6 +2,7 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runOnce } from "../media/src/runner";
+import type { JobHandler } from "../media/src/jobs/types";
 import type { callTool } from "../media/src/convex";
 import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vite-plus/test";
@@ -9,7 +10,7 @@ import { modules } from "../harness/modules";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
-import { type MediaJobInput } from "./shared/mediaJobs";
+import { LEASE_MS, type MediaJobInput } from "./shared/mediaJobs";
 import {
   probe,
   pendingArtifact,
@@ -259,6 +260,7 @@ describe("mediaJobs narration and operator publication", () => {
   test("a parked operator publication reuses its retained completion without another upload", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const root = await mkdtemp(join(tmpdir(), "operator-publication-"));
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     try {
       const input: MediaJobInput = {
         ...narrationInput(undefined, "Essay"),
@@ -280,12 +282,20 @@ describe("mediaJobs narration and operator publication", () => {
           }
           if (name === "failMediaJob")
             return t.mutation(internal.mediaJobs.fail, args as never);
-          if (name === "renewMediaLease")
+          if (name === "renewMediaJobLease")
             return t.mutation(internal.mediaJobs.renewLease, args as never);
           throw new Error(`Unexpected tool ${name}`);
         },
       ) as typeof callTool;
-      const upload = vi.fn(async () => {
+      const upload = vi.fn(async ({ job }: Parameters<JobHandler>[0]) => {
+        await vi.advanceTimersByTimeAsync(Math.floor(LEASE_MS / 3));
+        const renewal = vi
+          .mocked(tool)
+          .mock.calls.findIndex(([name]) => name === "renewMediaJobLease");
+        expect(renewal).toBeGreaterThanOrEqual(0);
+        await expect(
+          vi.mocked(tool).mock.results[renewal]!.value,
+        ).resolves.toEqual({ leaseExpiresAt: expect.any(Number) });
         const master = await pendingArtifact(
           t,
           first.jobId,
@@ -338,6 +348,7 @@ describe("mediaJobs narration and operator publication", () => {
       ).toBe("resolved");
       expect(await readdir(join(root, "retained"))).toEqual([]);
     } finally {
+      vi.useRealTimers();
       await rm(root, { recursive: true, force: true });
     }
   });
