@@ -2,10 +2,24 @@ name: Publish agent image
 
 on:
   pull_request:
-    paths: [.dockerignore, .github/workflows/publish-agent-image.yml, scripts/harbor-artifact.py, agent/**, convex/shared/**]
+    paths:
+      [
+        .dockerignore,
+        .github/workflows/publish-agent-image.yml,
+        scripts/harbor-artifact.py,
+        agent/**,
+        convex/shared/**,
+      ]
   push:
     branches: [main]
-    paths: [.dockerignore, .github/workflows/publish-agent-image.yml, scripts/harbor-artifact.py, agent/**, convex/shared/**]
+    paths:
+      [
+        .dockerignore,
+        .github/workflows/publish-agent-image.yml,
+        scripts/harbor-artifact.py,
+        agent/**,
+        convex/shared/**,
+      ]
   workflow_dispatch:
     inputs:
       source_ref:
@@ -24,48 +38,16 @@ env:
   IMAGE_NAME: registry.rproj.art/frequency-music/frequency-music-agent
 
 jobs:
-  validate:
-    name: Build and scan
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: {persist-credentials: false}
-      - name: Install Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with: {bun-version: 1.4.2}
-      - name: Audit production dependencies
-        working-directory: agent
-        run: bun audit --prod
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Build pull-request image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: .
-          file: agent/Dockerfile
-          load: true
-          platforms: linux/amd64
-          push: false
-          tags: frequency-agent:pr-${{ github.sha }}
-          cache-from: type=gha,scope=frequency-agent
-          cache-to: type=gha,mode=max,scope=frequency-agent
-      - name: Smoke-test hardened runtime
-        run: |
-          docker run --rm --entrypoint /bin/sh frequency-agent:pr-${{ github.sha }} -ec 'command -v node; command -v codex; ! command -v npm; test ! -d /usr/local/lib/node_modules/npm; test ! -e node_modules/@typescript/typescript-linux-x64; node_modules/.bin/tsx --version; codex --version'
-      - name: Scan pull-request image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with: {image-ref: frequency-agent:pr-${{ github.sha }}, version: v0.70.0, format: table, exit-code: "1", ignore-unfixed: false, severity: HIGH,CRITICAL}
-
   build:
-    name: Build, smoke-test, and scan exact artifact
-    if: github.event_name != 'pull_request'
+    name: Build and scan
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    permissions: {contents: read}
+    permissions:
+      contents: read
     outputs:
       source_sha: ${{ steps.metadata.outputs.source_sha }}
       image_name: ${{ steps.metadata.outputs.image_name }}
+      trivy_summary: ${{ steps.scan-summary.outputs.summary }}
       digest: ${{ steps.artifact.outputs.digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -75,7 +57,8 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || github.sha }}
       - id: metadata
         shell: bash
-        env: {REQUESTED_SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || '' }}}
+        env:
+          REQUESTED_SOURCE_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.source_ref || '' }}
         run: |
           set -euo pipefail
           source_sha=$(git rev-parse HEAD)
@@ -84,7 +67,8 @@ jobs:
           fi
           printf 'source_sha=%s\nimage_name=%s\n' "$source_sha" "${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with: {bun-version: 1.4.2}
+        with:
+          bun-version: 1.4.2
       - name: Audit production dependencies
         working-directory: agent
         run: bun audit --prod
@@ -103,8 +87,12 @@ jobs:
           cache-to: type=gha,mode=max,scope=frequency-agent
           provenance: mode=max
           sbom: true
-      - name: Load exact OCI artifact for smoke test
-        run: docker load --input "$RUNNER_TEMP/agent-image.tar"
+      - name: Load amd64 image from exact OCI artifact
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes skopeo
+          skopeo copy --override-os linux --override-arch amd64 "oci-archive:$RUNNER_TEMP/agent-image.tar" "docker-daemon:frequency-agent:smoke"
       - name: Record artifact index digest
         id: artifact
         shell: bash
@@ -115,10 +103,19 @@ jobs:
           printf 'digest=%s\n' "$digest" >> "$GITHUB_OUTPUT"
           printf '{"source_sha":"%s","image_name":"%s","digest":"%s"}\n' '${{ steps.metadata.outputs.source_sha }}' '${{ steps.metadata.outputs.image_name }}' "$digest" > "$RUNNER_TEMP/agent-artifact.json"
       - name: Smoke-test exact artifact
-        run: docker run --rm --entrypoint /bin/sh "${IMAGE_NAME}:sha-${{ steps.metadata.outputs.source_sha }}" -ec 'command -v node; command -v codex; ! command -v npm; test ! -d /usr/local/lib/node_modules/npm; test ! -e node_modules/@typescript/typescript-linux-x64; node_modules/.bin/tsx --version; codex --version'
+        run: docker run --rm --entrypoint /bin/sh frequency-agent:smoke -ec 'command -v node; command -v codex; ! command -v npm; test ! -d /usr/local/lib/node_modules/npm; test ! -e node_modules/@typescript/typescript-linux-x64; node_modules/.bin/tsx --version; codex --version'
       - name: Scan exact OCI artifact
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with: {input: ${{ runner.temp }}/agent-image.tar, version: v0.70.0, format: table, exit-code: "1", ignore-unfixed: false, severity: HIGH,CRITICAL}
+        with:
+          input: ${{ runner.temp }}/agent-image.tar
+          version: v0.70.0
+          format: table
+          exit-code: "1"
+          ignore-unfixed: false
+          severity: HIGH,CRITICAL
+      - name: Record Trivy gate summary
+        id: scan-summary
+        run: echo 'summary=Exact OCI artifact passed Trivy v0.70.0; HIGH/CRITICAL blocked, including unfixed findings.' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: agent-image-${{ steps.metadata.outputs.source_sha }}
@@ -135,7 +132,10 @@ jobs:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     timeout-minutes: 30
     environment: harbor-publish
-    permissions: {contents: read, id-token: write, attestations: write}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     env:
       HARBOR_REGISTRY: registry.rproj.art
       HARBOR_REPOSITORY: frequency-music/frequency-music-agent
@@ -148,12 +148,20 @@ jobs:
       COSIGN_SHA256: 4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71
       IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
       SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
-    outputs: {target_ref: ${{ steps.coords.outputs.target_ref }}, digest: ${{ needs.build.outputs.digest }}, source_sha: ${{ needs.build.outputs.source_sha }} }
+    outputs:
+      target_ref: ${{ steps.coords.outputs.target_ref }}
+      digest: ${{ needs.build.outputs.digest }}
+      source_sha: ${{ needs.build.outputs.source_sha }}
+      harbor_summary: ${{ steps.harbor-scan.outputs.summary }}
+      trivy_summary: ${{ needs.build.outputs.trivy_summary }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with: {name: agent-image-${{ needs.build.outputs.source_sha }}, path: ${{ runner.temp }}/agent}
+        with:
+          name: agent-image-${{ needs.build.outputs.source_sha }}
+          path: ${{ runner.temp }}/agent
       - name: Confirm the published source is on main
-        env: {GITHUB_TOKEN: ${{ github.token }}}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
@@ -171,36 +179,63 @@ jobs:
           echo "${CRANE_SHA256}  $RUNNER_TEMP/crane.tgz" | sha256sum -c -; tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$b" crane
           curl -fsSL -o "$b/cosign" "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"; echo "${COSIGN_SHA256}  $b/cosign" | sha256sum -c -; chmod 0755 "$b"/*; echo "$b" >> "$GITHUB_PATH"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: {ref: ${{ github.sha }}, persist-credentials: false}
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Install Harbor API helper
         run: install -m 0755 scripts/harbor-artifact.py "$RUNNER_TEMP/bin/harbor-artifact"
       - name: Log in to Harbor
-        env: {HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }} }
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
         run: test -n "$HARBOR_PASSWORD" && printf '%s' "$HARBOR_PASSWORD" | crane auth login "$HARBOR_REGISTRY" --username "$HARBOR_USERNAME" --password-stdin
       - name: Push exact OCI index to Harbor
         id: coords
-        env: {HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }} }
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
         run: |
           set -euo pipefail
           target_tag="sha-${SOURCE_SHA}-${IMAGE_DIGEST:7:12}"; target_tag_ref="$HARBOR_REGISTRY/$HARBOR_REPOSITORY:$target_tag"; target_ref="$HARBOR_REGISTRY/$HARBOR_REPOSITORY@$IMAGE_DIGEST"
-          existing=$(harbor-artifact digest "$target_tag" || true)
-          if [[ -z "$existing" ]]; then crane push "$RUNNER_TEMP/agent/agent-image.tar" "$target_tag_ref"; elif [[ "$existing" != "$IMAGE_DIGEST" ]]; then echo "immutable tag points at $existing" >&2; exit 1; fi
+          existing=$(harbor-artifact digest "$target_tag")
+          # crane reads OCI layouts as directories. The layout has one descriptor
+          # pointing to the BuildKit index; pushing that descriptor preserves its
+          # digest. --index would instead push the outer layout catalog.
+          mkdir -p "$RUNNER_TEMP/agent/layout"
+          tar -xf "$RUNNER_TEMP/agent/agent-image.tar" -C "$RUNNER_TEMP/agent/layout"
+          if [[ -z "$existing" ]]; then
+            crane push "$RUNNER_TEMP/agent/layout" "$target_tag_ref"
+          elif [[ "$existing" != "$IMAGE_DIGEST" ]]; then
+            echo "immutable tag points at $existing" >&2
+            exit 1
+          fi
           [[ "$(crane digest "$target_tag_ref")" == "$IMAGE_DIGEST" ]] || { echo 'Harbor index digest differs from recorded artifact digest' >&2; exit 1; }
           printf 'target_ref=%s\n' "$target_ref" >> "$GITHUB_OUTPUT"; printf 'TARGET_REF=%s\nTARGET_TAG_REF=%s\n' "$target_ref" "$target_tag_ref" >> "$GITHUB_ENV"
-          amd64=$(harbor-artifact amd64 "$IMAGE_DIGEST"); printf 'AMD64_REF=%s/%s@%s\nAMD64_DIGEST=%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$amd64" "$amd64" >> "$GITHUB_ENV"
+          amd64=$(harbor-artifact amd64 "$IMAGE_DIGEST")
+          [[ "$amd64" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'AMD64_REF=%s/%s@%s\nAMD64_DIGEST=%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$amd64" "$amd64" >> "$GITHUB_ENV"
       - name: Attest Harbor subject
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with: {subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_REPOSITORY }}, subject-digest: ${{ env.IMAGE_DIGEST }}, push-to-registry: true}
+        with:
+          subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_REPOSITORY }}
+          subject-digest: ${{ env.IMAGE_DIGEST }}
+          push-to-registry: true
       - name: Sign and verify Harbor index and amd64 manifest
         run: |
           set -euo pipefail
-          cosign sign --yes --recursive "$TARGET_REF"
+          verified=true
+          for ref in "$TARGET_REF" "$AMD64_REF"; do
+            if ! cosign verify --certificate-identity "$SIGNER_IDENTITY" --certificate-oidc-issuer "$SIGNER_ISSUER" "$ref" > /dev/null 2>&1; then verified=false; fi
+          done
+          if [[ "$verified" != true ]]; then cosign sign --yes --recursive "$TARGET_REF"; fi
           for ref in "$TARGET_REF" "$AMD64_REF"; do cosign verify --certificate-identity "$SIGNER_IDENTITY" --certificate-oidc-issuer "$SIGNER_ISSUER" "$ref" > /dev/null; done
           [[ "$(crane digest "$TARGET_REF")" == "$IMAGE_DIGEST" ]]
       - name: Wait for Harbor vulnerability scan
-        env: {HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }} }
+        id: harbor-scan
+        env:
+          HARBOR_PASSWORD: ${{ secrets.HARBOR_PUBLISH_ROBOT_SECRET }}
         run: |
+          set -euo pipefail
           scan=$(harbor-artifact scan "$AMD64_DIGEST" 600); { echo '## Harbor vulnerability scan'; echo '```json'; printf '%s\n' "$scan"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          printf 'summary=%s\n' "$(printf '%s' "$scan" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin),separators=(",",":")))')" >> "$GITHUB_OUTPUT"
       - name: Prove anonymous pull
         run: mkdir -p "$RUNNER_TEMP/anon" && for ref in "$TARGET_REF" "$AMD64_REF"; do env -u DOCKER_CONFIG HOME="$RUNNER_TEMP/anon" crane manifest "$ref" >/dev/null; done
       - name: Write and upload Harbor deployment manifest
@@ -211,7 +246,11 @@ jobs:
           PY
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with: {name: agent-image-harbor-${{ needs.build.outputs.source_sha }}, path: ${{ runner.temp }}/harbor-deployment.json, if-no-files-found: error, retention-days: 30}
+        with:
+          name: agent-image-harbor-${{ needs.build.outputs.source_sha }}
+          path: ${{ runner.temp }}/harbor-deployment.json
+          if-no-files-found: error
+          retention-days: 30
       - if: always()
         run: rm -f "$HOME/.docker/config.json"
 
@@ -221,10 +260,14 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: homelab-deploy-pr
-    permissions: {contents: read}
+    timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Require GitHub App secrets
-        env: {APP_ID: ${{ secrets.HOMELAB_DEPLOY_APP_ID }}, APP_KEY: ${{ secrets.HOMELAB_DEPLOY_APP_PRIVATE_KEY }}}
+        env:
+          APP_ID: ${{ secrets.HOMELAB_DEPLOY_APP_ID }}
+          APP_KEY: ${{ secrets.HOMELAB_DEPLOY_APP_PRIVATE_KEY }}
         run: test -n "$APP_ID" && test -n "$APP_KEY" || { echo 'HOMELAB_DEPLOY_APP_ID and HOMELAB_DEPLOY_APP_PRIVATE_KEY must be configured in homelab-deploy-pr' >&2; exit 1; }
       - name: Create GitHub App token
         id: app
@@ -237,18 +280,45 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: {repository: keithce/homelab-infra, token: ${{ steps.app.outputs.token }}, ref: main, path: homelab-infra}
+        with:
+          repository: keithce/homelab-infra
+          token: ${{ steps.app.outputs.token }}
+          ref: main
+          path: homelab-infra
+      - name: Prepare deploy branch without rewriting history
+        working-directory: homelab-infra
+        run: |
+          set -euo pipefail
+          git config user.name 'frequency-deploy-app[bot]'
+          git config user.email 'frequency-deploy-app[bot]@users.noreply.github.com'
+          branch=deploy/frequency-worker-agent
+          remote=$(git ls-remote --heads origin "refs/heads/$branch")
+          if [[ -n "$remote" ]]; then
+            git fetch origin "$branch"
+            git checkout -b "$branch" FETCH_HEAD
+            git merge --no-edit origin/main
+          else
+            git checkout -b "$branch" origin/main
+          fi
       - name: Update all agent digest pins
         working-directory: homelab-infra
-        env: {DIGEST: ${{ needs.harbor.outputs.digest }}}
+        env:
+          DIGEST: ${{ needs.harbor.outputs.digest }}
+          TRIVY_SUMMARY: ${{ needs.harbor.outputs.trivy_summary }}
+          HARBOR_SUMMARY: ${{ needs.harbor.outputs.harbor_summary }}
         run: |
           set -euo pipefail
           python3 - "$DIGEST" <<'PY'
           import pathlib,re,sys
-          digest=sys.argv[1]; files=[pathlib.Path('kubernetes/infra/frequency-worker/deployment.yaml'),pathlib.Path('hosts/frequency-process-monitor/check.cjs')]
+          digest=sys.argv[1]
+          if not re.fullmatch(r'sha256:[0-9a-f]{64}',digest): raise SystemExit('invalid Harbor digest')
+          files=[pathlib.Path('kubernetes/infra/frequency-worker/deployment.yaml'),pathlib.Path('hosts/frequency-process-monitor/check.cjs')]
           n=0
-          for p in files:
-            s=p.read_text(); t=re.sub(r'(registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:)[0-9a-f]{64}',r'\g<1>'+digest.removeprefix('sha256:'),s)
+          for p,expected in zip(files,(3,1)):
+            s=p.read_text()
+            count=len(re.findall(r'registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:[0-9a-f]{64}',s))
+            if count != expected: raise SystemExit(f'{p}: expected {expected} pins, found {count}')
+            t=re.sub(r'(registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:)[0-9a-f]{64}',r'\g<1>'+digest.removeprefix('sha256:'),s)
             n += len(re.findall(r'registry\.rproj\.art/frequency-music/frequency-music-agent@sha256:',s))
             p.write_text(t)
           if n != 4: raise SystemExit(f'expected 4 digest pins, replaced {n}')
@@ -259,13 +329,26 @@ jobs:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           SOURCE_SHA: ${{ needs.harbor.outputs.source_sha }}
           DIGEST: ${{ needs.harbor.outputs.digest }}
+          TRIVY_SUMMARY: ${{ needs.harbor.outputs.trivy_summary }}
+          HARBOR_SUMMARY: ${{ needs.harbor.outputs.harbor_summary }}
         run: |
-          set -euo pipefail; git config user.name frequency-deploy-app; git config user.email frequency-deploy-app[bot]@users.noreply.github.com
-          git fetch origin deploy/frequency-worker-agent || true
-          if git show-ref --verify --quiet refs/remotes/origin/deploy/frequency-worker-agent; then git checkout -B deploy/frequency-worker-agent origin/deploy/frequency-worker-agent; else git checkout -B deploy/frequency-worker-agent; fi git add kubernetes/infra/frequency-worker/deployment.yaml hosts/frequency-process-monitor/check.cjs
-          git diff --cached --quiet && echo 'No digest changes' || git commit -m "chore(frequency-worker): pin agent image digest"
+          set -euo pipefail
+          git add kubernetes/infra/frequency-worker/deployment.yaml hosts/frequency-process-monitor/check.cjs
+          if ! git diff --cached --quiet; then git commit -m "chore(frequency-worker): pin agent image digest"; fi
           git push --set-upstream origin deploy/frequency-worker-agent
           body=$(mktemp)
-          printf 'Harbor digest: `registry.rproj.art/frequency-music/frequency-music-agent@%s`\n\nSource commit: https://github.com/${GITHUB_REPOSITORY}/commit/%s\nWorkflow run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/%s\n\nTrivy: exact OCI artifact passed HIGH/CRITICAL scan in the source workflow.\nHarbor scan: passed/recorded by the harbor job.\nCosign: verified index and amd64 manifest with identity `%s` and issuer `%s`.\n' "$DIGEST" "$SOURCE_SHA" "$GITHUB_RUN_ID" 'https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main' 'https://token.actions.githubusercontent.com' > "$body"
+          {
+            # shellcheck disable=SC2016 # Markdown backticks are literal.
+            printf 'Harbor digest: `%s@%s`\n\n' "$IMAGE_NAME" "$DIGEST"
+            printf 'Source commit: https://github.com/%s/commit/%s\n' "$GITHUB_REPOSITORY" "$SOURCE_SHA"
+            printf 'Workflow run: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            # shellcheck disable=SC2016
+            printf 'Trivy: %s\n\nHarbor scan: `%s`\n\n' "$TRIVY_SUMMARY" "$HARBOR_SUMMARY"
+            echo 'Cosign verified both index and amd64 manifest.'
+            # shellcheck disable=SC2016
+            echo 'Identity: `https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main`'
+            # shellcheck disable=SC2016
+            echo 'Issuer: `https://token.actions.githubusercontent.com`'
+          } > "$body"
           pr=$(gh pr list --repo keithce/homelab-infra --head deploy/frequency-worker-agent --state open --json number --jq '.[0].number')
           if [[ -n "$pr" ]]; then gh pr edit "$pr" --body-file "$body"; else gh pr create --repo keithce/homelab-infra --base main --head deploy/frequency-worker-agent --title "chore(frequency-worker): pin agent image digest" --body-file "$body"; fi
