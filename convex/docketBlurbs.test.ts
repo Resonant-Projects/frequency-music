@@ -126,7 +126,7 @@ test("concurrent requests admit once; hourly and stale rebuilds retain generated
   expect(generateLlmText).toHaveBeenCalledTimes(1);
   expect((await t.mutation(internal.docket.list, {}))[0]).toMatchObject(blurb);
   expect(await t.mutation(internal.docket.prepare, {})).toBe(false);
-  vi.setSystemTime(Date.now() + DOCKET_REBUILD_MS);
+  vi.setSystemTime((await state(t)).completedAt + DOCKET_REBUILD_MS);
   expect(await t.mutation(internal.docket.prepare, {})).toBe(true);
   await flush(t);
   await t.run(markDocketStale);
@@ -143,7 +143,7 @@ test("inference failure leaves usable text and does not repeat paid attempts for
   expect(
     await t.query(internal.docket.card, { cardId: card!._id }),
   ).toMatchObject({ blurbMd: "Usable source text", spokenBlurb: "" });
-  vi.setSystemTime(Date.now() + DOCKET_REBUILD_MS);
+  vi.setSystemTime((await state(t)).completedAt + DOCKET_REBUILD_MS);
   await t.mutation(internal.docket.prepare, {});
   await flush(t);
   expect(generateLlmText).toHaveBeenCalledTimes(1);
@@ -172,7 +172,7 @@ test("save fences edits and expired owners; invalidation during a rebuild surviv
   ).toBe(false);
   await t.mutation(internal.docket.finishRebuild, { token: 1 });
   expect(await t.mutation(internal.docket.prepare, {})).toBe(true);
-  vi.setSystemTime(Date.now() + DOCKET_REBUILD_LEASE_MS);
+  vi.setSystemTime((await state(t)).startedAt + DOCKET_REBUILD_LEASE_MS);
   const latest = (await t.mutation(internal.docket.list, {}))[0]!;
   expect((await state(t)).token).toBe(3);
   expect(

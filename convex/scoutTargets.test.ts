@@ -88,6 +88,7 @@ describe("source scout target census", () => {
 
   test("rotates six tied areas through the five weekly slots", async () => {
     vi.useFakeTimers();
+    vi.setSystemTime(new Date(Date.UTC(2026, 0, 7)));
     try {
       const t = convexTest(schema, modules);
       await t.run(async (ctx) => {
