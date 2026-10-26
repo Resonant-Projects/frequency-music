@@ -15,7 +15,8 @@ with a typed result. It never writes research data directly.
   live in `src/jobs/`.
 - Run locally: `cd media && vp install && APP_ENV=dev vp run start` (needs
   ffmpeg and the 1Password app or `OP_SERVICE_ACCOUNT_TOKEN`).
-- Tests: `vp run test:media` (needs ffmpeg on PATH).
+- Tests from the repository root: `vp run test:media` (requires `ffmpeg`, `ffprobe`, `sclang`, and
+  `scsynth` on PATH; missing tools fail the suite).
 - Deployment: `homelab-infra/hosts/frequency-media/` (compose, deploy script,
   operator notes for ai-5090-02).
 
@@ -142,8 +143,40 @@ docker run --rm --entrypoint /bin/sh frequency-music-media:local \
 
 `src/engines/sc/smoke.ts` is a two-second real render; the publish workflow
 runs it in its smoke step. `tests/sc-real.test.ts` holds the real-engine
-tests (kits, pitch, dense voices, handler). It skips on hosts without
-SuperCollider, so run it in an image that has the tools.
+tests (kits, pitch, dense voices, handler). These are required on development
+hosts and CI runners. Development-host installation and rebuilds are owned by
+[personal-config's native media setup](https://github.com/keithce/personal-config/blob/main/README.md#frequency-music-media-prerequisites),
+including both platform bootstraps and the focused installer. A rebuilt machine
+is ready only after all six tests pass with zero skips.
+
+For standalone setup on Ubuntu or Debian, install the dependencies with:
+
+```sh
+sudo apt-get update
+sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+  ffmpeg supercollider-language supercollider-server
+# Run from the repository root:
+vp run test:media
+```
+
+On macOS, install Homebrew `ffmpeg` and the `supercollider` cask. The cask
+installs an app without CLI links, so expose its binaries before testing:
+
+```sh
+brew install ffmpeg
+brew install --cask supercollider
+export PATH="/Applications/SuperCollider.app/Contents/MacOS:/Applications/SuperCollider.app/Contents/Resources:$PATH"
+# Run from the repository root:
+vp run test:media
+```
+
+Use the actual app paths above or the `personal-config` installer's launchers.
+Symlinking `sclang` changes where it looks for its bundled class library.
+
+The renderer runs offline with a private home directory. Linux uses Qt
+offscreen; the macOS app uses its bundled cocoa backend. No audio device,
+running SuperCollider service, or production credentials are needed. The media
+CI job installs the same Linux packages on each fresh runner.
 
 CI publishes the image through `.github/workflows/publish-media-image.yml`
 (pull requests build, smoke-test, and scan; `main` publishes an immutable

@@ -1,12 +1,12 @@
-// Real SuperCollider renders. Skipped unless sclang, scsynth, ffmpeg, and
-// ffprobe are on PATH (the media image; this host has no SuperCollider).
+// Real SuperCollider renders. Requires sclang, scsynth, ffmpeg, and ffprobe
+// on PATH, on development hosts as well as CI runners.
 // These prove the engine runs and lands pitch on the tuning table; they say
 // nothing about musical or listening validity (plan 11 steps 3-4).
 import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { afterEach, beforeAll, describe, expect, it } from "vite-plus/test";
 import {
   generateSeedEvents,
   prepareDegreeToHz,
@@ -18,12 +18,6 @@ import { measure } from "../src/audio/loudness";
 import { renderLocal } from "../src/engines/sc";
 import { litmusRenderHandler } from "../src/jobs/litmusRender";
 import type { NewArtifact, ToolClient } from "../src/jobs/types";
-
-const hasSuperCollider = ["sclang", "scsynth", "ffmpeg", "ffprobe"].every(
-  (executable) =>
-    spawnSync("sh", ["-c", `command -v ${executable}`], { stdio: "ignore" })
-      .status === 0,
-);
 
 const roots: string[] = [];
 async function root() {
@@ -121,7 +115,21 @@ const kits: { name: string; tuning: TuningSpec; referenceHz: number }[] = [
 
 const evidence: Record<string, unknown>[] = [];
 
-describe.skipIf(!hasSuperCollider)("real SuperCollider litmus renders", () => {
+describe("real SuperCollider litmus renders", () => {
+  beforeAll(() => {
+    const missing = ["sclang", "scsynth", "ffmpeg", "ffprobe"].filter(
+      (executable) =>
+        spawnSync("sh", ["-c", `command -v ${executable}`], {
+          stdio: "ignore",
+          timeout: 5000,
+        }).status !== 0,
+    );
+    if (missing.length)
+      throw new Error(
+        `Required media test tools missing from PATH: ${missing.join(", ")}. See media/README.md for setup.`,
+      );
+  });
+
   afterEach(async () => {
     const path = process.env.SC_EVIDENCE_PATH;
     if (path) await writeFile(path, `${JSON.stringify(evidence, null, 2)}\n`);

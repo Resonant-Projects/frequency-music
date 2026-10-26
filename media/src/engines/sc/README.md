@@ -77,8 +77,9 @@ example. Four tests use the installed ffmpeg and ffprobe with generated float
 WAV fixtures and mocked SC to reject NaN and infinite samples before 24-bit
 conversion and to encode genuine silence. They skip without ffmpeg.
 
-`tests/sc-real.test.ts` runs the real engine and skips unless `sclang`,
-`scsynth`, `ffmpeg`, and `ffprobe` are on PATH. On 2026-10-13 it passed
+`tests/sc-real.test.ts` runs the real engine and requires `sclang`,
+`scsynth`, `ffmpeg`, and `ffprobe` on PATH. Missing tools fail the suite; see
+`media/README.md` for setup. On 2026-10-13 it passed
 inside a container built from the pinned media base image with Debian's
 SuperCollider 3.13.0 (`supercollider-server`, `supercollider-language`):
 

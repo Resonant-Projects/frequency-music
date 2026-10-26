@@ -28,7 +28,8 @@ export const runCommand: RunCommand = (command) =>
               PATH: process.env.PATH,
               HOME: command.cwd,
               TMPDIR: command.cwd,
-              QT_QPA_PLATFORM: "offscreen",
+              QT_QPA_PLATFORM:
+                process.platform === "darwin" ? "cocoa" : "offscreen",
             },
           }),
           closed: false,

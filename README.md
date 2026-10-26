@@ -79,6 +79,11 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 ### Verification
 
 Full verification needs dependencies in all four packages: run `vp install` in the root, `web/`, `agent/`, and `media/`. These are separate packages; a root install alone does not install their dependencies.
+Media development and full verification require `ffmpeg`, `ffprobe`, `sclang`,
+and `scsynth` on PATH. Rebuilt development machines must restore them through
+[personal-config's native media setup](https://github.com/keithce/personal-config/blob/main/README.md#frequency-music-media-prerequisites)
+and pass all six real-render tests with zero skips. See
+[media test setup](media/README.md) for native package installation.
 
 - Convex: `vp test convex`
 - Web: `vp run typecheck:web` and `vp run build:web`
