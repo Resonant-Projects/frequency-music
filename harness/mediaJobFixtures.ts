@@ -1,8 +1,6 @@
-import { convexTest } from "convex-test";
-import { modules } from "./modules";
+import type { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import schema from "../convex/schema";
 import type { MediaJobInput } from "../convex/shared/mediaJobs";
 
 export const probe = {
