@@ -380,10 +380,11 @@ describe("stateless MCP", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       `https://convex.example/agent-tools/${definition.name}`,
       expect.objectContaining({
-        signal,
+        signal: expect.any(AbortSignal),
         body: JSON.stringify({ secret: "test-outbound-agent" }),
       }),
     );
+    expect(signal.aborted).toBe(false);
     expect(JSON.stringify(fetchMock.mock.calls)).not.toContain(inbound);
   });
 });

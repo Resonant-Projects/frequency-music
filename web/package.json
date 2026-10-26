@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project=chromium",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "prepare": "if [ -f node_modules/@effect/tsgo/package.json ]; then effect-tsgo patch --typescript --no-oxlint; fi"
   },
   "dependencies": {
     "@ark-ui/solid": "5.39.3",
@@ -35,7 +36,8 @@
     "typescript": "^7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
     "vite-plugin-solid": "^2.11.14",
-    "vite-plus": "1.3.0"
+    "vite-plus": "1.3.0",
+    "@effect/tsgo": "0.59.0"
   },
   "overrides": {
     "hono": "4.13.13",
@@ -44,13 +46,13 @@
     },
     "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0",
     "@park-ui/panda-preset": {
-      "effect": "^3.20.0"
+      "effect": "4.0.6"
     },
     "@zag-js/core@0.62.1": "0.82.2"
   },
   "packageManager": "bun@1.4.2",
   "//overrides": {
-    "@park-ui/panda-preset > effect": "Upgrade legacy Effect 3.10.15 to patched >=3.20.0; Panda preset uses the compatible Match.value/when/orElse API for radius tokens. Validate with Panda codegen and production build.",
+    "@park-ui/panda-preset > effect": "Effect 4.0.6 compatibility verified against Park radius tokens, Panda codegen, and production build; see docs/effect-v4-upgrade.md.",
     "@zag-js/core@0.62.1": "Only Park UI legacy anatomy chain uses 0.62.1; 0.82.2 fixes GHSA-fg4m-w35q-vfg2 while preserving this unused runtime machine surface. Modern Ark UI retains its own 1.x core.",
     "hono, viem > ws, vite": "Existing security floors and Vite+ alias; preserve the configured toolchain."
   }

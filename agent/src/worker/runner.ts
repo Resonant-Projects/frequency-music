@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { requestDeadline, startMaintenance } from "./maintenance.js";
 import { workerOutbox } from "../shared/outbox.js";
 import { graph as failureInvestigationGraph } from "../graphs/failure-investigation/index.js";
 // Production worker runner.
@@ -41,7 +43,7 @@ import {
   type KnownGraphName,
 } from "./graphInput.js";
 
-import { runWorkerLoop } from "./lifecycle.js";
+import { runWorkerLoopEffect } from "./lifecycle.js";
 import {
   createLivenessReporter,
   type LivenessReporter,
@@ -115,43 +117,43 @@ async function appendNodeEvent(
 // Bound their HTTP lifetime so an abandoned heartbeat cannot hold a drained run.
 export const WORKER_HEARTBEAT_TIMEOUT_MS = 30_000;
 
-async function appendWorkerHeartbeat(runId: string): Promise<void> {
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    WORKER_HEARTBEAT_TIMEOUT_MS,
-  );
-  try {
-    await callConvex(
-      "appendAgentRunEvent",
-      {
-        runId,
-        kind: "status",
-        message: "Worker heartbeat",
-        payload: { reason: "worker_heartbeat" },
-      },
-      controller.signal,
+function appendWorkerHeartbeat(runId: string) {
+  return Effect.gen(function* () {
+    const signal = yield* requestDeadline(WORKER_HEARTBEAT_TIMEOUT_MS);
+    yield* Effect.tryPromise({
+      try: () =>
+        callConvex(
+          "appendAgentRunEvent",
+          {
+            runId,
+            kind: "status",
+            message: "Worker heartbeat",
+            payload: { reason: "worker_heartbeat" },
+          },
+          signal,
+        ),
+      catch: (error) => error,
+    }).pipe(
+      Effect.tap(() => Effect.sync(markWorkerAlive)),
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          log(
+            `failed to append heartbeat for run ${runId}:`,
+            redactError(error),
+          );
+        }),
+      ),
     );
-    markWorkerAlive();
-  } catch (error) {
-    log(`failed to append heartbeat for run ${runId}:`, redactError(error));
-  } finally {
-    clearTimeout(timeout);
-  }
+  }).pipe(Effect.scoped);
 }
 
 function startRunHeartbeat(runId: string): () => Promise<void> {
-  const pending = new Set<Promise<void>>();
-  const timer = setInterval(() => {
-    const heartbeat = appendWorkerHeartbeat(runId);
-    pending.add(heartbeat);
-    void heartbeat.finally(() => pending.delete(heartbeat));
-  }, HEARTBEAT_INTERVAL_MS);
-  (timer as { unref?: () => void }).unref?.();
-  return async () => {
-    clearInterval(timer);
-    await Promise.all(pending);
-  };
+  return startMaintenance({
+    intervalMs: HEARTBEAT_INTERVAL_MS,
+    task: appendWorkerHeartbeat(runId),
+    onDefect: (error) =>
+      log(`heartbeat task failed for run ${runId}:`, redactError(error)),
+  });
 }
 
 async function markFailed(
@@ -255,32 +257,37 @@ async function runClaimedGraph(claim: ClaimedRun): Promise<void> {
   }
 
   const invocation = buildGraphInvocation(claim);
-  const stopHeartbeat = startRunHeartbeat(runId);
-
-  try {
-    const { messageCount, summary } = await streamGraph(
-      runId,
-      invocation.graphName,
-      invocation.input,
+  const program = Effect.gen(function* () {
+    yield* Effect.acquireRelease(
+      Effect.sync(() => startRunHeartbeat(runId)),
+      (stop) => Effect.promise(stop),
     );
-    log(`run ${runId} (${graphName}) finished`);
-
-    if (TERMINAL_STATUS_OWNER[invocation.graphName] === "runner") {
-      // weekly-brief: the graph writes no audit terminal status, so the runner
-      // owns it. Isolate terminal-write failures from graph execution failures.
-      await markRunnerCompleted(runId, graphName, messageCount, summary);
-    }
-  } catch (error) {
-    // The graph threw before reaching its own terminal-status write (or has no
-    // owner), so the runner ensures the run does not linger as running.
-    log(`run ${runId} (${graphName}) threw:`, redactError(error));
-    await markFailed(runId, "Worker caught graph execution error", {
-      reason: "graph_execution_error",
-      message: redactError(error),
-    });
-  } finally {
-    await stopHeartbeat();
-  }
+    yield* Effect.gen(function* () {
+      const { messageCount, summary } = yield* Effect.tryPromise({
+        try: () => streamGraph(runId, invocation.graphName, invocation.input),
+        catch: (error) => error,
+      });
+      log(`run ${runId} (${graphName}) finished`);
+      if (TERMINAL_STATUS_OWNER[invocation.graphName] === "runner") {
+        yield* Effect.tryPromise({
+          try: () =>
+            markRunnerCompleted(runId, graphName, messageCount, summary),
+          catch: (error) => error,
+        });
+      }
+    }).pipe(
+      Effect.catch((error) =>
+        Effect.promise(async () => {
+          log(`run ${runId} (${graphName}) threw:`, redactError(error));
+          await markFailed(runId, "Worker caught graph execution error", {
+            reason: "graph_execution_error",
+            message: redactError(error),
+          });
+        }),
+      ),
+    );
+  }).pipe(Effect.scoped);
+  await Effect.runPromise(program);
 }
 
 // Claims and executes at most one run. Returns true when a run was claimed.
@@ -353,21 +360,27 @@ export async function main(): Promise<void> {
       (graphFilter ? ` graphFilter=${graphFilter}` : ""),
   );
 
-  try {
-    await runWorkerLoop({
-      poll: () => pollOnce(workerId, graphFilter),
-      pollIntervalMs: POLL_INTERVAL_MS,
-      signals: process,
-      log,
-      onPollError: (error) => log("poll iteration failed:", redactError(error)),
-      onPollSettled: markWorkerAlive,
-    });
-  } finally {
-    // A drained worker stops asserting liveness; the deadline then reports the
-    // intended shutdown exactly like any other absence of pushes.
-    await liveness?.stop();
-    liveness = null;
-  }
+  await Effect.runPromise(
+    Effect.gen(function* () {
+      yield* Effect.acquireRelease(
+        Effect.sync(() => liveness),
+        (reporter) =>
+          Effect.promise(async () => {
+            await reporter?.stop();
+            liveness = null;
+          }),
+      );
+      yield* runWorkerLoopEffect({
+        poll: () => pollOnce(workerId, graphFilter),
+        pollIntervalMs: POLL_INTERVAL_MS,
+        signals: process,
+        log,
+        onPollError: (error) =>
+          log("poll iteration failed:", redactError(error)),
+        onPollSettled: markWorkerAlive,
+      });
+    }).pipe(Effect.scoped),
+  );
 
   log("worker loop exited");
 }

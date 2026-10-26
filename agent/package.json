@@ -7,7 +7,7 @@
     "dev": "langgraphjs dev",
     "build": "vpx tsx scripts/build-image.ts",
     "up": "langgraphjs up",
-    "verify": "vpx tsc --noEmit",
+    "verify": "effect-tsgo tsc@7.0.2 --noEmit",
     "smoke:proxmox": "vpx tsx scripts/spike-proxmox.ts",
     "smoke:research-pipeline": "vpx tsx scripts/smoke-research-pipeline.ts",
     "run:research-pipeline": "RUN_RESEARCH_PIPELINE_REAL=true vpx tsx scripts/smoke-research-pipeline.ts",
@@ -33,13 +33,15 @@
     "zod": "4.6.7",
     "@modelcontextprotocol/sdk": "1.32.1",
     "varlock": "1.22.0",
-    "@varlock/1password-plugin": "2.0.5"
+    "@varlock/1password-plugin": "2.0.5",
+    "effect": "4.0.6"
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "1.5.1",
     "postcss": "8.5.31",
     "typescript": "5.9.3",
-    "@types/node": "26.6.5"
+    "@types/node": "26.6.5",
+    "@effect/tsgo": "0.59.0"
   },
   "overrides": {
     "esbuild": "0.28.2",

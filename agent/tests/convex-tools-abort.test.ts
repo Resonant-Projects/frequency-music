@@ -24,8 +24,9 @@ describe("Convex HTTP request cancellation", () => {
     const controller = new AbortController();
     const request = callConvex("appendAgentRunEvent", {}, controller.signal);
     const rejected = expect(request).rejects.toThrow("synthetic abort");
-    expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
     controller.abort();
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
     await rejected;
   });
 
