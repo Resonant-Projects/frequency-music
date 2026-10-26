@@ -99,7 +99,7 @@ jobs:
           image-ref: ${{ steps.metadata.outputs.image_ref }}
           version: v0.70.0
           format: table
-          exit-code: '1'
+          exit-code: "1"
           # Debian's ffmpeg dependency tree carries open, unfixed CVEs; fail only on fixable HIGH/CRITICAL.
           ignore-unfixed: true
           severity: HIGH,CRITICAL
@@ -142,9 +142,11 @@ jobs:
             fi
           fi
           image_name="${IMAGE_NAME,,}"
-          printf 'source_sha=%s\n' "$source_sha" >> "$GITHUB_OUTPUT"
-          printf 'image_name=%s\n' "$image_name" >> "$GITHUB_OUTPUT"
-          printf 'image_ref=%s:sha-%s\n' "$image_name" "$source_sha" >> "$GITHUB_OUTPUT"
+          {
+            printf 'source_sha=%s\n' "$source_sha"
+            printf 'image_name=%s\n' "$image_name"
+            printf 'image_ref=%s:sha-%s\n' "$image_name" "$source_sha"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Install Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -202,7 +204,7 @@ jobs:
           image-ref: ${{ steps.metadata.outputs.image_ref }}
           version: v0.70.0
           format: table
-          exit-code: '1'
+          exit-code: "1"
           # Debian's ffmpeg dependency tree carries open, unfixed CVEs; fail only on fixable HIGH/CRITICAL.
           ignore-unfixed: true
           severity: HIGH,CRITICAL

@@ -102,7 +102,7 @@ jobs:
           image-ref: ${{ steps.metadata.outputs.image_ref }}
           version: v0.70.0
           format: table
-          exit-code: '1'
+          exit-code: "1"
           ignore-unfixed: false
           severity: HIGH,CRITICAL
 
@@ -214,7 +214,7 @@ jobs:
           image-ref: ${{ steps.metadata.outputs.image_name }}@${{ steps.build.outputs.digest }}
           version: v0.70.0
           format: table
-          exit-code: '1'
+          exit-code: "1"
           ignore-unfixed: false
           severity: HIGH,CRITICAL
 

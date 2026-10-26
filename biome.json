@@ -15,7 +15,8 @@
     "lineWidth": 80,
     "lineEnding": "lf",
     "includes": [
-      "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,css,graphql,gql,html}"
+      "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,json,jsonc,css,graphql,gql,html,yaml,yml}",
+      "!**/*.md"
     ]
   },
   "linter": {
