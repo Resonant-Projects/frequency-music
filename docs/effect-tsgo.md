@@ -6,7 +6,7 @@ All four TypeScript projects use `@effect/tsgo` 0.59.0 for TypeScript 7.0.2 chec
 
 Run `vp install` in the root, `web/`, `agent/`, and `media/` directories. Root, web, and media `prepare` hooks run `effect-tsgo patch --typescript --no-oxlint`, so their existing `vpx tsc` commands use the Effect compiler. The root hook also retains `vp config --no-agent` for the Vite+ Git hooks.
 
-Agent retains TypeScript 5.9.3 for LangGraph CLI peer compatibility. Its `verify` script runs `effect-tsgo tsc@7.0.2 --noEmit` directly; root `typecheck:agent` delegates to that script. This uses the compiler shipped by `@effect/tsgo` without patching the agent's TypeScript 5 package. For direct agent checks, run `vp run verify`, rather than `vpx tsc`.
+Agent retains TypeScript 5.9.3 for LangGraph CLI peer compatibility. Its `verify` script runs `effect-tsgo tsc@7.0.2 --noEmit` directly; root `typecheck:agent` invokes the same compiler command. This uses the compiler shipped by `@effect/tsgo` without patching the agent's TypeScript 5 package. For direct agent checks, run `vp run verify`, rather than `vpx tsc`.
 
 The patch hook skips when `@effect/tsgo` is absent. Agent and media container builds can continue using production installs that omit dev dependencies and peers.
 
