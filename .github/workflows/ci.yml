@@ -34,10 +34,15 @@ jobs:
       - run: python3 scripts/recovery/tests/test-native-pause-controller.py
 
   web:
-    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
+    # Enable web first, only after coordinator acceptance of the restricted
+    # frequency-arc registration. Unset/false restores GARM; forks stay on GARM.
+    runs-on: ${{ fromJSON(github.repository == 'Resonant-Projects/frequency-music' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && vars.FREQUENCY_ARC_WEB_ENABLED == 'true' && '["frequency-arc"]' || '["self-hosted", "linux", "x64", "incus", "garm", "ephemeral"]') }}
     defaults:
       run:
         working-directory: web
+    env:
+      # Keep cache archives portable across GARM and ARC workspace layouts.
+      BUN_INSTALL_CACHE_DIR: ${{ github.workspace }}/.cache/bun
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,10 +71,15 @@ jobs:
       - run: vpx tsc --noEmit
 
   agent:
-    runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
+    # Enable agent only after web acceptance. Roll back each job independently
+    # by clearing its opt-in; never send fork PRs to the restricted ARC runner.
+    runs-on: ${{ fromJSON(github.repository == 'Resonant-Projects/frequency-music' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) && vars.FREQUENCY_ARC_AGENT_ENABLED == 'true' && '["frequency-arc"]' || '["self-hosted", "linux", "x64", "incus", "garm", "ephemeral"]') }}
     defaults:
       run:
         working-directory: agent
+    env:
+      # Keep cache archives portable across GARM and ARC workspace layouts.
+      BUN_INSTALL_CACHE_DIR: ${{ github.workspace }}/.cache/bun
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
