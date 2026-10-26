@@ -87,8 +87,12 @@ that benefit from composition rather than every function in the repository.
    such as the outbound transport. Avoid one service per function or global
    service lookup. Compose the live Layer once at the module's execution seam.
 5. Use scoped child fibers and `acquireRelease` for local resources. Keep cleanup
-   failures observable without changing an original failure into success. Keep
-   existing bounded grace periods for handlers that ignore cancellation.
+   failures observable without changing an original failure into success. Retain
+   the existing best-effort exception for HTTP response-body cancellation:
+   ignore its rejection so cleanup cannot replace successful audio or change
+   confirmed synthesis rejection into an ambiguous outcome. Do not log raw
+   provider cancellation errors, which may contain sensitive response data.
+   Keep existing bounded grace periods for handlers that ignore cancellation.
 6. Define failure types by the actual policy decision. For TTS, distinguish
    retryable confirmed rejection, terminal confirmed rejection, cancellation
    before any attempt, and unknown synthesis outcome. Do not retry defects or
@@ -291,10 +295,11 @@ part of this proposal.
 The planning pass ended after approval. Implementation now changes only package
 manifests, package lockfiles, and the stage A-D modules and tests named above.
 It must not contact production or make paid provider calls.
-The checkout still has no package installations. `vp run verify` was attempted
-again during planning and stopped immediately because project-local Vite+/Biome
-was absent. This is the same pre-existing setup blocker as the research pass.
-No implementation check is claimed green by this proposal.
+At planning time, the checkout had no package installations. `vp run verify`
+was attempted again and stopped immediately because project-local Vite+/Biome
+was absent. This was the same pre-existing setup blocker as the research pass.
+The proposal made no claim of green implementation checks at planning time;
+the completed implementation and acceptance evidence are recorded above.
 
 Primary references: [v4 migration entry point][migration], [services][services],
 [error recovery][errors], [forking][forking], [published 4.0.6 package][release],
