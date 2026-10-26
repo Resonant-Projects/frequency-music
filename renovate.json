@@ -1,8 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "enabledManagers": ["bun", "dockerfile"],
-  "ignorePaths": ["scripts/archive/**"],
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "bun",
+    "dockerfile"
+  ],
+  "ignorePaths": [
+    "scripts/archive/**"
+  ],
   "timezone": "America/New_York",
   "dependencyDashboard": true,
   "automerge": false,
@@ -11,17 +18,25 @@
   "minimumReleaseAge": "3 days",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["* 3-5 * * 1"]
+    "schedule": [
+      "* 3-5 * * 1"
+    ]
   },
   "packageRules": [
     {
       "description": "Approve major upgrades in the dependency dashboard first.",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "dependencyDashboardApproval": true
     },
     {
       "description": "Keep Convex dependencies together across runtime packages.",
-      "matchPackageNames": ["convex", "convex-helpers", "@convex-dev/*"],
+      "matchPackageNames": [
+        "convex",
+        "convex-helpers",
+        "@convex-dev/*"
+      ],
       "groupName": "Convex dependencies"
     },
     {
@@ -35,43 +50,79 @@
     },
     {
       "description": "Bun runtime upgrades must also update CI and Dockerfile pins.",
-      "matchPackageNames": ["bun"],
+      "matchPackageNames": [
+        "bun"
+      ],
       "enabled": false
     },
     {
       "description": "Preserve digest-pinned Docker base images.",
-      "matchManagers": ["dockerfile"],
+      "matchManagers": [
+        "dockerfile"
+      ],
       "pinDigests": true
     },
     {
       "description": "Keep the single LangSmith version below 0.10 while DeepAgents 1.14 requires its real >=0.7.1 <0.10.0 peer range.",
-      "matchFileNames": ["package.json", "agent/package.json"],
-      "matchPackageNames": ["langsmith"],
+      "matchFileNames": [
+        "package.json",
+        "agent/package.json"
+      ],
+      "matchPackageNames": [
+        "langsmith"
+      ],
       "allowedVersions": ">=0.7.1 <0.10.0"
     },
     {
       "description": "LangGraph API 1.5 requires TypeScript 5; other packages retain their own compiler versions.",
-      "matchFileNames": ["agent/package.json"],
-      "matchPackageNames": ["typescript"],
+      "matchFileNames": [
+        "agent/package.json"
+      ],
+      "matchPackageNames": [
+        "typescript"
+      ],
       "allowedVersions": ">=5.5.4 <6"
     },
     {
       "description": "Keep Core compatible with the single LangSmith 0.9 SDK required by DeepAgents; Core 1.2.18+ requires LangSmith >=0.11.",
-      "matchFileNames": ["agent/package.json"],
-      "matchPackageNames": ["@langchain/core"],
+      "matchFileNames": [
+        "agent/package.json"
+      ],
+      "matchPackageNames": [
+        "@langchain/core"
+      ],
       "allowedVersions": ">=1.2.14 <1.2.18"
     },
     {
       "description": "Keep LangChain compatible with the single LangSmith 0.9 SDK required by DeepAgents; newer releases require LangSmith >=0.11.",
-      "matchFileNames": ["agent/package.json"],
-      "matchPackageNames": ["langchain"],
+      "matchFileNames": [
+        "agent/package.json"
+      ],
+      "matchPackageNames": [
+        "langchain"
+      ],
       "allowedVersions": ">=1.5.10 <=1.5.12"
     },
     {
       "description": "Keep the CLI on its real LangSmith ^0.9 range while DeepAgents requires <0.10; CLI 1.5.2+ requires ^0.10.5.",
-      "matchFileNames": ["agent/package.json"],
-      "matchPackageNames": ["@langchain/langgraph-cli"],
+      "matchFileNames": [
+        "agent/package.json"
+      ],
+      "matchPackageNames": [
+        "@langchain/langgraph-cli"
+      ],
       "allowedVersions": ">=1.5.0 <1.5.2"
+    },
+    {
+      "description": "Group Biome packages on the weekly Monday morning schedule.",
+      "matchPackageNames": [
+        "@biomejs/**"
+      ],
+      "groupName": "Biome",
+      "schedule": [
+        "* 3-5 * * 1"
+      ],
+      "timezone": "America/New_York"
     }
   ]
 }

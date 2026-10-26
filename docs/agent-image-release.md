@@ -7,7 +7,7 @@ builds it on GitHub-hosted runners; the Proxmox LXC is a runtime, not a builder.
 
 - pull requests build and scan without publishing;
 - a relevant `main` change publishes
-  `ghcr.io/resonant-projects/frequency-music-agent:sha-<full-commit>`;
+  `registry.rproj.art/frequency-music/frequency-music-agent@sha256:<index-digest>`;
 - manual dispatch accepts an exact `source_ref`, which supports an artifact-only
   migration of an already-deployed commit;
 - the pinned, multi-stage image uses a minimal Node Alpine runtime, contains
@@ -20,8 +20,7 @@ builds it on GitHub-hosted runners; the Proxmox LXC is a runtime, not a builder.
 - GitHub attaches a build-provenance attestation to the digest; and
 - the run uploads `deployment.json` with the exact `image@sha256:...` reference.
 
-The readable `sha-<full-commit>` tag is a lookup aid and remains mutable in GHCR;
-the manifest digest is the immutability boundary. Do not deploy the tag by itself.
+The Harbor tag is an immutable lookup aid; the manifest digest is the deployment boundary. Do not deploy the tag by itself.
 Copy the `deploy` value from the manifest into the reviewed infrastructure
 declaration. A later release automation step may open that infrastructure pull
 request, but it must use a narrowly installed GitHub App rather than a personal
@@ -29,10 +28,10 @@ access token or the source repository's `GITHUB_TOKEN`.
 
 ## Lab Harbor copy
 
-The image is published to GHCR and, for `main` builds, also to the Lab's
+The image is published only to the Lab's
 internal Harbor at `registry.rproj.art/frequency-music/frequency-music-agent`.
 Harbor is reachable only from the Lab LAN, so the workflow's `harbor` job runs on
-a self-hosted GARM runner after `publish` succeeds. It copies the GHCR digest
+a self-hosted GARM runner after `build` succeeds. It pushes the exact OCI artifact
 under the immutable tag `sha-<full-commit>-<first 12 hex of the digest>`, so a
 rebuild of the same commit never collides, and signs it keylessly with cosign
 under this workflow's identity,
