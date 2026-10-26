@@ -28,7 +28,7 @@ function envWithoutSchemaSecrets(): typeof process.env {
 describe("ingest-manifest CLI", () => {
   test("dry-runs by default without contacting Convex", () => {
     // `vpx tsx`, not `bun run`: bun's JS runtime dies on the GARM pool's
-    // non-AVX CPUs (see the note in claude.yml), and `vpx tsx` is how every
+    // non-AVX CPUs, and `vpx tsx` is how every
     // other script in this repo is invoked anyway.
     const result = spawnSync(
       "vpx",
