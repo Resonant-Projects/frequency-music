@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+import { requestDeadline, startMaintenance } from "./maintenance.js";
 // External liveness for the Kubernetes deploy gate.
 //
 // The gate's previous evidence was a CronJob reading the Deployment through the
@@ -62,36 +64,35 @@ export function createLivenessReporter(options: {
   const now = options.now ?? Date.now;
   const intervalMs = options.intervalMs ?? LIVENESS_PUSH_INTERVAL_MS;
   const staleAfterMs = options.staleAfterMs ?? LIVENESS_STALE_AFTER_MS;
-  const pending = new Set<Promise<void>>();
   let lastProgressAt = now();
-  let stopped = false;
   let withheld = false;
 
   // The push URL embeds the monitor's secret token, so it is never logged and
   // errors are redacted like every other outbound call in this worker.
-  const push = async (): Promise<void> => {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      LIVENESS_PUSH_TIMEOUT_MS,
+  const push = Effect.gen(function* () {
+    const signal = yield* requestDeadline(LIVENESS_PUSH_TIMEOUT_MS);
+    yield* Effect.tryPromise({
+      try: () =>
+        (options.fetchImpl ?? globalThis.fetch)(options.pushUrl, { signal }),
+      catch: (error) => error,
+    }).pipe(
+      Effect.tap((response) =>
+        Effect.sync(() => {
+          if (!response.ok)
+            options.log(
+              `liveness push rejected with status ${response.status}`,
+            );
+        }),
+      ),
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          options.log("liveness push failed:", options.redact(error));
+        }),
+      ),
     );
-    try {
-      const fetchImpl = options.fetchImpl ?? globalThis.fetch;
-      const response = await fetchImpl(options.pushUrl, {
-        signal: controller.signal,
-      });
-      if (!response.ok) {
-        options.log(`liveness push rejected with status ${response.status}`);
-      }
-    } catch (error) {
-      options.log("liveness push failed:", options.redact(error));
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
+  }).pipe(Effect.scoped);
 
-  const tick = () => {
-    if (stopped) return;
+  const tick = Effect.gen(function* () {
     const age = now() - lastProgressAt;
     if (age > staleAfterMs) {
       if (!withheld) {
@@ -107,22 +108,20 @@ export function createLivenessReporter(options: {
       withheld = false;
       options.log("liveness: worker progress resumed; pushing again");
     }
-    const inFlight = push();
-    pending.add(inFlight);
-    void inFlight.finally(() => pending.delete(inFlight));
-  };
+    yield* push;
+  });
 
-  const timer = setInterval(tick, intervalMs);
-  (timer as { unref?: () => void }).unref?.();
+  const stop = startMaintenance({
+    intervalMs,
+    task: tick,
+    onDefect: (error) =>
+      options.log("liveness task failed:", options.redact(error)),
+  });
 
   return {
     markAlive: () => {
       lastProgressAt = now();
     },
-    stop: async () => {
-      stopped = true;
-      clearInterval(timer);
-      await Promise.all(pending);
-    },
+    stop,
   };
 }

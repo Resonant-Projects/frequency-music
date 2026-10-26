@@ -1,3 +1,6 @@
+import { Effect } from "effect";
+import { convexRequest } from "./convexHttp.js";
+export { ConvexToolHttpError } from "./convexHttp.js";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import {
@@ -23,65 +26,22 @@ function stripLargeTextFields(value: unknown): unknown {
   return result;
 }
 
-// Recovery, audit, and terminal calls fail fast instead of holding the worker's slot.
-const BOUNDED_TOOLS = new Set([
-  "appendAgentRunEvent",
-  "reportCaptureFailure",
-  "ingestScoutedSource",
-  "getCaptureRecovery",
-  "finishCaptureRecovery",
-  "markAgentRunCompleted",
-  "markAgentRunFailed",
-  "getAgentRun",
-]);
-
-export class ConvexToolHttpError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-  }
-}
-
-export async function callConvex<T>(
+export function callConvex<T>(
   path: string,
   body: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<T> {
-  const convexUrl = process.env.CONVEX_SITE_URL;
-  const agentSecret = process.env.AGENT_TOOL_SECRET;
-  if (!convexUrl) throw new Error("CONVEX_SITE_URL is required");
-  if (!agentSecret) throw new Error("AGENT_TOOL_SECRET is required");
-
-  const boundedSignal =
-    signal ??
-    (BOUNDED_TOOLS.has(path) ? AbortSignal.timeout(30_000) : undefined);
-  const resp = await fetch(
-    convexUrl.replace(/\/$/, "") + "/agent-tools/" + path,
-    {
-      method: "POST",
-      ...(boundedSignal ? { signal: boundedSignal } : {}),
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ secret: agentSecret, ...body }),
-    },
+  return Effect.runPromise(
+    convexRequest(path, body, signal).pipe(
+      // The deterministic recovery tool must receive its retained input.
+      Effect.map(
+        (result) =>
+          (path === "getCaptureRecovery"
+            ? result
+            : stripLargeTextFields(result)) as T,
+      ),
+    ),
   );
-  if (!resp.ok) {
-    throw new ConvexToolHttpError(
-      "Convex tool " +
-        path +
-        " failed: " +
-        resp.status +
-        " " +
-        (await resp.text()),
-      resp.status,
-    );
-  }
-  const result = await resp.json();
-  // This deterministic recovery tool must receive its retained input. It is never model-bound.
-  return (
-    path === "getCaptureRecovery" ? result : stripLargeTextFields(result)
-  ) as T;
 }
 
 function toSnake(name: string): string {
