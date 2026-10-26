@@ -259,7 +259,9 @@ describe("mediaJobs narration and operator publication", () => {
   test("a parked operator publication reuses its retained completion without another upload", async () => {
     const t = convexTest({ schema, modules, transactionLimits: true });
     const root = await mkdtemp(join(tmpdir(), "operator-publication-"));
-    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"],
+    });
     try {
       const input: MediaJobInput = {
         ...narrationInput(undefined, "Essay"),
