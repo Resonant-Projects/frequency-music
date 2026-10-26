@@ -47,7 +47,9 @@ describe("hypothesis tournament lease fencing", () => {
         })) as { lease: { token: string } }
       ).lease.token;
     const stale = await begin();
-    vi.setSystemTime((await leaseRow())!.leaseExpiresAt);
+    const leased = (await leaseRow())!;
+    expect(leased.leaseExpiresAt - leased.updatedAt).toBe(1_210_000);
+    vi.setSystemTime(leased.leaseExpiresAt);
     const current = await begin();
     const finalizeWith = (leaseToken?: string) =>
       f.callTool("finalizeTournamentRun", {
@@ -84,7 +86,9 @@ describe("hypothesis tournament lease fencing", () => {
         leaseDurationMs: 1_210_000,
       }),
     ).toEqual({ status: "busy" });
-    vi.setSystemTime((await leaseRow())!.leaseExpiresAt);
+    const leased = (await leaseRow())!;
+    expect(leased.leaseExpiresAt - leased.updatedAt).toBe(1_210_000);
+    vi.setSystemTime(leased.leaseExpiresAt);
     const second = (await f.callTool("beginTournamentRun", {
       agentRunId: runId,
       leaseDurationMs: 1_210_000,

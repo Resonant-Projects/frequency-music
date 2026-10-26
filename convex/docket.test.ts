@@ -237,6 +237,7 @@ test("confirmed deferral changes only docket data and survives rebuilds", async 
     status: "pending_review",
   });
   const deferred = (await t.run((ctx) => ctx.db.get(card._id)))!;
+  expect(deferred.deferredUntil).toBe(deferred.updatedAt + 14 * 86400000);
   vi.setSystemTime(deferred.deferredUntil!);
   expect(
     (await t.mutation(internal.docket.list, {})).some(
