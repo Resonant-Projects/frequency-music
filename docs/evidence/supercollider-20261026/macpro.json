@@ -1,0 +1,270 @@
+{
+  "target": "macpro",
+  "identityAndToolVersions": [
+    "2026-10-26T19:15:47Z",
+    "macpro.rproj.art",
+    "Darwin macpro.rproj.art 24.6.0 Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64 x86_64",
+    "kelliott",
+    "ProductName:\t\tmacOS",
+    "ProductVersion:\t\t15.7.9",
+    "BuildVersion:\t\t24G830",
+    "/usr/local/bin/ffmpeg",
+    "/usr/local/bin/ffprobe",
+    "/Users/kelliott/.local/bin/sclang",
+    "/Users/kelliott/.local/bin/scsynth",
+    "/usr/local/bin/vp",
+    "/Users/kelliott/.bun/bin/bun",
+    "/usr/local/bin/node",
+    "ffmpeg version 9.0.1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe version 9.0.1 Copyright (c) 2007-2026 the FFmpeg developers",
+    "sclang 3.14.1 (Built from tag 'Version-3.14.1' [426edf6])",
+    "scsynth 3.14.1 (Built from tag 'Version-3.14.1' [426edf6])",
+    "v26.7.0",
+    "1.3.14",
+    "vp v0.2.8"
+  ],
+  "verificationArchiveSha256": "d843e1f8ce9410f129b6bb1d9c85f736a5cf210ea963dc345fcfe9acf69d829e",
+  "sourceSha256": {
+    "media/src/engines/sc/process.ts": "4ef688723c89caa940447dd35a612996543ceb0c7df19f06f1e34808680fa54f",
+    "media/tests/sc-real.test.ts": "787a366dbd411ba16a7b44e459e76e85a7d8a4330a2237eaa3913178b1c32d54",
+    "media/bun.lock": "ba6e10cc6820eb1246d253f5ebcd46fc10f0b598ad50a11e6e0357ea5aefe9bb"
+  },
+  "commands": {
+    "install": "vp install",
+    "test": "APP_ENV=test SC_EVIDENCE_PATH=<verification directory>/render-evidence.json ./node_modules/.bin/vp test tests/sc-real.test.ts --reporter=verbose"
+  },
+  "dependencyInstallExit": 0,
+  "renderTestExit": 0,
+  "testsPassed": 6,
+  "testsSkipped": 0,
+  "durationSeconds": 39.78,
+  "rawMeasurementsSha256": "2ef7ccb1971b0e855b492a26d7f8e1f2f2241c958edd42d3a57d56af74b8007f",
+  "testOutput": [
+    "note: You are running `vp test` as a Vite+ built-in command. If you meant to run the test npm script, use `vpr test` instead.",
+    "",
+    " RUN  v5.0.5 /private/tmp/frequency-sc-verify.2dinQM/media",
+    "",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > renders a bounded 19-EDO at 432 Hz kit within loudness policy 2935ms",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > renders a bounded 5-limit JI at 261.63 Hz kit within loudness policy 2270ms",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > renders a bounded 12-EDO at 440 Hz kit within loudness policy 2150ms",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > lands sustained notes within 0.5 cents of the tuning table 24568ms",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > renders the dense 3072-voice fixture inside its node table 2600ms",
+    " \u2713 tests/sc-real.test.ts > real SuperCollider litmus renders > runs the litmusRender job handler end to end for a study family 4654ms",
+    "",
+    " Test Files  1 passed (1)",
+    "      Tests  6 passed (6)",
+    "   Start at  15:15:49",
+    "   Duration  39.78s (tests 99%)",
+    ""
+  ],
+  "measurements": [
+    {
+      "kind": "kit",
+      "kit": "19-EDO at 432 Hz",
+      "seedEvents": 8,
+      "masterLufs": -18,
+      "masterTruePeakDbtp": -10.9,
+      "deliveryLufs": -18,
+      "deliveryTruePeakDbtp": -10.9,
+      "masterBytes": 1152068,
+      "deliveryBytes": 129792
+    },
+    {
+      "kind": "kit",
+      "kit": "5-limit JI at 261.63 Hz",
+      "seedEvents": 8,
+      "masterLufs": -18,
+      "masterTruePeakDbtp": -10.7,
+      "deliveryLufs": -18,
+      "deliveryTruePeakDbtp": -10.7,
+      "masterBytes": 1152068,
+      "deliveryBytes": 129792
+    },
+    {
+      "kind": "kit",
+      "kit": "12-EDO at 440 Hz",
+      "seedEvents": 8,
+      "masterLufs": -18,
+      "masterTruePeakDbtp": -11,
+      "deliveryLufs": -18,
+      "deliveryTruePeakDbtp": -11,
+      "masterBytes": 1152068,
+      "deliveryBytes": 129792
+    },
+    {
+      "kind": "pitch",
+      "kit": "19-EDO at 432 Hz",
+      "degree": 1,
+      "expectedHz": 448.0509792007549,
+      "measuredHz": 448.0509792007549,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "19-EDO at 432 Hz",
+      "degree": 1,
+      "headPeak": 0.10480167716741562
+    },
+    {
+      "kind": "pitch",
+      "kit": "19-EDO at 432 Hz",
+      "degree": 4,
+      "expectedHz": 499.87162250613494,
+      "measuredHz": 499.87162250613494,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "19-EDO at 432 Hz",
+      "degree": 4,
+      "headPeak": 0.11539149284362793
+    },
+    {
+      "kind": "pitch",
+      "kit": "5-limit JI at 261.63 Hz",
+      "degree": 1,
+      "expectedHz": 294.33375,
+      "measuredHz": 294.33375,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "5-limit JI at 261.63 Hz",
+      "degree": 1,
+      "headPeak": 0.12357894331216812
+    },
+    {
+      "kind": "pitch",
+      "kit": "5-limit JI at 261.63 Hz",
+      "degree": 4,
+      "expectedHz": 392.445,
+      "measuredHz": 392.445,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "5-limit JI at 261.63 Hz",
+      "degree": 4,
+      "headPeak": 0.12094981968402863
+    },
+    {
+      "kind": "pitch",
+      "kit": "12-EDO at 440 Hz",
+      "degree": 1,
+      "expectedHz": 466.1637615180899,
+      "measuredHz": 466.1637615180899,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "12-EDO at 440 Hz",
+      "degree": 1,
+      "headPeak": 0.11820942908525467
+    },
+    {
+      "kind": "pitch",
+      "kit": "12-EDO at 440 Hz",
+      "degree": 4,
+      "expectedHz": 554.3652619537442,
+      "measuredHz": 554.3652619537442,
+      "errorCents": 0
+    },
+    {
+      "kind": "onset",
+      "kit": "12-EDO at 440 Hz",
+      "degree": 4,
+      "headPeak": 0.11834008991718292
+    },
+    {
+      "kind": "dense",
+      "notes": 4096,
+      "concurrentVoices": 3072,
+      "nodeSlots": 4096,
+      "masterLufs": -11.8,
+      "masterTruePeakDbtp": -5.8
+    },
+    {
+      "kind": "handler",
+      "members": [
+        {
+          "member": 0,
+          "master": {
+            "artifactId": "artifact-0",
+            "durationSecs": 2,
+            "loudnessLufs": -18,
+            "truePeakDbtp": -10.8,
+            "mimeType": "audio/wav"
+          },
+          "delivery": {
+            "artifactId": "artifact-1",
+            "durationSecs": 2,
+            "loudnessLufs": -18,
+            "truePeakDbtp": -10.8,
+            "mimeType": "audio/mpeg"
+          }
+        },
+        {
+          "member": 1,
+          "master": {
+            "artifactId": "artifact-2",
+            "durationSecs": 2,
+            "loudnessLufs": -18,
+            "truePeakDbtp": -11,
+            "mimeType": "audio/wav"
+          },
+          "delivery": {
+            "artifactId": "artifact-3",
+            "durationSecs": 2,
+            "loudnessLufs": -18,
+            "truePeakDbtp": -11,
+            "mimeType": "audio/mpeg"
+          }
+        }
+      ],
+      "uploads": [
+        {
+          "role": "masterNormalized",
+          "encoding": {
+            "codec": "wav",
+            "sampleRate": 48000,
+            "channels": 2
+          },
+          "mimeType": "audio/wav",
+          "bytes": 576068
+        },
+        {
+          "role": "delivery",
+          "encoding": {
+            "codec": "mp3",
+            "bitrateKbps": 256,
+            "sampleRate": 48000,
+            "channels": 2
+          },
+          "mimeType": "audio/mpeg",
+          "bytes": 66048
+        },
+        {
+          "role": "masterNormalized",
+          "encoding": {
+            "codec": "wav",
+            "sampleRate": 48000,
+            "channels": 2
+          },
+          "mimeType": "audio/wav",
+          "bytes": 576068
+        },
+        {
+          "role": "delivery",
+          "encoding": {
+            "codec": "mp3",
+            "bitrateKbps": 256,
+            "sampleRate": 48000,
+            "channels": 2
+          },
+          "mimeType": "audio/mpeg",
+          "bytes": 66048
+        }
+      ]
+    }
+  ]
+}

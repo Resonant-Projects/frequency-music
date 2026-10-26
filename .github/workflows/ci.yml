@@ -137,7 +137,10 @@ jobs:
         working-directory: media
       - run: bun audit --prod
         working-directory: media
-      # The media tests drive real ffmpeg/ffprobe binaries.
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      # Real audio and SuperCollider renders are required on every media runner.
+      - run: >-
+          sudo apt-get update &&
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
+          ffmpeg supercollider-language supercollider-server
       - run: vp run typecheck:media
       - run: vp run test:media

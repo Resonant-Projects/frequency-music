@@ -24,7 +24,8 @@ export const runCommand: RunCommand = async (command) => {
         PATH: process.env.PATH,
         HOME: command.cwd,
         TMPDIR: command.cwd,
-        QT_QPA_PLATFORM: "offscreen",
+        // The macOS app bundles only cocoa; Linux packages provide offscreen.
+        QT_QPA_PLATFORM: process.platform === "darwin" ? "cocoa" : "offscreen",
       },
     });
     let stdout = "";
