@@ -282,6 +282,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: keithce/homelab-infra
+          fetch-depth: 0
           token: ${{ steps.app.outputs.token }}
           ref: main
           path: homelab-infra
@@ -304,8 +305,6 @@ jobs:
         working-directory: homelab-infra
         env:
           DIGEST: ${{ needs.harbor.outputs.digest }}
-          TRIVY_SUMMARY: ${{ needs.harbor.outputs.trivy_summary }}
-          HARBOR_SUMMARY: ${{ needs.harbor.outputs.harbor_summary }}
         run: |
           set -euo pipefail
           python3 - "$DIGEST" <<'PY'
@@ -350,5 +349,5 @@ jobs:
             # shellcheck disable=SC2016
             echo 'Issuer: `https://token.actions.githubusercontent.com`'
           } > "$body"
-          pr=$(gh pr list --repo keithce/homelab-infra --head deploy/frequency-worker-agent --state open --json number --jq '.[0].number')
+          pr=$(gh pr list --repo keithce/homelab-infra --head deploy/frequency-worker-agent --state open --json number --jq '.[0].number // empty')
           if [[ -n "$pr" ]]; then gh pr edit "$pr" --body-file "$body"; else gh pr create --repo keithce/homelab-infra --base main --head deploy/frequency-worker-agent --title "chore(frequency-worker): pin agent image digest" --body-file "$body"; fi
