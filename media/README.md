@@ -15,7 +15,7 @@ with a typed result. It never writes research data directly.
   live in `src/jobs/`.
 - Run locally: `cd media && vp install && APP_ENV=dev vp run start` (needs
   ffmpeg and the 1Password app or `OP_SERVICE_ACCOUNT_TOKEN`).
-- Tests: `vp run test:media` (requires `ffmpeg`, `ffprobe`, `sclang`, and
+- Tests from the repository root: `vp run test:media` (requires `ffmpeg`, `ffprobe`, `sclang`, and
   `scsynth` on PATH; missing tools fail the suite).
 - Deployment: `homelab-infra/hosts/frequency-media/` (compose, deploy script,
   operator notes for ai-5090-02).
@@ -155,6 +155,7 @@ For standalone setup on Ubuntu or Debian, install the dependencies with:
 sudo apt-get update
 sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   ffmpeg supercollider-language supercollider-server
+# Run from the repository root:
 vp run test:media
 ```
 
@@ -165,6 +166,7 @@ installs an app without CLI links, so expose its binaries before testing:
 brew install ffmpeg
 brew install --cask supercollider
 export PATH="/Applications/SuperCollider.app/Contents/MacOS:/Applications/SuperCollider.app/Contents/Resources:$PATH"
+# Run from the repository root:
 vp run test:media
 ```
 
