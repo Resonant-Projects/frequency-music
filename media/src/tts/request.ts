@@ -107,9 +107,10 @@ export function fetchAudioWithRetry(
   const retryable = options.retryableRejections ?? [429];
   const timeoutMs = options.timeoutMs ?? TTS_REQUEST_TIMEOUT_MS;
   const backoff =
-    options.backoffMs ?? ((_status, number) => defaultBackoffMs(number));
+    options.backoffMs ??
+    ((_status, attemptNumber) => defaultBackoffMs(attemptNumber));
   const runAttempt = (
-    number: number,
+    attemptNumber: number,
   ): Effect.Effect<ArrayBuffer, unknown, TtsFetch> =>
     Effect.gen(function* () {
       if (init.signal?.aborted) {
@@ -122,7 +123,10 @@ export function fetchAudioWithRetry(
           OutcomeUnknown: (failure) => Effect.fail(failure.error),
           Rejected: (failure) =>
             Effect.gen(function* () {
-              if (!retryable.includes(failure.status) || number === attempts) {
+              if (
+                !retryable.includes(failure.status) ||
+                attemptNumber === attempts
+              ) {
                 return yield* Effect.fail(
                   new SynthesisRejectedError(
                     `TTS request failed with status ${failure.status}`,
@@ -130,7 +134,7 @@ export function fetchAudioWithRetry(
                 );
               }
               const delay = Effect.try({
-                try: () => backoff(failure.status, number),
+                try: () => backoff(failure.status, attemptNumber),
                 catch: (error) => error,
               }).pipe(
                 Effect.flatMap((ms) => wait(ms, init.signal ?? undefined)),
@@ -143,7 +147,7 @@ export function fetchAudioWithRetry(
                     ),
                 ),
               );
-              return yield* runAttempt(number + 1);
+              return yield* runAttempt(attemptNumber + 1);
             }),
         }),
       );
