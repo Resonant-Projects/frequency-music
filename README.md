@@ -58,8 +58,10 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
    - `cd web && vp install`
 2. Set web env:
    - Create `web/.env.local` and set `VITE_CONVEX_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, and `VITE_CLERK_SIGN_UP_URL`.
+   - Sign-in defaults to `https://accounts.resonantprojects.art/sign-in`.
 3. Run web app:
-   - `cd web && vp run dev`
+   - `cd web && vp run dev` serves `http://localhost:4173`.
+   - Signing in from localhost with the production Clerk key returns you to the production app. Use [local sign-in](web/CLERK_SUBDOMAIN_SETUP.md#4-local-sign-in) (`vp run dev:clerk` and the port 443 proxy) so sign-in returns to `https://local.resonantprojects.art`.
 
 ### Convex backend
 

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "panda codegen --clean && panda cssgen && vp dev",
+    "dev:clerk": "export CLERK_DEV_ORIGIN=local.resonantprojects.art && panda codegen --clean && panda cssgen && vp dev",
+    "dev:clerk-proxy": "bun scripts/clerk-dev-proxy.ts",
     "build": "panda codegen --clean && panda cssgen && vp build",
     "codegen": "panda codegen --clean && panda cssgen",
     "preview": "vp preview",

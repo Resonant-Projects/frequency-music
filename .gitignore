@@ -31,6 +31,7 @@ web/playwright-report
 web/artifacts
 web/test-results
 web/tests/e2e/.auth
+web/certs/
 
 # IntelliJ based IDEs
 .idea
