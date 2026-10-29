@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@varlock/1password-plugin": "^2.0.5",
-    "convex": "1.46.0",
-    "convex-helpers": "0.1.128",
+    "convex": "1.48.0",
+    "convex-helpers": "0.1.129",
     "tsx": "4.23.15",
     "varlock": "^1.22.0",
     "zod": "4.6.7",
