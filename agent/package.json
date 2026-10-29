@@ -26,7 +26,7 @@
     "convex-helpers": "0.1.128",
     "deepagents": "1.14.2",
     "esbuild": "0.28.2",
-    "hono": "4.13.13",
+    "hono": "4.13.14",
     "langchain": "1.5.12",
     "langsmith": "0.9.0",
     "tsx": "4.23.15",
@@ -45,7 +45,7 @@
   },
   "overrides": {
     "esbuild": "0.28.2",
-    "hono": "4.13.13",
+    "hono": "4.13.14",
     "postcss": "8.5.31",
     "ws": "^8.21.0",
     "extract-zip": "npm:@electron-internal/extract-zip@1.0.6"
