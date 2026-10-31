@@ -53,9 +53,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ### Web app
 
-1. Install dependencies:
-   - `vp install`
-   - `cd web && vp install`
+1. Run `vp i` at the repository root. It installs all four packages and generates the web's Panda files.
 2. Set web env:
    - Create `web/.env.local` and set `VITE_CONVEX_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`, and `VITE_CLERK_SIGN_UP_URL`.
 3. Run web app:
@@ -63,6 +61,8 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ### Convex backend
 
+- Run `vp i` at the repository root before deploying. The root install also installs the agent and media dependencies used by the pre-deployment typecheck.
+- The root typecheck discovers files in `convex/`, `harness/`, and `scripts/`, plus root-level TypeScript files. Private `scratchpad/` helpers are outside that file discovery; TypeScript still checks any file imported by maintained code.
 - The backend is self-hosted. Copy [`.env.example`](./.env.example) to `.env.local`; scripts load it via `varlock/auto-load` (imported at the top of each env-reading script); Node does not auto-load `.env` files.
 - Caution: `vpx convex dev`, `vpx convex codegen`, and `vpx convex deploy` talk to the live backend.
 - Deploy with `vp run convex:deploy` (or `vp run convex:deploy:dry-run`, which still uploads and prepares schema). It typechecks, refuses uncommitted changes and `.env`/`.env.local` files in the release checkout, pins the target to `https://convex.resonantprojects.art`, resolves the admin key through Varlock, and asks you to type `deploy` before it runs the audited CLI per the [CLI contract](./docs/frequency-supported-deployment-rollback.md#cli-contract-and-side-effects).
@@ -78,7 +78,7 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ### Verification
 
-Full verification needs dependencies in all four packages: run `vp install` in the root, `web/`, `agent/`, and `media/`. These are separate packages; a root install alone does not install their dependencies.
+Run `vp i` at the repository root before verification. Its install lifecycle installs `web/`, `agent/`, and `media/` from their own lockfiles and generates the web's Panda files. Each package keeps its own dependencies and configuration. Child installs use `--frozen-lockfile`; after changing a child package's dependencies, update its lockfile by running `vp install` in that package. `--ignore-scripts` skips this setup along with the existing hook and compiler setup.
 Media development and full verification require `ffmpeg`, `ffprobe`, `sclang`,
 and `scsynth` on PATH. Rebuilt development machines must restore them through
 [personal-config's native media setup](https://github.com/keithce/personal-config/blob/main/README.md#frequency-music-media-prerequisites)
