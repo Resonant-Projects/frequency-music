@@ -17,7 +17,7 @@
         "deepagents": "1.14.2",
         "effect": "4.0.6",
         "esbuild": "0.28.2",
-        "hono": "4.13.13",
+        "hono": "4.13.14",
         "langchain": "1.5.12",
         "langsmith": "0.9.0",
         "tsx": "4.23.15",
@@ -39,7 +39,7 @@
   "overrides": {
     "esbuild": "0.28.2",
     "extract-zip": "npm:@electron-internal/extract-zip@1.0.6",
-    "hono": "4.13.13",
+    "hono": "4.13.14",
     "postcss": "8.5.31",
     "ws": "^8.21.0",
   },
@@ -432,7 +432,7 @@
 
     "hasown": ["hasown@2.0.4", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A=="],
 
-    "hono": ["hono@4.13.13", "", {}, "sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA=="],
+    "hono": ["hono@4.13.14", "", {}, "sha512-yhRLQ21U6qa9Hsu2N7Qcbh8tE+WKEcoErjIo56LeSGiGXGp9sA7UpE86Ui9uexb61KakiGwuHMn2QdV7w6i6kQ=="],
 
     "http-errors": ["http-errors@2.0.1", "", { "dependencies": { "depd": "~2.0.0", "inherits": "~2.0.4", "setprototypeof": "~1.2.0", "statuses": "~2.0.2", "toidentifier": "~1.0.1" } }, "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ=="],
 
