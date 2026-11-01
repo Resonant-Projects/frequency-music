@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@langchain/langgraph-cli": "1.5.1",
-    "postcss": "8.5.31",
+    "postcss": "8.5.32",
     "typescript": "5.9.3",
     "@types/node": "26.6.5",
     "@effect/tsgo": "0.59.0"
@@ -46,7 +46,7 @@
   "overrides": {
     "esbuild": "0.28.2",
     "hono": "4.13.14",
-    "postcss": "8.5.31",
+    "postcss": "8.5.32",
     "ws": "^8.21.0",
     "extract-zip": "npm:@electron-internal/extract-zip@1.0.6"
   },
