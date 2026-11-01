@@ -48,7 +48,7 @@
     "hono": "4.13.14",
     "postcss": "8.5.31",
     "ws": "^8.21.0",
-    "extract-zip": "npm:@electron-internal/extract-zip@1.0.6"
+    "extract-zip": "npm:@electron-internal/extract-zip@1.0.8"
   },
   "patchedDependencies": {
     "braces@3.0.3": "patches/braces@3.0.3.patch"
