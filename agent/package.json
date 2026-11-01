@@ -31,7 +31,7 @@
     "langsmith": "0.9.0",
     "tsx": "4.23.15",
     "zod": "4.6.7",
-    "@modelcontextprotocol/sdk": "1.32.1",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "varlock": "1.22.0",
     "@varlock/1password-plugin": "2.0.5",
     "effect": "4.0.6"
