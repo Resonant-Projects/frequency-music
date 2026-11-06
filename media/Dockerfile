@@ -3,7 +3,7 @@
 # like the agent image; ffmpeg and ffprobe come from Debian in the runtime
 # stage so the host needs no media tooling. Bun stays in the dependency stage;
 # the runtime receives production node_modules only.
-ARG NODE_IMAGE=node:24.22.0-trixie-slim@sha256:a6155384446670e9719bdc4fd0ebe4d4b29fb32a8d6aa523da3547a6cfbcf22c
+ARG NODE_IMAGE=node:24.22.1-trixie-slim@sha256:89c5244bc22a9bc3287d89ebc7e49b9cb5bb84cd40e6175ac3421d5a9f68b95a
 
 FROM ${NODE_IMAGE} AS dependencies
 WORKDIR /app/media

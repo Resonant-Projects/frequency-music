@@ -2,7 +2,7 @@
 # which strips TypeScript and resolves the worker's `.js`-specifier -> `.ts`
 # source imports. Bun and the LangGraph development CLI stay in the dependency
 # stage; the runtime receives production node_modules only.
-ARG BUILD_NODE_IMAGE=node:24.22.0-trixie-slim@sha256:a6155384446670e9719bdc4fd0ebe4d4b29fb32a8d6aa523da3547a6cfbcf22c
+ARG BUILD_NODE_IMAGE=node:24.22.1-trixie-slim@sha256:89c5244bc22a9bc3287d89ebc7e49b9cb5bb84cd40e6175ac3421d5a9f68b95a
 ARG RUNTIME_NODE_IMAGE=node:24.22.1-alpine3.23@sha256:0468540aa58203ff9e40c2aab3907c52644ab818af6176b1c70a026137dc92a2
 
 FROM ${BUILD_NODE_IMAGE} AS dependencies
