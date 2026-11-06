@@ -61,7 +61,7 @@ WORKDIR /app/agent
 
 # Keep the patched minimum while Alpine rotates security releases.
 RUN apk add --no-cache --update-cache 'libcrypto3>=3.5.8-r0' 'libssl3>=3.5.8-r0' \
-    'libexpat>=2.9.0-r0'
+    'libexpat>=2.10.0-r0'
 
 ARG CODEX_CLI_VERSION=0.146.0
 SHELL ["/bin/ash", "-o", "pipefail", "-c"]
