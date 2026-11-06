@@ -29,11 +29,14 @@ Harbor tags use `sha-<full-commit>-<first 12 hex of the digest>` and are immutab
 a retry accepts the existing identical digest and refuses a conflicting tag.
 The manifest digest remains the deployment boundary; never deploy a tag alone.
 
-The Harbor job attaches GitHub build-provenance attestation to the Harbor subject
-with `push-to-registry: true`, signs recursively with cosign, and verifies both
-the index and linux/amd64 manifest with identity
+The Harbor project enforces its cosign policy, so registry reads of a manifest
+return 412 until it is signed; only cosign itself is exempt. The Harbor job
+therefore confirms the pushed digest through Harbor's API, signs recursively with
+cosign, and verifies both the index and linux/amd64 manifest with identity
 `https://github.com/Resonant-Projects/frequency-music/.github/workflows/publish-agent-image.yml@refs/heads/main`
-and issuer `https://token.actions.githubusercontent.com`. It waits for Harbor's
+and issuer `https://token.actions.githubusercontent.com`. It then attaches GitHub
+build-provenance attestation to the Harbor subject with `push-to-registry: true`,
+because that push reads the subject manifest. It waits for Harbor's
 vulnerability scan, records its summary, proves anonymous manifest access for
 both signed digests, and uploads `harbor-deployment.json` with the exact `deploy`
 reference. Harbor scan findings are recorded; the blocking HIGH/CRITICAL gate is

@@ -212,17 +212,13 @@ jobs:
             echo "immutable tag points at $existing" >&2
             exit 1
           fi
-          [[ "$(crane digest "$target_tag_ref")" == "$IMAGE_DIGEST" ]] || { echo 'Harbor index digest differs from recorded artifact digest' >&2; exit 1; }
+          # Read through the API: the project's cosign policy answers 412 to registry
+          # reads of a manifest until it is signed, and signing happens in a later step.
+          [[ "$(harbor-artifact digest "$target_tag")" == "$IMAGE_DIGEST" ]] || { echo 'Harbor index digest differs from recorded artifact digest' >&2; exit 1; }
           printf 'target_ref=%s\n' "$target_ref" >> "$GITHUB_OUTPUT"; printf 'TARGET_REF=%s\nTARGET_TAG_REF=%s\n' "$target_ref" "$target_tag_ref" >> "$GITHUB_ENV"
           amd64=$(harbor-artifact amd64 "$IMAGE_DIGEST")
           [[ "$amd64" =~ ^sha256:[0-9a-f]{64}$ ]]
           printf 'AMD64_REF=%s/%s@%s\nAMD64_DIGEST=%s\n' "$HARBOR_REGISTRY" "$HARBOR_REPOSITORY" "$amd64" "$amd64" >> "$GITHUB_ENV"
-      - name: Attest Harbor subject
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_REPOSITORY }}
-          subject-digest: ${{ env.IMAGE_DIGEST }}
-          push-to-registry: true
       - name: Sign and verify Harbor index and amd64 manifest
         run: |
           set -euo pipefail
@@ -233,6 +229,14 @@ jobs:
           if [[ "$verified" != true ]]; then cosign sign --yes --recursive "$TARGET_REF"; fi
           for ref in "$TARGET_REF" "$AMD64_REF"; do cosign verify --certificate-identity "$SIGNER_IDENTITY" --certificate-oidc-issuer "$SIGNER_ISSUER" "$ref" > /dev/null; done
           [[ "$(crane digest "$TARGET_REF")" == "$IMAGE_DIGEST" ]]
+      # After signing: pushing the attestation reads the subject manifest, which the
+      # project's cosign policy refuses while the image is unsigned.
+      - name: Attest Harbor subject
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_REPOSITORY }}
+          subject-digest: ${{ env.IMAGE_DIGEST }}
+          push-to-registry: true
       - name: Wait for Harbor vulnerability scan
         id: harbor-scan
         env:
