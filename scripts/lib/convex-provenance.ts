@@ -7,13 +7,14 @@ import { validateOpsOrigin } from "./frequency-queue-evidence";
 
 /** The one Convex CLI whose internal push-request and config-hash contracts
  * this tooling has audited. The installed CLI must match it exactly. */
-export const AUDITED_CONVEX_VERSION = "1.46.0";
+export const AUDITED_CONVEX_VERSION = "1.48.0";
 
 /** Every CLI whose root-module hash (sha256 of source, then sourceMap) was
  * audited. Retained release manifests from any of them still verify; new
  * manifests are only built with AUDITED_CONVEX_VERSION. */
 export const VERIFIABLE_CONVEX_VERSIONS = [
   "1.34.1",
+  "1.46.0",
   AUDITED_CONVEX_VERSION,
 ] as const;
 

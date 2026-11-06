@@ -33,10 +33,10 @@ alone does not prove successful query execution or function absence.
 
 ## CLI contract and side effects
 
-The supported deployment command is the installed Convex CLI, pinned to 1.46.0
+The supported deployment command is the installed Convex CLI, pinned to 1.48.0
 by the reviewed dependency lock (`AUDITED_CONVEX_VERSION` in
 `scripts/lib/convex-provenance.ts`). It matches the in-tree `convex` package of
-the deployed backend release, `precompiled-2026-09-28-5c7cb5b`. Invoke its installed JavaScript entrypoint
+the deployed backend release, `precompiled-2026-10-28-d1fcbea`. Invoke its installed JavaScript entrypoint
 with Node; do not use a global CLI or download a floating version. This is the
 same CLI the offline provenance builder audits.
 
@@ -46,7 +46,7 @@ same CLI the offline provenance builder audits.
 | Ordinary `deploy --dry-run` | Contacts the backend; can upload/analyze bundles, submit pending schemas, and start validation/index preparation. Final activation is suppressed, but this is a separately approved mutation. |
 | Ordinary `deploy` | Bundles and analyzes code, prepares schema/index changes, waits for readiness, then finishes the push and activates function/component/auth/cron changes. Errors do not guarantee that no preparation occurred. |
 | `--codegen disable` | Prevents deployment-time edits to generated source; does not suppress deployment. |
-| `--typecheck disable` | Skips the CLI's own check, which reads only `convex/tsconfig.json`. This repository has none, and under `--typecheck enable` the missing file is fatal in both 1.34.1 and 1.46.0, so that flag cannot deploy. The root `tsconfig.json` covers every `convex/` source file; run it first (below). Neither check proves live data compatibility. Component source must pass its relevant reviewed checks separately. |
+| `--typecheck disable` | Skips the CLI's own check, which reads only `convex/tsconfig.json`. This repository has none, and under `--typecheck enable` the missing file is fatal in 1.34.1, 1.46.0, and 1.48.0, so that flag cannot deploy. The root `tsconfig.json` covers every `convex/` source file; run it first (below). Neither check proves live data compatibility. Component source must pass its relevant reviewed checks separately. |
 | `--cmd`, preview options, debug/verbose flags | Not part of this procedure. `--cmd` can execute extra commands, and expanded output can expose private metadata. |
 
 Verified installed source: `node_modules/convex/src/cli/deploy.ts`,
@@ -93,7 +93,7 @@ Run in the clean, immutable approved release checkout with dependencies
 installed from its lock. First perform local assertions, which require no key:
 
 ```sh
-node -e 'const fs=require("node:fs"); if(JSON.parse(fs.readFileSync("node_modules/convex/package.json")).version!=="1.46.0") throw Error("CLI version mismatch"); for(const p of [".env", ".env.local"]) if(fs.existsSync(p)) throw Error("Unexpected environment file");'
+node -e 'const fs=require("node:fs"); if(JSON.parse(fs.readFileSync("node_modules/convex/package.json")).version!=="1.48.0") throw Error("CLI version mismatch"); for(const p of [".env", ".env.local"]) if(fs.existsSync(p)) throw Error("Unexpected environment file");'
 vpx tsc --noEmit -p tsconfig.json
 ```
 
@@ -118,7 +118,7 @@ node node_modules/convex/bin/main.js deploy --typecheck disable --codegen disabl
 This command is the **activation command**, not a read-only acceptance command.
 Do not add `--yes`, index-deletion overrides, preview flags, `--cmd`, or hidden
 push/debug flags. Retain operator prompts and stop on an unreviewed target,
-large-index deletion, authentication provisioning, or unexpected delta. The
+large-index deletion or backfill, staged-validator deletion, authentication provisioning, or unexpected delta. The
 tracked candidate uses Clerk; any unrelated provider provisioning prompt is
 outside this approval. Keep full CLI output private and return only reviewed
 scalar status/identity evidence.

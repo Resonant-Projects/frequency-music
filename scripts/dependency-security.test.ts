@@ -37,21 +37,21 @@ function isAffectedWs(version: string): boolean {
 
 describe("Convex dependency security floor", () => {
   const workspaces = [
-    { directory: root, convex: "^1.46.0" },
-    { directory: join(root, "agent"), convex: "1.46.0" },
-    { directory: join(root, "web"), convex: "^1.46.0" },
-    { directory: join(root, "media"), convex: "1.46.0" },
+    { directory: root, convex: "^1.48.0" },
+    { directory: join(root, "agent"), convex: "1.48.0" },
+    { directory: join(root, "web"), convex: "^1.48.0" },
+    { directory: join(root, "media"), convex: "1.48.0" },
   ];
 
   test.each(workspaces)(
-    "$directory uses Convex 1.46 and resolves patched WebSocket versions",
+    "$directory uses Convex 1.48 and resolves patched WebSocket versions",
     ({ directory, convex }) => {
       const manifest = readJson(join(directory, "package.json"));
       const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
       const wsVersions = resolvedVersions(lockfile, "ws");
 
       expect(manifest.dependencies?.convex).toBe(convex);
-      expect(lockfile).toContain('"convex@1.46.0"');
+      expect(lockfile).toContain('"convex@1.48.0"');
       expect(wsVersions.length).toBeGreaterThan(0);
       expect(wsVersions.filter(isAffectedWs)).toEqual([]);
     },
