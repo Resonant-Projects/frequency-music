@@ -20,7 +20,7 @@
     "@park-ui/panda-preset": "^0.43.1",
     "@resonant-projects/clerk-solidjs": "^4.1.0",
     "@tanstack/solid-router": "^1.170.39",
-    "convex": "^1.46.0",
+    "convex": "^1.48.0",
     "solid-js": "^1.9.17",
     "solid-markdown": "^2.1.1",
     "three": "^0.186.1"

@@ -161,9 +161,9 @@ describe("envFileKeys", () => {
 
 describe("assertCliVersion", () => {
   test("requires the audited version", () => {
-    expect(() => assertCliVersion("1.46.0", "1.46.0")).not.toThrow();
-    expect(() => assertCliVersion("1.47.0", "1.46.0")).toThrow(
-      /audited deploy CLI is 1\.46\.0/,
+    expect(() => assertCliVersion("1.48.0", "1.48.0")).not.toThrow();
+    expect(() => assertCliVersion("1.47.0", "1.48.0")).toThrow(
+      /audited deploy CLI is 1\.48\.0/,
     );
   });
 });

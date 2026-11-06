@@ -18,7 +18,7 @@ from processes import _run_bounded, _stop_process_group
 
 REPO = Path(__file__).resolve().parents[2]
 RUNS = REPO / "web/artifacts/local-convex"
-IMAGE = "ghcr.io/convex/convex-backend@sha256:294944b33dc55e8f68b2feda11c5e7b195f7778b9ad2951f1bea2744ad392e5a"
+IMAGE = "ghcr.io/convex/convex-backend@sha256:e9c084e8bd6c1f249012c672193f0988c748824f55a24cdad45f6185a8462f9a"
 LABEL = "frequency.local-verification"
 
 

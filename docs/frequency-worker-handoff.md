@@ -188,7 +188,7 @@ The `Convex source artifact provenance` workflow
 (`.github/workflows/convex-provenance.yml`) produces an attested
 `convex-root-modules-<source-sha>` artifact containing `convex-root-modules.json`.
 Publication is manual, from `main`; it needs no backend credentials. Its offline
-builder uses the pinned installed Convex 1.46.0 bundle pipeline, inert explicit
+builder uses the pinned installed Convex 1.48.0 bundle pipeline, inert explicit
 credentials, and a network-denying preload. It hashes the exact generated module
 source plus source map using Convex's own comparison algorithm. **Do not run a
 plain `convex deploy --dry-run` to reproduce this:** that command alone contacts

@@ -125,7 +125,7 @@ const request = {
   adminKey: "frequency-offline-inert",
   dryRun: true,
   appDefinition: {
-    udfServerVersion: "1.46.0",
+    udfServerVersion: "1.48.0",
     unchangedModuleHashes: [],
     definition: null,
     schema: null,
@@ -388,7 +388,7 @@ describe("Convex artifact evidence", () => {
       method: "POST",
       redirect: "error",
       headers: { Authorization: "Convex inert" },
-      body: JSON.stringify({ version: "1.46.0", adminKey: "inert" }),
+      body: JSON.stringify({ version: "1.48.0", adminKey: "inert" }),
     });
   });
 
