@@ -62,7 +62,7 @@
     "varlock": "^1.22.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
     "vite-plus": "1.4.0",
-    "@effect/tsgo": "0.59.0"
+    "@effect/tsgo": "0.67.1"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"
