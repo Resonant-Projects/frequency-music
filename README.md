@@ -51,6 +51,31 @@ A research-to-composition web app that ingests sources + Notion notes, extracts 
 
 ## Local development
 
+Use Node.js 26 LTS (`.node-version`) for local tools and CI. Root, web, and media
+require `26.x`; `web/package.json` also selects Node 26 for Vercel builds and
+functions. Agent and media worker images retain digest-pinned Node 26 bases.
+The optional LangGraph API image remains on Node 24 because the pinned
+`@langchain/langgraph-cli` 1.5.1 rejects Node 26. The agent package permits both
+24 and 26 only for that image; local tools, CI, and the always-on worker use 26.
+Removing the exception requires a compatible LangGraph CLI/LangSmith dependency
+upgrade and a successful image smoke check.
+
+### Vercel deployment policy
+
+`web/vercel.json` disables Git deployment creation for `renovate/**` and the
+verification-only `docs/verify-*` branch namespace. Required GitHub CI still runs
+on these PRs, including the inert web verification build and image build/scan
+checks when applicable. Do not put
+application changes that need a preview on a `docs/verify-*` branch.
+
+All other branches keep their current deployment behavior, including `main`,
+release branches, and feature previews. Existing SPA and podcast-feed rewrites
+are unchanged. This is a Git integration policy, not an Ignored Build Step:
+blocked branches create no Vercel deployment instead of creating a canceled
+build. It takes effect only after the configuration is published on the relevant
+Git refs; it does not cancel existing deployments or block explicit CLI/API
+manual deployments. Publishing this configuration is not approval to deploy.
+
 ### Web app
 
 1. Run `vp i` at the repository root. It installs all four packages and generates the web's Panda files.
