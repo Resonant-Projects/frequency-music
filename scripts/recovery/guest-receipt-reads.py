@@ -2,7 +2,7 @@
 """Bounded, read-only restore-receipt reads from an isolated guest's Convex backend.
 
 Runs inside a network-isolated restore guest (Python 3.9+ standard library
-only), under the same guest-side admin-key trap that `read-identities` uses.
+only, with guest_receipt_metadata.py and guest_receipt_postgres.py beside it), under the same guest-side admin-key trap that `read-identities` uses.
 It reads, from a numeric-loopback origin only:
 
 * the deployment metadata `scripts/lib/convex-deployment-inspect.ts` reads
@@ -32,25 +32,30 @@ digest. A watchdog ends the process after RESTORE_RECEIPT_DEADLINE_SECONDS.
 """
 
 import base64
-import decimal
 import hashlib
 import json
 import os
 import re
 import stat
-import struct
-import subprocess
 import sys
 import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 
+# The host pushes the two modules beside this script and removes all three
+# afterwards, so leave no bytecode directory behind in the guest.
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from guest_receipt_metadata import Rejected, cron_schedule, inspect, js_number, metadata_hash  # noqa: E402,F401
+from guest_receipt_postgres import parse_postgres_recovery, postgres_recovery  # noqa: E402,F401
+
 ORIGIN = os.environ.get("RESTORE_BACKEND_ORIGIN", "http://127.0.0.1:3210")
 KEY_FILE = os.environ.get("RESTORE_ADMIN_KEY_FILE", "/root/.restore-admin-key")
 OUT_FILE = os.environ.get("RESTORE_RECEIPT_OUT", "/root/restore-receipt-reads.json")
 DEADLINE = float(os.environ.get("RESTORE_RECEIPT_DEADLINE_SECONDS", "1500"))
-CLIENT = "npm-1.46.0"  # AUDITED_CONVEX_VERSION in scripts/lib/convex-provenance.ts
+CLIENT = "npm-1.48.0"  # AUDITED_CONVEX_VERSION in scripts/lib/convex-provenance.ts
 RESPONSE_CAP = 32 * 1024 * 1024
 TOTAL_CAP = 4 * 1024 * 1024 * 1024
 BLOB_CAP = 256 * 1024 * 1024
@@ -86,12 +91,6 @@ COUNT_TABLES = (
     ("mediaJobs", None),
     ("audioArtifacts", ("pending", "ready", "failed")),
 )
-UDF_TYPES = ("Query", "Mutation", "Action", "HttpAction")
-INTEGER = re.compile(r"^[A-Za-z0-9+/]{11}=$")
-
-
-class Rejected(Exception):
-    """Carries a fixed classification code, never backend text."""
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -162,189 +161,6 @@ def query(base, key, path, args, fmt="convex_encoded_json"):
     if envelope["status"] != "success":
         raise Rejected("query_failed")
     return envelope.get("value")
-
-
-# ---- deployment metadata, same output shape as inspectDeployment() ----
-
-def js_number(value):
-    """JSON.stringify(number): ECMAScript Number::toString over the shortest round-trip digits.
-
-    JSON.parse yields an IEEE double, so integers beyond 2**53 are rounded first.
-    """
-    if isinstance(value, int):
-        if abs(value) <= 2 ** 53:
-            return str(value)
-        value = float(value)
-    if value != value or value in (float("inf"), float("-inf")):
-        return "null"
-    if value == 0:
-        return "0"
-    sign = "-" if value < 0 else ""
-    shortest = decimal.Decimal(repr(abs(value))).as_tuple()
-    raw = "".join(str(d) for d in shortest.digits)
-    n = len(raw) + shortest.exponent  # value = 0.<digits> * 10**n
-    digits = raw.rstrip("0") or "0"
-    k = len(digits)
-    if k <= n <= 21:
-        text = digits + "0" * (n - k)
-    elif 0 < n <= 21:
-        text = digits[:n] + "." + digits[n:]
-    elif -6 < n <= 0:
-        text = "0." + "0" * -n + digits
-    else:
-        exponent = n - 1
-        text = digits[0] + ("." + digits[1:] if k > 1 else "") + "e" + ("+" if exponent >= 0 else "-") + str(abs(exponent))
-    return sign + text
-
-
-def utf16_order(key):
-    """JavaScript compares strings by UTF-16 code unit; big-endian UTF-16 bytes sort the same way."""
-    return key.encode("utf-16-be", "surrogatepass")
-
-
-def canonical(item, depth=0):
-    """Port of metadataHash()'s canonical form in convex-deployment-inspect.ts."""
-    if depth > 64:
-        raise Rejected("metadata_depth")
-    if item is None:
-        return "null"
-    if isinstance(item, bool):
-        return "true" if item else "false"
-    if isinstance(item, str):
-        return json.dumps(item, ensure_ascii=False)
-    if isinstance(item, (int, float)):
-        return js_number(item)
-    if isinstance(item, list):
-        return "[" + ",".join(canonical(child, depth + 1) for child in item) + "]"
-    if isinstance(item, dict):
-        return "{" + ",".join(
-            json.dumps(k, ensure_ascii=False) + ":" + canonical(item[k], depth + 1) for k in sorted(item, key=utf16_order)) + "}"
-    raise Rejected("metadata_type")
-
-
-def metadata_hash(value):
-    return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
-
-
-def label(value, nullable=False):
-    if value is None and nullable:
-        return None
-    if not isinstance(value, str) or len(value) > 1024:
-        raise Rejected("invalid_metadata")
-    return value
-
-
-def schedule_integer(value, low, high):
-    if not isinstance(value, dict) or set(value) != {"$integer"} or not isinstance(value["$integer"], str) \
-            or not INTEGER.match(value["$integer"]):
-        raise Rejected("invalid_schedule")
-    integer = struct.unpack("<q", base64.b64decode(value["$integer"]))[0]
-    if not low <= integer <= high:
-        raise Rejected("invalid_schedule")
-    return integer
-
-
-def cron_schedule(spec):
-    kind = spec.get("type") if isinstance(spec, dict) else None
-    out = {"type": kind}
-    def optional_minute():
-        if "minuteUTC" in spec and spec["minuteUTC"] is not None:
-            out["minuteUTC"] = schedule_integer(spec["minuteUTC"], 0, 59)
-    if kind == "interval":
-        out["seconds"] = schedule_integer(spec.get("seconds"), 0, 2**53 - 1)
-    elif kind == "hourly":
-        optional_minute()
-    elif kind == "daily":
-        out["hourUTC"] = schedule_integer(spec.get("hourUTC"), 0, 23)
-        optional_minute()
-    elif kind == "weekly":
-        out["dayOfWeek"] = schedule_integer(spec.get("dayOfWeek"), 0, 6)
-        out["hourUTC"] = schedule_integer(spec.get("hourUTC"), 0, 23)
-        optional_minute()
-    elif kind == "monthly":
-        out["day"] = schedule_integer(spec.get("day"), 1, 31)
-        out["hourUTC"] = schedule_integer(spec.get("hourUTC"), 0, 23)
-        optional_minute()
-    elif kind == "cron":
-        expr = spec.get("cronExpr")
-        if not isinstance(expr, str) or len(expr) > 256 or not re.match(r"^[0-9*,/-]+(?:[ \t]+[0-9*,/-]+){4}$", expr):
-            raise Rejected("invalid_schedule")
-        out["cronExpr"] = expr
-    else:
-        raise Rejected("invalid_schedule")
-    return out
-
-
-def inspect(base, key):
-    raw_components = query(base, key, "_system/frontend/components:list", {})
-    if not isinstance(raw_components, list) or len(raw_components) > 100:
-        raise Rejected("invalid_components")
-    components = []
-    for item in raw_components:
-        if not isinstance(item, dict) or not isinstance(item.get("args"), dict):
-            raise Rejected("invalid_components")
-        component = {"id": label(item.get("id")), "path": label(item.get("path")), "state": label(item.get("state"))}
-        if "name" in item:
-            component["name"] = label(item["name"], nullable=True)
-        if "httpPrefix" in item:
-            component["httpPrefix"] = label(item["httpPrefix"], nullable=True)
-        component["argsCount"] = len(item["args"])
-        component["argsOmitted"] = True
-        components.append(component)
-    if len({c["id"] for c in components}) != len(components) or len({c["path"] for c in components}) != len(components):
-        raise Rejected("duplicate_components")
-    component_ids = [None] + [c["id"] for c in components if c["path"] != ""]
-
-    raw_modules = query(base, key, "_system/frontend/modules:listForAllComponents", {})
-    if not isinstance(raw_modules, list) or len(raw_modules) != len(component_ids):
-        raise Rejected("incomplete_module_inventory")
-    modules = []
-    for entry in raw_modules:
-        if not isinstance(entry, list) or len(entry) != 2 or not isinstance(entry[1], list):
-            raise Rejected("invalid_modules")
-        component_id = label(entry[0], nullable=True)
-        if component_id not in component_ids:
-            raise Rejected("incomplete_module_inventory")
-        out_modules = []
-        for module_entry in entry[1]:
-            if not isinstance(module_entry, list) or len(module_entry) != 2 or not isinstance(module_entry[1], dict):
-                raise Rejected("invalid_modules")
-            path, module = label(module_entry[0]), module_entry[1]
-            functions = []
-            for fn in module.get("functions", []):
-                if fn.get("udfType") not in UDF_TYPES or fn.get("visibility", {}).get("kind") not in ("public", "internal"):
-                    raise Rejected("invalid_function")
-                functions.append({"name": label(fn.get("name")), "udfType": fn["udfType"],
-                                  "visibility": {"kind": fn["visibility"]["kind"]}})
-            if len({f["name"] for f in functions}) != len(functions):
-                raise Rejected("duplicate_functions")
-            crons = []
-            for cron in module.get("cronSpecs") or []:
-                identifier, spec = cron[0], cron[1]
-                crons.append({"identifier": label(identifier), "udfPath": label(spec.get("udfPath")),
-                              "schedule": cron_schedule(spec.get("cronSchedule")), "argsOmitted": True})
-            out_modules.append({"path": path, "functions": functions, "crons": crons})
-        if len({m["path"] for m in out_modules}) != len(out_modules):
-            raise Rejected("duplicate_modules")
-        modules.append({"componentId": component_id, "modules": out_modules})
-    if len({m["componentId"] for m in modules}) != len(modules):
-        raise Rejected("incomplete_module_inventory")
-
-    schemas = []
-    for component_id in component_ids:
-        value = query(base, key, "_system/frontend/getSchemas", {"componentId": component_id})
-        if not isinstance(value, dict):
-            raise Rejected("invalid_schema")
-        def fingerprint(field):
-            text = value.get(field)
-            if text is None:
-                return None
-            if not isinstance(text, str):
-                raise Rejected("invalid_schema")
-            return metadata_hash(json.loads(text))
-        schemas.append({"componentId": component_id, "activeHash": fingerprint("active"),
-                        "inProgressHash": fingerprint("inProgress")})
-    return {"components": components, "modules": modules, "schemas": schemas}
 
 
 # ---- component execution probes ----
@@ -559,7 +375,7 @@ def collect():
         raise Rejected("output_exists")
     key = read_key()
     result = {"format": "frequency-restore-receipt-reads-v1", "deploymentAuthorized": False}
-    sections = (("inspection", lambda: inspect(base, key)),
+    sections = (("inspection", lambda: inspect(lambda path, args: query(base, key, path, args))),
                 ("componentProbes", lambda: component_probes(base, key)),
                 ("environmentPresence", lambda: env_presence(base, key)))
     for name, read in sections:
@@ -584,55 +400,6 @@ def collect():
     return {"ok": result["allChecksPassed"],
             "classification": "receipt_reads_written" if result["allChecksPassed"] else "receipt_checks_failed",
             "written": True, "outputFile": OUT_FILE, "outputSha256": hashlib.sha256(payload).hexdigest()}
-
-
-# ---- PostgreSQL first-start recovery (item 2), parsed inside the guest ----
-
-PG_PREFIX = re.compile(r"^(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? [A-Z]{2,5}) \[\d+\] (?P<sev>[A-Z]+):  (?P<msg>.*)$")
-PG_EVENTS = (
-    ("interrupted", re.compile(r"database system was interrupted; last known up at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]{2,5})")),
-    ("clean_shutdown_at", re.compile(r"database system was shut down at (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]{2,5})")),
-    ("automatic_recovery_in_progress", re.compile(r"database system was not properly shut down; automatic recovery in progress")),
-    ("redo_starts_at", re.compile(r"redo starts at ([0-9A-F]{1,8}/[0-9A-F]{1,8})")),
-    ("redo_done_at", re.compile(r"redo done at ([0-9A-F]{1,8}/[0-9A-F]{1,8}) system usage: .*")),
-    ("wal_end_invalid_record_length_at", re.compile(r"invalid record length at ([0-9A-F]{1,8}/[0-9A-F]{1,8}): expected at least \d+, got \d+")),
-    ("end_of_recovery_checkpoint_started", re.compile(r"checkpoint starting: end-of-recovery(?: [a-z-]+)*")),
-    ("ready_to_accept_connections", re.compile(r"database system is ready to accept connections")),
-)
-
-
-def parse_postgres_recovery(lines):
-    """Fixed event tokens with their timestamp and an LSN or timestamp value; nothing else."""
-    events, severities, total = [], {"FATAL": 0, "PANIC": 0, "ERROR": 0, "WARNING": 0}, 0
-    for line in lines:
-        total += 1
-        match = PG_PREFIX.match(line.rstrip("\n"))
-        if not match:
-            continue
-        if match["sev"] in severities:
-            severities[match["sev"]] += 1
-        if match["sev"] != "LOG":
-            continue
-        for name, pattern in PG_EVENTS:
-            found = pattern.fullmatch(match["msg"])
-            if found:
-                event = {"at": match["ts"], "event": name}
-                if found.groups():
-                    event["value"] = found.group(1)
-                events.append(event)
-                break
-    return {"events": events, "severityCounts": severities, "linesScanned": total}
-
-
-def postgres_recovery(since):
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", since):
-        raise Rejected("invalid_since")
-    try:
-        logs = subprocess.run(["docker", "logs", "--since", since, "app-postgres-1"], stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, timeout=30, check=True).stdout
-    except Exception:  # noqa: BLE001
-        raise Rejected("log_read_failed") from None
-    return parse_postgres_recovery(logs.decode("utf-8", "replace").splitlines())
 
 
 def main():
