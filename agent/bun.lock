@@ -11,7 +11,7 @@
         "@langchain/langgraph-sdk": "1.12.7",
         "@modelcontextprotocol/sdk": "1.32.2",
         "@openai/codex-sdk": "0.162.1",
-        "@varlock/1password-plugin": "2.0.5",
+        "@varlock/1password-plugin": "2.0.6",
         "convex": "1.48.0",
         "convex-helpers": "0.1.128",
         "deepagents": "1.14.2",
@@ -242,7 +242,7 @@
 
     "@typescript/vfs": ["@typescript/vfs@1.6.5", "", { "dependencies": { "debug": "^4.4.3" }, "peerDependencies": { "typescript": "*" } }, "sha512-gobLHQLmvQGJInFk31NvgMd1uYzRXsd8qgnOssyLD055R2QPnw1ubRbBQ4+T+5qC7IQVuYXdvNDE2G7tMDVHgw=="],
 
-    "@varlock/1password-plugin": ["@varlock/1password-plugin@2.0.5", "", { "peerDependencies": { "varlock": "^1.22.0" } }, "sha512-QmthT9YxOocsp6J/EerOdeIwsm4DzKgnDoF7RdSiL8vDBy8Y0O0wSL0TWwp+3VxRfWjA7V7qGIzQkWRabu1e1Q=="],
+    "@varlock/1password-plugin": ["@varlock/1password-plugin@2.0.6", "", { "peerDependencies": { "varlock": "^1.24.0" } }, "sha512-MFW0sWdRy13dvqRZa2Ta8/1my/BhpEAKKd5+8a7yO/HN/XaJVdTb9yJW6Nk7DiCvweKxPsWgooIpK+jFsIOukw=="],
 
     "@varlock/native-helper-darwin": ["@varlock/native-helper-darwin@1.22.0", "", { "os": "darwin" }, "sha512-SseBFiqO9kugEc8Key8QsthdzrfUwj/vBRJeH4oC+gmT97I/aqmVjG6UH5a3n4RyLE2As2V+Es4aJoeNGav8dA=="],
 
