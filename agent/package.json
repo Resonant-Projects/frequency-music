@@ -54,7 +54,7 @@
     "braces@3.0.3": "patches/braces@3.0.3.patch"
   },
   "//overrides": {
-    "extract-zip": "LangGraph CLI uses extract-zip 2.0.1; Electron-maintained 1.0.6 preserves its API and rejects symlink escape/overwrite attacks. Covered by tests/zip-security.test.ts.",
+    "extract-zip": "LangGraph CLI uses extract-zip 2.0.1; Electron-maintained 1.0.8 preserves its API and rejects symlink escape/overwrite attacks. Covered by tests/zip-security.test.ts.",
     "esbuild, hono, postcss, ws": "Existing security floors; keep CLI and runtime transitive copies on patched versions."
   }
 }
