@@ -22,7 +22,7 @@
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
     "vite-plus": "1.4.0",
-    "@effect/tsgo": "0.59.0"
+    "@effect/tsgo": "0.67.1"
   },
   "overrides": {
     "ws": "^8.21.0"
