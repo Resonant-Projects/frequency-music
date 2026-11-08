@@ -74,6 +74,12 @@
       "allowedVersions": ">=1.5.0 <1.5.2"
     },
     {
+      "description": "Keep the LangGraph SDK on its real Core ^1.1.48 peer while DeepAgents holds Core below 1.2.18; SDK 1.12.9+ requires Core ^1.2.18.",
+      "matchFileNames": ["agent/package.json"],
+      "matchPackageNames": ["@langchain/langgraph-sdk"],
+      "allowedVersions": ">=1.12.7 <1.12.9"
+    },
+    {
       "description": "Group Biome packages on the weekly Monday morning schedule.",
       "matchPackageNames": ["@biomejs/**"],
       "groupName": "Biome",
