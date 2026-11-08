@@ -41,7 +41,7 @@
     "postcss": "8.5.32",
     "typescript": "5.9.3",
     "@types/node": "26.6.5",
-    "@effect/tsgo": "0.59.0"
+    "@effect/tsgo": "0.67.3"
   },
   "overrides": {
     "esbuild": "0.28.2",
