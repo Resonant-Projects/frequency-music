@@ -68,8 +68,9 @@ SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 
 # ffmpeg re-encodes YouTube audio over Groq's 25 MB upload limit into short
 # Opus segments (src/tools/youtubeTranscript.ts). Under pipefail, a failing
-# ffmpeg fails the build even if it printed libopus.
-RUN apk add --no-cache ffmpeg=8.0.1-r1 \
+# ffmpeg fails the build even if it printed libopus. ffmpeg pulls in glib; keep
+# its patched minimum here so the layer cannot be replayed from cache below it.
+RUN apk add --no-cache ffmpeg=8.0.1-r1 'glib>=2.86.5-r0' \
     && ffmpeg -hide_banner -encoders | grep libopus >/dev/null
 
 # Codex AUTH is never baked — auth.json is seeded once at runtime into the
