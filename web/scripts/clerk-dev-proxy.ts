@@ -60,6 +60,8 @@ const server = createServer(
         `Vite is not accepting connections on 127.0.0.1:${targetPort}. Start it with: vp run dev:clerk`,
       );
     });
+    // Free the Vite connection when the browser leaves mid-response.
+    res.on("close", () => upstream.destroy());
     req.pipe(upstream);
   },
 );

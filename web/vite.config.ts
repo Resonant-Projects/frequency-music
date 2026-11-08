@@ -91,6 +91,8 @@ export default defineConfig({
     // Default `vp run dev` leaves these unset and stays on localhost:4173.
     ...(process.env.CLERK_DEV_ORIGIN
       ? {
+          // The proxy connects to IPv4 loopback; `localhost` can resolve to ::1.
+          host: "127.0.0.1",
           allowedHosts: [process.env.CLERK_DEV_ORIGIN],
           origin: `https://${process.env.CLERK_DEV_ORIGIN}`,
           hmr: {
