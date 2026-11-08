@@ -1,6 +1,6 @@
 # Effect TypeScript tooling
 
-All four TypeScript projects use `@effect/tsgo` 0.59.0 for TypeScript 7.0.2 checks. Each package owns its dev dependency, lockfile, and `tsconfig.json` plugin configuration.
+All four TypeScript projects use `@effect/tsgo` 0.67.3 for TypeScript 7.0.2 checks. Each package owns its dev dependency, lockfile, and `tsconfig.json` plugin configuration.
 
 ## Install and typecheck
 
