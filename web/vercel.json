@@ -1,4 +1,11 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "renovate/**": false,
+      "docs/verify-*": false
+    }
+  },
   "rewrites": [
     {
       "source": "/podcast/:token/feed.xml",

@@ -122,7 +122,7 @@ jobs can drain during the grace period.
 from the repo root (the build context needs `media/` and `convex/shared/`;
 `.dockerignore` at the root allows both). Two stages: bun installs production
 `node_modules` in `dependencies`; the `runtime` stage is the same Debian
-`node:24.18.1-trixie-slim` base with `ffmpeg`/`ffprobe` from apt, a non-root
+digest-pinned Node 26 `trixie-slim` base with `ffmpeg`/`ffprobe` from apt, a non-root
 `media` user (uid 1001), `MEDIA_WORK_DIR=/work` owned by that user, and
 `/app/node_modules` symlinked to the media install so `convex/shared` files
 resolve their imports, and an `/app/package.json` declaring `"type": "module"`

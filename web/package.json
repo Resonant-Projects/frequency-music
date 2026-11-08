@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "26.x"
+  },
   "scripts": {
     "dev": "panda codegen --clean && panda cssgen && vp dev",
     "build": "panda codegen --clean && panda cssgen && vp build",
