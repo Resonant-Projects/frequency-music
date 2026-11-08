@@ -13,6 +13,7 @@ export RECEIPT_READER="$work/reader.py"
 export PATH="$work/bin:$PATH"
 mkdir -p "$work/bin"
 echo 'print("reader")' > "$RECEIPT_READER"
+touch "$work/guest_receipt_metadata.py" "$work/guest_receipt_postgres.py"
 
 cat > "$work/bin/timeout" <<'EOF'
 #!/usr/bin/env bash
@@ -55,7 +56,7 @@ case "$*" in
     echo '{"ok": true, "events": [{"at": "2026-10-17 16:30:01.1 UTC", "event": "ready_to_accept_connections"}]}' ;;
   "sh -c trap \"rm -f /root/.restore-admin-key\""*) [ ! -f "$SHIM_STATE/reader_fails" ] || exit 1; [ ! -f "$SHIM_STATE/checks_fail" ] || exit 2 ;;
   "sh -c [ ! -e /root/.restore-admin-key ]") [ ! -f "$SHIM_STATE/key_left" ] ;;
-  "rm -f "*) ;;
+  "rm -f "*) echo "$*" >> "$SHIM_STATE/removed.log" ;;
   *) echo "exec shim: unexpected $*" >&2; exit 98 ;;
 esac
 EOF
@@ -99,7 +100,23 @@ check "pulled file is private" "[ \"\$(stat -c %a '$work/runs/913-20261017T16290
 check "running services listed by name only" "grep -qx '  docker.service' '$work/last.out' && ! grep -q 'Docker$' '$work/last.out'"
 check "every pct exec, push and pull carries a deadline" "[ \"\$(grep -c '^pct \(exec\|push\|pull\)' '$SHIM_STATE/calls.log')\" = \"\$(grep -c '^timeout [0-9]* pct \(exec\|push\|pull\)' '$SHIM_STATE/calls.log')\" ]"
 check "guest reader runs under the key trap and its own deadline" "grep -q '^timeout 1560 pct exec 913 -- sh -c trap \"rm -f /root/.restore-admin-key\" EXIT HUP INT TERM;' '$SHIM_STATE/calls.log'"
+for name in guest-receipt-reads.py guest_receipt_metadata.py guest_receipt_postgres.py; do
+  check "pushes $name to the guest" "grep -q '^pct push 913 .* /root/$name --perms 0700$' '$SHIM_STATE/calls.log'"
+  check "removes $name from the guest" "grep -q ' /root/$name\( \|$\)' '$SHIM_STATE/removed.log'"
+done
 expect 1 "refuses to overwrite earlier evidence" --msg "already exists" 913
+
+reset_state; mv "$work/guest_receipt_postgres.py" "$work/held.py"
+expect 1 "refuses before contacting the guest without a reader module" --msg "guest reader module not found: guest_receipt_postgres.py" 913
+check "missing module stops before any pct call" "[ ! -e '$SHIM_STATE/calls.log' ]"
+mv "$work/held.py" "$work/guest_receipt_postgres.py"
+
+# The real files, alone in a directory like the guest's /root, from another cwd.
+guest="$work/guest-root"; mkdir -p "$guest"
+cp "$here/../guest-receipt-reads.py" "$here/../guest_receipt_metadata.py" "$here/../guest_receipt_postgres.py" "$guest/"
+out=$(cd / && python3 "$guest/guest-receipt-reads.py" --postgres-recovery not-a-time) && rc=0 || rc=$?
+check "the pushed files run together, by themselves" "[ '$rc' = 1 ] && [ '$out' = '{\"ok\": false, \"classification\": \"invalid_since\"}' ]"
+check "running them leaves no bytecode directory" "[ ! -e '$guest/__pycache__' ]"
 
 reset_state; echo 'net0: name=veth0,bridge=vmbr0' >> "$SHIM_STATE/config"
 expect 1 "refuses a guest with a network entry" --msg "network, extra mount" 913

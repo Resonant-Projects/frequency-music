@@ -12,6 +12,15 @@ import {
   verifyManifestSnapshot,
 } from "./convex-provenance";
 
+test("restore guest reads announce the audited Convex client", () => {
+  expect(
+    readFileSync(
+      new URL("../recovery/guest-receipt-reads.py", import.meta.url),
+      "utf8",
+    ),
+  ).toContain(`CLIENT = "npm-${AUDITED_CONVEX_VERSION}"`);
+});
+
 test("offline delta preserves exact added, removed and changed module identities without accepting mismatch", () => {
   const manifest = manifestFromPushRequest(request);
   const deployed = {
