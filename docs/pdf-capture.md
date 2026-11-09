@@ -11,6 +11,8 @@ approved the design on 2026-10-17 (Postplan draft `tzak0v5h9k77`, version 3).
 | Uploaded file (`/ingest`, 25 MB at most) | `pdfCapture.createFromPdfUpload`. The browser uploads to Convex storage first. The Source keeps the blob in `sources.pdfStorageId`. Dedupe key: `pdf:<sha256 hex>` | `POST $FIRECRAWL_API_URL/v2/parse` with the stored bytes |
 | Public PDF URL | `pdfCapture.createFromPdfUrl`. Dedupe key: the URL key, so `arxiv:` and `doi:` identity holds | `POST $FIRECRAWL_API_URL/v2/scrape` |
 
+Publisher PDF URLs share article DOI identity for supported Nature `/articles/<suffix>.pdf` identifier families, IOP `/article/<DOI>/pdf`, SIAM `/doi/pdf/<DOI>`, and Springer `/content/pdf/<DOI>.pdf`. The dedupe migration also rekeys public PDF Sources still stored under `url:` keys; uploaded files retain their `pdf:<hash>` identity. Follow the [paused-intake migration procedure](source-scout-research.md#publisher-doi-identity-and-rollout) before enabling the new identity rules on existing data.
+
 When a PDF URL's key already belongs to a page or PDF Source with no text (blocked for
 missing text, or ingested with no capture running; an arXiv abstract page behind a bot
 wall, say), intake reads that Source's text from the PDF

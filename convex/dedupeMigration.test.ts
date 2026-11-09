@@ -1,11 +1,13 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vite-plus/test";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import schema from "./schema";
 import { keepsDedupeKey } from "./sources";
 import { EXTRACTION_PROMPT_VERSION } from "./shared/extractionPrompt";
 import { modules } from "../harness/modules";
+import { publisherDois } from "../harness/fixtures/publisherDois";
+import { normalizeUrl } from "./sourceUtils";
 
 const arxivRow = (overrides: {
   dedupeKey: string;
@@ -26,6 +28,164 @@ const arxivRow = (overrides: {
 });
 
 describe("dedupe key migration", () => {
+  test.each(publisherDois)(
+    "rekeys legacy $url rows before preflight/intake resume",
+    async ({ url, doi }) => {
+      const t = convexTest(schema, modules);
+      const operator = t.withIdentity({ subject: "operator" });
+      const legacyKey = `url:${normalizeUrl(url)}`;
+      const canonicalKey = `doi:${doi.toLowerCase()}`;
+      const row = {
+        type: url.endsWith(".pdf") ? ("pdf" as const) : ("url" as const),
+        canonicalUrl: url,
+        dedupeKey: legacyKey,
+        rawText: "Existing captured article text.",
+        status: "text_ready" as const,
+        visibility: "private" as const,
+        createdBy: "system" as const,
+        createdAt: 1,
+        updatedAt: 1,
+      };
+      const id = await t.run((ctx) => ctx.db.insert("sources", row));
+      const before = await t.run((ctx) => ctx.db.get(id));
+      const dry = await operator.mutation(api.sources.recomputeDedupeKeys, {
+        cursor: null,
+        apply: false,
+      });
+      expect(dry).toMatchObject({
+        changed: 0,
+        collisionsArchived: 0,
+        planned: [
+          { id, from: legacyKey, to: canonicalKey, collidesWith: null },
+        ],
+      });
+      expect(await t.run((ctx) => ctx.db.get(id))).toEqual(before);
+
+      await operator.mutation(api.sources.recomputeDedupeKeys, {
+        cursor: null,
+        apply: true,
+      });
+      expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+        ...row,
+        dedupeKey: canonicalKey,
+        updatedAt: expect.any(Number),
+      });
+      const urls = [url, `https://doi.org/${doi.toUpperCase()}`];
+      expect(
+        await t.query(internal.sources.existingScoutedUrls, { urls }),
+      ).toEqual(urls.map((url) => ({ url, needsText: false })));
+      const agentRunId = await t.run((ctx) =>
+        ctx.db.insert("agentRuns", {
+          graphName: "source-scout",
+          status: "running",
+          input: null,
+          createdAt: 1,
+          updatedAt: 1,
+        }),
+      );
+      expect(
+        await t.mutation(internal.sources.createScoutedSource, {
+          url: urls[1]!,
+          query: "music acoustics",
+          rationale: "Existing work",
+          agentRunId,
+        }),
+      ).toEqual({ id, created: false });
+      expect(
+        await t.run((ctx) => ctx.db.query("sources").collect()),
+      ).toHaveLength(1);
+      expect(
+        await operator.mutation(api.sources.recomputeDedupeKeys, {
+          cursor: null,
+          apply: false,
+        }),
+      ).toMatchObject({ planned: [] });
+    },
+  );
+
+  test.each([true, false])(
+    "keeps captured publisher text on a DOI collision (publisher first: %s)",
+    async (publisherFirst) => {
+      const t = convexTest(schema, modules);
+      const operator = t.withIdentity({ subject: "operator" });
+      const canonicalUrl = "https://www.nature.com/articles/nature18635";
+      const key = "doi:10.1038/nature18635";
+      const base = {
+        type: "url" as const,
+        visibility: "private" as const,
+        createdBy: "system" as const,
+        updatedAt: 1,
+      };
+      const publisher = {
+        ...base,
+        canonicalUrl,
+        dedupeKey: `url:${normalizeUrl(canonicalUrl)}`,
+        rawText: "Captured publisher text",
+        status: "text_ready" as const,
+        createdAt: 2,
+      };
+      const registry = {
+        ...base,
+        canonicalUrl: "https://doi.org/10.1038/nature18635",
+        dedupeKey: key,
+        status: "ingested" as const,
+        createdAt: 1,
+      };
+      const [first, second] = await t.run(async (ctx) => [
+        await ctx.db.insert("sources", publisherFirst ? publisher : registry),
+        await ctx.db.insert("sources", publisherFirst ? registry : publisher),
+      ]);
+      const [winner, loser] = publisherFirst
+        ? [first, second]
+        : [second, first];
+      const before = await t.run((ctx) => ctx.db.query("sources").collect());
+      const dry = await operator.mutation(api.sources.recomputeDedupeKeys, {
+        cursor: null,
+        apply: false,
+      });
+      expect(dry.planned).toEqual([
+        { id: winner, from: publisher.dedupeKey, to: key, collidesWith: loser },
+      ]);
+      expect(await t.run((ctx) => ctx.db.query("sources").collect())).toEqual(
+        before,
+      );
+      // Exercise the operator script's paginated apply across row orderings.
+      let cursor: string | null = null;
+      let isDone = false;
+      while (!isDone) {
+        const result: { continueCursor: string; isDone: boolean } =
+          await operator.mutation(api.sources.recomputeDedupeKeys, {
+            cursor,
+            batchSize: 1,
+            apply: true,
+          });
+        cursor = result.continueCursor;
+        isDone = result.isDone;
+      }
+      expect(await t.run((ctx) => ctx.db.get(winner))).toMatchObject({
+        ...publisher,
+        dedupeKey: key,
+        updatedAt: expect.any(Number),
+      });
+      expect(await t.run((ctx) => ctx.db.get(loser))).toMatchObject({
+        status: "archived",
+        blockedReason: "duplicate",
+        blockedDetails: `dedupe-migration: duplicate of ${winner}`,
+      });
+      expect(
+        await t.query(internal.sources.existingScoutedUrls, {
+          urls: [registry.canonicalUrl],
+        }),
+      ).toEqual([{ url: registry.canonicalUrl, needsText: false }]);
+      expect(
+        await operator.mutation(api.sources.recomputeDedupeKeys, {
+          cursor: null,
+          apply: true,
+        }),
+      ).toMatchObject({ changed: 0, collisionsArchived: 0, planned: [] });
+    },
+  );
+
   test("keeps extraction work, then text, then status, then age", () => {
     const row = (
       status: string,

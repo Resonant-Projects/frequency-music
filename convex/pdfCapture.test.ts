@@ -181,6 +181,36 @@ describe("PDF upload intake", () => {
 });
 
 describe("PDF URL intake", () => {
+  test.each([
+    ["https://www.nature.com/articles/nature18635.pdf", "10.1038/nature18635"],
+    [
+      "https://iopscience.iop.org/article/10.1088/0034-4885/69/1/R01/pdf",
+      "10.1088/0034-4885/69/1/r01",
+    ],
+    [
+      "https://link.springer.com/content/pdf/10.3758/s13423-021-02033-5.pdf",
+      "10.3758/s13423-021-02033-5",
+    ],
+    ["https://epubs.siam.org/doi/pdf/10.1137/100804036", "10.1137/100804036"],
+  ])("shares identity between PDF %s and doi.org", async (url, doi) => {
+    const t = convexTest(schema, modules);
+    const first = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+      url,
+    });
+    expect(await source(t, first.id)).toMatchObject({
+      type: "pdf",
+      dedupeKey: `doi:${doi}`,
+    });
+    expect(
+      await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
+        url: `https://doi.org/${doi}`,
+      }),
+    ).toMatchObject({ id: first.id, created: false });
+    expect(
+      await t.run((ctx) => ctx.db.query("sources").collect()),
+    ).toHaveLength(1);
+  });
+
   test("keeps the URL dedupe key, so an arXiv PDF and its abstract page are one Source", async () => {
     const t = convexTest(schema, modules);
     const { id, created } = await reader(t).mutation(

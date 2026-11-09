@@ -161,7 +161,23 @@ describe("source utilities", () => {
     ).toBe("yt:dQw4w9WgXcQ");
 
     expect(computeCanonicalDedupeKey({ type: "rss" })).toBeNull(); // no feedUrl
-    expect(computeCanonicalDedupeKey({ type: "pdf" })).toBeNull(); // never recomputed
+    expect(computeCanonicalDedupeKey({ type: "pdf" })).toBeNull(); // no URL identity
+    const pdfUrl = "https://www.nature.com/articles/nature18635.pdf";
+    for (const extra of [
+      { dedupeKey: "pdf:original-file-hash" },
+      {
+        dedupeKey: `url:${normalizeUrl(pdfUrl)}`,
+        pdfStorageId: "stored-upload",
+      },
+    ]) {
+      expect(
+        computeCanonicalDedupeKey({
+          type: "pdf",
+          canonicalUrl: pdfUrl,
+          ...extra,
+        }),
+      ).toBeNull();
+    }
     expect(computeCanonicalDedupeKey({ type: "notion" })).toBeNull(); // no notionPageId
   });
 });
