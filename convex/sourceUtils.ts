@@ -96,12 +96,14 @@ export function generateArchivedDedupeKey(
 /**
  * Recompute the canonical dedupeKey for an existing source row.
  * Returns null when the row can't be recomputed safely:
- * - pdf keys were minted from file hashes we don't store on the row
+ * - uploaded pdf keys were minted from file hashes we don't store on the row
  * - notion/podcast rows missing their identifier
  * - rss/url/youtube rows missing the fields their key needs
  */
 export function computeCanonicalDedupeKey(source: {
   type: string;
+  dedupeKey?: string;
+  pdfStorageId?: string;
   notionPageId?: string;
   feedUrl?: string;
   rssGuid?: string;
@@ -118,6 +120,13 @@ export function computeCanonicalDedupeKey(source: {
         : null;
     case "url":
       return source.canonicalUrl ? generateDedupeKey("url", source) : null;
+    case "pdf":
+      // Public PDF URLs use URL identity; uploaded bytes retain their hash key.
+      return !source.pdfStorageId &&
+        source.dedupeKey?.startsWith("url:") &&
+        source.canonicalUrl
+        ? generateDedupeKey("url", source)
+        : null;
     case "youtube": {
       const videoId =
         source.youtubeVideoId ??
