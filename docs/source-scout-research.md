@@ -6,7 +6,7 @@ For judged Source candidates, the agent worker may fetch public HTML through Kei
 
 ## Publisher DOI identity and rollout
 
-The worker's OpenAlex lookup and backend URL dedupe share `convex/shared/doi.ts`. Trusted publisher routes include Nature `nature.com/articles/<suffix>` (`10.1038/<suffix>`), IOP `iopscience.iop.org/article/<DOI>`, SIAM `epubs.siam.org/doi/<DOI>`, and Springer `link.springer.com/article/<DOI>` and `/chapter/<DOI>`. Their PDF forms (Nature `.pdf`, IOP `/pdf`, SIAM `/doi/pdf/`, Springer `/content/pdf/<DOI>.pdf`) share the same case-insensitive `doi:` identity. Unknown hosts, AES e-lib numeric IDs, and ordinary AIP journal/article paths without an explicit DOI retain URL identity. No DOI is inferred from those IDs. The checked-in portfolio and bibliography exports contain Nature and Springer examples; this is not an audit of the current live corpus.
+The worker's OpenAlex lookup and backend URL dedupe share `convex/shared/doi.ts`. Trusted publisher routes include Nature `nature.com/articles/<suffix>` (`10.1038/<suffix>` for `nature<digits>`, `ncomms<digits>`, and modern `s41467`, `s41586`, or `s41598` article IDs), IOP `iopscience.iop.org/article/<DOI>`, SIAM `epubs.siam.org/doi/<DOI>`, and Springer `link.springer.com/article/<DOI>` and `/chapter/<DOI>`. Their PDF forms (Nature `.pdf`, IOP `/pdf`, SIAM `/doi/pdf/`, Springer `/content/pdf/<DOI>.pdf`) share the same case-insensitive `doi:` identity. Unsupported Nature identifier families (including Palgrave `palcomms…` and `s41599…`), unknown hosts, AES e-lib numeric IDs, and ordinary AIP journal/article paths without an explicit DOI retain URL identity. No DOI is inferred from those IDs. The checked-in portfolio and bibliography exports contain Nature and Springer examples; this is not an audit of the current live corpus.
 
 Existing publisher Sources with `url:` keys **must be migrated before intake resumes**. Until then, the new DOI lookup cannot find those old keys. Operator procedure for this single live deployment (not part of local verification):
 
@@ -15,7 +15,7 @@ Existing publisher Sources with `url:` keys **must be migrated before intake res
 3. After reviewing the report, run `vpx tsx scripts/migrate-dedupe-keys.ts --apply`. It pages through rows, rekeys live URL Sources and URL-backed PDF Sources, skips uploaded PDFs with hash keys, and archives collisions using the existing extraction/text/status/age preference. Archived rows and their provenance remain stored; this does not merge text or extraction history between rows.
 4. Run the default dry run again and require zero planned changes. Check `findExistingSourceUrls` for both publisher and doi.org forms of representative migrated rows, then update the worker and resume intake. Keep intake paused if migration or preflight verification fails.
 
-No deployment, migration, or live corpus query was performed to test this change; regressions use local fixtures and `convex-test`.
+No deployment, migration, or live corpus query was performed to test this change; regressions use local fixtures and `convex-test`. Nature-hosted [Palgrave Communications 2016/103](https://www.nature.com/articles/palcomms2016103) names DOI `10.1057/palcomms.2016.103`, so its URL must not be mapped into the `10.1038` namespace.
 
 ## Activation
 

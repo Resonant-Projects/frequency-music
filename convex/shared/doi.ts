@@ -31,10 +31,12 @@ export function doiForUrl(rawUrl: string): string | null {
     return named?.[1] ?? null;
   }
   if (host === "nature.com") {
-    // Nature article identifiers are DOI suffixes in the 10.1038 namespace.
-    const article = /^\/articles\/([a-z0-9][a-z0-9._-]*?)(?:\.pdf)?\/?$/i.exec(
-      path,
-    );
+    // Only supported 10.1038 identifier families. Nature also hosts Palgrave
+    // works with 10.1057 DOIs, so arbitrary article slugs cannot be inferred.
+    const article =
+      /^\/articles\/((?:nature|ncomms)\d+|s(?:41467|41586|41598)-\d{3}-\d{5}-[a-z0-9])(?:\.pdf)?\/?$/i.exec(
+        path,
+      );
     return article ? `10.1038/${article[1]}` : null;
   }
   if (host === "iopscience.iop.org") {

@@ -39,6 +39,15 @@ describe("publisher DOI identity", () => {
       "10.1088/0034-4885/69/1/R01",
     ],
     ["https://pubs.aip.org/doi/10.1121/1.1234567", "10.1121/1.1234567"],
+    ["https://www.nature.com/articles/ncomms12764", "10.1038/ncomms12764"],
+    [
+      "https://www.nature.com/articles/s41586-024-07132-6",
+      "10.1038/s41586-024-07132-6",
+    ],
+    [
+      "https://www.nature.com/articles/s41598-025-88517-z",
+      "10.1038/s41598-025-88517-z",
+    ],
   ])("reads the named DOI in %s", (url, doi) => {
     expect(trustedDoiForUrl(url)).toBe(doi);
     expect(generateDedupeKey("url", { canonicalUrl: url })).toBe(
@@ -55,6 +64,10 @@ describe("publisher DOI identity", () => {
     "https://link.springer.com.attacker.example/article/10.3758/s13423-021-02033-5",
     "https://www.nature.com/articles/nature18635/related",
     "https://www.nature.com/articles/",
+    "https://www.nature.com/articles/palcomms2016103",
+    "https://www.nature.com/articles/palcomms2016103.pdf",
+    "https://www.nature.com/articles/s41599-020-00669-6",
+    "https://www.nature.com/articles/arbitrary-slug",
     "https://www.nature.com/articles/%ZZ",
     "https://iopscience.iop.org/article/not-a-doi",
     "https://link.springer.com/article/12345",

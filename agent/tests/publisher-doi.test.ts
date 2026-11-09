@@ -3,6 +3,21 @@ import { publisherDois } from "../../harness/fixtures/publisherDois";
 import { createOpenAlexAbstract } from "../src/tools/crawlTool";
 
 describe("publisher URL OpenAlex lookup", () => {
+  test.each([
+    "https://www.nature.com/articles/palcomms2016103",
+    "https://www.nature.com/articles/s41599-020-00669-6",
+  ])(
+    "does not fabricate a DOI lookup for unsupported Nature identifiers: %s",
+    async (url) => {
+      const fetchImpl = vi.fn(() =>
+        Promise.resolve(new Response(null, { status: 404 })),
+      );
+      const lookup = createOpenAlexAbstract({ fetchImpl });
+      expect(await lookup(url)).toBeNull();
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
+
   test.each(publisherDois)(
     "looks up the DOI named by $url",
     async ({ url, doi }) => {
