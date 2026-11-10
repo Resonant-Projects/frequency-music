@@ -7,6 +7,11 @@ import { action, internalQuery, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { creatorOf } from "./creatorIdentity";
 import { recordEditCapture } from "./editCaptures";
+import {
+  type GeneratedHypothesisPayload,
+  projectGeneratedHypothesis,
+} from "./hypothesisPayload";
+import { linkedExtractionIds } from "./hypothesisLinks";
 import { modelForTask, extractJsonObject } from "./llm";
 import { hypothesisStatusValidator } from "./schema";
 import {
@@ -16,15 +21,6 @@ import {
   sourceReturnValidator,
   thesisReturnValidator,
 } from "./validators";
-
-interface GeneratedHypothesisPayload {
-  title: string;
-  question: string;
-  hypothesis: string;
-  whyThisMatters: string;
-  rationaleMd: string;
-  concepts?: string[];
-}
 
 type BatchGenerationResult =
   | {
@@ -542,11 +538,7 @@ export const generateFromExtraction = action({
     // Parse response
     let parsed: GeneratedHypothesisPayload;
     try {
-      parsed = extractJsonObject(text) as GeneratedHypothesisPayload;
-      parsed.whyThisMatters = assertWhyThisMatters(
-        parsed.whyThisMatters,
-        "generated.whyThisMatters",
-      );
+      parsed = projectGeneratedHypothesis(extractJsonObject(text));
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown parse error";
       throw new Error(`Failed to parse AI response: ${message}`, { cause: e });
@@ -581,17 +573,10 @@ export const listUnlinkedBatchCandidates = internalQuery({
   returns: v.array(extractionReturnValidator),
   handler: async (ctx, args) => {
     const extractions = await listCurrentExtractions(ctx.db, 50);
+    const linked = await linkedExtractionIds(ctx.db);
     return await selectUnlinkedExtractionCandidates(extractions, {
       ...args,
-      isLinked: async (extractionId) =>
-        Boolean(
-          await ctx.db
-            .query("hypotheses")
-            .withIndex("by_extractionIds", (q) =>
-              q.eq("extractionIds", [extractionId]),
-            )
-            .first(),
-        ),
+      isLinked: (extractionId) => Promise.resolve(linked.has(extractionId)),
     });
   },
 });

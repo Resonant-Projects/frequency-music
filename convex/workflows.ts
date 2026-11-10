@@ -144,10 +144,12 @@ export const generateHypothesisWorkflow = workflowManager.define({
   },
   handler: async (ctx, args): Promise<void> => {
     const devBypassSecret = args.devBypassSecret;
+    // No step retry: the action inserts before it returns. The batch cron
+    // re-selects an extraction that still has no hypothesis.
     const result = await ctx.runAction(
       api.hypotheses.generateFromExtraction,
       { extractionId: args.extractionId, model: args.model, devBypassSecret },
-      { retry: true },
+      { retry: false },
     );
 
     if (result.hypothesisId) {
@@ -187,7 +189,7 @@ export const batchHypothesisWorkflow = workflowManager.define({
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
           { extractionId: extraction._id, model: args.model, devBypassSecret },
-          { retry: true },
+          { retry: false },
         );
 
         if (result.hypothesisId) {
@@ -256,7 +258,7 @@ export const fullPipelineWorkflow = workflowManager.define({
         const result = await ctx.runAction(
           api.hypotheses.generateFromExtraction,
           { extractionId: extraction._id, model: args.model, devBypassSecret },
-          { retry: true },
+          { retry: false },
         );
 
         if (result.hypothesisId) {
