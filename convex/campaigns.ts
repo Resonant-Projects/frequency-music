@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { DatabaseReader, DatabaseWriter } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import {
   deriveFailureArchiveEntries,
   type FailureArchiveEntry,
@@ -556,10 +557,7 @@ export const create = mutation({
       endedAt: status === "completed" ? now : undefined,
       summaryMd: createArgs.summaryMd,
       visibility: "public",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });

@@ -3,6 +3,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import { action, mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { modelForTask, extractJsonObject } from "./llm";
 import { recipeStarterKitValidator, recipeStatusValidator } from "./schema";
 import {
@@ -298,7 +299,7 @@ export const create = mutation({
       ...createArgs,
       status: "draft",
       visibility: "private",
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });

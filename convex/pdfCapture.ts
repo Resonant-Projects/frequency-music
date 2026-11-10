@@ -7,7 +7,8 @@ import {
   mutation,
   type MutationCtx,
 } from "./_generated/server";
-import { type AppIdentity, requireAuth } from "./auth";
+import { requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { assertPublicHttpUrl } from "./ingest";
 import { settleCaptureFailures } from "./operationFailures";
 import { schedulePassageIndex } from "./passages";
@@ -110,19 +111,6 @@ export async function queuePdfCapture(
     seq: capture.seq,
   });
   return capture;
-}
-
-/** The submitter's users row, or "system" for the bypass identity or an unmapped subject. */
-async function creatorOf(
-  ctx: MutationCtx,
-  identity: AppIdentity,
-): Promise<Id<"users"> | "system"> {
-  if (identity.isBypass || identity.subject === "system") return "system";
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
-    .unique();
-  return user?._id ?? "system";
 }
 
 // Source types whose text a submitted PDF can supply; a YouTube or podcast

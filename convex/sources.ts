@@ -11,6 +11,7 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { currentExtractions } from "./extractions";
 import {
   settleCaptureFailures,
@@ -343,18 +344,8 @@ export const create = mutation({
       return { id: existing._id, created: false, reason: "duplicate" };
     }
 
-    // Compute hash if we have text
-    let rawTextSha256: string | undefined;
-    if (createArgs.rawText || createArgs.transcript) {
-      const text = createArgs.rawText || createArgs.transcript || "";
-      const encoder = new TextEncoder();
-      const data = encoder.encode(text);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      rawTextSha256 = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    }
+    const createText = createArgs.rawText || createArgs.transcript;
+    const rawTextSha256 = createText ? await sha256Hex(createText) : undefined;
 
     const id = await ctx.db.insert("sources", {
       ...createArgs,
@@ -362,7 +353,7 @@ export const create = mutation({
       status:
         createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });
@@ -837,8 +828,12 @@ async function upsertExternalSource(
         existing.status === "ingested"),
   );
 
+  const { createdBy: _createdBy, type: _type, ...supplied } = args;
+  const defined = Object.fromEntries(
+    Object.entries(supplied).filter(([, value]) => value !== undefined),
+  ) as Partial<typeof supplied>;
   await ctx.db.patch("sources", existing._id, {
-    ...args,
+    ...defined,
     rawTextSha256: rawTextSha256 ?? existing.rawTextSha256,
     status: contentChanged
       ? "text_ready"
@@ -1253,7 +1248,7 @@ export const createFromUrlInput = mutation({
       canonicalUrl: args.url,
       rawText: args.rawText,
       tags: args.tags,
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
     });
   },
 });
@@ -1292,7 +1287,7 @@ export const createFromYouTubeInput = mutation({
       youtubeVideoId: videoId,
       transcript: args.transcript,
       tags: args.tags,
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
     });
   },
 });

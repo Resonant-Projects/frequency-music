@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { thesisDetailValidator, thesisReturnValidator } from "./validators";
 
 const thesisStatusValidator = v.union(
@@ -153,10 +153,7 @@ export const create = mutation({
       ...createArgs,
       status: createArgs.status ?? "active",
       visibility: "private",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });
