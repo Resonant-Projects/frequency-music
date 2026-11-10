@@ -5,11 +5,11 @@ on:
 
 jobs:
   export:
+    if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
     permissions:
       contents: write
     env:
-      CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
       PUBLIC_APP_BASE_URL: ${{ vars.PUBLIC_APP_BASE_URL || 'https://app.resonantprojects.art' }}
       EXPORT_BRANCH: editorial-export
     steps:

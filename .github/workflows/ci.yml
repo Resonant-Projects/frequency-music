@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   root:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
@@ -32,6 +35,7 @@ jobs:
       - run: bun audit --prod
       - run: vp run lint:check
       - run: vp run format:check
+      - run: node scripts/check-file-tokens.mjs --all
       # `vp run test` (= vp test convex scripts) rather than a hardcoded subset,
       # so CI coverage tracks package.json instead of drifting from it.
       - run: vp run test
