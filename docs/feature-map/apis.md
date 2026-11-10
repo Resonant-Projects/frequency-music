@@ -2,9 +2,9 @@
 
 [Surface crosswalk](surfaces.md) · [Feature map](../feature-map.md)
 
-Snapshot `a9b728466f9254938e40761e012451b4d896825b`, 2026-10-22.
+Snapshot `c323b26c`, 2026-11-10 ([V10](verification-20261110.md)).
 
-45 modules / 248 declarations. `q` = query, `m` = mutation, `a` = action. Module ownership points to the stage matrix containing intent and verification. “Public” is a Convex export kind, not anonymous access or a UI promise.
+46 modules / 249 declarations (including `readerQuery`). `q` = query, `m` = mutation, `a` = action. Module ownership points to the stage matrix containing intent and verification. “Public” is a Convex export kind, not anonymous access or a UI promise.
 
 | Module / feature | Declared public functions |
 | --- | --- |
@@ -49,6 +49,7 @@ Snapshot `a9b728466f9254938e40761e012451b4d896825b`, 2026-10-22.
 | [studioComparisons](../../convex/studioComparisons.ts) — M08 | `beginUpload` (m), `finishUpload` (a), `list` (q), `get` (q), `machineCandidates` (q), `submitRatings` (m) |
 | [testing](../../convex/testing.ts) — O05 (test seed, not product) | `seedCampaigns` (m) |
 | [theses](../../convex/theses.ts) — S06 | `list` (q), `get` (q), `getByIds` (q), `getDetail` (q), `create` (m), `update` (m) |
+| [users](../../convex/users.ts) — A01 | `viewer` (q); `roleBySubject`/`setRole` are internal and excluded from this count. |
 | [vocabulary](../../convex/vocabulary.ts) — R12 | `seedMissionConceptDomains` (m), `cleanupProvisionalConceptDomainDuplicates` (m), `seedKnownRelationshipKinds` (m), `seedKnownParameterKinds` (m), `rekeyLegacyParameterKinds` (m), `promoteEntry` (m), `rejectEntry` (m), `mergeEntry` (m), `mergeVocabularyReferenceBatch` (m), `triageBoard` (q), `reviewSummary` (q) |
 | [voiceRatings](../../convex/voiceRatings.ts) — M09 | `submit` (m), `forGroup` (q) |
 | [weeklyBriefs](../../convex/weeklyBriefs.ts) — S08 | `list` (q), `get` (q), `getLatest` (q), `publish` (m), `editBrief` (m), `generate` (a), `publishToNotion` (a), `deleteById` (m) |
