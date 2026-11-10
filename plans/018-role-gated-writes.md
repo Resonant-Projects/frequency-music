@@ -10,6 +10,18 @@
 > If any of these changed, compare the "Current state" excerpts with the live
 > code before proceeding; a mismatch is a STOP condition.
 
+## Amendment (2026-11-10, as built in `26881c6d`)
+
+Step 4's call-site renames were dropped: they grew files the size ratchet
+pins at their baseline. Instead `requireAuth` picks the gate from its
+context. A query context (a `db` with no `insert`) gets the reader gate; a
+mutation, an action or any unrecognised shape gets the writer gate. Handler
+files are unchanged and call only `requireAuth`; `requireReader` stays
+exported for plan 020. Tests use `asWriter(t, subject, role)` from
+`convex/testHelpers.ts`, which seeds the `users` row and returns the
+identity-scoped client. Self-provisioning in `requireDecisionUser` is now
+unreachable for a human with no role.
+
 ## Status
 
 - **Priority**: P1
