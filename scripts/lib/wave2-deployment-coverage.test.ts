@@ -251,6 +251,7 @@ describe("wave 2 deployment coverage", () => {
       "studio-comparison",
       "zodiac-domain-sectors",
       "pdf-capture",
+      "role-gated-writes-018",
     ]);
     expect(report.groups.every((group) => !group.deployed)).toBe(true);
     const passages = report.groups.find((g) => g.id === "passages-153");
@@ -305,7 +306,16 @@ describe("wave 2 deployment coverage", () => {
     expect(report.webCalls.missing).toEqual(
       expect.arrayContaining(domainSectorCalls),
     );
-    const candidateCalls = [...studioCalls, ...pdfCalls, ...domainSectorCalls];
+    const viewerCalls = ["users:viewer"];
+    expect(report.webCalls.missing).toEqual(
+      expect.arrayContaining(viewerCalls),
+    );
+    const candidateCalls = [
+      ...studioCalls,
+      ...pdfCalls,
+      ...domainSectorCalls,
+      ...viewerCalls,
+    ];
     expect(
       report.webCalls.missing.filter((call) => !candidateCalls.includes(call)),
     ).toEqual(recorded.webCalls.missing);
