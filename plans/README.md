@@ -1,276 +1,159 @@
 # Implementation Plans
 
-Two improve-skill waves live here. Each executor: read the plan fully before
+Three improve-skill waves live here. Each executor: read the plan fully before
 starting, honor its STOP conditions, and update your row when done.
 
-- **Wave 1 (2026-07-07)** — standard audit at commit `a30f10c`, plans **001–010**.
-  Only 008 remains active; the rest are DONE.
-- **Wave 2 (2026-07-15)** — standard audit at commit `86f0751`, plans **011–015**,
-  weighted to the 528-file "loop wave" (claims/domains/correspondences/classifier,
-  agent worker, `web/src` + `agent/src`) that Wave 1 did not cover. **All five
-  DONE 2026-07-18 and archived** — the table below stays as the ledger. The
-  active frontier is the knowledge-loop wave in `docs/plans/`.
+- **Wave 1 (2026-07-07)** at `a30f10c`, plans 001–010. Only 008 remains active.
+- **Wave 2 (2026-07-15)** at `86f0751`, plans 011–015. All DONE 2026-07-18.
+- **Wave 3 (2026-11-09)** at `cf4a8174`, plans 017–024. All TODO. (016 was
+  used informally for a lint cleanup; the number is skipped.)
 
-> **SEC-01 — resolved by operator decision (Keith, 2026-07-16):**
-> `AUTH_BYPASS_ENABLED=true` on the single production instance is
-> **intentional and stays on**. There is no separate dev deployment; the
-> bypass secret is the standing service identity for agents, CI (the
-> editorial export), and scripts that read/write the database, while Clerk
-> authentication exists to track which humans log in — not to gate agents.
-> Do not re-flag the enabled bypass as a misconfiguration, and do not file
-> plans to disable it. See the 2026-07-16 decision-log entry. The controls
-> that matter under this model are **secret hygiene**: plan 014's
-> constant-time compare, rotation discipline, the consumer inventory +
-> auth-failure alerting (improvements ledger #20), and TLS for the site
-> surface (#9).
+Waves 1 and 2 are archived verbatim:
+[status ledger](./archive/ledger-waves-1-2.md) and
+[findings not planned](./archive/ledger-not-planned-waves-1-2.md). Cross-repo
+plan status is in `docs/plans/README.md`.
 
-> **Archive note (2026-07-15):** Wave-1 completed plans 001–007, 009, 010 were
-> moved to `plans/archive/`. Only 008 remains active from Wave 1. The Wave-1
-> table below stays as that wave's ledger. Cross-repo plan status:
-> `docs/plans/README.md`.
->
-> **Archive note (2026-07-19):** Wave-2 plans 011–015 (all DONE 2026-07-18)
-> moved to `plans/archive/`. **Plan 008 is now the only file in `plans/`** —
-> the sole open item across both improve-skill waves. Golden datasets were
-> ratified in `d2487c1`; plan 008 is ready when live API access is available.
+## Standing constraints for every plan
 
-**Relationship to `docs/plans/`**: this repo already carries two committed plan
-waves — the 2026-07-01 agent-system-v2 and 2026-07-03 architecture-deepening
-waves, both fully landed and archived to `docs/archive/plan-waves/`. The audit
-behind THIS directory excluded everything those waves already card. Where a
-plan here touches the same files as an arch-wave plan, its STOP conditions and
-maintenance notes say how to reconcile.
+- `vpx convex codegen|dev|deploy|run` and the `bunx convex` equivalents
+  contact the LIVE self-hosted backend. No plan here requires them; executors
+  never run them. Deploying a Convex change is operator-gated.
+- A new Convex module with registered functions is added by hand to
+  `convex/_generated/api.d.ts` and `harness/modules.ts`.
+- `AUTH_BYPASS_ENABLED=true` in production is intentional (decision log
+  2026-07-16). Do not file plans to disable it.
+- Never commit with `--no-verify`. If the size hook blocks a file, report it.
 
-**Standing constraint for every plan**: `bunx convex codegen|dev|deploy` — and
-equally the post-Vite+ `vpx convex codegen|dev|deploy` / `vpx convex run` —
-contact the LIVE self-hosted backend. No plan here requires them; executors
-never run them. Deployment of convex-touching changes (plans 002, 005, 010) is
-operator-gated.
+## Wave 3 (2026-11-09): execution order and status
 
-## Wave 2 (2026-07-15) — execution order & status
+Maintainer decisions recorded 2026-11-09 (Keith): the size hook becomes a
+ratchet; reads require a signed-in user or the service secret; writes,
+deletes and paid inference require the `admin` or `collaborator` role.
 
-Audited at commit `86f0751`. All five plans are independent (separate branches/
-worktrees) with one caveat noted below. None require live-backend commands; 013
-adds a cron whose **activation is operator-gated** (needs a Convex deploy).
+Plan review answered 2026-11-10 (Keith), all four kept as written: the
+operator grants the first writer role with `users:setRole` (018); tier 1 of
+login-required reads is Sources, inbox and listening (020); hypothesis
+generation uses `retry: false` plus a known-fields projection (021); a
+rejected draft rests its Correspondence for 28 days (024). The plans are
+approved for execution as they stand.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 011 | SSRF guard on `ingestUrl` (block private/loopback targets) | P1 | S | — | DONE 2026-07-18 — parse-time guard incl. IPv4-mapped-IPv6 block; `lint:check` gate pre-existing-broken on main (waived; carded into 015). |
-| 012 | Fix `recipes.generateBatch` return validator (`whyThisMatters`) | P1 | S | — | DONE 2026-07-18 — fail-then-pass regression test included; `lint:check` gate pre-existing-broken on main (waived; carded into 015/016). |
-| 013 | Wire `reconcileReviewedRuns` cron + finalizer atomicity | P1 | S | — | DONE — code+tests landed 2026-07-18; cron activation deploy-pending (operator). Note: `lint:check` and root `typecheck:agent` gates are pre-existing-broken on main (waived; carded into 015). |
-| 014 | Security hardening: bump `ws` (GHSA), constant-time bypass compare | P2 | S | — | DONE (root + agent) 2026-07-18 — root ws@8.21.0 and `agent/` ws@8.21.1, each via its own override; no `ws` advisory in either. Constant-time compare landed. **`web/` residual closed 2026-10-17:** the Convex 1.46.0 upgrade (c78be22e) added a name-level `ws` override to `web/` that removed `ws@7.5.10`, and #129 later dropped its consumers (`react-native` for metro/dev-middleware, `@solana/web3.js` for jayson). The name-level override is now the path-scoped `"viem": { "ws": "^8.21.0" }`: viem's exact `ws@8.18.3` pin was the only one below the floor, so every `ws` resolves to `>=8.21.0`, and a future `ws@7` consumer keeps its major (verified with jayson in a scratch install). `lint:check` gate pre-existing-broken on main at the time (waived; cleared by 016). |
-| 015 | Docs sweep (Bun→Vite+, stale facts) + aggregate `verify` command | P2 | S | — | DONE 2026-07-18 — incl. root typecheck + fixed typecheck:agent script; `verify` green on the merged tree (016 lint/format debt cleared, lint scope corrected). |
-
-**Recommended order**: 011, 012, 013 (the P1 correctness/security fixes) first,
-then 014 and 015 (hygiene). All are S-effort and independent.
-
-**Parallelization caveat**: 014 and 015 both edit root `package.json` (014 adds a
-`ws` override; 015 adds the `verify` script) — land them sequentially or expect a
-trivial merge. 011/012/013 touch disjoint files and parallelize freely.
-
-**Wave-2 dependency notes**:
-- None of 011–015 depend on each other for correctness.
-- 013's cron only takes effect after an operator Convex deploy — the code+tests
-  landing is "done" for the executor; note deploy-pending in the status row.
-- 014 reduces SEC-01's blast radius but does NOT resolve it (see the operator-
-  action callout at the top).
-
-## Wave 1 (2026-07-07) — execution order & status
-
-| Plan | Title | Priority | Effort | Depends on | Status |
-|------|-------|----------|--------|------------|--------|
-| 001 | Rotate & de-commit auth-bypass secret, HTTPS transport | P1 | S | — | DONE — secrets rotated 2026-07-09, HTTPS via convex.resonantprojects.art |
-| 002 | Internalize concept-graph write surface + constant-time secret check | P1 | S–M | — | DONE |
-| 003 | CI workflow + check-only lint/format/typecheck scripts | P1 | S | — | DONE — root typecheck descoped (pre-existing type debt) |
-| 004 | Characterization tests for RSS/LLM-output parsers | P2 | M | — (best before/with 003's CI) | DONE |
-| 005 | Dashboard query scaling: quadratic, N+1, stats table for counts | P2 | M | — | DONE — operator must deploy + run first `recomputeStats`; counts read 0 until then |
-| 006 | Docs canonicalization (CLAUDE.md/AGENTS.md/README) | P2 | S | 001 | DONE |
-| 007 | Dependency hygiene: dead deps, npm lockfile, linter split | P3 | S | 006 | DONE |
-| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | STAGE 1 DONE 2026-10-17: extraction and hypothesis are baselined. Extraction: `schema_valid` 1.00, `parameter_specificity` 0.82. Hypothesis: `why_this_matters` 0.67. Three runs each, all exit 0. Stage 1 cost $3.48: run 1 at its $1.52 bound on Keith's decision, plus $1.96 measured through the new opt-in `EVAL_USAGE_LOG` hook. Four stale 2026-07-24 LangSmith examples were deleted on Keith's decision. Stage 2 (weekly briefs) stays BLOCKED: STOP 4 applies, at 2 rows and 0 production theses, and stage 2 has no approval. See [stage 1 sweep](../docs/evidence/eval-baseline-20261017/sweep-stage1.md). Earlier: STOP 1 cleared on `devbox`; hypotheses ratified and materialized at 6 rows (H1–H3, H5–H7). Runner defects repaired ([runner repair](../docs/evidence/eval-baseline-20261017/runner-repair.md)); see [preflight](../docs/evidence/eval-baseline-20261017/preflight.md) and [readiness](../docs/evidence/eval-baseline-20261017/readiness.md) |
-| 009 | Spike: `recipe_export_v1` contract + .scl emitter | P3 | M | — (needs `.env.local`) | DONE — [Open questions](../docs/recipe-export-v1-design.md#6-open-questions) |
-| 010 | Spike: autonomous ingest design + URL-fetch prototype | P3 | M | — (see its STOP 1 re: arch plan 06) | DONE — see `docs/autonomous-ingest-design.md` §7 build slices |
-
+| 017 | [Size hook becomes a ratchet](./017-size-hook-ratchet.md) | P1 | S–M | — | TODO |
+| 018 | [Role-gated writes](./018-role-gated-writes.md) | P1 | M | — | TODO |
+| 019 | [Creator identity and safe URL resubmit](./019-creator-identity-and-safe-resubmit.md) | P1 | S–M | 017, 018 | TODO |
+| 020 | [Login-required reads, tier 1](./020-login-required-reads.md) | P1 | M | 017, 018, 019 | TODO |
+| 021 | [Hypothesis generation retry safety](./021-hypothesis-generation-retry-safety.md) | P2 | S | — | TODO |
+| 022 | [CI workflow hardening](./022-ci-workflow-hardening.md) | P2 | S | 017 (step 5 only) | TODO |
+| 023 | [Listening UI fixes](./023-listening-ui-fixes.md) | P2 | S | 017; 018 (step 4 only) | TODO |
+| 024 | [Agent target rotation](./024-agent-target-rotation.md) | P2 | M | 017 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
-Safe to parallelize (separate branches/worktrees): {001, 002, 003} are
-independent; {004, 005} after or alongside them; 008/009/010 any time
-(they don't touch the files plans 001–007 edit, except 010's one additive
-action in `convex/ingest.ts` — don't run 004 and 010 concurrently).
+**Recommended order**: 017 first. Then 018 → 019 → 020 in sequence. 021 and
+022 can run at any time, in parallel with the rest. 023 and 024 after 017.
 
-## Dependency notes
+### Dependency notes
 
-- **006 after 001**: both edit `CLAUDE.md`; 001 removes the secret literal 006
-  would otherwise have to work around.
-- **007 after 006**: both edit `CLAUDE.md` (linter-split note vs canonicalization).
-- **004 before/with 003**: the parser tests should be enforced by the new CI
-  from day one; either order works, but land both.
-- **004 vs arch plan 2026-07-03-03 (LLM module, archived)**: if the LLM-module refactor
-  lands first, 004's extract.ts targets move — its STOP 1 covers this.
-- **002 vs arch plan 2026-07-03-05 (agent-tool registry, archived)**: both touch
-  `agentToolsHttp.ts`; whichever runs second adapts (002's STOP 2 / the
-  registry plan's seam-handoff rules).
-- **Deferred dep upgrades** (see 007 maintenance notes): AI SDK v6→v7 must wait
-  for arch plan 2026-07-03-03 (archived).
-- **008** needs `ANTHROPIC_API_KEY` + `LANGSMITH_API_KEY` through Varlock
-  (resolving on `devbox` since 2026-10-17), a cost estimate approved before
-  the first paid run, and upload approval. Human dataset curation was ratified
-  in `d2487c1` with hypothesis (4) and weekly brief (2) under STOP 4's 5-row
-  floor. Keith ratified 6 hypothesis rows on 2026-10-17, now materialized,
-  which clears the hypothesis floor. No further brief qualifies, so briefs
-  stay under STOP 4. It STOPs cleanly if either key is missing.
+- **017 before 019, 020, 023, 024**: those plans edit files that are over the
+  20,000-byte limit (`convex/sources.ts`, `convex/campaigns.ts`,
+  `convex/correspondences.ts`, `convex/editorialArtifacts.ts`,
+  `convex/agentDrafts.ts`, `convex/correspondenceCandidates.ts`,
+  `web/src/routes/composition-detail.tsx`). Without the ratchet they cannot be
+  committed at all.
+- **Do not run `--prune-baseline` between 019 and 020**: 019 shrinks
+  `convex/sources.ts`, and 020 uses that room.
+- **018 before 019 and 020**: 018 adds `requireReader`, `seedUser` and
+  `convex/users.ts`; 019's tests and 020's gate use them.
+- **018 and 020 deploy together**, operator-gated. Before that deploy the
+  operator confirms their own `users` row has a writer role, or the web app
+  becomes read-only for them.
+- **018, 019, 021 all touch `convex/hypotheses.ts`** at different lines; land
+  them sequentially or expect a small merge.
+- **022 step 5** adds the size check to CI and needs 017's baseline file.
 
-## Audit findings that did NOT become plans
+## Wave 1 item still open
 
-(So nobody re-audits them.)
+| Plan | Title | Priority | Effort | Depends on | Status |
+|------|-------|----------|--------|------------|--------|
+| 008 | Run first eval baseline sweep (operational) | P2 | S–M | Golden datasets ratified; needs live API keys | STAGE 1 DONE 2026-10-17: extraction and hypothesis are baselined. Stage 2 (weekly briefs) stays BLOCKED: STOP 4 applies, at 2 rows and 0 production theses, and stage 2 has no approval. Full status text and evidence links: [archived ledger](./archive/ledger-waves-1-2.md) |
 
-- **Pagination on list endpoints** — real absence (no `.paginate()` anywhere;
-  fixed `.take()` caps), but no list has hit its cap for the small-collaborator
-  user base. Revisit when any table crosses a few thousand rows.
-- **`graph.ts getConceptEdges` N+1 / `exportForVisualization` load-all-then-BFS**
-  — real but low-traffic (constellation view); documented as deferred in plan
-  005's maintenance notes.
-- **Empty `catch {}` blocks in fetch scripts** — best-effort retry paths in
-  one-shot scripts; not worth hardening.
-- **`@onkernel/sdk` 0.37→0.74, `@clerk/clerk-js` v5→v6, AI SDK majors** —
-  legitimate version lag, deliberately deferred with sequencing recorded in
-  plan 007's maintenance notes.
-- **Playwright e2e in CI** — needs live Convex + Clerk auth seeding; deferred
-  with options in plan 003's maintenance notes.
-- **`recipe` eval baseline runner absent** — noted in plan 008; a tooling gap,
-  not an execution step.
-- **Direction findings not selected for planning**: composition→listening
-  "proving ground" build-out (large; revisit after the current waves), essays
-  vs `editorialArtifacts` divergence (272 static essays bypass the review
-  pipeline; likely resolved by a decision-log entry choosing to bless the
-  split or unify — an operator decision, not an executor plan).
-- **Already-settled by decision log / arch wave** (not re-reported): best-effort
-  tracing, dedupe contract, status-shape duplication, LLM-call duplication,
-  ctx-seam harness, agent-tool registry, ingest script env handling, web api
-  string table, `aggregates.ts` orphan decision, god-file decompositions.
+## Wave 3: vetted but not planned
 
-### Wave 2 (2026-07-15) — vetted but not planned
+Confirmed in code by the advisor unless marked "reported". Promote any of
+these in a later wave.
 
-Confirmed real, but lower leverage than 011–015; recorded so they aren't
-re-audited. Promote any of these in a future wave if priorities change.
+- **Agent-run terminal transitions are unfenced** (`convex/agentRuns.ts:215-243`,
+  `:428-459`): `markCompleted`/`markFailed` patch status without reading it,
+  so a run swept as stale can flip back to completed. Related (reported):
+  graph-owned graphs swallow a failed final write
+  (`agent/src/graphs/shared/audit.ts:63-96`).
+- **YouTube submissions report "queued" but never extract**
+  (`convex/workflows.ts:62`): the workflow checks only `rawText`, never
+  `transcript`. S-effort.
+- **Home page reads every concept row** (`convex/graph.ts:905-915`,
+  `web/src/routes/zodiac-3d.tsx:95`): six subscriptions `.collect()` whole
+  domains, inline embeddings included. Needs an index, so it needs
+  `convex/schema.ts` to shrink first.
+- **Reported, not individually vetted**: list queries ship full Source text
+  to the browser (`convex/inbox.ts:99`, `convex/dashboard.ts:569`); the weekly
+  embedding sweep scans by filter (`convex/embeddingsStore.ts:139-161`); the
+  media worker cannot stop cooperatively mid-narration (`media/src/main.ts:26-42`);
+  header-only TTS audio is retained as a valid chunk
+  (`media/src/retained.ts:124`); `ingest.ingestUrl` (`convex/ingest.ts:503`)
+  has no caller and fetches directly; `pollFeed` does not validate the feed
+  URL; DOI suffix gaps (`convex/shared/doi.ts:42-61`); a retained extraction
+  whose Source was deleted retries forever (`convex/operationFailures.ts:413`);
+  stored URLs rendered as `href` without a scheme check; no response headers
+  in `web/vercel.json`; the paid-character cap in
+  `scripts/essay-audio/episodes.ts:414-509` and the editorial publish state
+  machine (`convex/editorialArtifacts.ts`) are untested; three dashboard
+  queries have no caller (`convex/dashboard.ts:283-527`, `:985`); the media
+  worker has a weaker private copy of `redactError` (`media/src/log.ts:5-11`);
+  `@convex-dev/action-cache` is mounted but unused; `test:recovery`, four web
+  unit tests and `scripts/check-model-catalog.ts` run in no workflow;
+  `docs/schema.md` covers 11 of 41 tables; the research-pipeline scope loader
+  drops two tools' results (`agent/src/graphs/research-pipeline/nodes.ts:99-223`);
+  the drafter's self-check discard leaves no record (see plan 024's notes);
+  five more create forms lack double-submit guards (see plan 023's notes).
+- **Wave 2 carry-overs, still present**: weekly-brief `weekOf` on a Sunday
+  (now `convex/weeklyBriefs.ts:786-789`); the unvalidated extraction cast (now
+  `convex/extract.ts:162`, partly mitigated by a validator at retention). The
+  Wave 2 "already-linked" bug is planned as 021.
 
-- **BUG-02 — hypothesis "already-linked" check misses multi-extraction
-  hypotheses** (`convex/hypotheses.ts:586`): the `by_extractionIds` index
-  equality matches the whole array, so an extraction linked only inside a
-  multi-extraction hypothesis reads as unlinked and gets a duplicate hypothesis
-  regenerated. **Latent** — production only generates single-element
-  `extractionIds` today, so it can't fire until multi-extraction hypotheses
-  exist (agent-draft promotion can create them). Fix = membership test /
-  normalized join. Promote if agent drafts start carrying multiple extractions.
-- **BUG-04 — weekly-brief `weekOf` computes next Monday on Sundays**
-  (`convex/weeklyBriefs.ts:510`, `getDate()-getDay()+1`): a Sunday-generated
-  brief is stamped a week ahead. The scheduled cron runs Fridays, so the default
-  path is unaffected; only manual/off-day generation misfiles. S-effort one-line
-  fix (`const dow = (getDay()+6)%7`) — fold into a future correctness pass.
-- **BUG-05 — extraction JSON cast without zod** (`convex/extract.ts:184,210,235,237`):
-  the LLM extraction result is `as ExtractionResult` / `as any` with no schema;
-  a missing top-level `claims`/`compositionParameters` throws and flips the
-  source to `review_needed`, discarding a partially-good payload. Fails safe (no
-  corrupt data), so MED priority. Fix = zod-parse mirroring the classifier/recipe
-  paths. M-effort; good candidate for a dedicated robustness plan later.
-- **PERF-01 — `editorialSignals` per-concept traversal cascade**
-  (`convex/dashboard.ts:594-710`): four nested fan-out levels (concept →
-  hypothesis → recipe → composition → listening-session), each capped at 100 —
-  the heaviest dashboard read. Bounded (won't table-scan) and **predates
-  `a30f10c`**. Fix = extend the plan-005 stats cron to precompute per-concept
-  net-yield. Revisit when graph density makes the dashboard feel slow.
-- **PERF-02/03/04 — bounded perf smells**: classifier nested edge scans
-  (`conceptClassifier.ts:304`, ~2k edge reads/batch, off client hot path);
-  sequential claim inserts in `extractInternal.ts:87` (single mutation
-  transaction — marginal); worker poll loop has no error backoff
-  (`agent/src/worker/runner.ts:293`, single worker so low impact). All S-effort,
-  low leverage — batch into a perf pass if one is ever warranted.
-- **TEST-02 — web has zero non-e2e tests in CI** (`.github/workflows/ci.yml:23-41`
-  web job typechecks only; loop-wave web routes +690 lines untested): a real
-  MED coverage gap, but CI *does* typecheck web (which transitively typechecks
-  convex), so it is not the critical "no gate at all" variant. Playwright-e2e-in-CI
-  remains separately deferred (needs live Convex+Clerk). Promote by adding a
-  vitest Solid component runner for the highest-churn routes.
-- **TEST-03 — two new graph-link actions untested** (`convex/graph.ts`
-  `linkHypothesisConcepts`, `buildGraphFromExtractions`): no test reference;
-  LLM-dependent, possibly deferred deliberately. M-effort harness tests with a
-  stubbed classifier. Fold into a graph-coverage plan.
-- **DEP-01 — `web/` Vite+ floats on `@latest`** (`web/package.json:34,39`) while
-  root pins `0.2.2`: non-reproducible web builds on a young, fast-moving
-  toolchain. S-effort (pin to `0.2.2` + re-lock). Not bundled into 015 to keep
-  that plan docs-only; promote to its own tiny plan or fold into the next deps
-  pass.
-- **DEP-02 — minor cross-workspace version drift** (`langsmith`/`convex`/
-  `convex-helpers` caret-vs-exact across root/agent): latent risk on the
-  convex↔agent shared-contract seam. Worth a pinning *policy*, not a one-off bump.
-- **DEBT-01/02 — fossils & mislabels**: `frequency.db` (0-byte), `files.zip`
-  (also flagged SEC-03 — see below), `prompts/`, `planning/` are pre-Convex
-  fossils; `convex/phase4.test.ts` describes "phase 1 hardening" and tests
-  editorial/hypothesis modules (misnamed). S-effort cleanup; low urgency. Note:
-  `phase2.ts`/`fabric.ts`/`inbox.ts` were checked and are **live**, not fossils.
-- **SEC-03 — `files.zip` contains retired n8n/feed config with credential-shaped
-  fields** (repo root, tracked): dead artifact from the retired n8n path. Whether
-  the fields are live secrets or n8n credential-ID placeholders needs a
-  **maintainer values-level check** (not done here per the no-secret-repro rule).
-  If any real secret is present: delete + purge from history + rotate. Operator
-  task, not an executor plan.
-- **SEC-06/07 — blast-radius hygiene**: `AUTH_BYPASS_SECRET` provisioned into the
-  Vercel web env for e2e-only use (`web/.env.schema:54`; confirmed NOT in the
-  client bundle — no `VITE_` prefix); empty `*.db` artifacts tracked
-  (`frequency.db`, `data/freq.db`, `data/pipeline.db`). Both LOW — scope the
-  secret to the test runner; `git rm` the empty dbs + `.gitignore *.db`. Fold
-  into a hygiene pass.
-- **DOC-03 — README credits retired n8n for scheduling**: partially addressed by
-  plan 015 (README deliverable line). Full `docs/n8n.md` retirement is an
-  operator decision (commit `56c39ea` is ambiguous) — left out of 015's scope.
+### Considered and rejected
 
-### Wave 2 — direction findings (options for the maintainer, not planned)
+- **Fork pull requests on self-hosted runners**: `ci.yml` routes forks to
+  ephemeral GARM runners on purpose. What remains is an operator check of
+  GitHub's fork-approval setting and the runners' network egress.
+- **Podcast enclosure URLs not bound to the feed token**: Convex storage URLs
+  are capability links by design. Document it; rotation does not revoke them.
+- **Codex fallback subprocess inherits the worker environment**: off by
+  default (`CODEX_ENABLED`), read-only sandbox.
 
-Grounded in repo evidence; each is a design/spike or build decision for Keith,
-not an executor task. Listed so they're captured:
+### Direction options (for the maintainer, not planned)
 
-- **DIR-01 — build `recipe_export_v1` / "Starter Kit"**: spike (Wave-1 plan 009)
-  DONE, GLOSSARY.md specifies it, `.scl` emitter prototyped, but zero code
-  (`grep starterKit` → nothing). Highest-leverage "tool does the setup
-  arithmetic" win. Resolve `docs/recipe-export-v1-design.md#6` open questions
-  first. Effort L.
-- **DIR-02 — card autonomous-ingest slices S1–S5**: spike (Wave-1 plan 010) DONE
-  with sequenced slices in `docs/autonomous-ingest-design.md#7`; the `fetchJobs`
-  table (S1) is unstarted (`grep fetchJobs convex/schema.ts` → nothing). Reuses
-  the proven `agentRuns` claim/heartbeat contract. S1 alone unblocks the rest.
-- **DIR-03 — implement "Source Scout"**: GLOSSARY.md specifies need-directed
-  discovery driven by graph gaps; zero code, but the correspondence `conjectured`
-  lifecycle + domain registry + agent plumbing now exist. Needs a design/spike
-  first (no design doc yet). Effort L.
-- **DIR-04 — run the eval baseline sweep**: this is Wave-1 **plan 008** (BLOCKED
-  2026-10-17; see its row); tooling staged (`scripts/export-eval-datasets.ts`, `docs/eval-baselines.md`
-  skeleton). Operator-gated on live API keys. Without a baseline every generator
-  prompt/model change is unmeasured.
+- **RSS and URL full text**: polled feed items stop at the feed's excerpt
+  (`convex/ingest.ts:358-376`), while PDFs, YouTube and scouted URLs reach
+  full text unattended. The fetch must go through the worker or Lab Firecrawl.
+- **Recipe eval runner**: plan 13 is cleared to change recipe drafting, and
+  `docs/eval-baselines.md:105-114` has an empty recipe table and no runner.
+- **Theses**: production holds zero thesis rows, which blocks the
+  weekly-brief baseline (plan 008 stage 2). Seed a few by hand, or drop the
+  thesis gate from the brief evaluator.
 
-## Audit coverage note
+## Audit coverage note (Wave 3)
 
-**Wave 2 (2026-07-15)**, standard effort, audited at `86f0751` via 4 parallel
-read-only subagents (correctness, security, perf+tests, debt/deps/DX/docs/
-direction), weighted to the 528-file delta since `a30f10c`. Read deeply:
-`convex/` loop-wave modules (claims, correspondences, classifier, domains,
-dashboard, agentRuns, agentDrafts, extract, ingest, recipes, hypotheses,
-weeklyBriefs, auth, http, agentTools*), `agent/src` worker + research-pipeline
-nodes, all three `package.json` + lockfiles, CI workflows, root docs. Local test
-suites run green: `vp test convex` (144), `vp test harness` (46). NOT audited in
-depth: `web/src` component/3D-zodiac internals, the 306 essays' content, `data/`
-manifests, `harness/` test bodies line-by-line, live-backend state (barred). No
-secrets reproduced; no prompt-injection content encountered. Every finding that
-became a plan (011–015) was re-verified against live code by the advisor before
-planning. Correction carried forward: `web/` is **SolidJS**, not React.
+Standard effort, audited at `cf4a8174` by four parallel read-only passes
+(Convex correctness; security; agent, media and web correctness; performance,
+tests, debt, dependencies, DX, docs and direction), weighted to the change
+since `86f0751`. Every finding that became a plan was re-read in code by the
+advisor. No test, typecheck or build was run: the audit worktree had no
+installed dependencies and the audit is read-only.
 
----
-
-## Wave 1 archived coverage note
-
-Standard-effort audit (2026-07-07): correctness/security (very thorough over
-`convex/`, `agent/src`, `scripts/`, lighter over `web/src`), performance,
-dependencies, tests, DX, docs, direction. NOT audited: `web/src` component
-internals in depth, `agent/src` graph logic in depth, the 272 essays' content,
-`data/` manifests, git history beyond 30 commits. The audit trusted the
-2026-07-02 architecture review's findings for the seven clusters it carded
-rather than re-deriving them.
+NOT audited: `convex/hypothesisTournament*.ts`, the decision-signer modules
+beyond their auth checks, `docketBlurbs.ts`, `narration.ts`, `campaigns.ts`,
+most `web/src` JSX and the 3D scene code, agent prompts, `scripts/lib/`,
+`files.zip`, `scripts/archive/`, and anything that needs a live system (Clerk,
+Vercel and GitHub settings; production row counts). No secrets were
+reproduced; no prompt-injection content was found.
