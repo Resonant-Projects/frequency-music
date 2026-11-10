@@ -9,7 +9,18 @@ all other questions remain open. No production state or product gate was changed
 or environment choice open. An absent UI for an intentionally operator-only
 capability is not automatically a product defect.
 
-## Current local checkpoint, 2026-10-26
+## Current local checkpoint, 2026-11-10
+
+[V10](verification-20261110.md) at `c323b26c` passes aggregate verification,
+all four component suites, and both local Convex lifecycle variants. The seeded
+admin still passes after #255; the auth adapter suite does not exercise writer
+roles. The initial offline driver overlapped local proof output and failed amid
+Vite reloads; a fresh isolated run passed essays/navigation/search (25/9/9 actions).
+Run these workflows sequentially. Selected listening fixes and role/read/size/CI
+contracts are mapped with explicit execution versus source-inspection boundaries.
+No broader feature status or product gate changed. No new decision issue is proposed.
+
+## Historical checkpoint, 2026-10-26
 
 [V26 evidence](../evidence/effect-verification-20261026/README.md) at `ca495094`
 re-exercises the shipped fixes. G01's Docket targets and desktop/mobile navigation,
@@ -31,8 +42,8 @@ current audit passed without altering either test or runtime behavior.
 
 ## Small fixes with established intent
 
-Findings describe the original audit baseline; the final column records proof on
-the separate unmerged fix branches.
+Findings describe the original audit baseline; the final column records the original fix proof. V26/V10 checkpoints above
+record later execution on merged source.
 
 | ID | Gap / affected features | Evidence and bounded next step | Linked PR / issue |
 | --- | --- | --- | --- |

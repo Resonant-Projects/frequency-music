@@ -20,6 +20,10 @@ fixture before execution. Keep existing product decisions and gates intact.
 Do not enable gates, repair gaps, seed a shared backend, or publish as part of
 an audit. Record gaps as **small-fix** or **needs-decision**.
 
+For the latest command results and known failures, read the
+[2026-11-10 checkpoint](../../../docs/feature-map/verification-20261110.md).
+That receipt is local proof at `c323b26c`, not deployment evidence.
+
 Use local files, in-process `convex-test` databases, injected fake tools,
 the isolated browser configs, or the owned local Convex workflow below. `APP_ENV=test` selects the
 committed inert environment for CLI subprocess tests. Do not read credentials.
@@ -38,7 +42,9 @@ the guarded essay driver blocks that traffic. Do not open that proxy path.
 ## Build and checks
 
 From the repository root, install only missing dependencies. Each package has
-its own lockfile and project boundary:
+its own lockfile and project boundary. Use Node 26. Root `prepare` now installs
+all three child packages from their lockfiles and generates Panda output (#233),
+so the child install commands are only needed if a package remains missing:
 
 ```bash
 vp install --frozen-lockfile
@@ -89,7 +95,9 @@ python3 .agents/skills/verify-frequency/scripts/control.py cleanup <run-id>
 
 Use the helper's fresh browser context, external-request blocking, WebSocket
 blocking, action log, ARIA snapshots, screenshots and traces. Inspect archive
-and body screenshots. Its `ingest` journey intentionally refuses before opening
+and body screenshots. Run this lifecycle sequentially with fixtures and local
+Convex: Vite watches `web/artifacts/`, and persisted-proof trace HTML or disposable
+`tsconfig.json` changes can trigger reloads in the offline frontend. Its `ingest` journey intentionally refuses before opening
 a browser: no isolated backend exists in this mode. Port 9 supplies no fake
 data. Research loading is not an empty-state pass.
 
@@ -102,6 +110,18 @@ the disposable copy and a synthetic seed/snapshot module. A local-only bootstrap
 authenticates a synthetic user; hosted Clerk/JWT verification is outside this
 boundary. Backend egress is blocked and browser traffic stays on owned loopback
 origins. No checkout `.env` files or inherited credentials are loaded.
+
+Since #255, `requireAuth` on mutations/actions requires an existing `users` row
+with role `admin` or `collaborator`; sign-in alone returns `FORBIDDEN`.
+Queries using that helper require sign-in or the service identity. Source, inbox
+and listening reads use `readerQuery` (signed-in lists capped at 200); remaining
+ungated public queries are recorded in a tested allowlist. `users.viewer` reports
+the current user; `roleBySubject` and `setRole` are internal. Inspect the local
+seed before each run: `seed.ts.txt` already creates an admin and maps its
+`clerkUserId` to the synthetic identity subject. Both lifecycle variants passed
+all four journeys on 2026-11-10 without changing this seed. No hosted role grant
+or negative-role browser proof follows from that pass; use `authRoles.test.ts`
+for the in-process no-row/follower rejection cases.
 
 After the build/dependency prerequisites above, run from root with a fresh id:
 
@@ -149,15 +169,26 @@ APP_ENV=test vp exec playwright test --config tests/feedback/playwright.config.t
   feedback.spec.ts --workers=1 --max-failures=1 --timeout=8000 --reporter=list
 ```
 
-The feedback fixture is known to fail at the audit baseline: its adapter lacks
-`createAction`, imported by the real Listen page through studio comparison.
-The separately authorized repair is [PR #188](https://github.com/Resonant-Projects/frequency-music/pull/188), still unmerged.
-Preserve the baseline finding until that repair lands. Do not patch
-the adapter during an audit. The optional `screenshots.spec.ts` uses
+The old feedback-fixture `createAction` import failure was repaired by
+[PR #188](https://github.com/Resonant-Projects/frequency-music/pull/188), merged
+2026-10-22. All 13 feedback/Docket behavior tests pass at the current checkpoint.
+The auth suite's four tests use fake Clerk/Convex adapters; they prove token and
+AuthGate behavior, not database writer roles. The optional `screenshots.spec.ts` uses
 `SHOTS_DIR`/`SHOTS_LABEL`; unset values skip screenshots and must not count as
 visual proof. An interrupted fixture runner may leave a server: verify exact
 command, checkout, PID/start identity and process-group ownership before stopping
 only the process it created. Never use `reuseExistingServer:true` to adopt it.
+
+For #255's blank-rating and query-argument equality unit checks, run from `web/`:
+
+```bash
+APP_ENV=test vp test --environment node src/lib/rating.test.ts \
+  src/lib/query-args.test.ts src/integrations/convex/query.test.ts
+```
+
+The explicit environment avoids a missing `jsdom` startup error even though all
+12 selected tests declare Node. Running these paths from root finds no tests
+because the root include patterns exclude `web/`.
 
 For other feature IDs, use the stage matrix's named tests and manual recipe.
 Existing full-pipeline specs in `web/tests/e2e/` are intent/reference only here.
@@ -187,7 +218,8 @@ instead of substituting the live service.
   stage. Keep an intentionally gated feature distinct from a defect.
 
 Record source HEAD, scope, commands, exit codes, relevant output, screenshot
-paths and blockers in `docs/evidence/<run-id>/`. Preserve full raw logs locally
+paths and blockers in `docs/evidence/<run-id>/`, or `docs/feature-map/` when the
+task restricts edits to that subtree. Preserve full raw logs locally
 and commit compact redacted excerpts with checksums when useful. Do not commit
 credentials, session state, captured private data, or the existing essay
 helper's ignored screenshots/traces. Link local artifacts explicitly as local;

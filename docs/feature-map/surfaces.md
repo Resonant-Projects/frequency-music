@@ -2,7 +2,7 @@
 
 [Feature map](../feature-map.md) · [Evidence](../evidence/feature-map-20261022/README.md)
 
-Snapshot `a9b728466f9254938e40761e012451b4d896825b`. Mechanically enumerated from current source, with human-assigned feature IDs. This is a coverage crosswalk, not runtime proof. Public query/mutation/action declarations are counted; pure helper exports, generated files and internal functions are not counted as public APIs. Component-owned tables (for example RAG/workflow internals) are outside root schema-table counts.
+Snapshot `c323b26c`, 2026-11-10 ([V10](verification-20261110.md)). Mechanically enumerated from current source, with human-assigned feature IDs. This is a coverage crosswalk, not runtime proof. Public query/mutation/action declarations are counted; pure helper exports, generated files and internal functions are not counted as public APIs. Component-owned tables (for example RAG/workflow internals) are outside root schema-table counts.
 
 ## Routes and entry ownership
 
@@ -89,7 +89,7 @@ All routes live under the shared AuthGate. Top-level entries come from `app-navi
 
 ## Public backend APIs
 
-The [API declaration inventory](apis.md) maps all **45 public modules / 248 query, mutation and action exports** to feature IDs. It is split out to respect the repository file-size limit. Internal support and external routes remain below.
+The [API declaration inventory](apis.md) maps all **46 public modules / 249 query, mutation and action exports** to feature IDs. It is split out to respect the repository file-size limit. Internal support and external routes remain below.
 
 ## Public capabilities without a direct web call
 
@@ -111,7 +111,7 @@ Source scan of `api.<module>.<function>` across `web/src` finds no caller for th
 These non-public backend modules were included in the source inventory. Their responsibilities attach to the feature domains above; they are not independent missing screens. Tests and generated modules are excluded.
 
 
-`agentDraftPromotion`, `agentToolRegistry`, `agentTools`, `agentToolsHttp`, `auth.config`, `auth`, `components`, `conceptClassification`, `conceptClassifierInternal`, `conceptDomainNormalization`, `convex.config`, `correspondenceCandidates`, `crons`, `decisionIdentity`, `decisionIntentsMigrations`, `decisionSignerDelivery`, `decisionSignerParsing`, `decisionSignerRuntime`, `decisionSignerTransport`, `discordInteractions`, `docketBlurbs`, `domainMappings`, `editorialExports`, `embeddingsStore`, `episodes`, `extractInternal`, `http`, `hypothesesInternal`, `hypothesisTournament`, `hypothesisTournamentNode`, `llm`, `llmNode`, `maintenance`, `mediaJobEffects`, `mediaJobs`, `mediaSweeper`, `mediaToolsInternal`, `narration`, `narrationPrompt`, `pdfCaptureNode`, `phase2`, `recipesInternal`, `recoveryWorkflows`, `sourceUtils`, `telegramWebhook`, `tracing`, `transcriptCapture`, `weeklyBriefsInternal`.
+`agentDraftPromotion`, `agentToolRegistry`, `agentTools`, `agentToolsHttp`, `auth.config`, `auth`, `components`, `conceptClassification`, `conceptClassifierInternal`, `conceptDomainNormalization`, `convex.config`, `correspondenceCandidates`, `crons`, `creatorIdentity`, `decisionIdentity`, `decisionIntentsMigrations`, `decisionSignerDelivery`, `decisionSignerParsing`, `decisionSignerRuntime`, `decisionSignerTransport`, `discordInteractions`, `docketBlurbs`, `domainMappings`, `draftTargetExclusions`, `editorialExports`, `embeddingsStore`, `episodes`, `extractInternal`, `http`, `hypothesesInternal`, `hypothesisLinks`, `hypothesisPayload`, `hypothesisTournament`, `hypothesisTournamentNode`, `llm`, `llmNode`, `maintenance`, `mediaJobEffects`, `mediaJobs`, `mediaSweeper`, `mediaToolsInternal`, `narration`, `narrationPrompt`, `pdfCaptureNode`, `phase2`, `publicQueryAllowlist`, `recipesInternal`, `readerQuery`, `recoveryWorkflows`, `sourceReads`, `sourceUtils`, `telegramWebhook`, `tracing`, `transcriptCapture`, `weeklyBriefsInternal`.
 
 ## HTTP ingress and external consumers
 
@@ -199,7 +199,7 @@ Root, web, agent and media package scripts/configs/environment schemas were insp
 ```bash
 rg -n "path:|component:" web/src/router.tsx
 rg -n "defineTable" convex/schema.ts
-rg -n "export const .* = (query|mutation|action)" convex/*.ts
+rg -n "export const .* = (query|readerQuery|mutation|action)" convex/*.ts
 rg -n "KNOWN_GRAPH_NAMES|MEDIA_JOB_KINDS" convex/shared/{agentContract,mediaJobs}.ts
 rg -n "crons\.(interval|daily|weekly)" convex/crons.ts
 rg -n "TODO|FIXME|stub|not implemented|intentionally disabled" web/src convex agent/src media/src
