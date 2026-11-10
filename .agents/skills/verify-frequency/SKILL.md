@@ -111,11 +111,13 @@ authenticates a synthetic user; hosted Clerk/JWT verification is outside this
 boundary. Backend egress is blocked and browser traffic stays on owned loopback
 origins. No checkout `.env` files or inherited credentials are loaded.
 
-Since #255, `requireAuth` on mutations/actions requires an existing `users` row
-with role `admin` or `collaborator`; sign-in alone returns `FORBIDDEN`.
+Since #255, `requireAuth` on mutations/actions permits the service bypass identity
+and `system` subject without a `users` row. Other identities require an existing
+row with role `admin` or `collaborator`; sign-in alone returns `FORBIDDEN`.
 Queries using that helper require sign-in or the service identity. Source, inbox
-and listening reads use `readerQuery` (signed-in lists capped at 200); remaining
-ungated public queries are recorded in a tested allowlist. `users.viewer` reports
+and listening reads use `readerQuery`; handlers using `ctx.readLimit` cap
+signed-in list reads at 200. `listening.listByComposition` instead uses `collect()`
+without that cap. Remaining ungated public queries have a tested allowlist. `users.viewer` reports
 the current user; `roleBySubject` and `setRole` are internal. Inspect the local
 seed before each run: `seed.ts.txt` already creates an admin and maps its
 `clerkUserId` to the synthetic identity subject. Both lifecycle variants passed

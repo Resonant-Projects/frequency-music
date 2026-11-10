@@ -18,7 +18,9 @@ publication or external message was used as evidence.
   render acceptance remains separate.
 - Focused auth/read/creator/DOI/hypothesis/size/workflow run: **116 tests**.
   Auth-role cases distinguish no-row/follower rejection from admin/collaborator,
-  service/system access; reader tests assert 200 versus service-requested limits.
+  service/system access; Source list tests assert 200 versus service-requested limits.
+  The cap applies only where handlers use `ctx.readLimit`;
+  `listening.listByComposition` collects without a cap (source inspection).
 - Component Playwright suites: **23 UI + 3 playback + 4 auth + 13 feedback/Docket**
   tests. These run real components with synthetic adapters, without persistence.
   #188's old `createAction` import blocker is resolved; GitHub reports it merged
@@ -149,9 +151,9 @@ claims are limited to the named receipts above:
 
 | Features | Source finding | Work |
 | --- | --- | --- |
-| A01/O05 | [auth](../../convex/auth.ts), [users](../../convex/users.ts), [creatorOf](../../convex/creatorIdentity.ts), [readerQuery](../../convex/readerQuery.ts), [sourceReads](../../convex/sourceReads.ts), [public query ratchet](../../convex/publicQueryAuth.test.ts): writer roles, reader cap and internal twins. Remaining ungated reads are explicitly allowlisted; this is not universal query authentication. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
+| A01/O05 | [auth](../../convex/auth.ts), [users](../../convex/users.ts), [creatorOf](../../convex/creatorIdentity.ts), [readerQuery](../../convex/readerQuery.ts), [sourceReads](../../convex/sourceReads.ts), [public query ratchet](../../convex/publicQueryAuth.test.ts): writer roles with service/system exceptions, handler-applied reader caps and internal twins (`listening.listByComposition` collects without a cap). Remaining ungated reads are explicitly allowlisted; this is not universal query authentication. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
 | R01/R03/R06 | [shared DOI](../../convex/shared/doi.ts), [dedupe](../../convex/sourceUtils.ts), [creator/resubmit tests](../../convex/creatorIdentity.test.ts): trusted publisher URLs and PDF forms share DOI identity; unsupported IDs/hosts retain URL identity; resubmission patches supplied fields only. | [#254](https://github.com/Resonant-Projects/frequency-music/pull/254), [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
-| S02/R13/O03 | [workflows](../../convex/workflows.ts), [hypotheses](../../convex/hypotheses.ts), [payload projection](../../convex/hypothesisPayload.ts), [hunter targets](../../convex/correspondenceCandidates.ts), [draft exclusions](../../convex/draftTargetExclusions.ts): paid generation retry disabled, known-field projection, all linked extractions excluded, daily rotation/28-day rest. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
+| S02/R13/O03 | [workflows](../../convex/workflows.ts), [hypotheses](../../convex/hypotheses.ts), [payload projection](../../convex/hypothesisPayload.ts), [hunter targets](../../convex/correspondenceCandidates.ts), [draft exclusions](../../convex/draftTargetExclusions.ts): workflow extraction/hypothesis retries disabled (full-pipeline recipe generation retains `retry: true`), known-field projection, all linked extractions excluded, daily rotation/28-day rest. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
 | M03/M06 | [feedback](../../web/src/routes/feedback.tsx), [composition detail](../../web/src/routes/composition-detail.tsx), [query adapter](../../web/src/integrations/convex/query.ts): omit blank score; in-flight guard; expandability value; owner visibility; query equality avoids needless subscription recreation. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255) |
 | O07 | [CI](../../.github/workflows/ci.yml), [export](../../.github/workflows/public-editorial-export.yml), [media publish](../../.github/workflows/publish-media-image.yml), [size checker](../../scripts/check-file-tokens.mjs), [package installer](../../scripts/install-packages.mjs), [deploy wrapper](../../scripts/convex-deploy.ts): Node 26/inert build, root typecheck, read-only CI, main-only publication, git-backed size ratchet; root prepare installs child packages. | [#255](https://github.com/Resonant-Projects/frequency-music/pull/255), [#245](https://github.com/Resonant-Projects/frequency-music/pull/245), [#233](https://github.com/Resonant-Projects/frequency-music/pull/233) |
 
