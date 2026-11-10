@@ -54,13 +54,19 @@ describe("baseline ratchet", () => {
     });
   }
 
-  function writeBaselineText(text: string) {
+  const baselinePath = "scripts/file-token-baseline.json";
+
+  function writeBaselineText(text: string, staged = true) {
     mkdirSync(join(repo, "scripts"), { recursive: true });
-    writeFileSync(join(repo, "scripts/file-token-baseline.json"), text);
+    writeFileSync(join(repo, baselinePath), text);
+    if (staged) git("add", "--", baselinePath);
   }
 
-  function writeBaseline(files: Record<string, number>) {
-    writeBaselineText(`${JSON.stringify({ version: 1, files }, null, 2)}\n`);
+  function writeBaseline(files: Record<string, number>, staged = true) {
+    writeBaselineText(
+      `${JSON.stringify({ version: 1, files }, null, 2)}\n`,
+      staged,
+    );
   }
 
   function readBaselineFiles(): Record<string, number> {
@@ -104,6 +110,32 @@ describe("baseline ratchet", () => {
     const result = check();
     expect(result.status).toBe(1);
     expect(result.stderr).not.toContain("this file grew");
+  });
+
+  test("an unstaged baseline edit does not raise a ceiling", () => {
+    init();
+    writeBaseline({ "big.ts": 25_000 });
+    stage("big.ts", "a".repeat(25_000));
+    commit();
+    writeBaseline({ "big.ts": 25_001 }, false);
+    stage("big.ts", "a".repeat(25_001));
+    expect(check().status).toBe(1);
+  });
+
+  test("an unstaged baseline entry does not exempt a new file", () => {
+    init();
+    writeBaseline({ "big.ts": 25_000 }, false);
+    stage("big.ts", "a".repeat(25_000));
+    expect(check().status).toBe(1);
+  });
+
+  test("--all reads the committed baseline, not the working tree", () => {
+    init();
+    writeBaseline({ "big.ts": 25_000 });
+    stage("big.ts", "a".repeat(25_001));
+    commit();
+    writeBaseline({ "big.ts": 25_001 }, false);
+    expect(check("--all").status).toBe(1);
   });
 
   test("without a baseline file, blocks as before", () => {

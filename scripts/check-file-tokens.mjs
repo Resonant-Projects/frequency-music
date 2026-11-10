@@ -449,12 +449,27 @@ function pruneBaseline() {
   return 0;
 }
 
+/**
+ * The baseline as git holds it: ":" is the index, "HEAD:" the last commit.
+ * The checks never read the working-tree copy, so an unstaged edit to the
+ * baseline cannot raise a ceiling or exempt a new file.
+ */
+function trackedBaseline(revision) {
+  let text;
+  try {
+    text = git(["show", `${revision}${BASELINE_PATH}`], { stdio: "pipe" });
+  } catch {
+    return {};
+  }
+  return JSON.parse(text).files ?? {};
+}
+
 export function main(argv = process.argv.slice(2)) {
   if (argv.includes("--write-baseline")) return writeBaseline();
   if (argv.includes("--prune-baseline")) return pruneBaseline();
 
   const scanAll = argv.includes("--all");
-  const baseline = readBaseline(repositoryRoot());
+  const baseline = trackedBaseline(scanAll ? "HEAD:" : ":");
 
   if (scanAll) {
     const tracked = trackedCandidates();
