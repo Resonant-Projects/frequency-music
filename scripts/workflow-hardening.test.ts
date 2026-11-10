@@ -37,6 +37,10 @@ describe("CI workflow", () => {
     expect(workflow).toMatch(/^permissions:\n {2}contents: read$/m);
   });
 
+  test("typechecks the root package", () => {
+    expect(workflow).toContain("- run: vp run typecheck:scripts");
+  });
+
   test("runs the file size check", () => {
     expect(workflow).toContain(
       "- run: node scripts/check-file-tokens.mjs --all",
