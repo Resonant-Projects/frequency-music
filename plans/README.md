@@ -5,7 +5,7 @@ starting, honor its STOP conditions, and update your row when done.
 
 - **Wave 1 (2026-07-07)** at `a30f10c`, plans 001–010. Only 008 remains active.
 - **Wave 2 (2026-07-15)** at `86f0751`, plans 011–015. All DONE 2026-07-18.
-- **Wave 3 (2026-11-09)** at `cf4a8174`, plans 017–024. All TODO. (016 was
+- **Wave 3 (2026-11-09)** at `cf4a8174`, plans 017–024. All DONE 2026-11-10. (016 was
   used informally for a lint cleanup; the number is skipped.)
 
 Waves 1 and 2 are archived verbatim:
@@ -46,7 +46,7 @@ approved for execution as they stand.
 | 021 | [Hypothesis generation retry safety](./021-hypothesis-generation-retry-safety.md) | P2 | S | — | DONE 2026-11-10 |
 | 022 | [CI workflow hardening](./022-ci-workflow-hardening.md) | P2 | S | 017 (step 5 only) | DONE 2026-11-10; the root job now also installs `agent/` deps, which root `tsc` resolves through harness imports |
 | 023 | [Listening UI fixes](./023-listening-ui-fixes.md) | P2 | S | 017; 018 (step 4 only) | DONE 2026-11-10; the visibility control stays read-only until 018's `users:viewer` is deployed |
-| 024 | [Agent target rotation](./024-agent-target-rotation.md) | P2 | M | 017 | TODO |
+| 024 | [Agent target rotation](./024-agent-target-rotation.md) | P2 | M | 017 | DONE 2026-11-10 |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

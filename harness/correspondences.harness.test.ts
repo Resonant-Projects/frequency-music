@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
@@ -231,6 +231,9 @@ describe("correspondence pair identity and classification gates", () => {
 
 describe("correspondence evidence target ordering", () => {
   test("only considers the first 500 conjectures from the status index", async () => {
+    // Targets rotate by UTC day; day 0 selects the first window.
+    vi.useFakeTimers({ toFake: ["Date"], now: 0 });
+    onTestFinished(() => void vi.useRealTimers());
     const t = convexTest(schema, modules);
     const [conceptAId, conceptBId] = await Promise.all([
       seedConcept(t, "bounded target a"),
