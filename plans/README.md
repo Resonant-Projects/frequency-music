@@ -45,7 +45,7 @@ approved for execution as they stand.
 | 020 | [Login-required reads, tier 1](./020-login-required-reads.md) | P1 | M | 017, 018, 019 | DONE 2026-11-10; 81 keys left in `UNGATED_PUBLIC_QUERIES`; deploys together with 018 |
 | 021 | [Hypothesis generation retry safety](./021-hypothesis-generation-retry-safety.md) | P2 | S | — | DONE 2026-11-10 |
 | 022 | [CI workflow hardening](./022-ci-workflow-hardening.md) | P2 | S | 017 (step 5 only) | DONE 2026-11-10; the root job now also installs `agent/` deps, which root `tsc` resolves through harness imports |
-| 023 | [Listening UI fixes](./023-listening-ui-fixes.md) | P2 | S | 017; 018 (step 4 only) | TODO |
+| 023 | [Listening UI fixes](./023-listening-ui-fixes.md) | P2 | S | 017; 018 (step 4 only) | DONE 2026-11-10; the visibility control stays read-only until 018's `users:viewer` is deployed |
 | 024 | [Agent target rotation](./024-agent-target-rotation.md) | P2 | M | 017 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)

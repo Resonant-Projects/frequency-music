@@ -25,6 +25,7 @@ import {
   describeError,
 } from "../integrations/convex";
 import { api } from "../../../convex/_generated/api";
+import { parseScore } from "../lib/rating";
 
 function parseParticipants(input: string) {
   return input
@@ -149,9 +150,11 @@ export function FeedbackPage() {
   const [standoutMoments, setStandoutMoments] = createSignal("");
   const [notice, setNotice] = createSignal<string | null>(null);
   const [noticeError, setNoticeError] = createSignal<string | null>(null);
+  const [saving, setSaving] = createSignal(false);
 
   async function submitSession(event: SubmitEvent) {
     event.preventDefault();
+    if (saving()) return;
 
     if (!compositionId() || !feedbackMd().trim()) {
       setNotice(null);
@@ -159,6 +162,22 @@ export function FeedbackPage() {
       return;
     }
 
+    const scores = {
+      bodilyPleasantness: parseScore(pleasantness()),
+      goosebumps: parseScore(goosebumps()),
+      musicality: parseScore(musicality()),
+    };
+    if (Object.values(scores).includes(null)) {
+      setNotice(null);
+      setNoticeError("Ratings must be whole numbers from 0 to 5.");
+      return;
+    }
+    // A blank rating is "not given": leave it out rather than store a 0.
+    const givenScores = Object.fromEntries(
+      Object.entries(scores).filter(([, value]) => value !== undefined),
+    ) as Partial<Record<keyof typeof scores, number>>;
+
+    setSaving(true);
     try {
       const parsedFeltQualities = parseCommaSeparated(feltQualities());
       const parsedBodyMapTags = parseCommaSeparated(bodyMapTags());
@@ -172,9 +191,7 @@ export function FeedbackPage() {
         contextMd: contextMd().trim() || undefined,
         feedbackMd: feedbackMd().trim(),
         ratings: {
-          bodilyPleasantness: Number(pleasantness()),
-          goosebumps: Number(goosebumps()),
-          musicality: Number(musicality()),
+          ...givenScores,
           expandability: parseOptionalRating(expandability()),
         },
         bodyMapNotes: bodyMapNotes().trim() || undefined,
@@ -201,6 +218,8 @@ export function FeedbackPage() {
       setNotice("Listening session logged.");
     } catch (error) {
       setNoticeError(`Failed to log session: ${describeError(error)}`);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -438,7 +457,12 @@ export function FeedbackPage() {
           })}
         >
           <UINotice status={notice()} error={noticeError()} />
-          <UIButton type="submit" variant="solid">
+          <UIButton
+            type="submit"
+            variant="solid"
+            disabled={saving()}
+            aria-busy={saving()}
+          >
             Log Session
           </UIButton>
         </div>
