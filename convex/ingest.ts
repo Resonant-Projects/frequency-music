@@ -336,9 +336,12 @@ export const pollFeed = internalAction({
               });
 
           // Check if already exists
-          const existing = await ctx.runQuery(api.sources.getByDedupeKey, {
-            dedupeKey,
-          });
+          const existing = await ctx.runQuery(
+            internal.sourceReads.getByDedupeKey,
+            {
+              dedupeKey,
+            },
+          );
           if (existing) {
             continue; // Skip duplicates
           }
@@ -521,7 +524,7 @@ export const ingestUrl = action({
 
     // Check if already exists
     const existing: Doc<"sources"> | null = await ctx.runQuery(
-      api.sources.getByDedupeKey,
+      internal.sourceReads.getByDedupeKey,
       {
         dedupeKey,
       },
@@ -607,7 +610,7 @@ export const ingestYouTube = action({
 
     // Check if already exists
     const existing: Doc<"sources"> | null = await ctx.runQuery(
-      api.sources.getByDedupeKey,
+      internal.sourceReads.getByDedupeKey,
       {
         dedupeKey,
       },

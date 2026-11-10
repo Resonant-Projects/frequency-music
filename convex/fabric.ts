@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { requireAuth } from "./auth";
 
@@ -219,9 +219,12 @@ export const fetchTranscriptForSource = action({
   handler: async (ctx, args): Promise<TranscriptForSourceResult> => {
     await requireAuth(ctx, args);
     // Get the source
-    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
-      id: args.sourceId,
-    });
+    const source: Doc<"sources"> | null = await ctx.runQuery(
+      internal.sourceReads.get,
+      {
+        id: args.sourceId,
+      },
+    );
     if (!source) {
       throw new Error("Source not found");
     }
@@ -296,7 +299,7 @@ export const fetchAllYouTubeTranscripts = action({
     const limit = args.limit ?? 10;
 
     // Get YouTube sources that are in "ingested" status (no transcript yet)
-    const sources = await ctx.runQuery(api.sources.listByStatus, {
+    const sources = await ctx.runQuery(internal.sourceReads.listByStatus, {
       status: "ingested",
       limit: limit * 2, // Get more since we filter
     });
@@ -402,9 +405,12 @@ export const fetchArticleForSource = action({
   ),
   handler: async (ctx, args): Promise<ArticleForSourceResult> => {
     await requireAuth(ctx, args);
-    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
-      id: args.sourceId,
-    });
+    const source: Doc<"sources"> | null = await ctx.runQuery(
+      internal.sourceReads.get,
+      {
+        id: args.sourceId,
+      },
+    );
     if (!source) {
       throw new Error("Source not found");
     }

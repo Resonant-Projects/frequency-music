@@ -10,6 +10,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { requireAuth, type AppIdentity } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { pairKey } from "./shared/correspondenceKey";
 import { correspondenceStatusValidator } from "./shared/correspondences";
 import { correspondenceReturnValidator } from "./validators";
@@ -405,10 +406,7 @@ async function upsertConjectureImpl(
     origin: input.agentRunId ? "agent" : undefined,
     agentRunId: input.agentRunId,
     traceUrl: input.traceUrl,
-    createdBy:
-      identity.subject === "system"
-        ? "system"
-        : (identity.subject as Id<"users">),
+    createdBy: await creatorOf(ctx, identity),
     createdAt: now,
     updatedAt: now,
   });

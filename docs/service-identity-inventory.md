@@ -140,3 +140,11 @@ change adds no new push channel. Reading it:
   `MCP_SHARED_SECRET` are separate shared secrets and are not counted here.
 - **A real service identity** for the worker and scripts (ledger #20,
   longer term).
+
+**User roles.** `requireAuth` lets any signed-in user run a query. A mutation
+or action also needs the `admin` or `collaborator` role on that user's `users`
+row; an account with no row is a follower. The service secret and the
+`system` subject keep full access. Grant a role with the internal mutation
+`users:setRole` (`clerkUserId`, `role`). Before deploying the release that
+contains this gate, confirm the operator's own `users` row exists with a
+writer role, or the web app becomes read-only for them.

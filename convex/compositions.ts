@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import type { DatabaseReader } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import {
   type DbReader,
   getBranchFailureStatusForComposition,
@@ -251,10 +252,7 @@ export const create = mutation({
       revisionVariable: createArgs.revisionVariable?.trim() || undefined,
       status: "idea",
       visibility: "private",
-      createdBy:
-        identity.subject === "system"
-          ? "system"
-          : (identity.subject as Id<"users">),
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });

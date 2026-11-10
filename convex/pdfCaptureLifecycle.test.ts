@@ -21,6 +21,7 @@ import {
   startAttempt,
   type T,
 } from "../harness/pdfCaptureFixtures";
+import { seedUser } from "./testHelpers";
 
 beforeEach(() => {
   // Scheduled captures must not run on their own: each test drives them.
@@ -34,6 +35,7 @@ afterEach(() => {
 describe("PDF capture attempts", () => {
   test("an attempt returns the upload to parse and is marked parsing", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id, storageId } = await upload(t);
     const { plan } = await startAttempt(t, id);
     expect(plan).toEqual({ endpoint: "parse", storageId });
@@ -42,6 +44,7 @@ describe("PDF capture attempts", () => {
 
   test("a stale sequence number gets no work", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     expect(
       await t.mutation(internal.pdfCapture.startPdfAttempt, {
@@ -53,6 +56,7 @@ describe("PDF capture attempts", () => {
 
   test("captured text makes the Source text_ready with its provenance", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     expect(
@@ -87,6 +91,7 @@ describe("PDF capture attempts", () => {
 
   test("near-empty text parks the Source with pdf_parse_error", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.mutation(internal.pdfCapture.recordPdfCapture, {
@@ -108,6 +113,7 @@ describe("PDF capture attempts", () => {
 
   test("an unreadable PDF blocks on the first attempt", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.mutation(internal.pdfCapture.recordPdfCapture, {
@@ -127,6 +133,7 @@ describe("PDF capture attempts", () => {
 
   test("a retryable failure waits, then the third failure parks no_text", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
       url: "https://example.org/paper.pdf",
     });
@@ -173,6 +180,7 @@ describe("PDF capture attempts", () => {
 
   test("a late result from an older attempt changes nothing", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.mutation(internal.pdfCapture.recordPdfCapture, {
@@ -197,6 +205,7 @@ describe("PDF capture attempts", () => {
 
   test("the watchdog fails an attempt that never reported, and ignores a settled one", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     const watchdog = (await scheduled(t)).find((job) =>
@@ -222,6 +231,7 @@ describe("PDF capture attempts", () => {
 
   test("an archived Source ignores capture results", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.run((ctx) => ctx.db.patch("sources", id, { status: "archived" }));
@@ -257,6 +267,7 @@ describe("PDF recovery", () => {
 
   test("Access changed starts a fresh capture run for an upload that failed to reach Firecrawl", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id, seq, blocked } = await blockUpload(
       t,
       "pdf_capture_unconfigured",
@@ -285,6 +296,7 @@ describe("PDF recovery", () => {
 
   test("Access changed does not re-parse uploaded bytes that failed to parse", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id, seq, blocked } = await blockUpload(t, "pdf_unreadable");
     const before = (await scheduled(t)).length;
     expect(
@@ -304,6 +316,7 @@ describe("PDF recovery", () => {
 
   test("Access changed re-reads a PDF URL that failed to parse", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
       url: "https://example.org/score.pdf",
     });
@@ -330,6 +343,7 @@ describe("PDF recovery", () => {
 
   test("provided text resolves a pdf_parse_error block", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const { seq } = await startAttempt(t, id);
     await t.mutation(internal.pdfCapture.recordPdfCapture, {
@@ -351,8 +365,9 @@ describe("PDF recovery", () => {
 
   test("the inbox offers text recovery for a pdf_parse_error block", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
-    const queued = await t.query(api.inbox.list, {});
+    const queued = await reader(t).query(api.inbox.list, {});
     expect(queued.find((row) => row._id === id)?.nextAction).toBe(
       "Extracting PDF text",
     );
@@ -363,7 +378,7 @@ describe("PDF recovery", () => {
       outcome: "failed",
       code: "pdf_unreadable",
     });
-    const rows = await t.query(api.inbox.list, {});
+    const rows = await reader(t).query(api.inbox.list, {});
     expect(rows.find((row) => row._id === id)?.nextAction).toBe(
       "Paste excerpt or mark as blocked",
     );
@@ -373,15 +388,20 @@ describe("PDF recovery", () => {
 describe("PDF storage privacy", () => {
   test("public Source queries never return the uploaded file's storage id", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await upload(t);
     const row = (await source(t, id))!;
     const results = [
-      await t.query(api.sources.get, { id }),
-      await t.query(api.sources.getByDedupeKey, { dedupeKey: row.dedupeKey }),
-      ...(await t.query(api.sources.listRecent, {})),
-      ...(await t.query(api.sources.listByStatus, { status: "ingested" })),
-      ...(await t.query(api.sources.listByType, { type: "pdf" })),
-      ...(await t.query(api.inbox.list, {})),
+      await reader(t).query(api.sources.get, { id }),
+      await reader(t).query(api.sources.getByDedupeKey, {
+        dedupeKey: row.dedupeKey,
+      }),
+      ...(await reader(t).query(api.sources.listRecent, {})),
+      ...(await reader(t).query(api.sources.listByStatus, {
+        status: "ingested",
+      })),
+      ...(await reader(t).query(api.sources.listByType, { type: "pdf" })),
+      ...(await reader(t).query(api.inbox.list, {})),
     ];
     expect(results).toHaveLength(6);
     for (const result of results) {
@@ -394,6 +414,7 @@ describe("PDF storage privacy", () => {
 describe("PDF storage ownership", () => {
   test("mediaSweeper keeps a blob that a Source references", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { storageId } = await upload(t);
     const orphan = await t.run((ctx) => ctx.storage.store(pdfBytes("orphan")));
     const orphanBlob = (await t.run((ctx) => ctx.db.system.get(orphan)))!;

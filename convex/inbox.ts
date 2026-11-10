@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import { currentExtractions } from "./extractions";
 import type { Doc } from "./_generated/dataModel";
-import { query } from "./_generated/server";
 import { readStat } from "./dashboard";
+import { readerQuery } from "./readerQuery";
 import { readsPdfText } from "./shared/pdfCapture";
 import { isMissingTextBlock } from "./shared/statuses";
 import { publicSource, sourceReturnValidator } from "./validators";
@@ -43,7 +43,7 @@ function nextActionForSource(source: {
   return "Review extraction";
 }
 
-export const list = query({
+export const list = readerQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(
     v.object({
@@ -81,7 +81,7 @@ export const list = query({
     }),
   ),
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 30;
+    const limit = ctx.readLimit(args.limit ?? 30);
     const statuses: InboxStatus[] = [
       "ingested",
       "text_ready",
@@ -153,7 +153,7 @@ export const list = query({
   },
 });
 
-export const counts = query({
+export const counts = readerQuery({
   args: {},
   returns: v.object({
     ingested: v.number(),

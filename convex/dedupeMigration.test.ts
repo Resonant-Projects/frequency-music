@@ -8,6 +8,7 @@ import { EXTRACTION_PROMPT_VERSION } from "./shared/extractionPrompt";
 import { modules } from "../harness/modules";
 import { publisherDois } from "../harness/fixtures/publisherDois";
 import { normalizeUrl } from "./sourceUtils";
+import { seedUser } from "./testHelpers";
 
 const arxivRow = (overrides: {
   dedupeKey: string;
@@ -32,6 +33,7 @@ describe("dedupe key migration", () => {
     "rekeys legacy $url rows before preflight/intake resume",
     async ({ url, doi }) => {
       const t = convexTest(schema, modules);
+      await seedUser(t, "operator");
       const operator = t.withIdentity({ subject: "operator" });
       const legacyKey = `url:${normalizeUrl(url)}`;
       const canonicalKey = `doi:${doi.toLowerCase()}`;
@@ -107,6 +109,7 @@ describe("dedupe key migration", () => {
     "keeps captured publisher text on a DOI collision (publisher first: %s)",
     async (publisherFirst) => {
       const t = convexTest(schema, modules);
+      await seedUser(t, "operator");
       const operator = t.withIdentity({ subject: "operator" });
       const canonicalUrl = "https://www.nature.com/articles/nature18635";
       const key = "doi:10.1038/nature18635";
@@ -235,6 +238,7 @@ describe("dedupe key migration", () => {
 
   test("merges a re-announced arXiv paper into its extracted copy", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "operator");
     const asOperator = t.withIdentity({
       subject: "operator",
       name: "Operator",
@@ -312,6 +316,7 @@ describe("dedupe key migration", () => {
 describe("dedupe key migration with archived rows", () => {
   test("never archives a live row in favour of an archived one", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "operator");
     const asOperator = t.withIdentity({
       subject: "operator",
       name: "Operator",
@@ -378,6 +383,7 @@ describe("duplicate Extraction text", () => {
 
   test("archives a Source whose text another Source already extracted", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "operator");
     const asOperator = t.withIdentity({
       subject: "operator",
       name: "Operator",

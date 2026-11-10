@@ -12,6 +12,7 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { modules } from "../harness/modules";
 import { SOURCE_TEXT_MAX_CHARS } from "./shared/sourceText";
+import { seedUser } from "./testHelpers";
 
 type T = ReturnType<typeof convexTest>;
 
@@ -101,6 +102,7 @@ async function capture(t: T, id: Id<"sources">) {
 describe("capturePdf: uploads", () => {
   test("sends the stored bytes to Lab Firecrawl /v2/parse and stores the text", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t);
     respondWith(pdfSuccess(prose, 12));
     await capture(t, id);
@@ -127,6 +129,7 @@ describe("capturePdf: uploads", () => {
 
   test("keeps the first SOURCE_TEXT_MAX_CHARS characters of a long book", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t);
     const book = prose.repeat(
       Math.ceil((SOURCE_TEXT_MAX_CHARS * 2) / prose.length),
@@ -144,6 +147,7 @@ describe("capturePdf: uploads", () => {
 
   test("a file that is not a PDF blocks before any Firecrawl call", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t, "<html>not a pdf</html>");
     respondWith();
     await capture(t, id);
@@ -157,6 +161,7 @@ describe("capturePdf: uploads", () => {
 
   test("a PDF Firecrawl cannot read blocks with pdf_parse_error", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t);
     respondWith({
       status: 500,
@@ -172,6 +177,7 @@ describe("capturePdf: uploads", () => {
 
   test("a connection that breaks while the body is read waits for a retry", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t);
     vi.stubGlobal(
       "fetch",
@@ -197,6 +203,7 @@ describe("capturePdf: uploads", () => {
 
   test("a network failure waits for a retry", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await uploaded(t);
     respondWith(new TypeError("fetch failed"));
     await capture(t, id);
@@ -212,6 +219,7 @@ describe("capturePdf: uploads", () => {
 describe("capturePdf: URLs", () => {
   test("asks Lab Firecrawl /v2/scrape for the URL, with TLS verification on", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await fromUrl(t);
     respondWith(pdfSuccess(prose, 15));
     await capture(t, id);
@@ -231,6 +239,7 @@ describe("capturePdf: URLs", () => {
 
   test("retries once with the longer budget when Firecrawl needs more time", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await fromUrl(t);
     respondWith(
       {
@@ -249,6 +258,7 @@ describe("capturePdf: URLs", () => {
 
   test("a 404 page that Firecrawl reports as success blocks no_text", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await fromUrl(t);
     respondWith(
       pdfSuccess("Sorry, page not found", 0, {
@@ -281,6 +291,7 @@ describe("capturePdf: configuration", () => {
   ])("%s blocks without a call", async (_label, env) => {
     for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await fromUrl(t);
     respondWith();
     await capture(t, id);
@@ -294,6 +305,7 @@ describe("capturePdf: configuration", () => {
 
   test("a stale attempt makes no Firecrawl call", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await fromUrl(t);
     respondWith();
     await t.action(internal.pdfCaptureNode.capturePdf, {

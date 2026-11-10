@@ -1,25 +1,15 @@
 /* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { AUTO_RETIRE_AFTER_MS } from "../convex/correspondences";
 import schema from "../convex/schema";
 import { pairKey } from "../convex/shared/correspondenceKey";
+import { asWriter } from "../convex/testHelpers";
 import { modules } from "./modules";
 
 type Harness = ReturnType<typeof convexTest>;
-
-async function seedUser(t: Harness) {
-  return await t.run((ctx) =>
-    ctx.db.insert("users", {
-      clerkUserId: "clerk-test-user",
-      role: "admin",
-      createdAt: 1,
-      updatedAt: 1,
-    }),
-  );
-}
 
 async function seedAgentRun(t: Harness) {
   return await t.run((ctx) =>
@@ -241,6 +231,9 @@ describe("correspondence pair identity and classification gates", () => {
 
 describe("correspondence evidence target ordering", () => {
   test("only considers the first 500 conjectures from the status index", async () => {
+    // Targets rotate by UTC day; day 0 selects the first window.
+    vi.useFakeTimers({ toFake: ["Date"], now: 0 });
+    onTestFinished(() => void vi.useRealTimers());
     const t = convexTest(schema, modules);
     const [conceptAId, conceptBId] = await Promise.all([
       seedConcept(t, "bounded target a"),
@@ -404,8 +397,7 @@ describe("correspondence evidence lifecycle", () => {
 describe("correspondence setStatus guard", () => {
   test("allows every human transition with a reason", async () => {
     const t = convexTest(schema, modules);
-    const userId = await seedUser(t);
-    const asHuman = t.withIdentity({ subject: userId });
+    const asHuman = await asWriter(t, "clerk-test-user", "admin");
     const agentRunId = await seedAgentRun(t);
     const { conceptAId, conceptBId } = await seedValidPair(t);
     const { id } = await upsertAsAgent(t, agentRunId, conceptAId, conceptBId);
@@ -434,8 +426,7 @@ describe("correspondence setStatus guard", () => {
 
   test("requires a human reason and enforces the complete agent/system matrix", async () => {
     const t = convexTest(schema, modules);
-    const userId = await seedUser(t);
-    const asHuman = t.withIdentity({ subject: userId });
+    const asHuman = await asWriter(t, "clerk-test-user", "admin");
     const asSystem = t.withIdentity({ subject: "system" });
     const agentRunId = await seedAgentRun(t);
     const { conceptAId, conceptBId } = await seedValidPair(t);

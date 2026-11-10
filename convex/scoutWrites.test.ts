@@ -4,6 +4,7 @@ import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { generateDedupeKey } from "./sourceUtils";
 import { modules } from "../harness/modules";
+import { asWriter } from "./testHelpers";
 
 async function seedAgentRun(t: ReturnType<typeof convexTest>) {
   return await t.run((ctx) =>
@@ -15,6 +16,17 @@ async function seedAgentRun(t: ReturnType<typeof convexTest>) {
       updatedAt: 1,
     }),
   );
+}
+
+/** A Scout-run fixture with the operator signed in as a writer. */
+async function setupOperator() {
+  const t = convexTest(schema, modules);
+  const agentRunId = await seedAgentRun(t);
+  const asOperator = await asWriter(t, {
+    subject: "operator",
+    name: "Operator",
+  });
+  return { t, agentRunId, asOperator };
 }
 
 describe("source scout canonical writes", () => {
@@ -381,12 +393,7 @@ describe("scout capture providers and repair", () => {
   });
 
   test("resets a bad capture so a later Scout run can capture it again", async () => {
-    const t = convexTest(schema, modules);
-    const agentRunId = await seedAgentRun(t);
-    const asOperator = t.withIdentity({
-      subject: "operator",
-      name: "Operator",
-    });
+    const { t, agentRunId, asOperator } = await setupOperator();
     const input = {
       url: "https://example.org/resonance",
       query: "measured resonance",
@@ -434,12 +441,7 @@ describe("scout capture providers and repair", () => {
   });
 
   test("resets a capture the extraction gate parked as no_text", async () => {
-    const t = convexTest(schema, modules);
-    const agentRunId = await seedAgentRun(t);
-    const asOperator = t.withIdentity({
-      subject: "operator",
-      name: "Operator",
-    });
+    const { t, agentRunId, asOperator } = await setupOperator();
     const { id } = await t.mutation(internal.sources.createScoutedSource, {
       url: "https://example.org/excerpt",
       query: "q",
@@ -475,12 +477,7 @@ describe("scout capture providers and repair", () => {
   });
 
   test("refuses to reset unauthenticated, non-scout, or extracted Sources", async () => {
-    const t = convexTest(schema, modules);
-    const agentRunId = await seedAgentRun(t);
-    const asOperator = t.withIdentity({
-      subject: "operator",
-      name: "Operator",
-    });
+    const { t, agentRunId, asOperator } = await setupOperator();
     const { id } = await t.mutation(internal.sources.createScoutedSource, {
       url: "https://example.org/extracted",
       query: "q",

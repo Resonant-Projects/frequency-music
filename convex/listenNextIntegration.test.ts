@@ -20,12 +20,21 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import type { TournamentCandidate } from "./shared/hypothesisTournament";
+import { seedUser } from "./testHelpers";
 import {
   type ClaimedMediaJob,
   RENDERER_VERSION_FOR_JOBS,
 } from "./shared/mediaJobs";
 
 type T = ReturnType<typeof convexTest>;
+const human = (t: T) => t.withIdentity({ subject: "human" });
+const draft = {
+  status: "draft",
+  visibility: "private",
+  createdBy: "system",
+  createdAt: 1,
+  updatedAt: 1,
+} as const;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -73,11 +82,7 @@ describe("rendered audio in general feedback", () => {
         hypothesis: "Hypothesis",
         rationaleMd: "Rationale",
         sourceIds: [],
-        status: "draft",
-        visibility: "private",
-        createdBy: "system",
-        createdAt: 1,
-        updatedAt: 1,
+        ...draft,
       });
       return await ctx.db.insert("recipes", {
         hypothesisId,
@@ -85,11 +90,7 @@ describe("rendered audio in general feedback", () => {
         bodyMd: "Recipe",
         parameters: [],
         dawChecklist: [],
-        status: "draft",
-        visibility: "private",
-        createdBy: "system",
-        createdAt: 1,
-        updatedAt: 1,
+        ...draft,
         renderPlan: renderPlan as never,
       });
     });
@@ -175,7 +176,6 @@ describe("rendered audio in general feedback", () => {
     }));
   }
 
-  const human = (t: T) => t.withIdentity({ subject: "human" });
   const setGate = (t: T, value: string) =>
     t.mutation(internal.settings.set, { key: "renderValidation", value });
   const queueIds = async (t: T) =>
@@ -199,6 +199,7 @@ describe("rendered audio in general feedback", () => {
 
   test("an unvalidated render projects once, as its delivery, and a rating clears it", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "human");
     const recipeId = await insertRecipe(t, baselinePlan);
     const [{ master, delivery }] = (await render(t, recipeId, 1)) as [
       { master: Id<"audioArtifacts">; delivery: Id<"audioArtifacts"> },
@@ -337,6 +338,7 @@ describe("rendered audio in general feedback", () => {
 
   test("a signed rating binds to the rendered delivery's current content", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "human");
     const recipeId = await insertRecipe(t, baselinePlan);
     const [first] = await render(t, recipeId, 1);
     await expect(proposeRating(t, first!.master)).rejects.toThrow(
@@ -585,13 +587,12 @@ describe("tournament drafts in the shared review path", () => {
     expect(
       await f.t.run((ctx) => ctx.db.query("hypotheses").collect()),
     ).toHaveLength(1);
-    const applied = await f.t
-      .withIdentity({ subject: "human" })
-      .mutation(api.decisionIntents.applyWeb, {
-        intentId: intent._id,
-        digest8: intent.payloadDigest.slice(0, 8),
-        eventId: "tournament-approve-1",
-      });
+    await seedUser(f.t, "human");
+    const applied = await human(f.t).mutation(api.decisionIntents.applyWeb, {
+      intentId: intent._id,
+      digest8: intent.payloadDigest.slice(0, 8),
+      eventId: "tournament-approve-1",
+    });
     expect(applied.status).toBe("applied");
     const promoted = (
       await f.t.run((ctx) => ctx.db.query("hypotheses").collect())

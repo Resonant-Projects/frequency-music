@@ -10,6 +10,7 @@ import {
   createSignal,
   onCleanup,
 } from "solid-js";
+import { sameQueryArgs } from "../../lib/query-args";
 import { toError } from "./errors";
 import { useConvexClient } from "./provider";
 
@@ -33,6 +34,8 @@ export function createQuery<Query extends FunctionReference<"query">>(
       (typeof args === "function"
         ? (args as () => FunctionArgs<Query>)()
         : args) ?? ({} as FunctionArgs<Query>),
+    undefined,
+    { equals: sameQueryArgs },
   );
 
   let unsubscribe: (() => void) | null = null;
@@ -71,14 +74,18 @@ export function createQueryWithStatus<Query extends FunctionReference<"query">>(
   );
   const [error, setError] = createSignal<Error | null>(null);
 
-  const resolvedArgs = createMemo(() => {
-    const raw =
-      typeof args === "function"
-        ? (args as () => FunctionArgs<Query> | "skip")()
-        : args;
-    if (raw === "skip") return "skip" as const;
-    return raw ?? ({} as FunctionArgs<Query>);
-  });
+  const resolvedArgs = createMemo(
+    () => {
+      const raw =
+        typeof args === "function"
+          ? (args as () => FunctionArgs<Query> | "skip")()
+          : args;
+      if (raw === "skip") return "skip" as const;
+      return raw ?? ({} as FunctionArgs<Query>);
+    },
+    undefined,
+    { equals: sameQueryArgs },
+  );
 
   let unsubscribe: (() => void) | null = null;
   let isMounted = true;

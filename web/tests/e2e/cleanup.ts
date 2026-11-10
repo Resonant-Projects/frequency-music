@@ -125,6 +125,7 @@ export async function cleanupByRunId(runId: string): Promise<number> {
   const sourcesJson = convexRun("sources:listByStatus", {
     status: "ingested",
     limit: 100,
+    devBypassSecret: requireBypassSecret(),
   });
   try {
     const sources = JSON.parse(sourcesJson);
@@ -142,7 +143,11 @@ export async function cleanupByRunId(runId: string): Promise<number> {
 
   // Search other statuses too
   for (const status of ["text_ready", "extracted", "archived"] as const) {
-    const json = convexRun("sources:listByStatus", { status, limit: 100 });
+    const json = convexRun("sources:listByStatus", {
+      status,
+      limit: 100,
+      devBypassSecret: requireBypassSecret(),
+    });
     try {
       const sources = JSON.parse(json);
       for (const s of sources) {

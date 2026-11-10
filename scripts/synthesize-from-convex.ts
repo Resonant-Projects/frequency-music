@@ -16,6 +16,13 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import { getDevBypassSecret } from "./lib/convexClient";
+import {
+  jaccardSimilarity,
+  normalizedScore,
+  timestampSlug,
+  unique,
+} from "./lib/synthesisMath";
 
 type Mode = "collect" | "publish" | "full";
 
@@ -699,30 +706,6 @@ async function loadNoveltyHistory(
   return history;
 }
 
-function unique<T>(arr: T[]): T[] {
-  return [...new Set(arr)];
-}
-
-function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 1;
-  if (a.size === 0 || b.size === 0) return 0;
-  let intersection = 0;
-  for (const item of a) {
-    if (b.has(item)) intersection++;
-  }
-  const union = a.size + b.size - intersection;
-  return union === 0 ? 0 : intersection / union;
-}
-
-function normalizedScore(base: number, min: number, max: number): number {
-  if (max === min) return 1;
-  return (base - min) / (max - min);
-}
-
-function timestampSlug(date: Date): string {
-  return date.toISOString().replaceAll(/[:.]/g, "-");
-}
-
 function ensureObject(value: unknown, label: string): JsonRecord {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     fail(`${label} must be an object`);
@@ -1273,10 +1256,12 @@ async function collectMode(
     .filter((row): row is ExtractionLike => row !== null);
 
   const sourceByExtractionId = new Map<string, SourceLike | null>();
+  const devBypassSecret = getDevBypassSecret();
   await Promise.all(
     fetchedExtractions.map(async (extraction) => {
       const sourceRaw = await client.query(api.sources.get, {
         id: extraction.sourceId as never,
+        devBypassSecret,
       });
       sourceByExtractionId.set(extraction._id, coerceSource(sourceRaw));
     }),

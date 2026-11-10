@@ -23,6 +23,7 @@ import {
   buildRecipeInsertFromPayload,
 } from "./agentDraftPromotion";
 import { completeReviewedRunIfReady } from "./agentRuns";
+import { restingCorrespondenceIds } from "./draftTargetExclusions";
 import { PENDING_DRAFT_CAP } from "./shared/agentContract";
 import { compareDraftableCorrespondences } from "./shared/correspondenceCandidates";
 import { describeConcept } from "./shared/conceptProjection";
@@ -684,31 +685,16 @@ export const countPending = internalQuery({
 
 /**
  * Bounded, hydrated correspondence candidates for the hypothesis drafter.
- * Existing hypotheses, pending drafts, and evidence-less correspondences are
- * excluded at the read boundary.
+ * Existing hypotheses, pending drafts, drafts rejected in the last 28 days,
+ * and evidence-less correspondences are excluded at the read boundary.
  */
 export const listDraftableCorrespondences = internalQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = Math.max(1, Math.min(Math.floor(args.limit ?? 20), 100));
-    const pendingDrafts = await ctx.db
-      .query("agentReviewDrafts")
-      .withIndex("by_status_kind_updatedAt", (q) =>
-        q.eq("status", "pending_review").eq("kind", "hypothesis_draft"),
-      )
-      .collect();
-    const pendingCorrespondenceIds = new Set(
-      pendingDrafts.flatMap((draft) => {
-        if (
-          draft.kind !== "hypothesis_draft" ||
-          !draft.payload ||
-          !("statement" in draft.payload) ||
-          !draft.payload.correspondenceId
-        ) {
-          return [];
-        }
-        return [String(draft.payload.correspondenceId)];
-      }),
+    const pendingCorrespondenceIds = await restingCorrespondenceIds(
+      ctx,
+      Date.now(),
     );
     const [evidenced, conjectured] = await Promise.all([
       ctx.db

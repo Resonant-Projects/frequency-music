@@ -7,11 +7,12 @@ import {
 import { internalMutation, type MutationCtx } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { readerQuery } from "./readerQuery";
 import { listeningSessionReturnValidator } from "./validators";
 
-export const listByComposition = query({
+export const listByComposition = readerQuery({
   args: { compositionId: v.id("compositions") },
   returns: v.array(listeningSessionReturnValidator),
   handler: async (ctx, args) => {
@@ -25,14 +26,14 @@ export const listByComposition = query({
   },
 });
 
-export const listRecent = query({
+export const listRecent = readerQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(listeningSessionReturnValidator),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("listeningSessions")
       .order("desc")
-      .take(args.limit ?? 40);
+      .take(ctx.readLimit(args.limit ?? 40));
   },
 });
 

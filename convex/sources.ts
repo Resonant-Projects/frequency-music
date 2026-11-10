@@ -11,6 +11,8 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { readerQuery } from "./readerQuery";
+import { creatorOf } from "./creatorIdentity";
 import { currentExtractions } from "./extractions";
 import {
   settleCaptureFailures,
@@ -54,14 +56,14 @@ import { publicSource, sourceReturnValidator } from "./validators";
 /**
  * Get sources by status (for inbox/pipeline views)
  */
-export const listByStatus = query({
+export const listByStatus = readerQuery({
   args: {
     status: sourceStatusValidator,
     limit: v.optional(v.number()),
   },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
+    const limit = ctx.readLimit(args.limit ?? 50);
     const rows = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
@@ -225,14 +227,14 @@ export const operatorExtractionSnapshots = query({
 /**
  * List recent sources regardless of status
  */
-export const listRecent = query({
+export const listRecent = readerQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     const rows = await ctx.db
       .query("sources")
       .order("desc")
-      .take(args.limit ?? 50);
+      .take(ctx.readLimit(args.limit ?? 50));
     return rows.map(publicSource);
   },
 });
@@ -240,7 +242,7 @@ export const listRecent = query({
 /**
  * List sources by type
  */
-export const listByType = query({
+export const listByType = readerQuery({
   args: {
     type: v.union(
       v.literal("notion"),
@@ -258,7 +260,7 @@ export const listByType = query({
       .query("sources")
       .withIndex("by_type_updatedAt", (q) => q.eq("type", args.type))
       .order("desc")
-      .take(args.limit ?? 50);
+      .take(ctx.readLimit(args.limit ?? 50));
     return rows.map(publicSource);
   },
 });
@@ -266,7 +268,7 @@ export const listByType = query({
 /**
  * Get a single source by ID
  */
-export const get = query({
+export const get = readerQuery({
   args: { id: v.id("sources") },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
@@ -278,7 +280,7 @@ export const get = query({
 /**
  * Check if a source exists by dedupeKey
  */
-export const getByDedupeKey = query({
+export const getByDedupeKey = readerQuery({
   args: { dedupeKey: v.string() },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
@@ -343,18 +345,8 @@ export const create = mutation({
       return { id: existing._id, created: false, reason: "duplicate" };
     }
 
-    // Compute hash if we have text
-    let rawTextSha256: string | undefined;
-    if (createArgs.rawText || createArgs.transcript) {
-      const text = createArgs.rawText || createArgs.transcript || "";
-      const encoder = new TextEncoder();
-      const data = encoder.encode(text);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      rawTextSha256 = hashArray
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    }
+    const createText = createArgs.rawText || createArgs.transcript;
+    const rawTextSha256 = createText ? await sha256Hex(createText) : undefined;
 
     const id = await ctx.db.insert("sources", {
       ...createArgs,
@@ -362,7 +354,7 @@ export const create = mutation({
       status:
         createArgs.rawText || createArgs.transcript ? "text_ready" : "ingested",
       visibility: "private",
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
       createdAt: now,
       updatedAt: now,
     });
@@ -837,8 +829,12 @@ async function upsertExternalSource(
         existing.status === "ingested"),
   );
 
+  const { createdBy: _createdBy, type: _type, ...supplied } = args;
+  const defined = Object.fromEntries(
+    Object.entries(supplied).filter(([, value]) => value !== undefined),
+  ) as Partial<typeof supplied>;
   await ctx.db.patch("sources", existing._id, {
-    ...args,
+    ...defined,
     rawTextSha256: rawTextSha256 ?? existing.rawTextSha256,
     status: contentChanged
       ? "text_ready"
@@ -1253,7 +1249,7 @@ export const createFromUrlInput = mutation({
       canonicalUrl: args.url,
       rawText: args.rawText,
       tags: args.tags,
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
     });
   },
 });
@@ -1292,7 +1288,7 @@ export const createFromYouTubeInput = mutation({
       youtubeVideoId: videoId,
       transcript: args.transcript,
       tags: args.tags,
-      createdBy: identity.subject as Id<"users">,
+      createdBy: await creatorOf(ctx, identity),
     });
   },
 });

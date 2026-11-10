@@ -36,7 +36,7 @@ describe("batch extraction failure accounting", () => {
 
 test("the full pipeline disables extraction retries and continues independent work", async () => {
   const runQuery = vi.fn(async (ref) =>
-    getFunctionName(ref) === "sources:listByStatus"
+    getFunctionName(ref) === "sourceReads:listByStatus"
       ? [{ _id: "source-a" }, { _id: "source-b" }]
       : [],
   );

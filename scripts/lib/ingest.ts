@@ -113,6 +113,7 @@ export function createSourceIngestor(
   async function dedupeKeyExists(dedupeKey: string): Promise<boolean> {
     const existing = await client.query(api.sources.getByDedupeKey, {
       dedupeKey,
+      devBypassSecret,
     });
     return existing !== null;
   }
@@ -194,6 +195,7 @@ export function createSourceIngestor(
       const batch: SourceRow[] = await client.query(api.sources.listByStatus, {
         status,
         limit: limit * 2,
+        devBypassSecret,
       });
       all.push(...batch);
     }

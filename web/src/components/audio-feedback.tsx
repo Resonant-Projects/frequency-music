@@ -9,6 +9,7 @@ import {
 import { stableStringify } from "../../../convex/shared/stableHash";
 import { css, cx } from "../../styled-system/css";
 import { createKeyedRows } from "../lib/keyed-rows";
+import { parseScore } from "../lib/rating";
 import {
   createMutation,
   createQueryWithStatus,
@@ -66,11 +67,6 @@ function serverAnswered(error: unknown): boolean {
     "data" in error &&
     (error as { data?: unknown }).data !== undefined
   );
-}
-function parseScore(raw: string): number | null | undefined {
-  if (raw.trim() === "") return undefined;
-  const value = Number(raw);
-  return Number.isInteger(value) && value >= 0 && value <= 5 ? value : null;
 }
 
 const listClass = css({ display: "grid", gap: "4" });

@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   root:
     runs-on: [self-hosted, linux, x64, incus, garm, ephemeral]
@@ -28,10 +31,15 @@ jobs:
       # Root suites import media runner/TTS modules, including media-owned Effect.
       - run: vp install --frozen-lockfile
         working-directory: media
+      # Root tsc follows harness imports into agent/src, which needs agent deps.
+      - run: bun install --frozen-lockfile
+        working-directory: agent
       - run: bun audit
       - run: bun audit --prod
       - run: vp run lint:check
       - run: vp run format:check
+      - run: vp run typecheck:scripts
+      - run: node scripts/check-file-tokens.mjs --all
       # `vp run test` (= vp test convex scripts) rather than a hardcoded subset,
       # so CI coverage tracks package.json instead of drifting from it.
       - run: vp run test

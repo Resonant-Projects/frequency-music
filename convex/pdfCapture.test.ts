@@ -20,6 +20,7 @@ import {
   scheduled,
   startAttempt,
 } from "../harness/pdfCaptureFixtures";
+import { seedUser } from "./testHelpers";
 
 beforeEach(() => {
   // Scheduled captures must not run on their own: each test drives them.
@@ -33,6 +34,7 @@ afterEach(() => {
 describe("PDF upload intake", () => {
   test("creates a private ingested pdf Source keyed by the file's SHA-256 and queues capture", async () => {
     const t = convexTest(schema, modules);
+    const readerId = await seedUser(t, "reader");
     const { id, created, storageId } = await upload(t);
     expect(created).toBe(true);
     const file = await t.run((ctx) => ctx.db.system.get(storageId));
@@ -47,7 +49,7 @@ describe("PDF upload intake", () => {
       pdfStorageId: storageId,
       status: "ingested",
       visibility: "private",
-      createdBy: "system",
+      createdBy: readerId,
       metadata: {
         pdfCapture: { state: "queued", seq: 1, tries: 1, endpoint: "parse" },
       },
@@ -58,8 +60,18 @@ describe("PDF upload intake", () => {
     expect(jobs[0]!.args[0]).toEqual({ sourceId: id, seq: 1 });
   });
 
+  test("an upload by the service identity records the system as its creator", async () => {
+    const t = convexTest(schema, modules);
+    const storageId = await t.run((ctx) => ctx.storage.store(pdfBytes()));
+    const { id } = await t
+      .withIdentity({ subject: "system" })
+      .mutation(api.pdfCapture.createFromPdfUpload, { storageId });
+    expect(await source(t, id)).toMatchObject({ createdBy: "system" });
+  });
+
   test("a second upload of the same bytes returns the first Source and deletes its own blob", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const first = await upload(t);
     const second = await upload(t, "text", "copy.pdf");
     expect(second).toMatchObject({
@@ -77,6 +89,7 @@ describe("PDF upload intake", () => {
 
   test("an upload gives its bytes to a textless manifest PDF Source with the same hash", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const storageId = await t.run((ctx) => ctx.storage.store(pdfBytes()));
     const file = await t.run((ctx) => ctx.db.system.get(storageId));
     const hex = Array.from(atob(file!.sha256), (c) =>
@@ -116,6 +129,7 @@ describe("PDF upload intake", () => {
 
   test("a missing stored file is cleared, so a replacement upload recovers the Source", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id, storageId } = await upload(t);
     await t.run((ctx) => ctx.storage.delete(storageId));
     const { seq } = await startAttempt(t, id);
@@ -145,6 +159,7 @@ describe("PDF upload intake", () => {
 
   test("submitting the same storage id twice keeps the stored file", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const first = await upload(t);
     const again = await reader(t).mutation(api.pdfCapture.createFromPdfUpload, {
       storageId: first.storageId,
@@ -157,6 +172,7 @@ describe("PDF upload intake", () => {
 
   test("refuses a file over PDF_MAX_BYTES and leaves it for mediaSweeper", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const storageId = await t.run((ctx) =>
       ctx.storage.store(new Blob([new Uint8Array(PDF_MAX_BYTES + 1)])),
     );
@@ -194,6 +210,7 @@ describe("PDF URL intake", () => {
     ["https://epubs.siam.org/doi/pdf/10.1137/100804036", "10.1137/100804036"],
   ])("shares identity between PDF %s and doi.org", async (url, doi) => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const first = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
       url,
     });
@@ -213,6 +230,7 @@ describe("PDF URL intake", () => {
 
   test("keeps the URL dedupe key, so an arXiv PDF and its abstract page are one Source", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id, created } = await reader(t).mutation(
       api.pdfCapture.createFromPdfUrl,
       { url: "https://arxiv.org/pdf/1706.03762" },
@@ -235,6 +253,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL captures text for an existing Source blocked without text", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await t.run((ctx) =>
       ctx.db.insert("sources", {
         type: "url",
@@ -292,6 +311,7 @@ describe("PDF URL intake", () => {
 
   test("a corrected PDF URL is read for a blocked PDF Source", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const { id } = await reader(t).mutation(api.pdfCapture.createFromPdfUrl, {
       url: "https://arxiv.org/abs/1706.03762",
     });
@@ -314,6 +334,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL captures text for an existing ingested Source that has none", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await t.run((ctx) =>
       ctx.db.insert("sources", {
         type: "url",
@@ -334,7 +355,7 @@ describe("PDF URL intake", () => {
         url: pdfUrl,
       }),
     ).toEqual({ id, created: false, pdfQueued: true });
-    const rows = await t.query(api.inbox.list, {});
+    const rows = await reader(t).query(api.inbox.list, {});
     expect(rows.find((row) => row._id === id)?.nextAction).toBe(
       "Extracting PDF text",
     );
@@ -344,6 +365,7 @@ describe("PDF URL intake", () => {
 
   test("PDF text settles the Source's open Scout capture failures", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await t.run((ctx) =>
       ctx.db.insert("sources", {
         type: "url",
@@ -399,6 +421,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL captures text for an extracted Source blocked without text", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await t.run((ctx) =>
       ctx.db.insert("sources", {
         type: "url",
@@ -424,6 +447,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL captures text for a textless PDF Source that never had a capture", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const pdfUrl = "https://example.org/score.pdf";
     const { generateDedupeKey } = await import("./sourceUtils");
     const id = await t.run((ctx) =>
@@ -451,6 +475,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL does not queue capture for a YouTube Source", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
     const { generateDedupeKey } = await import("./sourceUtils");
     const id = await t.run((ctx) =>
@@ -475,6 +500,7 @@ describe("PDF URL intake", () => {
 
   test("a PDF URL leaves an existing Source that has text alone", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await t.run((ctx) =>
       ctx.db.insert("sources", {
         type: "url",
@@ -504,6 +530,7 @@ describe("PDF URL intake", () => {
 
   test("refuses private and malformed URLs", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     for (const url of [
       "http://192.168.1.10/a.pdf",
       "ftp://example.org/a.pdf",

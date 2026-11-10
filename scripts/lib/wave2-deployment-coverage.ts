@@ -196,6 +196,17 @@ export const COVERAGE_GROUPS: readonly CoverageGroup[] = Object.freeze([
     crons: [],
     components: [],
   },
+  {
+    // Plan 018's public viewer query; the web asks it who may edit a
+    // listening session's visibility (plan 023) and reads a failure as "no".
+    id: "role-gated-writes-018",
+    description:
+      "Signed-in viewer's users id and role for showing edit controls (plan 018; undeployed)",
+    functions: fn("users", "viewer"),
+    httpRoutes: [],
+    crons: [],
+    components: [],
+  },
 ]);
 
 const API_REFERENCE = /\bapi\.([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\b/g;

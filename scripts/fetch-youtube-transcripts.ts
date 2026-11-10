@@ -80,6 +80,7 @@ async function main() {
   const sources = await client.query(api.sources.listByStatus, {
     status: "ingested",
     limit: limit * 2,
+    devBypassSecret,
   });
   const youtubeSources = sources
     .filter((source) => source.type === "youtube")

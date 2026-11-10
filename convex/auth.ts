@@ -116,7 +116,10 @@ export async function requireAgentToolSecretInAction(
   invalidAgentToolSecret();
 }
 
-export async function requireAuth(
+export type UserRole = "admin" | "collaborator" | "follower";
+
+/** Reader gate: any signed-in user, or the service identity. */
+export async function requireReader(
   ctx: AuthCtx,
   options?: RequireAuthOptions,
 ): Promise<AppIdentity> {
@@ -173,6 +176,46 @@ export async function requireAuth(
     code: "UNAUTHORIZED",
     message: "Authentication required",
   });
+}
+
+/**
+ * A query context gets the reader gate. Any other context, including an
+ * unrecognised shape, gets the writer gate: the service identity, or a user
+ * whose role is admin or collaborator.
+ */
+export async function requireAuth(
+  ctx: AuthCtx,
+  options?: RequireAuthOptions,
+): Promise<AppIdentity> {
+  const identity = await requireReader(ctx, options);
+  if (isQueryCtx(ctx)) return identity;
+  if (identity.isBypass || identity.subject === "system") return identity;
+  const role = await roleOf(ctx, identity.subject);
+  if (role === "admin" || role === "collaborator") return identity;
+  throw new ConvexError({
+    code: "FORBIDDEN",
+    message: "This action needs a collaborator or admin role",
+  });
+}
+
+/** A subject with no users row has no role and cannot write. */
+async function roleOf(ctx: AuthCtx, subject: string): Promise<UserRole | null> {
+  if (isActionCtx(ctx))
+    return await ctx.runQuery(internal.users.roleBySubject, {
+      clerkUserId: subject,
+    });
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", subject))
+    .unique();
+  return user?.role ?? null;
+}
+
+/** Fail closed: only a db without insert (a query's reader) counts. */
+function isQueryCtx(ctx: AuthCtx): boolean {
+  const db: unknown = "db" in ctx ? ctx.db : undefined;
+  if (typeof db !== "object" || db === null) return false;
+  return !("insert" in db) || typeof db.insert !== "function";
 }
 
 function isActionCtx(ctx: AuthCtx): ctx is ActionCtx {

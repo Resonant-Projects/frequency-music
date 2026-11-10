@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { modules } from "../harness/modules";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { seedUser } from "./testHelpers";
 
 describe("settings", () => {
   test("get returns null until set; set upserts by key", async () => {
@@ -59,6 +60,7 @@ describe("setHouseVoice initial narration", () => {
   test("first choice schedules one 14-day reconcile; repeats and changes do not", async () => {
     vi.useFakeTimers();
     const t = convexTest(schema, modules);
+    await seedUser(t, "user_1");
     const asKeith = t.withIdentity(identity);
 
     expect(
@@ -96,6 +98,7 @@ describe("setHouseVoice initial narration", () => {
   test("a voice set by the internal helper still lets the first human choice start narration", async () => {
     vi.useFakeTimers();
     const t = convexTest(schema, modules);
+    await seedUser(t, "user_1");
     await t.mutation(internal.settings.setHouseVoiceInternal, {
       voiceId: "breeze-2",
     });
@@ -112,6 +115,7 @@ describe("setHouseVoice initial narration", () => {
     vi.useFakeTimers();
     vi.stubEnv("AUTH_BYPASS_ENABLED", "false");
     const t = convexTest(schema, modules);
+    await seedUser(t, "user_1");
     await expect(
       t
         .withIdentity(identity)

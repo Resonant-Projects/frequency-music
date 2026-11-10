@@ -7,10 +7,12 @@ import "varlock/auto-load";
 import { writeFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
+import { getDevBypassSecret } from "./lib/convexClient";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
 async function main() {
+  const devBypassSecret = getDevBypassSecret();
   const extractions = await client.query(api.extractions.listRecent, {
     limit: 200,
   });
@@ -19,7 +21,10 @@ async function main() {
   const results = [];
   for (const ext of extractions) {
     try {
-      const source = await client.query(api.sources.get, { id: ext.sourceId });
+      const source = await client.query(api.sources.get, {
+        id: ext.sourceId,
+        devBypassSecret,
+      });
       results.push({
         extractionId: ext._id,
         sourceId: ext.sourceId,

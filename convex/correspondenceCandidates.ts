@@ -21,6 +21,11 @@ import {
 } from "./shared/correspondenceCandidates";
 import { conceptDomains, describeConcept } from "./shared/conceptProjection";
 import { EMBEDDING_DIMENSIONS, EMBEDDING_MODEL } from "./shared/embeddingText";
+import {
+  lastEvidenceAt,
+  orderEvidenceTargets,
+  rotateWindow,
+} from "./shared/evidenceTargets";
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
@@ -712,25 +717,13 @@ export const listEvidenceTargets = internalQuery({
       .withIndex("by_status_updatedAt", (q) => q.eq("status", "conjectured"))
       .order("asc")
       .take(EVIDENCE_TARGET_SCAN_LIMIT);
-    const lastEvidenceAt = (row: (typeof rows)[number]) =>
-      row.evidence.reduce<number | undefined>(
-        (latest, entry) => Math.max(latest ?? 0, entry.addedAt),
-        undefined,
-      );
-    const selected = rows
-      .toSorted((left, right) => {
-        const leftEvidence = lastEvidenceAt(left);
-        const rightEvidence = lastEvidenceAt(right);
-        if (leftEvidence === undefined && rightEvidence !== undefined)
-          return -1;
-        if (leftEvidence !== undefined && rightEvidence === undefined) return 1;
-        return (
-          (leftEvidence ?? 0) - (rightEvidence ?? 0) ||
-          left.createdAt - right.createdAt ||
-          left._id.localeCompare(right._id)
-        );
-      })
-      .slice(0, limit);
+    // One window per UTC day, so a run that adds nothing does not pick the
+    // same Correspondences tomorrow.
+    const selected = rotateWindow(
+      orderEvidenceTargets(rows),
+      limit,
+      Math.floor(Date.now() / 86_400_000),
+    );
     return (
       await Promise.all(
         selected.map(async (row) => {

@@ -152,11 +152,13 @@ const temporaries = () =>
 
 beforeEach(() => {
   for (const [path, text] of ORIGINALS) disk.set(path, text);
+  vi.stubEnv("AUTH_BYPASS_SECRET", "test-bypass-secret");
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   clients.length = 0;
   calls.length = 0;
   missing.clear();
@@ -224,6 +226,8 @@ describe("main", () => {
     expect(queried()).toEqual(
       new Set(["hypotheses:get", "sources:get", "extractions:get"]),
     );
+    for (const call of calls.filter((c) => c.name === "sources:get"))
+      expect(call.args.devBypassSecret).toBe("test-bypass-secret");
     expect(written().map((file) => file.path)).toEqual([
       DATASETS.hypotheses.path,
     ]);

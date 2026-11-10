@@ -43,7 +43,6 @@ import {
 } from "../integrations/convex";
 import { parseLines } from "../lib/markdown-utils";
 import { api } from "../../../convex/_generated/api";
-import { useClerkAuthSnapshot } from "../integrations/clerk";
 
 /** Secondary line under a lineage or source title. */
 const subLineSpaced = cx(helperClass, css({ mt: "1" }));
@@ -412,7 +411,7 @@ type Visibility = Doc<"listeningSessions">["visibility"];
 function ListeningVisibilityControl(props: {
   session: Doc<"listeningSessions">;
 }) {
-  const auth = useClerkAuthSnapshot();
+  const viewer = createQueryWithStatus(api.users.viewer, () => ({}));
   const updateVisibility = createMutation(api.listening.updateVisibility);
   const [visibility, setVisibility] = createSignal<Visibility>(
     props.session.visibility,
@@ -431,10 +430,7 @@ function ListeningVisibilityControl(props: {
   );
   const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
   const canEdit = createMemo(
-    () =>
-      !authBypass &&
-      auth().userId !== null &&
-      auth().userId === String(props.session.createdBy),
+    () => !authBypass && viewer.data()?.userId === props.session.createdBy,
   );
 
   async function saveVisibility() {
@@ -907,11 +903,10 @@ export function CompositionDetailPage() {
                                   session().ratings.expandability !== undefined
                                 }
                               >
-                                {(score) => (
-                                  <UIBadge tone="cream">
-                                    expandability {score()}
-                                  </UIBadge>
-                                )}
+                                <UIBadge tone="cream">
+                                  expandability{" "}
+                                  {session().ratings.expandability}
+                                </UIBadge>
                               </Show>
                             </div>
                             <div

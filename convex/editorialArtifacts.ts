@@ -10,7 +10,8 @@ import {
   mutation,
   query,
 } from "./_generated/server";
-import { requireAuth } from "./auth";
+import { type AppIdentity, requireAuth } from "./auth";
+import { creatorOf } from "./creatorIdentity";
 import { deriveFailureArchiveEntries } from "./failures";
 import {
   editorialArtifactExportEntryValidator,
@@ -872,7 +873,7 @@ export const get = query({
 
 async function insertDraftArtifact(
   ctx: { db: any },
-  identity: { subject: string },
+  identity: AppIdentity,
   kind: ArtifactKind,
   payload: DraftPayload,
 ): Promise<Id<"editorialArtifacts">> {
@@ -893,10 +894,7 @@ async function insertDraftArtifact(
     primaryRef: payload.primaryRef,
     linkedIds: payload.linkedIds,
     publicEvidenceCards: payload.publicEvidenceCards,
-    createdBy:
-      identity.subject === "system"
-        ? "system"
-        : (identity.subject as Id<"users">),
+    createdBy: await creatorOf(ctx, identity),
     createdAt: now,
     updatedAt: now,
   });
