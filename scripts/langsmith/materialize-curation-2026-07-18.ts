@@ -19,6 +19,7 @@ import {
   type EvalQuery,
   type Row,
 } from "../lib/eval-dataset-helpers";
+import { getDevBypassSecret } from "../lib/convexClient";
 
 const EXTRACTION_IDS = [
   "j97f7yq3rv85mv7jkhvy1r0fbx8arevy",
@@ -187,7 +188,7 @@ function productionQuery(): EvalQuery {
     process.env.CONVEX_URL ??
     process.env.CONVEX_SELF_HOSTED_URL ??
     "https://convex.resonantprojects.art";
-  return createEvalQuery(new ConvexHttpClient(convexUrl));
+  return createEvalQuery(new ConvexHttpClient(convexUrl), getDevBypassSecret());
 }
 
 /**

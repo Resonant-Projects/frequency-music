@@ -42,7 +42,7 @@ describe("source recovery from the Action Queue", () => {
           note: "Access changed; retry the new capture snapshot.",
         });
       }
-      const protectedSource = await t.query(api.sources.get, { id });
+      const protectedSource = await reader.query(api.sources.get, { id });
       for (const stale of [
         { rawText: `${body}Old automatic article.` },
         { transcript: `${body}Old automatic transcript.` },
@@ -55,7 +55,9 @@ describe("source recovery from the Action Queue", () => {
             ...stale,
           }),
         ).toEqual({ id, created: false, contentChanged: false });
-        expect(await t.query(api.sources.get, { id })).toEqual(protectedSource);
+        expect(await reader.query(api.sources.get, { id })).toEqual(
+          protectedSource,
+        );
       }
     },
   );
@@ -131,7 +133,7 @@ describe("source recovery from the Action Queue", () => {
         expect((await t.run((ctx) => ctx.db.get(failureId)))!.status).toBe(
           expectedStatus,
         );
-        expect((await t.query(api.sources.get, { id }))!.status).toBe(
+        expect((await t.query(internal.sourceReads.get, { id }))!.status).toBe(
           "text_ready",
         );
       } finally {
@@ -156,7 +158,7 @@ describe("source recovery from the Action Queue", () => {
         metadata: { feedName: "New automatic capture" },
       }),
     ).toEqual({ id, created: false, contentChanged: true });
-    expect(await t.query(api.sources.get, { id })).toMatchObject({
+    expect(await t.query(internal.sourceReads.get, { id })).toMatchObject({
       rawText: body,
       status: "text_ready",
       metadata: { feedName: "New automatic capture" },
@@ -173,13 +175,14 @@ describe("source recovery from the Action Queue", () => {
         expectedUpdatedAt: 2,
         transcript: body,
       });
-    const source = await t.query(api.sources.get, { id });
+    const source = await t.query(internal.sourceReads.get, { id });
     expect(source?.status).toBe("text_ready");
     expect(source?.blockedReason).toBeUndefined();
     expect(source?.blockedDetails).toBeUndefined();
     expect(
-      (await t.query(api.inbox.list, {})).find((row) => row._id === id)
-        ?.nextAction,
+      (
+        await t.withIdentity({ subject: "reader" }).query(api.inbox.list, {})
+      ).find((row) => row._id === id)?.nextAction,
     ).toBe("Run extraction");
   });
   test("explicit excerpts retain bot/minimum checks and remain extractable despite truncation markers", async () => {
@@ -219,7 +222,7 @@ describe("source recovery from the Action Queue", () => {
       text: excerpt,
       kind: "excerpt",
     });
-    const s = await t.query(api.sources.get, { id });
+    const s = await reader.query(api.sources.get, { id });
     expect(s?.rawText).toContain(excerpt);
     expect(s?.rawText).toContain("Excerpt only");
     expect(
@@ -235,18 +238,18 @@ describe("source recovery from the Action Queue", () => {
       reader = t.withIdentity({ subject: "reader" });
     await seedUser(t, "reader");
     for (const note of ["Signed in.", "Publisher access now works."]) {
-      const s = await t.query(api.sources.get, { id });
+      const s = await reader.query(api.sources.get, { id });
       await reader.mutation(api.sources.requestSourceRecovery, {
         id,
         expectedUpdatedAt: s!.updatedAt,
         note,
       });
       expect(
-        (await t.query(api.sources.get, { id }))?.metadata.sourceRecovery
+        (await reader.query(api.sources.get, { id }))?.metadata.sourceRecovery
           .previousBlock,
       ).toBe("This video is unavailable");
     }
-    const s = await t.query(api.sources.get, { id });
+    const s = await reader.query(api.sources.get, { id });
     await reader.mutation(api.sources.provideRecoveryText, {
       id,
       expectedUpdatedAt: s!.updatedAt,
@@ -254,7 +257,7 @@ describe("source recovery from the Action Queue", () => {
       kind: "article",
     });
     expect(
-      (await t.query(api.sources.get, { id }))?.metadata.sourceRecovery
+      (await reader.query(api.sources.get, { id }))?.metadata.sourceRecovery
         .previousBlock,
     ).toBe("This video is unavailable");
   });
@@ -273,7 +276,7 @@ describe("source recovery from the Action Queue", () => {
         note: "I can open it in my browser.",
       }),
     ).toEqual({ transcriptQueued: false, pdfQueued: false });
-    expect((await t.query(api.sources.get, { id }))?.status).toBe(
+    expect((await reader.query(api.sources.get, { id }))?.status).toBe(
       "review_needed",
     );
     await seed(t, {
@@ -322,7 +325,7 @@ describe("source recovery from the Action Queue", () => {
       id,
       expectedUpdatedAt: 2,
     });
-    expect(await t.query(api.sources.get, { id })).toMatchObject({
+    expect(await reader.query(api.sources.get, { id })).toMatchObject({
       status: "archived",
       visibility: "private",
       blockedDetails: "This video is unavailable",
@@ -332,7 +335,7 @@ describe("source recovery from the Action Queue", () => {
       },
     });
     expect(
-      (await t.query(api.inbox.list, { limit: 24 })).map((s) => s._id),
+      (await reader.query(api.inbox.list, { limit: 24 })).map((s) => s._id),
     ).not.toContain(id);
     await expect(
       reader.mutation(api.sources.provideRecoveryText, {
@@ -368,7 +371,7 @@ describe("source recovery from the Action Queue", () => {
       text: body,
       kind: "transcript",
     });
-    const s = await t.query(api.sources.get, { id });
+    const s = await reader.query(api.sources.get, { id });
     expect(s?.transcript).toContain(body.trim());
     expect(s?.rawText).toBeUndefined();
   });
@@ -386,7 +389,7 @@ describe("source recovery from the Action Queue", () => {
         provenanceUrl: "https://example.org/paper",
         note: "Verified author abstract; full text unavailable.",
       });
-    const s = await t.query(api.sources.get, { id });
+    const s = await t.query(internal.sourceReads.get, { id });
     expect(s).toMatchObject({
       status: "text_ready",
       visibility: "private",
@@ -483,7 +486,7 @@ describe("source recovery from the Action Queue", () => {
         expectedUpdatedAt: 2,
         note: "Video now plays publicly.",
       });
-    const s = await t.query(api.sources.get, { id });
+    const s = await t.query(internal.sourceReads.get, { id });
     expect(s).toMatchObject({
       status: "ingested",
       visibility: "private",
@@ -518,7 +521,7 @@ describe("source recovery from the Action Queue", () => {
         expectedUpdatedAt: 2,
         note: "Signed in to the publisher in the integrated browser.",
       });
-    const s = await t.query(api.sources.get, { id });
+    const s = await t.query(internal.sourceReads.get, { id });
     expect(s).toMatchObject({
       status: "review_needed",
       blockedReason: "no_text",

@@ -11,6 +11,7 @@ import {
   query,
 } from "./_generated/server";
 import { requireAuth } from "./auth";
+import { readerQuery } from "./readerQuery";
 import { creatorOf } from "./creatorIdentity";
 import { currentExtractions } from "./extractions";
 import {
@@ -55,14 +56,14 @@ import { publicSource, sourceReturnValidator } from "./validators";
 /**
  * Get sources by status (for inbox/pipeline views)
  */
-export const listByStatus = query({
+export const listByStatus = readerQuery({
   args: {
     status: sourceStatusValidator,
     limit: v.optional(v.number()),
   },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
+    const limit = ctx.readLimit(args.limit ?? 50);
     const rows = await ctx.db
       .query("sources")
       .withIndex("by_status_updatedAt", (q) => q.eq("status", args.status))
@@ -226,14 +227,14 @@ export const operatorExtractionSnapshots = query({
 /**
  * List recent sources regardless of status
  */
-export const listRecent = query({
+export const listRecent = readerQuery({
   args: { limit: v.optional(v.number()) },
   returns: v.array(sourceReturnValidator),
   handler: async (ctx, args) => {
     const rows = await ctx.db
       .query("sources")
       .order("desc")
-      .take(args.limit ?? 50);
+      .take(ctx.readLimit(args.limit ?? 50));
     return rows.map(publicSource);
   },
 });
@@ -241,7 +242,7 @@ export const listRecent = query({
 /**
  * List sources by type
  */
-export const listByType = query({
+export const listByType = readerQuery({
   args: {
     type: v.union(
       v.literal("notion"),
@@ -259,7 +260,7 @@ export const listByType = query({
       .query("sources")
       .withIndex("by_type_updatedAt", (q) => q.eq("type", args.type))
       .order("desc")
-      .take(args.limit ?? 50);
+      .take(ctx.readLimit(args.limit ?? 50));
     return rows.map(publicSource);
   },
 });
@@ -267,7 +268,7 @@ export const listByType = query({
 /**
  * Get a single source by ID
  */
-export const get = query({
+export const get = readerQuery({
   args: { id: v.id("sources") },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {
@@ -279,7 +280,7 @@ export const get = query({
 /**
  * Check if a source exists by dedupeKey
  */
-export const getByDedupeKey = query({
+export const getByDedupeKey = readerQuery({
   args: { dedupeKey: v.string() },
   returns: v.union(sourceReturnValidator, v.null()),
   handler: async (ctx, args) => {

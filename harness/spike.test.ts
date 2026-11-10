@@ -22,7 +22,8 @@ describe("convex-test spike (GO/NO-GO gate)", () => {
       });
     });
 
-    const rows = await t.query(api.sources.listByStatus, {
+    const reader = t.withIdentity({ subject: "reader" });
+    const rows = await reader.query(api.sources.listByStatus, {
       status: "text_ready",
       limit: 10,
     });

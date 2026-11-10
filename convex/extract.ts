@@ -407,7 +407,7 @@ export const extractAllReady = action({
   handler: async (ctx, args) => {
     await requireAuth(ctx, args);
     const limit = args.limit ?? 10;
-    const sources = await ctx.runQuery(api.sources.listByStatus, {
+    const sources = await ctx.runQuery(internal.sourceReads.listByStatus, {
       status: "text_ready",
       limit,
     });

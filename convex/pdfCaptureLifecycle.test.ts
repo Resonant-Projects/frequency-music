@@ -367,7 +367,7 @@ describe("PDF recovery", () => {
     const t = convexTest(schema, modules);
     await seedUser(t, "reader");
     const { id } = await upload(t);
-    const queued = await t.query(api.inbox.list, {});
+    const queued = await reader(t).query(api.inbox.list, {});
     expect(queued.find((row) => row._id === id)?.nextAction).toBe(
       "Extracting PDF text",
     );
@@ -378,7 +378,7 @@ describe("PDF recovery", () => {
       outcome: "failed",
       code: "pdf_unreadable",
     });
-    const rows = await t.query(api.inbox.list, {});
+    const rows = await reader(t).query(api.inbox.list, {});
     expect(rows.find((row) => row._id === id)?.nextAction).toBe(
       "Paste excerpt or mark as blocked",
     );
@@ -392,12 +392,16 @@ describe("PDF storage privacy", () => {
     const { id } = await upload(t);
     const row = (await source(t, id))!;
     const results = [
-      await t.query(api.sources.get, { id }),
-      await t.query(api.sources.getByDedupeKey, { dedupeKey: row.dedupeKey }),
-      ...(await t.query(api.sources.listRecent, {})),
-      ...(await t.query(api.sources.listByStatus, { status: "ingested" })),
-      ...(await t.query(api.sources.listByType, { type: "pdf" })),
-      ...(await t.query(api.inbox.list, {})),
+      await reader(t).query(api.sources.get, { id }),
+      await reader(t).query(api.sources.getByDedupeKey, {
+        dedupeKey: row.dedupeKey,
+      }),
+      ...(await reader(t).query(api.sources.listRecent, {})),
+      ...(await reader(t).query(api.sources.listByStatus, {
+        status: "ingested",
+      })),
+      ...(await reader(t).query(api.sources.listByType, { type: "pdf" })),
+      ...(await reader(t).query(api.inbox.list, {})),
     ];
     expect(results).toHaveLength(6);
     for (const result of results) {

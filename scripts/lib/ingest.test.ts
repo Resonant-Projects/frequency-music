@@ -102,6 +102,8 @@ describe("ingest", () => {
     expect((creates[0]!.args.rawText as string).length).toBe(150);
     expect(creates[1]!.args.rawText).toBeUndefined();
     expect(creates[0]!.args.devBypassSecret).toBeDefined();
+    for (const call of calls.filter((c) => c.kind === "query"))
+      expect(call.args.devBypassSecret).toBe(process.env.AUTH_BYPASS_SECRET);
     expect(creates.map((call) => call.args.dedupeKey)).toEqual([
       "url:b.example",
       "pdf:short-sha",
@@ -237,6 +239,8 @@ describe("refetchByStatus", () => {
     const resets = calls.filter((call) => call.name === "sources:updateStatus");
     expect(resets.length).toBe(1);
     expect(resets[0]!.args).toMatchObject({ id: "c", status: "text_ready" });
+    for (const call of calls.filter((c) => c.kind === "query"))
+      expect(call.args.devBypassSecret).toBe(process.env.AUTH_BYPASS_SECRET);
   });
 
   test("fetched text not longer than current counts as skipped", async () => {

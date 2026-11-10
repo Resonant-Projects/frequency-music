@@ -52,7 +52,9 @@ export const extractSourceWorkflow = workflowManager.define({
   handler: async (ctx, args): Promise<void> => {
     const devBypassSecret = args.devBypassSecret;
     // Validate source exists and has content
-    const source = await ctx.runQuery(api.sources.get, { id: args.sourceId });
+    const source = await ctx.runQuery(internal.sourceReads.get, {
+      id: args.sourceId,
+    });
 
     if (!source) {
       console.log(`Source ${args.sourceId} not found`);
@@ -88,7 +90,7 @@ export const batchExtractionWorkflow = workflowManager.define({
     const limit = args.limit ?? 10;
     const devBypassSecret = args.devBypassSecret;
 
-    const sources = await ctx.runQuery(api.sources.listByStatus, {
+    const sources = await ctx.runQuery(internal.sourceReads.listByStatus, {
       status: "text_ready",
       limit,
     });
@@ -222,7 +224,7 @@ export const fullPipelineWorkflow = workflowManager.define({
     console.log("Starting full pipeline");
 
     // Step 1: Extract sources
-    const sources = await ctx.runQuery(api.sources.listByStatus, {
+    const sources = await ctx.runQuery(internal.sourceReads.listByStatus, {
       status: "text_ready",
       limit: extractLimit,
     });

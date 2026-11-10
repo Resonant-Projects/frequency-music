@@ -11,6 +11,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { SourceStatus } from "../convex/shared/statuses";
 import { writeFileSync, mkdirSync } from "fs";
+import { getDevBypassSecret } from "./lib/convexClient";
 
 const CONVEX_URL =
   process.env.CONVEX_URL || "https://convex.resonantprojects.art";
@@ -114,6 +115,7 @@ function categorize(tags: string[], url: string, title: string): string[] {
 
 async function main() {
   const client = new ConvexHttpClient(CONVEX_URL);
+  const devBypassSecret = getDevBypassSecret();
 
   // Fetch all non-archived sources
   const statuses: readonly SourceStatus[] = [
@@ -126,6 +128,7 @@ async function main() {
     const batch = await client.query(api.sources.listByStatus, {
       status,
       limit: 1000,
+      devBypassSecret,
     });
     allSources.push(...batch);
   }

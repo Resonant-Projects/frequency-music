@@ -355,7 +355,7 @@ describe("PDF URL intake", () => {
         url: pdfUrl,
       }),
     ).toEqual({ id, created: false, pdfQueued: true });
-    const rows = await t.query(api.inbox.list, {});
+    const rows = await reader(t).query(api.inbox.list, {});
     expect(rows.find((row) => row._id === id)?.nextAction).toBe(
       "Extracting PDF text",
     );

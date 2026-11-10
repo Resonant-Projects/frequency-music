@@ -33,61 +33,57 @@ describe("dashboard stats recomputation", () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
+      const url = { type: "url", createdBy: "system" } as const;
       const ingestedId = await ctx.db.insert("sources", {
-        type: "url",
+        ...url,
         title: "Blocked private source",
         canonicalUrl: "https://example.com/blocked",
         status: "ingested",
         blockedReason: "no_text",
         dedupeKey: "url:example.com/blocked",
         visibility: "private",
-        createdBy: "system",
         createdAt: 1000,
         updatedAt: 1000,
       });
       await ctx.db.insert("sources", {
-        type: "url",
+        ...url,
         title: "Ready private source",
         canonicalUrl: "https://example.com/ready",
         status: "text_ready",
         dedupeKey: "url:example.com/ready",
         visibility: "private",
-        createdBy: "system",
         createdAt: 1001,
         updatedAt: 1001,
       });
       await ctx.db.insert("sources", {
-        type: "url",
+        ...url,
         title: "Review private source",
         canonicalUrl: "https://example.com/review",
         status: "review_needed",
         dedupeKey: "url:example.com/review",
         visibility: "private",
-        createdBy: "system",
         createdAt: 1002,
         updatedAt: 1002,
       });
       await ctx.db.insert("sources", {
-        type: "url",
+        ...url,
         title: "Public source",
         canonicalUrl: "https://example.com/public",
         status: "ingested",
         blockedReason: "no_text",
         dedupeKey: "url:example.com/public",
         visibility: "public",
-        createdBy: "system",
         createdAt: 1003,
         updatedAt: 1003,
       });
       for (let index = 0; index < 3; index++) {
         await ctx.db.insert("sources", {
-          type: "url",
+          ...url,
           title: `Extra public source ${index}`,
           canonicalUrl: `https://example.com/extra-${index}`,
           status: "triaged",
           dedupeKey: `url:example.com/extra-${index}`,
           visibility: "public",
-          createdBy: "system",
           createdAt: 1010 + index,
           updatedAt: 1010 + index,
         });
@@ -101,13 +97,12 @@ describe("dashboard stats recomputation", () => {
       for (const group of extraInboxSources) {
         for (let index = 0; index < group.count; index++) {
           await ctx.db.insert("sources", {
-            type: "url",
+            ...url,
             title: `Extra private ${group.status} source ${index}`,
             canonicalUrl: `https://example.com/${group.status}-${index}`,
             status: group.status,
             dedupeKey: `url:example.com/${group.status}-${index}`,
             visibility: "private",
-            createdBy: "system",
             createdAt: 1020 + extraInboxIndex,
             updatedAt: 1020 + extraInboxIndex,
           });
@@ -358,7 +353,9 @@ describe("dashboard stats recomputation", () => {
       weeklyBriefs: directCounts.weeklyBriefs,
       feeds: directCounts.feeds,
     });
-    expect(await t.query(api.inbox.counts, {})).toEqual({
+    expect(
+      await t.withIdentity({ subject: "reader" }).query(api.inbox.counts, {}),
+    ).toEqual({
       ingested: 4,
       textReady: 3,
       reviewNeeded: 2,

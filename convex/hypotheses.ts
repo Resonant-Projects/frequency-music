@@ -489,9 +489,12 @@ export const generateFromExtraction = action({
     }
 
     // Get source
-    const source: Doc<"sources"> | null = await ctx.runQuery(api.sources.get, {
-      id: extraction.sourceId,
-    });
+    const source: Doc<"sources"> | null = await ctx.runQuery(
+      internal.sourceReads.get,
+      {
+        id: extraction.sourceId,
+      },
+    );
 
     if (!source) {
       throw new Error("Source not found");

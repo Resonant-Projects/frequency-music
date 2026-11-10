@@ -45,9 +45,16 @@ function asId<T extends TableNames>(id: string) {
   return id as Id<T>;
 }
 
-export function createEvalQuery(client: ConvexHttpClient): EvalQuery {
+export function createEvalQuery(
+  client: ConvexHttpClient,
+  devBypassSecret: string,
+): EvalQuery {
   return {
-    source: (id) => client.query(api.sources.get, { id: asId<"sources">(id) }),
+    source: (id) =>
+      client.query(api.sources.get, {
+        id: asId<"sources">(id),
+        devBypassSecret,
+      }),
     extraction: (id) =>
       client.query(api.extractions.get, { id: asId<"extractions">(id) }),
     extractionsBySource: (sourceId) =>

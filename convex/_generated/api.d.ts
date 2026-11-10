@@ -103,6 +103,7 @@ import type * as shared_stableHash from "../shared/stableHash.js";
 import type * as shared_statuses from "../shared/statuses.js";
 import type * as shared_vocabularyTriage from "../shared/vocabularyTriage.js";
 import type * as shared_voices from "../shared/voices.js";
+import type * as sourceReads from "../sourceReads.js";
 import type * as sourceUtils from "../sourceUtils.js";
 import type * as sources from "../sources.js";
 import type * as testHelpers from "../testHelpers.js";
@@ -220,6 +221,7 @@ declare const fullApi: ApiFromModules<{
   "shared/statuses": typeof shared_statuses;
   "shared/vocabularyTriage": typeof shared_vocabularyTriage;
   "shared/voices": typeof shared_voices;
+  sourceReads: typeof sourceReads;
   sourceUtils: typeof sourceUtils;
   sources: typeof sources;
   testHelpers: typeof testHelpers;

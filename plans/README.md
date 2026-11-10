@@ -42,7 +42,7 @@ approved for execution as they stand.
 | 017 | [Size hook becomes a ratchet](./017-size-hook-ratchet.md) | P1 | S–M | — | DONE 2026-11-10 |
 | 018 | [Role-gated writes](./018-role-gated-writes.md) | P1 | M | — | DONE 2026-11-10; deploy needs the operator's users row confirmed first |
 | 019 | [Creator identity and safe URL resubmit](./019-creator-identity-and-safe-resubmit.md) | P1 | S–M | 017, 018 | DONE 2026-11-10 |
-| 020 | [Login-required reads, tier 1](./020-login-required-reads.md) | P1 | M | 017, 018, 019 | TODO |
+| 020 | [Login-required reads, tier 1](./020-login-required-reads.md) | P1 | M | 017, 018, 019 | DONE 2026-11-10; 81 keys left in `UNGATED_PUBLIC_QUERIES`; deploys together with 018 |
 | 021 | [Hypothesis generation retry safety](./021-hypothesis-generation-retry-safety.md) | P2 | S | — | TODO |
 | 022 | [CI workflow hardening](./022-ci-workflow-hardening.md) | P2 | S | 017 (step 5 only) | TODO |
 | 023 | [Listening UI fixes](./023-listening-ui-fixes.md) | P2 | S | 017; 018 (step 4 only) | TODO |

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
+import { getDevBypassSecret } from "./lib/convexClient";
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL!);
 
@@ -35,9 +36,11 @@ if (invalidCount > 0) {
 const zeros = rows.filter((e: SummaryItem) => e.claims === 0 && e.params === 0);
 
 async function main() {
+  const devBypassSecret = getDevBypassSecret();
   for (const z of zeros) {
     const source = await client.query(api.sources.get, {
       id: z.sourceId as Id<"sources">,
+      devBypassSecret,
     });
     const title = source?.title?.slice(0, 70) || "UNKNOWN";
     const type = source?.type || "?";

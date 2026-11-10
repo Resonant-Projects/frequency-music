@@ -10,6 +10,7 @@ import {
   withPlaceholderTheses,
   type Row,
 } from "./lib/eval-dataset-helpers";
+import { getDevBypassSecret } from "./lib/convexClient";
 
 const convexUrl = process.env.CONVEX_URL ?? process.env.CONVEX_SELF_HOSTED_URL;
 const agentSecret = process.env.AGENT_TOOL_SECRET;
@@ -23,7 +24,7 @@ if (!agentSecret) {
 }
 
 const client = new ConvexHttpClient(convexUrl);
-const query = createEvalQuery(client);
+const query = createEvalQuery(client, getDevBypassSecret());
 
 function toJsonl(rows: unknown[]) {
   return rows.map((row) => JSON.stringify(row)).join("\n");

@@ -47,6 +47,7 @@ async function main() {
     const batch = await client.query(api.sources.listByStatus, {
       status,
       limit: 1000,
+      devBypassSecret: requireBypassSecret(),
     });
     allSources.push(...batch);
   }

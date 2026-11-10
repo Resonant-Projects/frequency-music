@@ -29,7 +29,7 @@ describe("source recovery capture version fencing", () => {
           kind: "article",
           text: body,
         });
-        const recovered = (await t.query(api.sources.get, { id }))!;
+        const recovered = (await reader.query(api.sources.get, { id }))!;
         expect(recovered.updatedAt).toBe(3);
         if (write === "text") {
           await reader.mutation(api.sources.updateText, {
@@ -58,7 +58,7 @@ describe("source recovery capture version fencing", () => {
             status: "review_needed",
           });
         }
-        const fresh = await t.query(api.sources.get, { id });
+        const fresh = await reader.query(api.sources.get, { id });
         await expect(
           reader.mutation(api.sources.updateText, {
             id,
@@ -66,7 +66,7 @@ describe("source recovery capture version fencing", () => {
             rawText: `${body}Old capture that must be discarded.`,
           }),
         ).rejects.toThrow("Source changed during capture");
-        expect(await t.query(api.sources.get, { id })).toEqual(fresh);
+        expect(await reader.query(api.sources.get, { id })).toEqual(fresh);
         expect(fresh?.updatedAt).toBeGreaterThan(recovered.updatedAt);
       } finally {
         vi.clearAllTimers();
@@ -106,7 +106,7 @@ describe("source recovery capture version fencing", () => {
           detail: "Fresh temporary failure",
         }),
       ).toEqual({ updated: true });
-      const fresh = await t.query(api.sources.get, { id });
+      const fresh = await t.query(internal.sourceReads.get, { id });
       expect(
         await t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
           sourceId: id,
@@ -117,7 +117,7 @@ describe("source recovery capture version fencing", () => {
           model: "whisper-large-v3-turbo",
         }),
       ).toEqual({ updated: false });
-      expect(await t.query(api.sources.get, { id })).toEqual(fresh);
+      expect(await t.query(internal.sourceReads.get, { id })).toEqual(fresh);
       expect(fresh?.updatedAt).toBe(4);
     } finally {
       vi.clearAllTimers();
@@ -168,7 +168,7 @@ describe("source recovery capture version fencing", () => {
       } finally {
         clock.mockRestore();
       }
-      const before = await t.query(api.sources.get, { id });
+      const before = await t.query(internal.sourceReads.get, { id });
       for (const expectedUpdatedAt of [oldPage.rows[0]!.updatedAt, undefined]) {
         expect(
           await callTool("recordTranscriptCapture", {
@@ -181,7 +181,7 @@ describe("source recovery capture version fencing", () => {
             detail: "Old access outcome",
           }),
         ).toEqual({ updated: false });
-        expect(await t.query(api.sources.get, { id })).toEqual(before);
+        expect(await t.query(internal.sourceReads.get, { id })).toEqual(before);
       }
       const freshPage = pageShape.parse(
         await callTool("listTranscriptBacklog"),
@@ -196,7 +196,8 @@ describe("source recovery capture version fencing", () => {
         }),
       ).toEqual({ updated: true });
       expect(
-        (await t.query(api.sources.get, { id }))?.metadata.transcriptCapture,
+        (await t.query(internal.sourceReads.get, { id }))?.metadata
+          .transcriptCapture,
       ).toMatchObject({
         attempts: 1,
         lastAttemptDetail: "Fresh access outcome",
@@ -242,11 +243,11 @@ describe("source recovery capture version fencing", () => {
               id,
               expectedUpdatedAt: 2,
             });
-          const before = await t.query(api.sources.get, { id });
+          const before = await reader.query(api.sources.get, { id });
           release.resolve();
           await expect(job).rejects.toThrow(/discard/);
           expect(before?.updatedAt).toBeGreaterThan(2);
-          expect(await t.query(api.sources.get, { id })).toEqual(before);
+          expect(await reader.query(api.sources.get, { id })).toEqual(before);
         } finally {
           release.resolve();
           fetchMock.mockRestore();
@@ -273,7 +274,7 @@ describe("source recovery capture version fencing", () => {
           id,
           expectedUpdatedAt: 2,
         });
-      const before = await t.query(api.sources.get, { id });
+      const before = await reader.query(api.sources.get, { id });
       if (recovery === "archive") {
         await expect(
           reader.mutation(api.sources.updateStatus, {
@@ -299,7 +300,7 @@ describe("source recovery capture version fencing", () => {
           }),
         ).rejects.toThrow(/discard/);
       }
-      expect(await t.query(api.sources.get, { id })).toEqual(before);
+      expect(await reader.query(api.sources.get, { id })).toEqual(before);
     }
   });
   test.each(["text", "status"] as const)(
@@ -314,7 +315,7 @@ describe("source recovery capture version fencing", () => {
         expectedUpdatedAt: 2,
         note: "The video is now available publicly.",
       });
-      const before = await t.query(api.sources.get, { id });
+      const before = await reader.query(api.sources.get, { id });
       const capture = (expectedUpdatedAt?: number) =>
         write === "text"
           ? reader.mutation(api.sources.updateText, {
@@ -329,10 +330,10 @@ describe("source recovery capture version fencing", () => {
               expectedUpdatedAt,
             });
       await expect(capture()).rejects.toThrow(/discard/);
-      expect(await t.query(api.sources.get, { id })).toEqual(before);
+      expect(await reader.query(api.sources.get, { id })).toEqual(before);
       await capture(before!.updatedAt);
       expect(
-        (await t.query(api.sources.get, { id }))!.updatedAt,
+        (await reader.query(api.sources.get, { id }))!.updatedAt,
       ).toBeGreaterThan(before!.updatedAt);
     },
   );
@@ -377,10 +378,10 @@ describe("source recovery capture version fencing", () => {
       ).toEqual({ updated: false });
     }
     expect(
-      (await t.query(api.sources.get, { id: supplied }))?.transcript,
+      (await reader.query(api.sources.get, { id: supplied }))?.transcript,
     ).toContain(body.trim());
-    expect((await t.query(api.sources.get, { id: archived }))?.status).toBe(
-      "archived",
-    );
+    expect(
+      (await reader.query(api.sources.get, { id: archived }))?.status,
+    ).toBe("archived");
   });
 });
