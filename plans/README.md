@@ -39,7 +39,7 @@ approved for execution as they stand.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 017 | [Size hook becomes a ratchet](./017-size-hook-ratchet.md) | P1 | S–M | — | TODO |
+| 017 | [Size hook becomes a ratchet](./017-size-hook-ratchet.md) | P1 | S–M | — | DONE 2026-11-10 |
 | 018 | [Role-gated writes](./018-role-gated-writes.md) | P1 | M | — | TODO |
 | 019 | [Creator identity and safe URL resubmit](./019-creator-identity-and-safe-resubmit.md) | P1 | S–M | 017, 018 | TODO |
 | 020 | [Login-required reads, tier 1](./020-login-required-reads.md) | P1 | M | 017, 018, 019 | TODO |

@@ -114,7 +114,7 @@ and pass all six real-render tests with zero skips. See
 - Web: `vp run typecheck:web` and `vp run build:web`
 - Agent: `cd agent && vp run verify && vp test`
 - Everything at once: `vp run verify`.
-- Commits run a pre-commit hook that blocks files over 5,000 estimated tokens (20,000 bytes); `vp install` enables it. See the token-limit guardrail in `AGENTS.md`.
+- Commits run a pre-commit hook that blocks files over 5,000 estimated tokens (20,000 bytes); `vp install` enables it. See the token-limit guardrail in `AGENTS.md`. Files already over the limit are listed in `scripts/file-token-baseline.json` and may not grow.
 
 ### Dependency updates
 
