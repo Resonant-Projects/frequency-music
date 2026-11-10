@@ -5,6 +5,7 @@ import { modules } from "../harness/modules";
 import { recipeParameterValidator } from "./validators";
 import { validateGeneratedRecipePayload } from "./recipes";
 import schema from "./schema";
+import { seedUser } from "./testHelpers";
 
 const generatedPayload = {
   title: "Test 432Hz drone bed",
@@ -35,6 +36,7 @@ describe("generated recipe payload vs create args validator", () => {
 describe("recipe starter-kit linkage", () => {
   test("auth-guarded recipe updates persist and return starter-kit metadata", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "user-1");
     const recipeId = await t.run(async (ctx) => {
       const hypothesisId = await ctx.db.insert("hypotheses", {
         title: "Test hypothesis",

@@ -11,6 +11,7 @@ import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import { modules } from "./modules";
+import { seedUser } from "../convex/testHelpers";
 
 describe("Source recovery and projection", () => {
   beforeEach(() => vi.useFakeTimers());
@@ -23,6 +24,7 @@ describe("Source recovery and projection", () => {
     "archiving settles a %s capture failure and fences queued work",
     async (status) => {
       const t = convexTest({ schema, modules, transactionLimits: true });
+      await seedUser(t, "reader");
       const runId = await t.run((ctx) =>
         ctx.db.insert("agentRuns", {
           graphName: "source-scout",

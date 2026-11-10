@@ -12,6 +12,38 @@ export type TableName =
 
 export type Tables = Record<TableName, any[]>;
 
+/** A users row for a test identity; returns its id. */
+export async function seedUser(
+  t: { run: <T>(fn: (ctx: any) => Promise<T>) => Promise<T> },
+  clerkUserId: string,
+  role: "admin" | "collaborator" | "follower" = "collaborator",
+) {
+  const now = Date.now();
+  return await t.run((ctx) =>
+    ctx.db.insert("users", {
+      clerkUserId,
+      role,
+      createdAt: now,
+      updatedAt: now,
+    }),
+  );
+}
+
+/** Seeds a users row for the identity and returns the client signed in as it. */
+export async function asWriter<R>(
+  t: {
+    run: <T>(fn: (ctx: any) => Promise<T>) => Promise<T>;
+    withIdentity: (identity: { subject: string; name?: string }) => R;
+  },
+  identity: string | { subject: string; name?: string },
+  role: "admin" | "collaborator" | "follower" = "collaborator",
+): Promise<R> {
+  const signedIn =
+    typeof identity === "string" ? { subject: identity } : identity;
+  await seedUser(t, signedIn.subject, role);
+  return t.withIdentity(signedIn);
+}
+
 export class FakeQuery<T extends Record<string, any>> {
   constructor(private rows: T[]) {}
 

@@ -6,6 +6,7 @@ import { modules } from "../harness/modules";
 import { extractionInputHash } from "./shared/extractionPrompt";
 
 import { body, seed } from "../harness/sourceRecoveryFixtures";
+import { seedUser } from "./testHelpers";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -14,6 +15,7 @@ describe("source recovery from the Action Queue", () => {
     "external intake preserves operator-owned %s and its provenance",
     async (recovery) => {
       const t = convexTest(schema, modules);
+      await seedUser(t, "reader");
       const id = await seed(t, {
         type: "url",
         canonicalUrl: "https://example.org/protected",
@@ -68,6 +70,7 @@ describe("source recovery from the Action Queue", () => {
       vi.setSystemTime(50_000);
       try {
         const t = convexTest({ schema, modules, transactionLimits: true });
+        await seedUser(t, "reader");
         const url = "https://example.org/human-recovery";
         const id = await seed(t, {
           type: "url",
@@ -161,6 +164,7 @@ describe("source recovery from the Action Queue", () => {
   });
   test("successful legacy text writes clear obsolete no-text blocks and advance the inbox", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "reader");
     const id = await seed(t);
     await t
       .withIdentity({ subject: "reader" })
@@ -182,6 +186,7 @@ describe("source recovery from the Action Queue", () => {
     const t = convexTest(schema, modules),
       id = await seed(t),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     const excerpt =
       "A recovered source explains how resonance depends on frequency damping and boundary conditions. Its measurements describe the physical system and do not establish a musical listening effect. The investigators compared multiple measurements and reported their uncertainty ...";
     await expect(
@@ -228,6 +233,7 @@ describe("source recovery from the Action Queue", () => {
     const t = convexTest(schema, modules),
       id = await seed(t, { type: "url" }),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     for (const note of ["Signed in.", "Publisher access now works."]) {
       const s = await t.query(api.sources.get, { id });
       await reader.mutation(api.sources.requestSourceRecovery, {
@@ -255,6 +261,7 @@ describe("source recovery from the Action Queue", () => {
   test("YouTube access updates without a usable video ID stay parked and cannot create empty runs", async () => {
     const t = convexTest(schema, modules),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     const id = await seed(t, {
       canonicalUrl: undefined,
       youtubeVideoId: "invalid",
@@ -298,6 +305,7 @@ describe("source recovery from the Action Queue", () => {
     const t = convexTest(schema, modules),
       id = await seed(t),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     await expect(
       t.mutation(api.sources.archiveRecoverySource, {
         id,
@@ -339,6 +347,7 @@ describe("source recovery from the Action Queue", () => {
     const t = convexTest(schema, modules),
       id = await seed(t, { rawText: "Old teaser" }),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     await t.run((ctx) =>
       ctx.db.patch("sources", id, { visibility: "followers" }),
     );
@@ -366,6 +375,7 @@ describe("source recovery from the Action Queue", () => {
   test("saves labelled evidence atomically, clears the block and preserves privacy and provenance", async () => {
     const t = convexTest(schema, modules),
       id = await seed(t);
+    await seedUser(t, "reader");
     await t
       .withIdentity({ subject: "reader" })
       .mutation(api.sources.provideRecoveryText, {
@@ -403,6 +413,7 @@ describe("source recovery from the Action Queue", () => {
     const t = convexTest(schema, modules),
       id = await seed(t),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     await expect(
       reader.mutation(api.sources.provideRecoveryText, {
         id,
@@ -440,6 +451,7 @@ describe("source recovery from the Action Queue", () => {
   test("requires authentication and rejects unsafe provenance links", async () => {
     const t = convexTest(schema, modules),
       id = await seed(t);
+    await seedUser(t, "reader");
     await expect(
       t.mutation(api.sources.provideRecoveryText, {
         id,
@@ -463,6 +475,7 @@ describe("source recovery from the Action Queue", () => {
   test("access changes requeue a blocked empty YouTube source and retain the failed attempt", async () => {
     const t = convexTest(schema, modules),
       id = await seed(t);
+    await seedUser(t, "reader");
     await t
       .withIdentity({ subject: "reader" })
       .mutation(api.sources.requestSourceRecovery, {
@@ -497,6 +510,7 @@ describe("source recovery from the Action Queue", () => {
         canonicalUrl: "https://example.org/paper",
         rawText: "Feed teaser",
       });
+    await seedUser(t, "reader");
     await t
       .withIdentity({ subject: "reader" })
       .mutation(api.sources.requestSourceRecovery, {

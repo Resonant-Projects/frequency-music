@@ -10,6 +10,7 @@ import {
   RENDERER_VERSION_FOR_JOBS,
 } from "./shared/mediaJobs";
 import { MAX_UPLOAD_BYTES } from "./shared/uploadLimits";
+import { asWriter, seedUser } from "./testHelpers";
 
 type T = ReturnType<typeof convexTest>;
 
@@ -43,6 +44,13 @@ const provenance = {
 
 const keith = (t: T) => t.withIdentity({ subject: "keith" });
 const service = (t: T) => t.withIdentity({ subject: "system" });
+
+/** A fresh backend where Keith holds a writer role. */
+async function setup() {
+  const t = convexTest(schema, modules);
+  await seedUser(t, "keith");
+  return t;
+}
 
 async function insertRecipe(t: T, renderPlan: unknown) {
   return await t.run(async (ctx) => {
@@ -243,7 +251,7 @@ async function rateAll(t: T, groupId: Id<"blindGroups">, base = 3) {
 
 describe("studio comparison upload", () => {
   test("a human studio upload pairs blind with a fresh copy of the machine delivery", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const { groupId, replayed, artifactId } = await uploadStudio(
       t,
@@ -336,7 +344,7 @@ describe("studio comparison upload", () => {
   });
 
   test("nothing identifies a member before reveal on any surface", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const { groupId, artifactId } = await uploadStudio(t, machine.deliveryId);
     const projection = await keith(t).query(api.blindGroups.projection, {
@@ -411,7 +419,7 @@ describe("studio comparison upload", () => {
   });
 
   test("ratings land on both members at once and reveal with provenance", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const { groupId, artifactId } = await uploadStudio(t, machine.deliveryId);
     expect(await rateAll(t, groupId)).toEqual({ replayed: false });
@@ -478,7 +486,7 @@ describe("studio comparison upload", () => {
   });
 
   test("the docket and rating queue hide the comparison, then count both members rated", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const debt = async () =>
       (await t.query(internal.docket.currentState, {})).map(
@@ -536,7 +544,7 @@ describe("studio comparison upload", () => {
   });
 
   test("ratings need every member, the six render scales and conditions", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const { groupId } = await uploadStudio(t, machine.deliveryId);
     const projection = await t.query(internal.blindGroups.projectionInternal, {
@@ -602,7 +610,7 @@ describe("studio comparison upload", () => {
 
 describe("studio upload admission", () => {
   test("only a signed-in human may upload, finish or read comparisons", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     await expect(
       begin(t, machine.deliveryId, STUDIO_MP3, {}, service(t)),
@@ -625,21 +633,12 @@ describe("studio upload admission", () => {
       }),
     ).rejects.toThrow(/Human authentication required/);
     // Another person cannot finish someone else's upload.
-    await t.run((ctx) =>
-      ctx.db.insert("users", {
-        clerkUserId: "someone-else",
-        role: "collaborator",
-        createdAt: 1,
-        updatedAt: 1,
-      }),
-    );
+    const other = await asWriter(t, "someone-else");
     await expect(
-      t
-        .withIdentity({ subject: "someone-else" })
-        .action(api.studioComparisons.finishUpload, {
-          artifactId: started.artifactId,
-          storageId,
-        }),
+      other.action(api.studioComparisons.finishUpload, {
+        artifactId: started.artifactId,
+        storageId,
+      }),
     ).rejects.toThrow(/Studio upload not found/);
     for (const read of [
       () => service(t).query(api.studioComparisons.list, {}),
@@ -649,7 +648,7 @@ describe("studio upload admission", () => {
   });
 
   test("bounds, digest and declaration are checked before any state exists", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const sha256 = await sha256Hex(STUDIO_MP3);
     const cases: [Record<string, unknown>, RegExp][] = [
@@ -694,7 +693,7 @@ describe("studio upload admission", () => {
   });
 
   test("only a finished single-baseline machine delivery can be compared", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     // A master, or an artifact claiming sc-litmus without a job, is refused.
     await expect(begin(t, machine.masterId, STUDIO_MP3)).rejects.toThrow(
@@ -728,7 +727,7 @@ describe("studio upload admission", () => {
   });
 
   test("a render that keeps its level is not compared against the loudness policy", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const raw = { ...plan, normalize: false };
     const machine = await machineRender(t, raw);
     await expect(
@@ -851,7 +850,7 @@ describe("studio upload content", () => {
   ])(
     "refuses %s, deletes the bytes and marks the row failed",
     async (_name, bytes, message) => {
-      const t = convexTest(schema, modules);
+      const t = await setup();
       const machine = await machineRender(t);
       const { row, blob, groups } = await rejected(
         t,
@@ -870,7 +869,7 @@ describe("studio upload content", () => {
   );
 
   test("bytes that differ from the declaration are refused and left alone", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const started = await begin(t, machine.deliveryId, STUDIO_MP3);
     // Someone else's blob, or a different file than declared.
@@ -902,7 +901,7 @@ describe("studio upload content", () => {
 
 describe("studio upload replay and races", () => {
   test("begin and finish are idempotent; a second comparison of one render is refused", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const first = await begin(t, machine.deliveryId, STUDIO_MP3);
     const again = await begin(t, machine.deliveryId, STUDIO_MP3);
@@ -936,7 +935,7 @@ describe("studio upload replay and races", () => {
   });
 
   test("a replay must repeat its declaration", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const first = await begin(t, machine.deliveryId, STUDIO_MP3);
     for (const overrides of [
@@ -962,7 +961,7 @@ describe("studio upload replay and races", () => {
   });
 
   test("presentation order and labels are independent of which member is the studio render", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const firstIsStudio = new Set<boolean>();
     const studioLabel = new Set<string>();
     for (let index = 0; index < 16; index++) {
@@ -990,7 +989,7 @@ describe("studio upload replay and races", () => {
   });
 
   test("two uploads racing for one machine render: the loser is failed and cleaned up", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const loserBytes = mp3Fixture({ frames: 84, fill: 0x66 });
     const winner = await begin(t, machine.deliveryId, STUDIO_MP3);
@@ -1021,7 +1020,7 @@ describe("studio upload replay and races", () => {
   });
 
   test("the sweeper keeps comparison audio and the gate stays closed to families", async () => {
-    const t = convexTest(schema, modules);
+    const t = await setup();
     const machine = await machineRender(t);
     const { groupId } = await uploadStudio(t, machine.deliveryId);
     await rateAll(t, groupId);

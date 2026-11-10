@@ -15,6 +15,7 @@ import schema from "./schema";
 import { internalAction, internalMutation } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { modules } from "../harness/modules";
+import { asWriter, seedUser } from "./testHelpers";
 import type {
   DecisionCommand,
   DecisionEvent,
@@ -241,30 +242,27 @@ describe("immutable human decision application", () => {
       await t.withIdentity({ subject: "human" }).mutation(webApply, args),
     ).toMatchObject({ status: "applied" });
   });
-  test("a previously authenticated unmapped human can read and decide without manual provisioning", async () => {
+  test("an unmapped signed-in human can read, but decides only once granted a writer role", async () => {
     const { t, intent, draftId } = await setup();
     const human = t.withIdentity({ subject: "new-human", name: "New human" });
     expect(
       await human.query(api.decisionIntents.get, { intentId: intent._id }),
     ).toMatchObject({ _id: intent._id });
+    const reject = {
+      draftId,
+      decisionNote: "Reviewed by its authenticated user",
+    };
+    await expect(
+      human.mutation(api.agentDrafts.reject, reject),
+    ).rejects.toThrow("FORBIDDEN");
     expect(await t.run((ctx) => ctx.db.query("users").collect())).toHaveLength(
       1,
     );
-    await human.mutation(api.agentDrafts.reject, {
-      draftId,
-      decisionNote: "Reviewed by its authenticated user",
+    expect(await t.run((ctx) => ctx.db.get(draftId))).toMatchObject({
+      status: "pending_review",
     });
-    const mapped = await t.run((ctx) =>
-      ctx.db
-        .query("users")
-        .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", "new-human"))
-        .unique(),
-    );
-    expect(mapped).toMatchObject({
-      clerkUserId: "new-human",
-      displayName: "New human",
-      role: "collaborator",
-    });
+    await seedUser(t, "new-human");
+    await human.mutation(api.agentDrafts.reject, reject);
     expect(await t.run((ctx) => ctx.db.get(draftId))).toMatchObject({
       decidedBy: "human",
       decisionSource: "web",
@@ -588,20 +586,19 @@ test("listening confirmation stores only spoken ratings, conditions and human at
   expect(await t.run((ctx) => ctx.db.get(sessions[0]!._id))).toMatchObject({
     visibility: "public",
   });
+  const other = await asWriter(t, "another-human");
   await expect(
-    t
-      .withIdentity({ subject: "another-human" })
-      .mutation(api.listening.updateVisibility, {
-        id: sessions[0]!._id,
-        visibility: "private",
-      }),
+    other.mutation(api.listening.updateVisibility, {
+      id: sessions[0]!._id,
+      visibility: "private",
+    }),
   ).rejects.toThrow("Not authorized");
 });
 
 test("direct listening creation reuses its mapped human identity for ownership", async () => {
   const { t } = await setup();
   const compositionId = await seedComposition(t);
-  const human = t.withIdentity({ subject: "new-listener" });
+  const human = await asWriter(t, "new-listener");
   const args = {
     compositionId,
     participants: [],

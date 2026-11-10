@@ -15,6 +15,7 @@ import {
   LEASE_MS,
   RENDERER_VERSION_FOR_JOBS,
 } from "../convex/shared/mediaJobs";
+import { seedUser } from "../convex/testHelpers";
 
 describe("recovery admission", () => {
   beforeEach(() => vi.useFakeTimers());
@@ -332,6 +333,7 @@ describe("recovery admission", () => {
     "stale %s snapshots cannot admit recovery or investigation without retained output",
     async (change) => {
       const t = convexTest({ schema, modules, transactionLimits: true });
+      await seedUser(t, "operator");
       const sourceId = await t.run((ctx) =>
         ctx.db.insert("sources", {
           type: "url",

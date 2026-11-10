@@ -4,6 +4,7 @@ import { modules } from "../harness/modules";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
+import { seedUser } from "./testHelpers";
 import {
   type ClaimedMediaJob,
   RENDERER_VERSION_FOR_JOBS,
@@ -61,6 +62,9 @@ async function insertRecipe(t: T, renderPlan?: unknown) {
 }
 
 const human = (t: T) => t.withIdentity({ subject: "human-listener" });
+
+const requestRender = (t: T, recipeId: Id<"recipes">) =>
+  t.mutation(internal.renders.requestInternal, { recipeId });
 
 async function setGate(t: T, value: string) {
   await t.mutation(internal.settings.set, { key: "renderValidation", value });
@@ -158,6 +162,7 @@ async function complete(
 describe("render plan admission", () => {
   test("setPlan admits a valid plan, rejects an invalid one, and clears", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "human-listener");
     const recipeId = await insertRecipe(t);
     await expect(
       human(t).mutation(api.renders.setPlan, {
@@ -183,6 +188,7 @@ describe("render plan admission", () => {
 
   test("requests need authentication and a typed plan", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "human-listener");
     const recipeId = await insertRecipe(t);
     await expect(
       t.mutation(api.renders.request, { recipeId }),
@@ -222,6 +228,7 @@ describe("render plan admission", () => {
 
   test("enqueues an immutable snapshot and dedupes by recipe revision", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "human-listener");
     const recipeId = await insertRecipe(t, baselinePlan);
     const first = await human(t).mutation(api.renders.request, { recipeId });
     const again = await human(t).mutation(api.renders.request, { recipeId });
@@ -251,7 +258,7 @@ describe("render plan admission", () => {
   test("only a compatible renderer claims the job", async () => {
     const t = convexTest(schema, modules);
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     expect(
       await t.mutation(internal.mediaJobs.claimNext, {
         workerId: "old",
@@ -283,7 +290,7 @@ describe("litmus render completion", () => {
   test("an unvalidated baseline lands ready, private, and out of evidence", async () => {
     const t = convexTest(schema, modules);
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const member = await uploadMember(t, job, 0);
     const done = await complete(t, job, [member]);
@@ -345,7 +352,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const member = await uploadMember(t, job, 0);
     await complete(t, job, [member]);
@@ -393,7 +400,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, familyPlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const members = [
       await uploadMember(t, job, 0),
@@ -414,7 +421,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, familyPlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const members = [
       await uploadMember(t, job, 1),
@@ -504,7 +511,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, familyPlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const members = [
       await uploadMember(t, job, 0),
@@ -527,7 +534,7 @@ describe("litmus render completion", () => {
       const t = convexTest(schema, modules);
       await setGate(t, "go");
       const recipeId = await insertRecipe(t, familyPlan);
-      await t.mutation(internal.renders.requestInternal, { recipeId });
+      await requestRender(t, recipeId);
       const job = await claim(t);
       const members = [
         await uploadMember(t, job, 0),
@@ -550,7 +557,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, familyPlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const zero = await uploadMember(t, job, 0);
     const one = await uploadMember(t, job, 1);
@@ -583,7 +590,7 @@ describe("litmus render completion", () => {
       ...baselinePlan,
       normalize: false,
     });
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const normalized = await uploadMember(t, job, 0);
     await expect(complete(t, job, [normalized])).rejects.toThrow(
@@ -599,7 +606,7 @@ describe("litmus render completion", () => {
   test("workers cannot self-certify, publish, or mint other kinds", async () => {
     const t = convexTest(schema, modules);
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const base = {
       kind: "litmusRender",
@@ -631,7 +638,7 @@ describe("litmus render completion", () => {
   test("a stale lease cannot complete after the job is re-claimed", async () => {
     const t = convexTest(schema, modules);
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const stale = await claim(t);
     const member = await uploadMember(t, stale, 0);
     await t.mutation(internal.mediaJobs.sweepStale, {
@@ -671,7 +678,7 @@ describe("litmus render completion", () => {
     const t = convexTest(schema, modules);
     await setGate(t, "go");
     const recipeId = await insertRecipe(t, baselinePlan);
-    await t.mutation(internal.renders.requestInternal, { recipeId });
+    await requestRender(t, recipeId);
     const job = await claim(t);
     const member = await uploadMember(t, job, 0);
     await t.run((ctx) => ctx.db.delete(recipeId));

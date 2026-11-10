@@ -6,6 +6,7 @@ import schema from "./schema";
 import { modules } from "../harness/modules";
 
 import { body, seed } from "../harness/sourceRecoveryFixtures";
+import { seedUser } from "./testHelpers";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -19,6 +20,7 @@ describe("source recovery capture version fencing", () => {
       vi.setSystemTime(2);
       try {
         const t = convexTest(schema, modules);
+        await seedUser(t, "reader");
         const id = await seed(t);
         const reader = t.withIdentity({ subject: "reader" });
         await reader.mutation(api.sources.provideRecoveryText, {
@@ -77,6 +79,7 @@ describe("source recovery capture version fencing", () => {
     vi.setSystemTime(2);
     try {
       const t = convexTest(schema, modules);
+      await seedUser(t, "reader");
       const id = await seed(t, { status: "ingested" });
       const runId = await t.run((ctx) =>
         ctx.db.insert("agentRuns", {
@@ -126,6 +129,7 @@ describe("source recovery capture version fencing", () => {
     async (outcome) => {
       vi.stubEnv("AGENT_TOOL_SECRET", "synthetic-recovery-test-secret");
       const t = convexTest(schema, modules);
+      await seedUser(t, "reader");
       const callTool = async (name: string, args = {}) => {
         const response = await t.fetch(`/agent-tools/${name}`, {
           method: "POST",
@@ -205,6 +209,7 @@ describe("source recovery capture version fencing", () => {
         const t = convexTest(schema, modules),
           id = await seed(t, { type }),
           reader = t.withIdentity({ subject: "reader" });
+        await seedUser(t, "reader");
         const entered = Promise.withResolvers<void>(),
           release = Promise.withResolvers<void>();
         const clock = vi.spyOn(Date, "now").mockReturnValue(2);
@@ -253,6 +258,7 @@ describe("source recovery capture version fencing", () => {
   test("legacy capture writes reject stale snapshots and cannot replace recovered text or revive archives", async () => {
     const t = convexTest(schema, modules),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     for (const recovery of ["text", "archive"]) {
       const id = await seed(t, { dedupeKey: `legacy-${recovery}` });
       if (recovery === "text")
@@ -300,6 +306,7 @@ describe("source recovery capture version fencing", () => {
     "legacy %s cannot overwrite an access update without its new version",
     async (write) => {
       const t = convexTest(schema, modules);
+      await seedUser(t, "reader");
       const reader = t.withIdentity({ subject: "reader" });
       const id = await seed(t);
       await reader.mutation(api.sources.requestSourceRecovery, {
@@ -333,6 +340,7 @@ describe("source recovery capture version fencing", () => {
   test("late automatic captures cannot overwrite supplied text or revive archived sources", async () => {
     const t = convexTest(schema, modules),
       reader = t.withIdentity({ subject: "reader" });
+    await seedUser(t, "reader");
     const agentRunId = await t.run((ctx) =>
       ctx.db.insert("agentRuns", {
         graphName: "transcript-capture",

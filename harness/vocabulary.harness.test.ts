@@ -5,8 +5,14 @@ import { api, internal } from "../convex/_generated/api";
 import schema from "../convex/schema";
 import { getNonDeprecatedConceptDomains } from "../convex/vocabulary";
 import { modules } from "./modules";
+import { asWriter } from "../convex/testHelpers";
 
 const now = 1_000;
+const bySystem = {
+  introducedBy: "system",
+  createdAt: now,
+  updatedAt: now,
+} as const;
 
 async function seedConceptDomainPair(
   t: ReturnType<typeof convexTest>,
@@ -16,16 +22,12 @@ async function seedConceptDomainPair(
     const targetId = await ctx.db.insert("conceptDomains", {
       name: "wave-physics",
       status: options.targetStatus ?? "known",
-      introducedBy: "system",
-      createdAt: now,
-      updatedAt: now,
+      ...bySystem,
     });
     const sourceId = await ctx.db.insert("conceptDomains", {
       name: options.sourceName ?? "physics-of-sound",
       status: "provisional",
-      introducedBy: "system",
-      createdAt: now,
-      updatedAt: now,
+      ...bySystem,
     });
     return { sourceId, targetId };
   });
@@ -131,9 +133,7 @@ describe("parameter kind normalization", () => {
         await ctx.db.insert("parameterKinds", {
           name,
           status: "provisional",
-          introducedBy: "system",
-          createdAt: now,
-          updatedAt: now,
+          ...bySystem,
         });
       }
     });
@@ -249,9 +249,7 @@ describe("parameter kind normalization", () => {
         await ctx.db.insert("parameterKinds", {
           name,
           status: "provisional",
-          introducedBy: "system",
-          createdAt: now,
-          updatedAt: now,
+          ...bySystem,
         });
       }
     });
@@ -297,14 +295,12 @@ describe("parameter kind normalization", () => {
 describe("vocabulary triage decisions", () => {
   test("promotes a provisional entry and records the server-derived operator", async () => {
     const t = convexTest(schema, modules);
-    const asOperator = t.withIdentity({ subject: "operator-123" });
+    const asOperator = await asWriter(t, "operator-123");
     const entryId = await t.run((ctx) =>
       ctx.db.insert("parameterKinds", {
         name: "duration",
         status: "provisional",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       }),
     );
 
@@ -332,9 +328,7 @@ describe("vocabulary triage decisions", () => {
       ctx.db.insert("relationshipKinds", {
         name: "contextualizes",
         status: "provisional",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       }),
     );
 
@@ -526,9 +520,7 @@ describe("vocabulary triage decisions", () => {
       ctx.db.insert("conceptDomains", {
         name: "bioacoustics",
         status: "provisional",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       }),
     );
 
@@ -589,16 +581,12 @@ describe("vocabulary triage decisions", () => {
       const targetId = await ctx.db.insert("relationshipKinds", {
         name: "related_to",
         status: "known",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       });
       const sourceId = await ctx.db.insert("relationshipKinds", {
         name: "relates_to",
         status: "provisional",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       });
       const edgeIds = await Promise.all(
         ["concept-a", "concept-b"].map((fromId, index) =>
@@ -648,9 +636,7 @@ describe("classifier-facing vocabulary", () => {
         await ctx.db.insert("conceptDomains", {
           name,
           status,
-          introducedBy: "system",
-          createdAt: now,
-          updatedAt: now,
+          ...bySystem,
         });
       }
     });
@@ -673,23 +659,17 @@ describe("vocabulary triage read and fallback surfaces", () => {
         name: "physics-of-sound",
         status: "provisional",
         description: "A duplicate wave domain.",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       });
       await ctx.db.insert("conceptDomains", {
         name: "wave-physics",
         status: "known",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       });
       await ctx.db.insert("parameterKinds", {
         name: "duration",
         status: "provisional",
-        introducedBy: "system",
-        createdAt: now,
-        updatedAt: now,
+        ...bySystem,
       });
     });
     await insertConcept(t, "standing-wave", "physics-of-sound");
@@ -719,16 +699,12 @@ describe("vocabulary triage read and fallback surfaces", () => {
         const targetEntryId = await ctx.db.insert("parameterKinds", {
           name: "harmonicprofile",
           status: "known",
-          introducedBy: "system",
-          createdAt: now,
-          updatedAt: now,
+          ...bySystem,
         });
         const sourceEntryId = await ctx.db.insert("parameterKinds", {
           name: "timbre",
           status: "provisional",
-          introducedBy: "system",
-          createdAt: now,
-          updatedAt: now,
+          ...bySystem,
         });
         const sourceId = await ctx.db.insert("sources", {
           type: "url",

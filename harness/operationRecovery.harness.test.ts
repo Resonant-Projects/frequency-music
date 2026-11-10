@@ -12,6 +12,7 @@ import { recordOperationFailure } from "../convex/operationFailures";
 import { generateDedupeKey } from "../convex/sourceUtils";
 
 import { setupOperationRecovery as setup } from "./fixtures/operationRecovery";
+import { seedUser } from "../convex/testHelpers";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
@@ -163,6 +164,7 @@ describe("operational recovery", () => {
     vi.setSystemTime(10_000);
     try {
       const { t, runId, input } = await setup(true);
+      await seedUser(t, "operator");
       const source = await t.mutation(internal.sources.createScoutedSource, {
         ...input,
         rawText: "Retained capture awaiting operator inspection. ".repeat(5),

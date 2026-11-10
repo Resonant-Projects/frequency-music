@@ -5,6 +5,7 @@ import type { Id } from "../convex/_generated/dataModel";
 import schema from "../convex/schema";
 import { generateDedupeKey } from "../convex/sourceUtils";
 import { modules } from "./modules";
+import { seedUser } from "../convex/testHelpers";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
@@ -16,6 +17,7 @@ test.each([false, true])(
   "dedupe collision archives and settles the %s winning-row case",
   async (incomingWins) => {
     const t = convexTest({ schema, modules, transactionLimits: true });
+    await seedUser(t, "operator");
     const url = "https://example.org/collision";
     const key = generateDedupeKey("url", { canonicalUrl: url });
     const ids: Id<"sources">[] = [];
@@ -137,6 +139,7 @@ test.each([false, true])(
 
 test("a queued migration settlement cannot close capture recovery after the surviving Source changes", async () => {
   const t = convexTest({ schema, modules, transactionLimits: true });
+  await seedUser(t, "operator");
   const url = "https://example.org/reset";
   const dedupeKey = generateDedupeKey("url", { canonicalUrl: url });
   const archivedId = await t.run((ctx) =>

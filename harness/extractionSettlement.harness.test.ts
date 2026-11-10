@@ -5,6 +5,7 @@ import schema from "../convex/schema";
 import type { Id } from "../convex/_generated/dataModel";
 import { modules } from "./modules";
 import { extractionInputHash } from "../convex/shared/extractionPrompt";
+import { asWriter } from "../convex/testHelpers";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => {
@@ -55,7 +56,8 @@ async function setup() {
   const failure = (await t.run((ctx) =>
     ctx.db.query("operationFailures").first(),
   ))!;
-  return { t, sourceId, begin, attemptId, failure };
+  const reader = await asWriter(t, "reader");
+  return { t, reader, sourceId, begin, attemptId, failure };
 }
 
 async function drainSettlements(t: ReturnType<typeof convexTest>) {
@@ -81,10 +83,11 @@ async function drainSettlements(t: ReturnType<typeof convexTest>) {
 }
 
 test("snapshot import settles displaced failure only after covering output completes", async () => {
-  const { t, sourceId, begin, attemptId, failure } = await setup();
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+  const { t, reader, sourceId, begin, attemptId, failure } = await setup();
+  await reader.mutation(api.sources.updateText, {
+    id: sourceId,
+    rawText: text,
+  });
   const replacement = await begin(true);
   expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
     "recorded",
@@ -113,13 +116,11 @@ test("snapshot import settles displaced failure only after covering output compl
 test.each(["recorded", "investigating", "recovering"] as const)(
   "archive settles %s extraction recovery and releases ownership",
   async (status) => {
-    const { t, sourceId, attemptId, failure } = await setup();
+    const { t, reader, sourceId, attemptId, failure } = await setup();
     await t.run((ctx) =>
       ctx.db.patch(failure._id, { status, nextAttemptAt: 0 }),
     );
-    await t
-      .withIdentity({ subject: "reader" })
-      .mutation(api.sources.archive, { id: sourceId });
+    await reader.mutation(api.sources.archive, { id: sourceId });
     expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
       "resolved",
     );
@@ -215,7 +216,7 @@ test("legacy normalization withdraws historical topics without a new extraction"
 });
 
 test("archiving drains a long displaced chain without touching newer ownership", async () => {
-  const { t, sourceId, attemptId } = await setup();
+  const { t, reader, sourceId, attemptId } = await setup();
   const original = (await t.run((ctx) => ctx.db.get(attemptId)))!;
   let previous = attemptId;
   const failures = [];
@@ -257,9 +258,7 @@ test("archiving drains a long displaced chain without touching newer ownership",
   await t.run((ctx) =>
     ctx.db.patch(sourceId, { activeExtractionAttemptId: previous }),
   );
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.archive, { id: sourceId });
+  await reader.mutation(api.sources.archive, { id: sourceId });
   await t.run((ctx) => ctx.db.patch(sourceId, { status: "text_ready" }));
   const newer = await t.mutation(internal.extractInternal.beginExtraction, {
     sourceId,
@@ -291,16 +290,17 @@ test("archiving drains a long displaced chain without touching newer ownership",
 });
 
 test("a historical replacement cannot settle the displaced failure", async () => {
-  const { t, sourceId, begin, failure } = await setup();
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+  const { t, reader, sourceId, begin, failure } = await setup();
+  await reader.mutation(api.sources.updateText, {
+    id: sourceId,
+    rawText: text,
+  });
   const replacement = await begin(true);
   await t.mutation(internal.extractInternal.retainExtractionResult, {
     attemptId: replacement,
     result,
   });
-  await t.withIdentity({ subject: "reader" }).mutation(api.sources.updateText, {
+  await reader.mutation(api.sources.updateText, {
     id: sourceId,
     rawText: text + "Changed",
   });
@@ -318,11 +318,9 @@ test("a historical replacement cannot settle the displaced failure", async () =>
 });
 
 test("archive fences the first late failure on an attempt with no prior report", async () => {
-  const { t, sourceId, begin } = await setup();
+  const { t, reader, sourceId, begin } = await setup();
   const attemptId = await begin(true);
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.archive, { id: sourceId });
+  await reader.mutation(api.sources.archive, { id: sourceId });
   await t.mutation(internal.extractInternal.failExtraction, {
     attemptId,
     error: "Late first failure",
@@ -368,15 +366,13 @@ test("operator expiry preserves displaced failure lineage for a later covering i
 });
 
 test("archive after operator expiry still settles displaced worker recovery", async () => {
-  const { t, sourceId, begin, failure } = await setup();
+  const { t, reader, sourceId, begin, failure } = await setup();
   const expired = await begin(true);
   await t.run((ctx) =>
     ctx.db.patch(expired, { updatedAt: Date.now() - 25 * 60 * 60_000 }),
   );
   await t.mutation(internal.extractInternal.reconcileAttempts, {});
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.archive, { id: sourceId });
+  await reader.mutation(api.sources.archive, { id: sourceId });
   await drainSettlements(t);
   expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
     "resolved",
@@ -452,10 +448,8 @@ test("settling displaced retained output schedules historical completion and per
 });
 
 test("late retained output after archive schedules completion without reopening recovery", async () => {
-  const { t, sourceId, attemptId, failure } = await setup();
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.archive, { id: sourceId });
+  const { t, reader, sourceId, attemptId, failure } = await setup();
+  await reader.mutation(api.sources.archive, { id: sourceId });
   await t.mutation(internal.extractInternal.retainExtractionResult, {
     attemptId,
     result,
@@ -471,7 +465,7 @@ test("late retained output after archive schedules completion without reopening 
 test.each(["import", "archive"] as const)(
   "legacy owner release preserves lineage for later %s",
   async (operation) => {
-    const { t, sourceId, begin, attemptId, failure } = await setup();
+    const { t, reader, sourceId, begin, attemptId, failure } = await setup();
     await t.run((ctx) =>
       ctx.db.patch(sourceId, {
         title: "Changed title",
@@ -488,9 +482,7 @@ test.each(["import", "archive"] as const)(
     expect(source.activeExtractionAttemptId).toBeUndefined();
     expect(source.lastExtractionAttemptId).toBe(attemptId);
     if (operation === "archive")
-      await t
-        .withIdentity({ subject: "reader" })
-        .mutation(api.sources.archive, { id: sourceId });
+      await reader.mutation(api.sources.archive, { id: sourceId });
     else {
       const replacement = await begin(true);
       await t.mutation(internal.extractInternal.retainExtractionResult, {
@@ -515,13 +507,14 @@ test.each(["import", "archive"] as const)(
 test.each(["recorded", "investigating", "recovering"] as const)(
   "updateStatus archive settles %s extraction recovery",
   async (status) => {
-    const { t, sourceId, attemptId, failure } = await setup();
+    const { t, reader, sourceId, attemptId, failure } = await setup();
     await t.run((ctx) =>
       ctx.db.patch(failure._id, { status, nextAttemptAt: 0 }),
     );
-    await t
-      .withIdentity({ subject: "reader" })
-      .mutation(api.sources.updateStatus, { id: sourceId, status: "archived" });
+    await reader.mutation(api.sources.updateStatus, {
+      id: sourceId,
+      status: "archived",
+    });
     expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
       "resolved",
     );
@@ -546,10 +539,11 @@ test.each(["recorded", "investigating", "recovering"] as const)(
 );
 
 test("Mark Triaged settles detached extraction recovery and preserves late output as history", async () => {
-  const { t, sourceId, attemptId, failure } = await setup();
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.updateStatus, { id: sourceId, status: "triaged" });
+  const { t, reader, sourceId, attemptId, failure } = await setup();
+  await reader.mutation(api.sources.updateStatus, {
+    id: sourceId,
+    status: "triaged",
+  });
   expect((await t.run((ctx) => ctx.db.get(failure._id)))?.status).toBe(
     "resolved",
   );
@@ -566,7 +560,7 @@ test("Mark Triaged settles detached extraction recovery and preserves late outpu
 });
 
 test("bulk archive settles many large snapshots through bounded separate transactions", async () => {
-  const { t, attemptId } = await setup();
+  const { t, reader, attemptId } = await setup();
   const original = (await t.run((ctx) => ctx.db.get(attemptId)))!;
   const ids: Id<"sources">[] = [];
   const failures: Id<"operationFailures">[] = [];
@@ -619,11 +613,9 @@ test("bulk archive settles many large snapshots through bounded separate transac
       ),
     );
   }
-  expect(
-    await t
-      .withIdentity({ subject: "reader" })
-      .mutation(api.sources.bulkArchive, { ids }),
-  ).toEqual({ archived: 20 });
+  expect(await reader.mutation(api.sources.bulkArchive, { ids })).toEqual({
+    archived: 20,
+  });
   await drainSettlements(t);
   for (const id of ids)
     expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
@@ -690,7 +682,7 @@ test.each([
 );
 
 test("bulk archive fences queued investigation and stale diagnosis before chain settlement runs", async () => {
-  const { t, sourceId, failure } = await setup();
+  const { t, reader, sourceId, failure } = await setup();
   const runId = await t.run((ctx) =>
     ctx.db.insert("agentRuns", {
       graphName: "failure-investigation",
@@ -706,9 +698,7 @@ test("bulk archive fences queued investigation and stale diagnosis before chain 
       investigationRunId: runId,
     }),
   );
-  await t
-    .withIdentity({ subject: "reader" })
-    .mutation(api.sources.bulkArchive, { ids: [sourceId] });
+  await reader.mutation(api.sources.bulkArchive, { ids: [sourceId] });
   expect(
     await t.query(internal.operationFailures.getInvestigation, {
       agentRunId: runId,

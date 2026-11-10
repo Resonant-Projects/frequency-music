@@ -20,6 +20,7 @@ import {
   renderExtractionPrompt,
 } from "./shared/extractionPrompt";
 import { modules } from "../harness/modules";
+import { asWriter, seedUser } from "./testHelpers";
 
 const article =
   "Pythagorean tuning stacks pure fifths with a frequency ratio of 3:2. " +
@@ -89,17 +90,25 @@ const store = (
     ...overrides,
   });
 
+const begin = (
+  t: ReturnType<typeof convexTest>,
+  sourceId: Id<"sources">,
+  inputHash: string,
+  model: string = MODELS.opus,
+) =>
+  t.action(api.extract.beginOperatorExtraction, {
+    sourceId,
+    inputHash,
+    model,
+    devBypassSecret: BYPASS,
+  });
+
 describe("operator extraction", () => {
   test.each([MODELS.sol, MODELS.sonnet])(
     "selected operator model %s survives snapshot export and historical import",
     async (model) => {
       const { t, sourceId, inputHash } = await setup();
-      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
-        sourceId,
-        inputHash,
-        model,
-        devBypassSecret: BYPASS,
-      });
+      const snapshot = await begin(t, sourceId, inputHash, model);
       expect(snapshot).not.toBeNull();
       const exported = await t.query(api.sources.operatorExtractionSnapshots, {
         model,
@@ -113,12 +122,10 @@ describe("operator extraction", () => {
         snapshotId: snapshot!.snapshotId,
         inputHash,
       });
-      await t
-        .withIdentity({ subject: "operator" })
-        .mutation(api.sources.updateText, {
-          id: sourceId,
-          rawText: article.repeat(3),
-        });
+      await (await asWriter(t, "operator")).mutation(api.sources.updateText, {
+        id: sourceId,
+        rawText: article.repeat(3),
+      });
       await expect(
         store(t, sourceId, inputHash, {
           model,
@@ -159,12 +166,7 @@ describe("operator extraction", () => {
   });
   test("snapshot recovery pages past 200 abandoned reservations to the live owner", async () => {
     const { t, sourceId, inputHash } = await setup();
-    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
-      sourceId,
-      inputHash,
-      model: MODELS.opus,
-      devBypassSecret: BYPASS,
-    });
+    const snapshot = await begin(t, sourceId, inputHash);
     await t.run(async (ctx) => {
       const {
         _id: _ignoredId,
@@ -219,12 +221,7 @@ describe("operator extraction", () => {
           updatedAt: 1,
         }),
       );
-      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
-        sourceId,
-        inputHash,
-        model: MODELS.opus,
-        devBypassSecret: BYPASS,
-      });
+      const snapshot = await begin(t, sourceId, inputHash);
       expected.push(snapshot!.snapshotId);
     }
     const recovered = [];
@@ -252,12 +249,7 @@ describe("operator extraction", () => {
   });
   test("an interrupted export can recover its original snapshot and import late output as history", async () => {
     const { t, sourceId, inputHash } = await setup();
-    const snapshot = await t.action(api.extract.beginOperatorExtraction, {
-      sourceId,
-      inputHash,
-      model: MODELS.opus,
-      devBypassSecret: BYPASS,
-    });
+    const snapshot = await begin(t, sourceId, inputHash);
     expect(snapshot).not.toBeNull();
     const resumed = await t.query(api.sources.operatorExtractionSnapshots, {
       model: MODELS.opus,
@@ -406,6 +398,7 @@ describe("operator extraction", () => {
 
   test("requires the operator service identity, not a signed-in user", async () => {
     const { t, sourceId, inputHash } = await setup();
+    await seedUser(t, "user_123");
     await expect(
       store(t, sourceId, inputHash, { devBypassSecret: undefined }),
     ).rejects.toThrow();
@@ -550,13 +543,8 @@ describe("concept linking", () => {
     "scheduled links and backfill cannot promote a late %s snapshot",
     async (disposition) => {
       const { t, sourceId, inputHash } = await setup();
-      const snapshot = await t.action(api.extract.beginOperatorExtraction, {
-        sourceId,
-        inputHash,
-        model: MODELS.opus,
-        devBypassSecret: BYPASS,
-      });
-      const reader = t.withIdentity({ subject: "operator" });
+      const snapshot = await begin(t, sourceId, inputHash);
+      const reader = await asWriter(t, "operator");
       if (disposition === "historical") {
         await reader.mutation(api.sources.updateText, {
           id: sourceId,
@@ -703,6 +691,7 @@ describe("concept linking", () => {
 
   test("only the operator service identity starts the backfill", async () => {
     const t = convexTest(schema, modules);
+    await seedUser(t, "user_123");
     await expect(
       t.mutation(api.extractions.startConceptBackfill, {}),
     ).rejects.toThrow();

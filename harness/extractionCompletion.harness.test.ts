@@ -8,6 +8,7 @@ import { validateArtifactForPublish } from "../convex/editorialArtifacts";
 import { resumeAttempt } from "../convex/extract";
 import schema from "../convex/schema";
 import { extractionInputHash } from "../convex/shared/extractionPrompt";
+import { asWriter } from "../convex/testHelpers";
 import { modules } from "./modules";
 
 const text =
@@ -49,7 +50,8 @@ async function setup(transactionLimits = false) {
     if (!started.attemptId) throw new Error("Expected attempt");
     return started.attemptId;
   };
-  return { t, sourceId, begin };
+  const operator = await asWriter(t, "operator");
+  return { t, operator, sourceId, begin };
 }
 // These scenarios inspect state before queued completion is allowed to run.
 async function withFrozenScheduler<T>(work: () => Promise<T>): Promise<T> {
@@ -144,7 +146,7 @@ describe("Extraction completion", () => {
   test.each([false, true])(
     "a snapshot-less operator import settles the displaced worker investigation, duplicate=%s",
     async (duplicate) => {
-      const { t, sourceId, begin } = await setup();
+      const { t, operator, sourceId, begin } = await setup();
       const attemptId = await begin();
       await t.mutation(internal.extractInternal.failExtraction, {
         attemptId,
@@ -164,9 +166,10 @@ describe("Extraction completion", () => {
       await t.run((ctx) =>
         ctx.db.patch(investigating.investigationRunId!, { status: "running" }),
       );
-      await t
-        .withIdentity({ subject: "operator" })
-        .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+      await operator.mutation(api.sources.updateText, {
+        id: sourceId,
+        rawText: text,
+      });
       expect(
         (await t.run((ctx) => ctx.db.get(sourceId)))?.activeExtractionAttemptId,
       ).toBe(attemptId);
@@ -1530,7 +1533,7 @@ describe("Extraction completion", () => {
       );
   });
   test("saving identical text during an in-flight call still completes current without re-admission", async () => {
-    const { t, sourceId } = await setup();
+    const { t, operator, sourceId } = await setup();
     const started = await t.mutation(internal.extractInternal.beginExtraction, {
       sourceId,
       model: "test",
@@ -1542,9 +1545,10 @@ describe("Extraction completion", () => {
         lease: "running",
       }),
     ).toBe(true);
-    await t
-      .withIdentity({ subject: "operator" })
-      .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+    await operator.mutation(api.sources.updateText, {
+      id: sourceId,
+      rawText: text,
+    });
     await t.mutation(internal.extractInternal.retainExtractionResult, {
       attemptId,
       result,
@@ -1572,7 +1576,7 @@ describe("Extraction completion", () => {
   test.each([false, true])(
     "a legacy import retires worker ownership before another identical-text save, force=%s",
     async (force) => {
-      const { t, sourceId } = await setup();
+      const { t, operator, sourceId } = await setup();
       const original = await t.mutation(
         internal.extractInternal.beginExtraction,
         { sourceId, model: "test", force },
@@ -1582,9 +1586,10 @@ describe("Extraction completion", () => {
         attemptId,
         error: "temporary",
       });
-      await t
-        .withIdentity({ subject: "operator" })
-        .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+      await operator.mutation(api.sources.updateText, {
+        id: sourceId,
+        rawText: text,
+      });
       expect(
         await t.mutation(internal.extractInternal.storeOperatorExtraction, {
           sourceId,
@@ -1596,9 +1601,10 @@ describe("Extraction completion", () => {
       expect(
         (await t.run((ctx) => ctx.db.get(sourceId)))?.activeExtractionAttemptId,
       ).toBeUndefined();
-      await t
-        .withIdentity({ subject: "operator" })
-        .mutation(api.sources.updateText, { id: sourceId, rawText: text });
+      await operator.mutation(api.sources.updateText, {
+        id: sourceId,
+        rawText: text,
+      });
       // Scheduled resume bypasses beginExtraction, so its lease admission must refuse too.
       await expect(
         t.mutation(internal.extractInternal.claimGeneration, {
@@ -1898,7 +1904,7 @@ describe("Extraction completion", () => {
     "saving unchanged text re-admits the owned attempt as current, retained output=%s",
     async (retained) =>
       withFrozenScheduler(async () => {
-        const { t, sourceId, begin } = await setup();
+        const { t, operator, sourceId, begin } = await setup();
         const attemptId = await begin();
         if (retained)
           await t.mutation(internal.extractInternal.retainExtractionResult, {
@@ -1909,12 +1915,10 @@ describe("Extraction completion", () => {
           attemptId,
           error: "interrupted",
         });
-        await t
-          .withIdentity({ subject: "operator" })
-          .mutation(api.sources.updateText, {
-            id: sourceId,
-            rawText: text,
-          });
+        await operator.mutation(api.sources.updateText, {
+          id: sourceId,
+          rawText: text,
+        });
         expect(await begin()).toBe(attemptId);
         expect((await t.run((ctx) => ctx.db.get(sourceId)))?.status).toBe(
           "extracting",

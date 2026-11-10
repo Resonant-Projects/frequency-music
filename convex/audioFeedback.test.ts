@@ -12,6 +12,7 @@ import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import { modules } from "../harness/modules";
 import { decisionProposeArgsZ } from "./shared/docketTools";
+import { asWriter } from "./testHelpers";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -32,6 +33,13 @@ const proposal = {
 async function setup() {
   const t = convexTest(schema, modules);
   const ids = await t.run(async (ctx) => {
+    const draft = {
+      status: "draft",
+      visibility: "private",
+      createdBy: "system",
+      createdAt: 1,
+      updatedAt: 1,
+    } as const;
     const storageId = await ctx.storage.store(new Blob(["audio"]));
     const hypothesisId = await ctx.db.insert("hypotheses", {
       title: "Hypothesis",
@@ -39,11 +47,7 @@ async function setup() {
       hypothesis: "Premise",
       rationaleMd: "Rationale",
       sourceIds: [],
-      status: "draft",
-      visibility: "private",
-      createdBy: "system",
-      createdAt: 1,
-      updatedAt: 1,
+      ...draft,
     });
     const recipeId = await ctx.db.insert("recipes", {
       hypothesisId,
@@ -51,11 +55,7 @@ async function setup() {
       bodyMd: "Protocol",
       parameters: [],
       dawChecklist: [],
-      status: "draft",
-      visibility: "private",
-      createdBy: "system",
-      createdAt: 1,
-      updatedAt: 1,
+      ...draft,
     });
     const base = {
       role: "delivery" as const,
@@ -136,7 +136,7 @@ async function setup() {
       takeId,
     };
   });
-  return { t, human: t.withIdentity({ subject: "human" }), ...ids };
+  return { t, human: await asWriter(t, "human"), ...ids };
 }
 
 /** A render as the media lane stores it: a WAV master and its MP3 delivery,
@@ -350,9 +350,10 @@ describe("general audio feedback", () => {
       "This request ID was already used for a different rating.",
     );
     // Another person may reuse the same client ID without colliding.
-    const other = await t
-      .withIdentity({ subject: "someone-else" })
-      .mutation(api.audioFeedback.submit, args);
+    const other = await (await asWriter(t, "someone-else")).mutation(
+      api.audioFeedback.submit,
+      args,
+    );
     expect(other.replayed).toBe(false);
     await expect(
       human.mutation(api.audioFeedback.submit, {
