@@ -24,7 +24,7 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
-    "vite-plus": "1.4.0",
+    "vite-plus": "1.6.0",
     "@effect/tsgo": "0.67.3"
   },
   "overrides": {

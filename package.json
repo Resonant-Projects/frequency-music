@@ -63,15 +63,15 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "varlock": "^1.22.0",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
-    "vite-plus": "1.4.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
+    "vite-plus": "1.6.0",
     "@effect/tsgo": "0.67.3"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
     "ws": "^8.21.0"
   },
   "devEngines": {
