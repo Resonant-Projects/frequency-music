@@ -1,8 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
+  // Only the fixture server is reachable; baseURL names it (127.0.0.1, or
+  // localhost when the browser comes from the homelab pool).
+  const fixtureHost = new URL(baseURL ?? "http://127.0.0.1").hostname;
   await page.route("**/*", (route) =>
-    new URL(route.request().url()).hostname === "127.0.0.1"
+    new URL(route.request().url()).hostname === fixtureHost
       ? route.continue()
       : route.abort(),
   );

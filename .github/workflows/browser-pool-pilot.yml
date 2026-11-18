@@ -1,0 +1,81 @@
+name: Browser Pool Pilot
+
+# Playwright browser pool pilot (keithce/homelab-infra ADR 0015). Runs the
+# web/tests/listen fixture suite on frequency-arc with Chromium from the
+# cluster's browser pool. Not a required check; ci.yml and its
+# FREQUENCY_ARC_*_ENABLED routing are unchanged. The pool's browser maps
+# localhost to this runner pod, so the page keeps a localhost origin.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - ".github/workflows/browser-pool-pilot.yml"
+      - "web/tests/listen/**"
+      - "web/package.json"
+      - "web/bun.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-pool-pilot-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pool-listen:
+    name: Listen suite through the browser pool (pilot)
+    # Only this repository, and never fork PRs, reach the restricted ARC runner.
+    if: >-
+      github.repository == 'Resonant-Projects/frequency-music' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: frequency-arc
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    env:
+      # Keep cache archives portable across GARM and ARC workspace layouts.
+      BUN_INSTALL_CACHE_DIR: ${{ github.workspace }}/.cache/bun
+      # Every browser comes from the pool; nothing is downloaded here.
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.4.2"
+          no-cache: true
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
+        with:
+          node-version: "26"
+          cache: true
+          run-install: false
+      # The fixture imports convex/_generated, whose packages resolve from root.
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      - run: bun install --frozen-lockfile
+      - run: vpx panda codegen && vpx panda cssgen
+      - name: Point Playwright at the browser pool
+        run: |
+          pod_ip="$(hostname -i | awk '{print $1}')"
+          # `--` stops Node reading the Chromium flag as one of its own options.
+          arg="$(node -p 'encodeURIComponent(process.argv[1])' -- "--host-resolver-rules=MAP localhost ${pod_ip}")"
+          endpoint="ws://moon.browser-pool:4444/playwright/chromium?arg=${arg}"
+          echo "PLAYWRIGHT_BROWSER_POOL_WS_ENDPOINT=${endpoint}" >> "$GITHUB_ENV"
+          echo "Runner ${RUNNER_NAME}, pod ${pod_ip}; pool endpoint ${endpoint}"
+      - name: Run the listen suite through the pool
+        id: listen
+        run: timeout --kill-after=10s 8m vpx playwright test -c tests/listen/playwright.config.ts
+      - name: Upload pool evidence
+        if: ${{ always() && steps.listen.outcome == 'failure' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pool-listen-playwright-evidence
+          path: web/test-results/
+          if-no-files-found: ignore
+          retention-days: 3
