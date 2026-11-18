@@ -33,7 +33,7 @@
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@pandacss/dev": "^2.2.0",
     "@pandacss/preset-base": "^2.2.0",
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.5",
     "@types/three": "^0.186.0",
     "typescript": "^7.0.2",
