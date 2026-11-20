@@ -4,6 +4,7 @@ import App from "./App";
 import {
   AppClerkProvider,
   createConvexClerkAuthAdapter,
+  localDevSignInBlocked,
 } from "./integrations/clerk";
 import { ConvexProvider } from "./integrations/convex";
 import "./index.css";
@@ -39,10 +40,27 @@ const convexClient = new ConvexClient(convexUrl, {
 
 const authBypass = import.meta.env.VITE_AUTH_BYPASS === "1";
 
+// A live key on localhost cannot come back from the account portal. Skip
+// Clerk startup so the gate can show the local HTTPS URL instead of failing
+// the load or redirecting to the production app.
+const devSignInBlocked =
+  !authBypass &&
+  localDevSignInBlocked({
+    dev: import.meta.env.DEV,
+    publishableKey: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ?? "",
+    origin: {
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      port: window.location.port,
+    },
+  });
+
 const ConvexApp = () => (
   <ConvexProvider
     client={convexClient}
-    useAuth={authBypass ? undefined : createConvexClerkAuthAdapter}
+    useAuth={
+      authBypass || devSignInBlocked ? undefined : createConvexClerkAuthAdapter
+    }
   >
     <App />
   </ConvexProvider>
@@ -52,7 +70,7 @@ const ConvexApp = () => (
 // Clerk context that AppClerkProvider sets up around it.
 render(
   () =>
-    authBypass ? (
+    authBypass || devSignInBlocked ? (
       <ConvexApp />
     ) : (
       <AppClerkProvider>

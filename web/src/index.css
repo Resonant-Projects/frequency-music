@@ -113,6 +113,11 @@ body {
   color: color-mix(in srgb, var(--colors-zodiac-cream) 70%, transparent);
 }
 
+.route-placeholder a {
+  color: var(--colors-zodiac-cream);
+  overflow-wrap: anywhere;
+}
+
 /* ── Zodiac scrollbar — reusable for any scrollable container ── */
 
 .zodiac-scroll::-webkit-scrollbar {
