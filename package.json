@@ -63,7 +63,7 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "varlock": "^1.22.0",
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8000",
     "vite-plus": "1.7.0",
     "@effect/tsgo": "0.67.3"
   },
@@ -71,7 +71,7 @@
     "typescript": "^7.0.2"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.6.0",
+    "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8000",
     "ws": "^8.21.0"
   },
   "devEngines": {
