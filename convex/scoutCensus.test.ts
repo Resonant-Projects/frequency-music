@@ -155,6 +155,11 @@ describe("source scout sector census", () => {
         await concept(ctx, `old off-mission ${index}`, "production", "off");
       }
       await concept(ctx, "newer waveguide model", "production", "on", 1);
+      // Newer off-mission rows too, so a limit-then-filter scan fails in
+      // either direction.
+      for (let index = 0; index < 60; index++) {
+        await concept(ctx, `new off-mission ${index}`, "production", "off");
+      }
     });
     const { thinDomains } = await t.query(api.correspondences.scoutTargets, {});
     expect(thinDomains).toEqual([
