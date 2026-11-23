@@ -141,5 +141,16 @@ export const RESEARCH_AREAS = [
 export const BOOTSTRAP_RESEARCH_DOMAINS: readonly string[] =
   RESEARCH_AREAS.flatMap((area) => [...area.domains]);
 
+/**
+ * Registry domains Source Scout never targets or counts: the seed registry's
+ * two off-mission capture buckets, and `biofield` (bioelectromagnetic and
+ * wellness models, outside the program in docs/vision-and-meaning.md).
+ */
+export const SCOUT_EXCLUDED_DOMAINS: readonly string[] = [
+  "biofield",
+  "general-science",
+  "ml-audio-engineering",
+];
+
 export const RESEARCH_SOURCE_GUIDANCE = `Include foundational university textbook chapters, formal mathematical results, empirical studies, negative or contradictory results, reproducible DSP methods, specialist tuning and performance practice, and author or instrument documentation when they explain a concrete musical mechanism. A paper need not mention music in its title if its acoustic, perceptual, or mathematical mechanism has a specific musical application. Incidental ML, speech benchmarks, unrelated software, and generic science remain off-mission.
 Separate physical mechanisms, measured listener responses, formal models, practitioner observations, opinion, and speculative inspiration. Musical stability or finishedness, pleasantness, roughness, harmonicity, familiarity, and therapeutic outcomes are different constructs. Preserve measured outcomes, participant background, stimuli, register, timbre, level, and study limitations. Do not infer therapeutic effects from preference or infer physical causation from a visual resemblance. A preprint or opinion is not an independent peer-reviewed experiment; an abstract does not supply unreported methods. Textbook chapters from one work are not independent corroboration.`;

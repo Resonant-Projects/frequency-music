@@ -205,7 +205,7 @@ export const AGENT_TOOL_MANIFEST: readonly AgentToolManifestEntry[] = [
     "read",
     "correspondences:scoutTargets",
     "Fetch under-represented on-mission domains and low-evidence conjectures for need-directed source discovery.",
-    "Source-scout target selection only; results are bounded to five domains and five conjectures.",
+    "Scout targeting; 5 domains with sector-pooled counts, off-mission excluded; 5 conjectures.",
   ),
   entry(
     "listTranscriptBacklog",
