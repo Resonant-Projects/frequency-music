@@ -49,7 +49,7 @@
   "overrides": {
     "esbuild": "0.28.2",
     "hono": "4.13.16",
-    "@hono/node-server": "2.1.9",
+    "@hono/node-server": "2.1.11",
     "postcss": "8.5.33",
     "ws": "^8.21.0",
     "extract-zip": "npm:@electron-internal/extract-zip@1.0.8"
