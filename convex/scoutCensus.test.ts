@@ -122,7 +122,7 @@ async function seedLiveShapedCensus(ctx: MutationCtx) {
 }
 
 describe("source scout sector census", () => {
-  test("counts sector evidence held under a non-registry domain name", async () => {
+  test("counts sector evidence held under a non-bootstrap registry domain", async () => {
     const t = convexTest(schema, modules);
     await t.run(async (ctx) => {
       await domain(ctx, "production");
