@@ -30,17 +30,21 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # the build cache was populated; the floor check fails a stale mirror rather
 # than publishing an unpatched OpenSSL (CVE-2026-75804, CVE-2026-84782) or
 # expat (CVE-2026-66046, CVE-2026-76956, CVE-2026-76957, CVE-2026-77214,
-# CVE-2026-93990).
-ARG DEBIAN_SECURITY_REFRESH=2026-10-17
+# CVE-2026-93990) or krb5 (CVE-2026-107364, CVE-2026-112315, CVE-2026-112316,
+# CVE-2026-112317), which ffmpeg and SuperCollider pull in.
+ARG DEBIAN_SECURITY_REFRESH=2026-11-23
 ARG OPENSSL_FLOOR=3.5.7-1~deb13u3
 ARG EXPAT_FLOOR=2.9.0-1~deb13u1
+ARG KRB5_FLOOR=1.21.3-5+deb13u2
 RUN echo "security refresh ${DEBIAN_SECURITY_REFRESH}" \
     && apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
        supercollider-server supercollider-language \
     && for check in "libssl3t64 $OPENSSL_FLOOR" "openssl $OPENSSL_FLOOR" \
-         "libexpat1 $EXPAT_FLOOR"; do \
+         "libexpat1 $EXPAT_FLOOR" "libkrb5-3 $KRB5_FLOOR" \
+         "libgssapi-krb5-2 $KRB5_FLOOR" "libk5crypto3 $KRB5_FLOOR" \
+         "libkrb5support0 $KRB5_FLOOR"; do \
          read -r pkg floor <<< "$check"; \
          installed="$(dpkg-query -W -f='${Version}' "$pkg")"; \
          dpkg --compare-versions "$installed" ge "$floor" \
