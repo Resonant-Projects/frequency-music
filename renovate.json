@@ -25,13 +25,14 @@
       "groupName": "Convex dependencies"
     },
     {
-      "description": "Update Vite Plus and its aliased packages together.",
+      "description": "Update Vite Plus and its aliased packages together. Since vite-plus 1.7.0 the core alias carries the bundled Vite version (8.3.8000 for Vite 8.3.8), so a core major can ship inside a vite-plus minor; keep majors in the same branch so the pair never splits. A major in the group still holds the whole branch for dashboard approval.",
       "matchPackageNames": [
         "vite-plus",
         "@voidzero-dev/vite-plus-core",
         "@voidzero-dev/vite-plus-test"
       ],
-      "groupName": "Vite Plus"
+      "groupName": "Vite Plus",
+      "separateMajorMinor": false
     },
     {
       "description": "Bun runtime upgrades must also update CI and Dockerfile pins.",
