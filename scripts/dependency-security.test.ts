@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vite-plus/test";
+import { AUDITED_CONVEX_VERSION } from "./lib/convex-provenance";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -26,6 +27,15 @@ function atLeast(version: string, floor: string): boolean {
   return true;
 }
 
+/** GHSA-qw8j-4xj7-6f28 and GHSA-9mw5-7p28-rvv4 are both fixed in convex 1.48.0. */
+const CONVEX_SECURITY_FLOOR = "1.48.0";
+
+/** The lowest version a `^x.y.z`, `~x.y.z`, or exact `x.y.z` spec allows;
+ * undefined for any other shape, so an unrecognised spec fails the floor. */
+function specLowerBound(spec: string | undefined): string | undefined {
+  return spec?.match(/^[\^~]?(\d+\.\d+\.\d+)$/)?.[1];
+}
+
 /** Patched lines: 7.5.11+ on 7.x, 8.21.0+ on 8.x, and any later major. */
 function isAffectedWs(version: string): boolean {
   const [major = 0] = version.split(".").map(Number);
@@ -37,25 +47,72 @@ function isAffectedWs(version: string): boolean {
 
 describe("Convex dependency security floor", () => {
   const workspaces = [
-    { directory: root, convex: "^1.48.0" },
-    { directory: join(root, "agent"), convex: "1.48.0" },
-    { directory: join(root, "web"), convex: "^1.48.0" },
-    { directory: join(root, "media"), convex: "1.48.0" },
+    { directory: root },
+    { directory: join(root, "agent") },
+    { directory: join(root, "web") },
+    { directory: join(root, "media") },
   ];
 
   test.each(workspaces)(
-    "$directory uses Convex 1.48 and resolves patched WebSocket versions",
-    ({ directory, convex }) => {
+    `$directory resolves Convex at or above its patched security floor (${CONVEX_SECURITY_FLOOR}) and patched WebSocket versions`,
+    ({ directory }) => {
       const manifest = readJson(join(directory, "package.json"));
       const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
+      const convexVersions = resolvedVersions(lockfile, "convex");
       const wsVersions = resolvedVersions(lockfile, "ws");
 
-      expect(manifest.dependencies?.convex).toBe(convex);
-      expect(lockfile).toContain('"convex@1.48.0"');
+      const lowerBound = specLowerBound(manifest.dependencies?.convex);
+      expect(
+        lowerBound,
+        `convex spec ${manifest.dependencies?.convex}`,
+      ).toBeDefined();
+      expect(atLeast(lowerBound ?? "0.0.0", CONVEX_SECURITY_FLOOR)).toBe(true);
+      expect(convexVersions.length).toBeGreaterThan(0);
+      for (const version of convexVersions) {
+        expect(
+          atLeast(version, CONVEX_SECURITY_FLOOR),
+          `convex@${version}`,
+        ).toBe(true);
+      }
       expect(wsVersions.length).toBeGreaterThan(0);
       expect(wsVersions.filter(isAffectedWs)).toEqual([]);
     },
   );
+
+  test("the root workspace resolves exactly the audited Convex CLI used for deploys", () => {
+    const lockfile = readFileSync(join(root, "bun.lock"), "utf8");
+    expect(resolvedVersions(lockfile, "convex")).toEqual([
+      AUDITED_CONVEX_VERSION,
+    ]);
+  });
+
+  test("the Convex floor rejects every unpatched version", () => {
+    for (const spec of [
+      "^1.47.0",
+      "~1.47.9",
+      "1.46.0",
+      "0.99.0",
+      ">=1.48.0",
+      "latest",
+      undefined,
+    ]) {
+      const lowerBound = specLowerBound(spec);
+      expect(
+        lowerBound !== undefined && atLeast(lowerBound, CONVEX_SECURITY_FLOOR),
+        String(spec),
+      ).toBe(false);
+    }
+    for (const spec of ["^1.48.0", "1.48.0", "~1.51.0", "1.51.0", "2.0.0"]) {
+      const lowerBound = specLowerBound(spec);
+      expect(
+        lowerBound !== undefined && atLeast(lowerBound, CONVEX_SECURITY_FLOOR),
+        spec,
+      ).toBe(true);
+    }
+    expect(
+      resolvedVersions('"convex": ["convex@1.47.2", "", {}]', "convex"),
+    ).toEqual(["1.47.2"]);
+  });
 
   test.each(workspaces)(
     "$directory resolves Hono only at or above its patched security floor (4.13.7)",
