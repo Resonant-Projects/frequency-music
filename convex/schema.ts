@@ -1225,11 +1225,10 @@ export default defineSchema({
 
   /**
    * Canonical concepts - the "nodes" of our knowledge graph
-   * Examples: "just intonation", "432 Hz", "beating", "Tonnetz"
    */
   concepts: defineTable({
     name: v.string(), // Canonical name (lowercase, normalized)
-    displayName: v.string(), // Human-readable display name
+    displayName: v.string(),
     description: v.optional(v.string()),
     aliases: v.array(v.string()), // Alternative names/spellings
 
@@ -1260,6 +1259,7 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_domain", ["domain"])
+    .index("by_domain_relevance", ["domain", "missionRelevance"])
     .index("by_missionRelevance", ["missionRelevance"])
     .index("by_missionRelevance_classifiedAt_createdAt", [
       "missionRelevance",

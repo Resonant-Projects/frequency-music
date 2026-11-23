@@ -20,7 +20,7 @@ export function foundationQueries(targets: ScoutTargets): ScoutQuery[] {
     return {
       query: `${target.domain} ${area?.foundationQuery ?? "music acoustics primary research"}`,
       targetGap: `thin-domain:${target.domain}`,
-      rationale: `Develop foundational mechanisms for ${target.domain}; the bounded census found ${target.onMissionConceptCount} on-mission concepts and ${target.sourceCount} linked sources.`,
+      rationale: `Develop foundational mechanisms for ${target.domain}; its research area's bounded census found ${target.onMissionConceptCount} on-mission concepts and ${target.sourceCount} linked sources.`,
     };
   });
 }

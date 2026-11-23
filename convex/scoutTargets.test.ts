@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vite-plus/test";
 import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { scoutConceptLimitPerDomain } from "./correspondences";
+import { scoutConceptLimitPerDomain } from "./scoutCensus";
 import schema from "./schema";
 import { BOOTSTRAP_RESEARCH_DOMAINS } from "./shared/researchTopics";
 import { modules } from "../harness/modules";
@@ -202,10 +202,12 @@ describe("source scout target census", () => {
       }
     });
     const result = await t.query(api.correspondences.scoutTargets, {});
+    // Every recent slug infers to `music`, so the pooled sector count shows
+    // each domain's on-mission concept was sampled.
     expect(result.thinDomains).toContainEqual({
       domain: "recent-0",
       sectorMapping: "music",
-      onMissionConceptCount: 1,
+      onMissionConceptCount: 50,
       sourceCount: 0,
     });
   });
