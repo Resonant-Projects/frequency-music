@@ -30,6 +30,23 @@ function atLeast(version: string, floor: string): boolean {
 /** GHSA-qw8j-4xj7-6f28 and GHSA-9mw5-7p28-rvv4 are both fixed in convex 1.48.0. */
 const CONVEX_SECURITY_FLOOR = "1.48.0";
 
+/** Every resolved version of a package, prereleases included, so the floor
+ * check sees each copy the lockfile holds. */
+function resolvedFullVersions(lockfile: string, name: string): string[] {
+  const pattern = new RegExp(`\\["${name}@([^"]+)"`, "g");
+  return [...lockfile.matchAll(pattern)].map((match) => match[1] as string);
+}
+
+/** True when a stable or prerelease SemVer version meets a stable floor. A
+ * prerelease sorts below its own release, and any other shape fails. */
+function meetsFloor(version: string, floor: string): boolean {
+  const match = version.match(/^(\d+\.\d+\.\d+)(-[0-9A-Za-z.-]+)?$/);
+  if (!match) return false;
+  const release = match[1] as string;
+  if (match[2] === undefined) return atLeast(release, floor);
+  return release !== floor && atLeast(release, floor);
+}
+
 /** The lowest version a `^x.y.z`, `~x.y.z`, or exact `x.y.z` spec allows;
  * undefined for any other shape, so an unrecognised spec fails the floor. */
 function specLowerBound(spec: string | undefined): string | undefined {
@@ -58,7 +75,7 @@ describe("Convex dependency security floor", () => {
     ({ directory }) => {
       const manifest = readJson(join(directory, "package.json"));
       const lockfile = readFileSync(join(directory, "bun.lock"), "utf8");
-      const convexVersions = resolvedVersions(lockfile, "convex");
+      const convexVersions = resolvedFullVersions(lockfile, "convex");
       const wsVersions = resolvedVersions(lockfile, "ws");
 
       const lowerBound = specLowerBound(manifest.dependencies?.convex);
@@ -70,7 +87,7 @@ describe("Convex dependency security floor", () => {
       expect(convexVersions.length).toBeGreaterThan(0);
       for (const version of convexVersions) {
         expect(
-          atLeast(version, CONVEX_SECURITY_FLOOR),
+          meetsFloor(version, CONVEX_SECURITY_FLOOR),
           `convex@${version}`,
         ).toBe(true);
       }
@@ -80,10 +97,10 @@ describe("Convex dependency security floor", () => {
   );
 
   test("the root workspace resolves exactly the audited Convex CLI used for deploys", () => {
+    // convex-deploy loads the top-level package; nested copies only need the floor.
     const lockfile = readFileSync(join(root, "bun.lock"), "utf8");
-    expect(resolvedVersions(lockfile, "convex")).toEqual([
-      AUDITED_CONVEX_VERSION,
-    ]);
+    const topLevel = lockfile.match(/^\s*"convex": \["convex@([^"]+)"/m)?.[1];
+    expect(topLevel).toBe(AUDITED_CONVEX_VERSION);
   });
 
   test("the Convex floor rejects every unpatched version", () => {
@@ -109,9 +126,18 @@ describe("Convex dependency security floor", () => {
         spec,
       ).toBe(true);
     }
-    expect(
-      resolvedVersions('"convex": ["convex@1.47.2", "", {}]', "convex"),
-    ).toEqual(["1.47.2"]);
+    const lockfile =
+      '"convex": ["convex@1.51.0", "", {}],\n"x/convex": ["convex@1.48.0-rc.1", "", {}]';
+    expect(resolvedFullVersions(lockfile, "convex")).toEqual([
+      "1.51.0",
+      "1.48.0-rc.1",
+    ]);
+    for (const version of ["1.47.2", "1.48.0-rc.1", "1.47.9-beta", "next"]) {
+      expect(meetsFloor(version, CONVEX_SECURITY_FLOOR), version).toBe(false);
+    }
+    for (const version of ["1.48.0", "1.48.1-rc.1", "1.51.0"]) {
+      expect(meetsFloor(version, CONVEX_SECURITY_FLOOR), version).toBe(true);
+    }
   });
 
   test.each(workspaces)(
