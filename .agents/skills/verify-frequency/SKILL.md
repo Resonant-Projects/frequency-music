@@ -171,6 +171,15 @@ APP_ENV=test vp exec playwright test --config tests/feedback/playwright.config.t
   feedback.spec.ts --workers=1 --max-failures=1 --timeout=8000 --reporter=list
 ```
 
+Keep `PLAYWRIGHT_BROWSER_POOL_WS_ENDPOINT` unset for these local runs. Since
+[PR #260](https://github.com/Resonant-Projects/frequency-music/pull/260) a set
+value makes the listen suite connect to a remote browser pool, serve on
+`localhost` and bind its fixture server to `0.0.0.0`, which leaves this
+loopback-only boundary. Only `.github/workflows/browser-pool-pilot.yml` sets it.
+A Playwright version bump needs `vp exec playwright install chromium` again; the
+2026-11-24 listen run first failed 3/3 on the missing 1.65.1 browser, then
+passed 3/3 after that install.
+
 The old feedback-fixture `createAction` import failure was repaired by
 [PR #188](https://github.com/Resonant-Projects/frequency-music/pull/188), merged
 2026-10-22. All 13 feedback/Docket behavior tests pass at the current checkpoint.
