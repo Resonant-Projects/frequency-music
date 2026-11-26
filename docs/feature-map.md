@@ -1,6 +1,6 @@
 # Frequency Music feature map
 
-Audit baseline: **2026-10-22**, `a9b72846`. **V26** is the [2026-10-26 local verification][v26] at `ca495094` in [PR #229][p229]. **V10** is the [2026-11-10 checkpoint][v10] at `c323b26c` after [#254][p254]/[#255][p255]. Evidence is local except read-only [11-26][v1126] production reads.
+Audit baseline: **2026-10-22**, `a9b72846`. **V26** is the [2026-10-26 local verification][v26] at `ca495094` in [PR #229][p229]. **V10** is the [2026-11-10 checkpoint][v10] at `c323b26c` after [#254][p254]/[#255][p255]. Evidence is local except [11-26][v1126] CI runs and read-only prod reads.
 
 The intended loop is **source → extraction/claims → correspondence/hypothesis → recipe → composition/render → listening → accumulated learning/editorial**. Intent is grounded in schema, APIs, route/component calls, job registries, stop paths and plans, apart from aspirational prose.
 

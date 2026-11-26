@@ -6,7 +6,7 @@ This follow-up covers the four items that the [2026-11-24 upkeep](gaps.md#upkeep
 |---|---|---|
 | Browser-pool listen path | M06 / [#260](https://github.com/Resonant-Projects/frequency-music/pull/260) | **Verified in CI.** Six green `push` runs on main, each 3/3 through the pool. |
 | Scout census on real data | R06 / [#264](https://github.com/Resonant-Projects/frequency-music/pull/264) | **Not live as of the 11-26 read.** Production returned the pre-#264 census. |
-| Live LangSmith trace link | O01 / [#261](https://github.com/Resonant-Projects/frequency-music/pull/261) | **API-verified.** Production worker URLs use the new form, and every id in them resolves. |
+| Live LangSmith trace link | O01 / [#261](https://github.com/Resonant-Projects/frequency-music/pull/261) | **API-verified for the 2 sampled links.** Both production URLs since 11-24 use the new form and their ids resolve; browser click pending. |
 | FORBIDDEN surfacing | A01 / O05 / G15 / [#258](https://github.com/Resonant-Projects/frequency-music/issues/258) | **Observed locally.** Every control shows an inline alert, and nothing persists. On /ingest, the Ingest URL alert renders off screen. |
 
 ## 1. Browser-pool path for the listen fixtures (M06)
@@ -39,7 +39,7 @@ This is CI evidence only. Local fixture runs keep the endpoint unset.
 This was one read-only query, approved by Keith, run at 2026-11-26T02:00:48Z. `correspondences:scoutTargets` takes no arguments and has no auth check, so no credential was used.
 
 ```sh
-curl -sS -X POST https://convex.resonantprojects.art/api/query \
+curl -sS -o out.json -w '%{http_code}\n' -X POST https://convex.resonantprojects.art/api/query \
   -H 'Content-Type: application/json' \
   -d '{"path":"correspondences:scoutTargets","args":{},"format":"json"}'
 ```
@@ -67,7 +67,7 @@ Convex deploys are manual: no workflow deploys on merge, and `convex-provenance.
 This was a read-only query, approved by Keith. `agentRuns:listRecentPublic` is an ungated public query.
 
 ```sh
-curl -sS -X POST https://convex.resonantprojects.art/api/query \
+curl -sS -o out.json -w '%{http_code}\n' -X POST https://convex.resonantprojects.art/api/query \
   -H 'Content-Type: application/json' \
   -d '{"path":"agentRuns:listRecentPublic","args":{"limit":50},"format":"json"}'
 ```
@@ -78,8 +78,8 @@ I checked both new-form URLs against the LangSmith REST API:
 
 ```sh
 # run with LANGSMITH_API_KEY and LANGSMITH_ENDPOINT from `vpx varlock run --`
-curl -sS -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/runs/$RUN_ID"
-curl -sS -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/sessions/$PROJECT_ID"
+curl -sS -o run.json -w "%{http_code}\n" -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/runs/$RUN_ID"
+curl -sS -o session.json -w "%{http_code}\n" -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/sessions/$PROJECT_ID"
 ```
  The key came from `op://Homelab Runtime/langsmith-api-key/credential` through `vpx varlock run` at the repo root, and was never printed. `agent/.env.schema` failed to resolve unrelated items, so it couldn't be used.
 
