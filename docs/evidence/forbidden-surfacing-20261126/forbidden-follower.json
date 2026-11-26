@@ -1,0 +1,120 @@
+{
+  "role": "follower",
+  "subject": "ps7egk5wqmssggwrjxt95e492n8jzjpd",
+  "observations": [
+    {
+      "probe": "ingest-url",
+      "path": "/ingest",
+      "alertInViewport": false,
+      "alerts": ["URL ingest failed: You do not have access to this."],
+      "statuses": [],
+      "writes": ["sources:createFromUrlAndQueue"],
+      "refusals": [
+        {
+          "udfPath": "sources:createFromUrlAndQueue",
+          "errorData": {
+            "code": "FORBIDDEN",
+            "message": "This action needs a collaborator or admin role"
+          }
+        }
+      ],
+      "forbiddenFromBackend": true,
+      "console": [
+        "error: [CONVEX A(sources:createFromUrlAndQueue)] [Request ID: d5d6c332d2faad42] Server Error\nUncaught ConvexError: {\"code\":\"FORBIDDEN\",\"message\":\"This action needs a collaborator or admin role\"}\n    at requireAuth (../../convex/auth.ts:195:4)\n    at async handler (../convex/sources.ts:1313:4)\n"
+      ],
+      "pageErrors": []
+    },
+    {
+      "probe": "add-feed",
+      "path": "/ingest",
+      "alertInViewport": true,
+      "alerts": ["Feed creation failed: You do not have access to this."],
+      "statuses": [],
+      "writes": ["admin:createFeed"],
+      "refusals": [
+        {
+          "udfPath": "admin:createFeed",
+          "errorData": {
+            "code": "FORBIDDEN",
+            "message": "This action needs a collaborator or admin role"
+          }
+        }
+      ],
+      "forbiddenFromBackend": true,
+      "console": [
+        "error: [CONVEX M(admin:createFeed)] [Request ID: 7a1acd1418532b63] Server Error\nUncaught ConvexError: {\"code\":\"FORBIDDEN\",\"message\":\"This action needs a collaborator or admin role\"}\n    at requireAuth (../../convex/auth.ts:195:4)\n    at async handler (../convex/admin.ts:69:4)\n"
+      ],
+      "pageErrors": []
+    },
+    {
+      "probe": "poll-feeds",
+      "path": "/ingest",
+      "alertInViewport": true,
+      "alerts": ["Feed poll failed: You do not have access to this."],
+      "statuses": [],
+      "writes": ["admin:pollFeedsNow"],
+      "refusals": [
+        {
+          "udfPath": "admin:pollFeedsNow",
+          "errorData": {
+            "code": "FORBIDDEN",
+            "message": "This action needs a collaborator or admin role"
+          }
+        }
+      ],
+      "forbiddenFromBackend": true,
+      "console": [
+        "error: [CONVEX A(admin:pollFeedsNow)] [Request ID: 966190126b0ce700] Server Error\nUncaught ConvexError: {\"code\":\"FORBIDDEN\",\"message\":\"This action needs a collaborator or admin role\"}\n    at requireAuth (../../convex/auth.ts:195:4)\n    at async handler (../convex/admin.ts:246:28)\n"
+      ],
+      "pageErrors": []
+    },
+    {
+      "probe": "create-hypothesis",
+      "path": "/hypotheses",
+      "alertInViewport": true,
+      "alerts": [
+        "Failed to create hypothesis: You do not have access to this."
+      ],
+      "statuses": [
+        "No hypotheses yet. Generate one from an extraction or create one above."
+      ],
+      "writes": ["hypotheses:create"],
+      "refusals": [
+        {
+          "udfPath": "hypotheses:create",
+          "errorData": {
+            "code": "FORBIDDEN",
+            "message": "This action needs a collaborator or admin role"
+          }
+        }
+      ],
+      "forbiddenFromBackend": true,
+      "console": [
+        "error: [CONVEX M(hypotheses:create)] [Request ID: a10a97952048bea1] Server Error\nUncaught ConvexError: {\"code\":\"FORBIDDEN\",\"message\":\"This action needs a collaborator or admin role\"}\n    at requireAuth (../../convex/auth.ts:195:4)\n    at async handler (../../convex/hypotheses.ts:245:46)\n"
+      ],
+      "pageErrors": []
+    },
+    {
+      "probe": "admin-batch-extraction",
+      "path": "/admin",
+      "alertInViewport": true,
+      "alerts": ["Batch extraction failed: You do not have access to this."],
+      "statuses": [],
+      "writes": ["workflows:startBatchExtraction"],
+      "refusals": [
+        {
+          "udfPath": "workflows:startBatchExtraction",
+          "errorData": {
+            "code": "FORBIDDEN",
+            "message": "This action needs a collaborator or admin role"
+          }
+        }
+      ],
+      "forbiddenFromBackend": true,
+      "console": [
+        "error: [CONVEX M(workflows:startBatchExtraction)] [Request ID: 652abbd90582b2a9] Server Error\nUncaught ConvexError: {\"code\":\"FORBIDDEN\",\"message\":\"This action needs a collaborator or admin role\"}\n    at requireAuth (../../convex/auth.ts:195:4)\n    at async handler (../convex/workflows.ts:301:6)\n"
+      ],
+      "pageErrors": []
+    }
+  ]
+}
