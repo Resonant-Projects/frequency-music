@@ -25,6 +25,13 @@ export function readRun(run) {
   }
   return { directory, info };
 }
+/** Synthetic identity role: admin (default journeys), follower, or none (no users row). */
+export function localRole() {
+  const role = process.env.LOCAL_CONVEX_ROLE ?? "admin";
+  if (!["admin", "follower", "none"].includes(role))
+    throw new Error("Invalid LOCAL_CONVEX_ROLE");
+  return role;
+}
 export function localClient(run, identity) {
   const { directory, info } = readRun(run);
   const key = readFileSync(resolve(directory, "local-admin-key"), "utf8");

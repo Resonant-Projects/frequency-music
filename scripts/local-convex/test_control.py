@@ -181,6 +181,23 @@ class LocalBoundary(unittest.TestCase):
             control.exercise("proof")
         self.assertEqual([call["timeout"] for call in calls], [120, 900])
 
+    def test_exercise_passes_the_synthetic_role_and_defaults_to_admin(self):
+        roles = []
+        def run(*args, **kwargs):
+            roles.append(kwargs["env"]["LOCAL_CONVEX_ROLE"])
+            return SimpleNamespace(returncode=0)
+        with patch.object(control, "owned"), patch.object(control, "check_source"), \
+             patch.object(control, "_run_bounded", side_effect=run):
+            control.exercise("proof")
+            control.exercise("proof", "none")
+            with self.assertRaisesRegex(ValueError, "Unknown synthetic role"):
+                control.exercise("proof", "collaborator")
+        self.assertEqual(roles, ["admin", "admin", "none", "none"])
+
+    def test_role_runs_select_the_refusal_probe_not_the_writer_journeys(self):
+        config = (control.REPO / "web/tests/local/playwright.config.ts").read_text()
+        self.assertIn('localRole() === "admin" ? "journeys.spec.ts" : "forbidden.spec.ts"', config)
+
     def test_failed_start_relay_uses_live_handle_before_signalling(self):
         relay = SimpleNamespace(pid=4322, poll=unittest.mock.Mock(return_value=None), wait=unittest.mock.Mock())
         info = {"relay_started": None}

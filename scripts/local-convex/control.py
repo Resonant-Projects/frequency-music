@@ -258,7 +258,10 @@ def deploy(run):
                       "source_exceptions": ["empty crons in disposable copy", "synthetic seed/snapshot module"]}))
 
 
-def exercise(run):
+ROLES = ("admin", "follower", "none")
+
+
+def exercise(run, role="admin"):
     info = load(run)
     owned(info, "container", info["name"])
     check_source(info)
@@ -267,6 +270,9 @@ def exercise(run):
     env = clean_env()
     env["TMPDIR"] = str(directory(run) / "scratch")
     env["LOCAL_CONVEX_RUN"] = run
+    if role not in ROLES:
+        raise ValueError("Unknown synthetic role: " + role)
+    env["LOCAL_CONVEX_ROLE"] = role
     _run_bounded(["node", str(REPO / "scripts/local-convex/seed.mjs"), run],
                  cwd=REPO, env=env, timeout=120)
     _run_bounded([str(REPO / "web/node_modules/.bin/playwright"), "test", "--config",
@@ -395,11 +401,11 @@ def stop(run, info=None):
         raise RuntimeError("Cleanup failed: " + "; ".join(errors))
 
 
-def run_all(run):
+def run_all(run, role="admin"):
     start(run)
     try:
         deploy(run)
-        exercise(run)
+        exercise(run, role)
     finally:
         stop(run)
 
@@ -408,8 +414,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("action", choices=["start", "deploy", "exercise", "stop", "run"])
     parser.add_argument("run_id")
+    parser.add_argument("--role", choices=ROLES, default="admin",
+                        help="synthetic identity for exercise/run; follower and none run the refusal probe")
     args = parser.parse_args()
-    {"start": start, "deploy": deploy, "exercise": exercise, "stop": stop, "run": run_all}[args.action](args.run_id)
+    if args.action in ("exercise", "run"):
+        {"exercise": exercise, "run": run_all}[args.action](args.run_id, args.role)
+    elif args.role != "admin":
+        parser.error("--role applies only to exercise and run")
+    else:
+        {"start": start, "deploy": deploy, "stop": stop}[args.action](args.run_id)
 
 
 if __name__ == "__main__":
