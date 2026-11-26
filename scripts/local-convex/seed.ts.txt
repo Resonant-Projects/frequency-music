@@ -45,14 +45,21 @@ export const snapshot = query({
   }),
 });
 
-// Row count and newest creation time for every application table.
+// FNV-1a over the serialized rows, so an in-place update changes the census.
+function contentHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return hash.toString(16).padStart(8, "0");
+}
+
+// Row count and content hash for every application table.
 export const census = query({
   args: {}, returns: v.any(),
   handler: async (ctx) => {
-    const tables: Record<string, { count: number; newest: number | null }> = {};
+    const tables: Record<string, { count: number; hash: string }> = {};
     for (const name of Object.keys(schema.tables).toSorted()) {
       const rows = await ctx.db.query(name as any).collect();
-      tables[name] = { count: rows.length, newest: rows.at(-1)?._creationTime ?? null };
+      tables[name] = { count: rows.length, hash: contentHash(JSON.stringify(rows)) };
     }
     return tables;
   },

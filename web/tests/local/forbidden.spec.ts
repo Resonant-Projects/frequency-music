@@ -134,20 +134,32 @@ for (const probe of probes) {
     await probe.act(page);
     // Give the mutation/action round trip time to settle and render.
     await page.waitForTimeout(3000);
+    // Only rendered (non-hidden) feedback counts as something the user saw.
     const visible = async (selector: string) =>
-      (await page.locator(selector).allInnerTexts())
+      (await page.locator(selector).filter({ visible: true }).allInnerTexts())
         .map((text) => text.trim())
         .filter(Boolean);
-    // Whether the first alert is on screen where the user clicked, unscrolled.
+    // Whether a rendered alert intersects the viewport where the user clicked.
+    const shownAlerts = page
+      .locator('[role="alert"]')
+      .filter({ visible: true });
     const alertInViewport =
-      (await page.locator('[role="alert"]').count()) > 0
-        ? await page
-            .locator('[role="alert"]')
-            .first()
-            .evaluate((element) => {
-              const box = element.getBoundingClientRect();
-              return box.bottom > 0 && box.top < window.innerHeight;
-            })
+      (await shownAlerts.count()) > 0
+        ? (
+            await shownAlerts.evaluateAll((elements) =>
+              elements.map((element) => {
+                const box = element.getBoundingClientRect();
+                return (
+                  box.width > 0 &&
+                  box.height > 0 &&
+                  box.bottom > 0 &&
+                  box.right > 0 &&
+                  box.top < window.innerHeight &&
+                  box.left < window.innerWidth
+                );
+              }),
+            )
+          ).some(Boolean)
         : null;
     const observation = {
       probe: probe.name,
