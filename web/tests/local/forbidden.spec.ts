@@ -99,7 +99,17 @@ for (const probe of probes) {
     const external: string[] = [];
     const pageErrors: string[] = [];
     const consoleLines: string[] = [];
-    const forbiddenFrames: string[] = [];
+    // Writes sent after the click, matched to their structured responses.
+    let armed = false;
+    const writes = new Map<string, string>();
+    const refusals: { udfPath: string; errorData: unknown }[] = [];
+    const parse = (message: string | Buffer) => {
+      try {
+        return typeof message === "string" ? JSON.parse(message) : null;
+      } catch {
+        return null;
+      }
+    };
     const allowed = [info.frontend, info.backend, info.site];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     page.on("console", (message) => {
@@ -119,11 +129,21 @@ for (const probe of probes) {
         return ws.close();
       }
       const server = ws.connectToServer();
-      ws.onMessage((message) => server.send(message));
+      ws.onMessage((message) => {
+        const sent = parse(message);
+        if (armed && (sent?.type === "Mutation" || sent?.type === "Action"))
+          writes.set(String(sent.requestId), sent.udfPath);
+        server.send(message);
+      });
       server.onMessage((message) => {
-        const text = typeof message === "string" ? message : "";
-        if (text.includes("FORBIDDEN"))
-          forbiddenFrames.push(text.slice(0, 400));
+        const got = parse(message);
+        const udfPath = writes.get(String(got?.requestId));
+        if (
+          udfPath &&
+          (got.type === "MutationResponse" || got.type === "ActionResponse") &&
+          got.success === false
+        )
+          refusals.push({ udfPath, errorData: got.errorData });
         ws.send(message);
       });
     });
@@ -131,6 +151,7 @@ for (const probe of probes) {
     await page.goto(probe.path);
     await page.waitForLoadState("networkidle");
     const before = await census();
+    armed = true;
     await probe.act(page);
     // Give the mutation/action round trip time to settle and render.
     await page.waitForTimeout(3000);
@@ -167,8 +188,16 @@ for (const probe of probes) {
       alertInViewport,
       alerts: await visible('[role="alert"]'),
       statuses: await visible('[role="status"]'),
-      forbiddenFromBackend: forbiddenFrames.length > 0,
-      forbiddenFrame: forbiddenFrames[0] ?? null,
+      writes: [...writes.values()],
+      refusals,
+      forbiddenFromBackend:
+        writes.size > 0 &&
+        refusals.length === writes.size &&
+        refusals.every(
+          (refusal) =>
+            (refusal.errorData as { code?: unknown } | undefined)?.code ===
+            "FORBIDDEN",
+        ),
       console: consoleLines.map((line) => line.slice(0, 400)),
       pageErrors: pageErrors.map((line) => line.slice(0, 400)),
     };
@@ -183,7 +212,7 @@ for (const probe of probes) {
     expect(external, "only owned localhost services").toEqual([]);
     expect(
       observation.forbiddenFromBackend,
-      "backend must refuse with FORBIDDEN",
+      "every write the click sent must be refused with code FORBIDDEN",
     ).toBe(true);
   });
 }

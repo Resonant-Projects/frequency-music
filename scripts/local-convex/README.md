@@ -73,7 +73,8 @@ row was deleted) and runs `web/tests/local/forbidden.spec.ts` in place of the fo
 journeys. Each probe clicks one write control, records the visible
 `role=alert`/`role=status` text, whether that alert is in the viewport, console
 lines and page errors to `forbidden-<role>.json`, and saves a viewport screenshot.
-It asserts only that the backend answered `FORBIDDEN` and that a census of every
+It asserts only that every Convex write the click sent came back with
+structured error code `FORBIDDEN` and that a content-hash census of every
 application table is unchanged; how the UI should surface the refusal is open
 (#258). The default `admin` role is unchanged.
 
