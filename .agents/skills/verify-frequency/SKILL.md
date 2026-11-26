@@ -22,7 +22,10 @@ an audit. Record gaps as **small-fix** or **needs-decision**.
 
 For the latest command results and known failures, read the
 [2026-11-10 checkpoint](../../../docs/feature-map/verification-20261110.md).
-That receipt is local proof at `c323b26c`, not deployment evidence.
+That receipt is local proof at `c323b26c`, not deployment evidence. The
+[2026-11-26 follow-up](../../../docs/feature-map/verification-20261126.md)
+adds pool CI runs, approved read-only production reads (scout census, trace
+URLs) and the local non-writer refusal probe.
 
 Use local files, in-process `convex-test` databases, injected fake tools,
 the isolated browser configs, or the owned local Convex workflow below. `APP_ENV=test` selects the
@@ -122,8 +125,13 @@ the current user; `roleBySubject` and `setRole` are internal. Inspect the local
 seed before each run: `seed.ts.txt` already creates an admin and maps its
 `clerkUserId` to the synthetic identity subject. Both lifecycle variants passed
 all four journeys on 2026-11-10 without changing this seed. No hosted role grant
-or negative-role browser proof follows from that pass; use `authRoles.test.ts`
-for the in-process no-row/follower rejection cases.
+proof follows from that pass; use `authRoles.test.ts` for the in-process
+no-row/follower rejection cases. For the browser view of those refusals, add
+`--role follower` or `--role none` to `run`/`exercise`
+([#270](https://github.com/Resonant-Projects/frequency-music/pull/270)): it runs
+`web/tests/local/forbidden.spec.ts` instead of the journeys and writes
+`forbidden-<role>.json` plus viewport screenshots. On 2026-11-26 both roles
+passed 5/5.
 
 After the build/dependency prerequisites above, run from root with a fresh id:
 
@@ -175,7 +183,9 @@ Keep `PLAYWRIGHT_BROWSER_POOL_WS_ENDPOINT` unset for these local runs. Since
 [PR #260](https://github.com/Resonant-Projects/frequency-music/pull/260) a set
 value makes the listen suite connect to a remote browser pool, serve on
 `localhost` and bind its fixture server to `0.0.0.0`, which leaves this
-loopback-only boundary. Only `.github/workflows/browser-pool-pilot.yml` sets it.
+loopback-only boundary. Only `.github/workflows/browser-pool-pilot.yml` sets it;
+for pool evidence read its main runs (`gh run list --workflow
+browser-pool-pilot.yml`) instead of setting it locally.
 A Playwright version bump needs `vp exec playwright install chromium` again; the
 2026-11-24 listen run first failed 3/3 on the missing 1.65.1 browser, then
 passed 3/3 after that install.
