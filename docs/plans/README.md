@@ -69,6 +69,7 @@ record: [ADR 0001](../adr/0001-split-embedding-spaces-for-passages.md)
 | — | Extraction full-text fix (send all ≤100k chars; not a RAG change) | Implemented 2026-10-17: `EXTRACTION_CONTENT_MAX_CHARS` is 100,000, and Scout capture and recovery inputs derive from it. Prompt version stays `extract_v3`. The Convex and agent-worker deploys are operator-gated, and existing Sources over 30,000 characters keep their 30,000-character Extractions until someone re-extracts them |
 | — | Recipe context (inherits hypothesis pattern) | Follow-on, last |
 | — | Migrate claims/concepts to 3-large | Roadmap follow-on (ADR 0001) |
+| — | [Local embedding evaluation](./2026-11-26-local-embedding-evaluation.md) and [migration](./2026-11-26-local-embedding-migration.md) | Proposed alternative to 3-large for claims and concepts. Evaluate passages first, then migrate the remaining embedding callers after a separate quality check. |
 
 ## 1c. Listen-first program (2026-09-28)
 
