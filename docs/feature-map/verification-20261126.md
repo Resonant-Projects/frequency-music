@@ -5,7 +5,7 @@ This follow-up covers the four items that the [2026-11-24 upkeep](gaps.md#upkeep
 | Item | Feature | Result |
 |---|---|---|
 | Browser-pool listen path | M06 / [#260](https://github.com/Resonant-Projects/frequency-music/pull/260) | **Verified in CI.** Six green `push` runs on main, each 3/3 through the pool. |
-| Scout census on real data | R06 / [#264](https://github.com/Resonant-Projects/frequency-music/pull/264) | **Not live.** Production still returns the pre-#264 census. |
+| Scout census on real data | R06 / [#264](https://github.com/Resonant-Projects/frequency-music/pull/264) | **Not live as of the 11-26 read.** Production returned the pre-#264 census. |
 | Live LangSmith trace link | O01 / [#261](https://github.com/Resonant-Projects/frequency-music/pull/261) | **API-verified.** Production worker URLs use the new form, and every id in them resolves. |
 | FORBIDDEN surfacing | A01 / O05 / G15 / [#258](https://github.com/Resonant-Projects/frequency-music/issues/258) | **Observed locally.** Every control shows an inline alert, and nothing persists. On /ingest, the Ingest URL alert renders off screen. |
 
