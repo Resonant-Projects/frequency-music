@@ -17,7 +17,7 @@ gh run list --workflow browser-pool-pilot.yml --limit 30 \
 gh run view <id> --log   # grep Runner name / pool endpoint / Running / passed
 ```
 
-Every `push` run on main since #260 merged (2026-11-18T16:43Z) ran job *Listen suite through the browser pool (pilot)* on the `frequency-arc` runner. In each run's log, `PLAYWRIGHT_BROWSER_POOL_WS_ENDPOINT` is `ws://moon.browser-pool:4444/playwright/chromium?arg=--host-resolver-rules%3DMAP%20localhost%20<pod IP>`, and the line `Running 3 tests using 1 worker` is followed by `3 passed`.
+All six successful `push` runs on main since #260 merged (2026-11-18T16:43Z) ran job *Listen suite through the browser pool (pilot)* on the `frequency-arc` runner. In each run's log, `PLAYWRIGHT_BROWSER_POOL_WS_ENDPOINT` is `ws://moon.browser-pool:4444/playwright/chromium?arg=--host-resolver-rules%3DMAP%20localhost%20<pod IP>`, and the line `Running 3 tests using 1 worker` is followed by `3 passed`.
 
 | Run | Head | Runner | Result |
 |---|---|---|---|
@@ -56,9 +56,9 @@ The query returned HTTP 200, `status: success`:
 
 `starvedConjectures` is `[]`.
 
-This matches the **Before** column of #264 row for row. `biofield` is in `SCOUT_EXCLUDED_DOMAINS` on main (`convex/shared/researchTopics.ts`) and cannot be returned by the merged census. So the live deployment is still running pre-#264 functions.
+This matches the **Before** column of #264 row for row. `biofield` is in `SCOUT_EXCLUDED_DOMAINS` on main (`convex/shared/researchTopics.ts`) and cannot be returned by the merged census. So at the time of this read, the live `scoutTargets` was still serving the pre-#264 census.
 
-Convex deploys are manual: no workflow deploys on merge, and `convex-provenance.yml` only prepares an artifact. The source-scout runs on 2026-11-25 therefore used the old census.
+Convex deploys are manual: no workflow deploys on merge, and `convex-provenance.yml` only prepares an artifact. The deploy history isn't visible from here, so these runs alone don't show which census the 2026-11-25 source-scout runs received.
 
 **Remaining step:** an operator deploys main to the Convex deployment, then repeats the query above. The expected result is no `biofield`, and synthesis pooled per sector (about 13 Sources / 9 concepts on the fixture-shaped data).
 
@@ -72,9 +72,16 @@ curl -sS -X POST https://convex.resonantprojects.art/api/query \
   -d '{"path":"agentRuns:listRecentPublic","args":{"limit":50},"format":"json"}'
 ```
 
-Runs created on or after 2026-11-24 carry the #261 form: `https://smith.langchain.com/o/<org>/projects/p/<project>/trace/<trace>/run/<run>`. Runs from 2026-11-18 and earlier carry the old `/r/<id>?trace_id=…` form, so the worker picked up #261 between those dates.
+The two runs since 2026-11-24 that carry a `traceUrl` (correspondence-miner 2026-11-24 05:00, source-scout 2026-11-25 16:00) use the #261 form: `https://smith.langchain.com/o/<org>/projects/p/<project>/trace/<trace>/run/<run>`. The URLs from 2026-11-18 and earlier use the old `/r/<id>?trace_id=…` form, so the worker picked up #261 between those dates.
 
-I checked both new-form URLs against the LangSmith REST API. The key came from `op://Homelab Runtime/langsmith-api-key/credential` through `vpx varlock run` at the repo root, and was never printed. `agent/.env.schema` failed to resolve unrelated items, so it couldn't be used.
+I checked both new-form URLs against the LangSmith REST API:
+
+```sh
+# run with LANGSMITH_API_KEY and LANGSMITH_ENDPOINT from `vpx varlock run --`
+curl -sS -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/runs/$RUN_ID"
+curl -sS -H "x-api-key: $LANGSMITH_API_KEY" "$LANGSMITH_ENDPOINT/api/v1/sessions/$PROJECT_ID"
+```
+ The key came from `op://Homelab Runtime/langsmith-api-key/credential` through `vpx varlock run` at the repo root, and was never printed. `agent/.env.schema` failed to resolve unrelated items, so it couldn't be used.
 
 | Check | HTTP | Matches URL |
 |---|---|---|
@@ -122,5 +129,5 @@ Screenshots (viewport, as seen right after the click) and the raw observation JS
 
 ## Gates
 
-- `APP_ENV=test vp run verify` on the docs branch: see the PR body for the exit code and counts.
-- codex-first review: run on #270 and on this branch.
+- `APP_ENV=test vp run verify` on this branch: exit 0, 10/10 tasks. Tests: root 1,770, backend harness 234, agent 456, media 153, all passing.
+- codex-first review (`gpt-6.2-sol`, high): run on #270 and on this branch. The PR bodies list the findings and how each was handled.
