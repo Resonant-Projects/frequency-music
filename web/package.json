@@ -40,7 +40,7 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@8.3.8000",
     "vite-plugin-solid": "^2.11.14",
     "vite-plus": "1.7.0",
-    "@effect/tsgo": "0.67.3"
+    "@effect/tsgo": "0.73.4"
   },
   "overrides": {
     "hono": "4.13.16",
