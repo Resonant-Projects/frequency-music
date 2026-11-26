@@ -2,7 +2,7 @@
 
 Audit baseline: **2026-10-22**, `a9b728466f9254938e40761e012451b4d896825b`. **V26** is the [2026-10-26 local verification][v26] at `ca495094` in [PR #229][p229]. **V10** is the [2026-11-10 checkpoint][v10] at `c323b26c` after [#254][p254]/[#255][p255]. Evidence is local; production behavior is unverified.
 
-The intended loop is **source → extraction/claims → correspondence/hypothesis → recipe → composition/render → listening → accumulated learning/editorial**. Intent is grounded in current schema, public APIs, route/component calls, worker/job registries, explicit stop paths and repository plans. Aspirational prose is recorded separately from shipped contracts.
+The intended loop is **source → extraction/claims → correspondence/hypothesis → recipe → composition/render → listening → accumulated learning/editorial**. Intent is grounded in schema, public APIs, route/component calls, worker/job registries, stop paths and plans. Aspirational prose is kept apart from shipped contracts.
 
 ## Read this map
 
@@ -19,7 +19,7 @@ Stage matrices own intent, contracts, UI entry points, acceptance and source anc
 
 | Stage / feature and intended outcome | Backend / UI summary | Status | Evidence / remaining step | Linked PR / issue |
 | --- | --- | --- | --- | --- |
-| [A01 — Authentication and authorization](feature-map/access.md#a01) | Clerk/AuthGate; role-gated writes; tier-1 readerQuery; public-query allowlist | **partial** | V10: 4 auth fixtures, role/read tests, local seeded-admin saves; hosted JWT unproved. | [#255][p255] · [#198][i198] |
+| [A01 — Authentication and authorization](feature-map/access.md#a01) | Clerk/AuthGate; role-gated writes; tier-1 readerQuery; public-query allowlist | **partial** | V10: 4 auth fixtures, role/read tests, seeded-admin saves; hosted JWT unproved. UI ignores role ([G15](feature-map/gaps.md)). | [#255][p255] · [#198][i198] · [#258][i258] |
 | [A02 — Grouped navigation and route reachability](feature-map/access.md#a02) | 28 registered routes / Home + Research/Compose/Library/Operations | **partial** | V10: 9 guarded navigation actions; destination workflows partial. | [fix #200][p200] |
 | [A03 — Site search: pages, essays, concepts, research](feature-map/access.md#a03) | Local page/essay search / Search button, Ctrl+K, Meta+K on app shell. | **partial** | V10: 9 guarded local search actions; backend research unproved. | [audit][audit] |
 | [A04 — Essay archive and reading](feature-map/access.md#a04) | 413 committed Markdown essays / Library → Essays | **done** | V10: 25 isolated actions, archive/body PNG inspection, clean teardown. | [audit][audit] |
@@ -28,7 +28,7 @@ Stage matrices own intent, contracts, UI entry points, acceptance and source anc
 | [R03 — PDF URL/upload capture](feature-map/research.md#r03) | PDF URL/upload capture; publisher URLs share DOI identity / /ingest | **partial** | V: pdfCapture/pdfCaptureNode and shared PDF contracts; [G05; G12](feature-map/gaps.md) | [#254][p254] · [docs #202][p202] |
 | [R04 — RSS/Atom feed management and proposals](feature-map/research.md#r04) | Feed create/toggle/poll, external RSS ingress / /ingest feed form/list/poll | **partial — local save verified** | V10: both local workflows persist feed create/disable/reload; polling unproved. | [local proof][plocal] |
 | [R05 — Notion inbound notes](feature-map/research.md#r05) | Secret-guarded POST /ingest/notion → sources.upsertExternal. / External input by documented contract | **partial** | Source/HTTP implementation inspected; [G06](feature-map/gaps.md) | [#191][i191] |
-| [R06 — Source Scout discovery and capture](feature-map/research.md#r06) | Scout preflight/intake share publisher DOI identity / worker/operator | **partial** | V10: mocked agent/backend suites; no provider/corpus migration proof. | [#254][p254] · [#191][i191] |
+| [R06 — Source Scout discovery and capture](feature-map/research.md#r06) | Sector-pooled thin-domain census; DOI-shared preflight/intake / worker/operator | **partial** | 12 census/target tests (11-24); no provider/corpus proof. | [#264][p264] · [#254][p254] · [#191][i191] |
 | [R07 — Missing-text recovery and archive](feature-map/research.md#r07) | provideRecoveryText/requestSourceRecovery/archiveRecoverySource with version fences. / /display missing-text row → recovery details/form/access changed/archive. | **partial — local save verified** | V10: both local workflows persist text/provenance; archive/stale UI unproved. | [local proof][plocal] |
 | [R08 — Extraction, attempt history and operator import](feature-map/research.md#r08) | Durable workflows / /display Run extraction | **partial** | V: extract/operatorExtraction/extractions, completion/settlement harness; [G05](feature-map/gaps.md) | [docs #202][p202] |
 | [R09 — Inbox triage and visibility promotion](feature-map/research.md#r09) | readerQuery inbox/Source reads; writer-role triage / /display | **partial** | V10: read gate/cap tests; triage/promote UI unproved. | [#255][p255] |
@@ -53,27 +53,27 @@ Stage matrices own intent, contracts, UI entry points, acceptance and source anc
 | [M03 — Subjective and embodied listening sessions](feature-map/music.md#m03) | Writer-role session saves; owner visibility control enabled; blank/double-submit fixes | **partial — local save verified** | V10: ratings/owner/reload persist; fixes source-inspected, 12 unit checks; visibility save unproved. | [#255][p255] |
 | [M04 — Composition starter kits](feature-map/music.md#m04) | CLI/pure generation: Scala .scl/.kbm, seed MIDI, card / scripts/generate-starter-kit.ts <recipeId> | **partial** | V: generate-starter-kit, seedMidi and tuning tests write local kits/cards. No live CLI run.; [G08](feature-map/gaps.md) | [#193][i193] |
 | [M05 — Typed litmus render ladder](feature-map/music.md#m05) | renders.setPlan/request, leased litmusRender, normalized delivery, validation/composition effects. / Backend request only | **partial** | V10: 153 media tests, including 6 real-SC renders, zero skips; human gates remain. | [#194][i194] · [#196][i196] · [229][p229] |
-| [M06 — Recipe/composition target audio](feature-map/music.md#m06) | Target playback; query equality preserves audio across unrelated queue updates | **partial** | V10: 3 playback fixtures + query unit checks; audible playback unproved. | [#255][p255] |
+| [M06 — Recipe/composition target audio](feature-map/music.md#m06) | Target playback; query equality preserves audio across unrelated queue updates | **partial** | 3/3 playback fixtures (11-24) + query unit checks; audible playback unproved. | [#255][p255] · [#260][p260] |
 | [M07 — Audio ratings and Docket deferral](feature-map/music.md#m07) | audioFeedback queues, kind-specific scores, stable request IDs/content hashes, deferWeb. / /listen Rate audio | **partial** | V10: 13 feedback/Docket fixtures pass; #188 merged; audio persistence unproved. | [fix #188][p188] |
 | [M08 — Human studio versus machine blind comparison](feature-map/music.md#m08) | Studio upload validation/digests, paired hidden group, complete ratings/reveal. / /listen Studio comparisons → upload metadata/audio → rate both members. | **partial** | V: studioComparisons tests pass; [G03; G09](feature-map/gaps.md) | [#194][i194] |
 | [M09 — Blind voice shootouts and house voice](feature-map/music.md#m09) | Five media job handlers / /listen Voice shootouts → take rating/reveal → choose house voice. | **partial** | V26: provider/shootout suites with injected services; no live voice call. | [#195][i195] · [229][p229] |
 | [M10 — Essay/brief episodes and private podcast subscription](feature-map/music.md#m10) | Narrate/assemble jobs, chapters/artifacts/feed token / /listen Episodes/feed copy/play | **partial** | V26: narration/episode/podcast suites; no real TTS or feed access. | [#195][i195] · [229][p229] |
 | [M11 — Render analysis and later comparison stages](feature-map/music.md#m11) | Spec describes analyze job/roughness / No analysis UI | **missing** | Static job/handler/spec comparison only; [G11](feature-map/gaps.md) | [#196][i196] |
-| [O01 — Agent run history, events and queue health](feature-map/operations.md#o01) | Nine graph registrations / Operations → Agent Runs → /agent-runs/$runId → related drafts/failures/trace. | **partial** | V26: 10 graph-filter fixtures and worker suites; no live history proof. | [fix #201][p201] · [229][p229] |
+| [O01 — Agent run history, events and queue health](feature-map/operations.md#o01) | Nine graph registrations / Operations → Agent Runs → /agent-runs/$runId → related drafts/failures/trace. | **partial** | V26: 10 graph-filter fixtures and worker suites; no live history proof. | [fix #201][p201] · [229][p229] · [#261][p261] |
 | [O02 — Automatic failure investigation and recovery](feature-map/operations.md#o02) | Grouped failures, retained outputs, reconciliation/recovery workflows, failure-investigation graph. / /agent-runs/$runId failures | **partial** | V26: recovery/lease suites; integrated operational UI unproved. | [PR #229][p229] |
 | [O03 — Scheduled intake/synthesis/maintenance](feature-map/operations.md#o03) | 21 crons; daily evidence-hunter windows and 28-day drafter rest | **partial** | V10: backend/agent suites; no scheduler/service run. | [#255][p255] · [#191][i191] |
 | [O04 — Docket, signed decisions, MCP and channel delivery](feature-map/operations.md#o04) | Cards, immutable payload/digest/revision, propose/confirm/cancel/apply receipts / Compose → Docket | **partial** | V26: 9 intent and 13 feedback fixtures; live signers remain gated. | [#194][i194] |
-| [O05 — Admin, service auth and bounded tool surface](feature-map/operations.md#o05) | Admin/tool contracts; role writes, readerQuery and public-query ratchet | **partial** | V10: role/read/creator/manifest tests; hosted grants/admin overrides unproved. | [#255][p255] · [#191][i191] |
+| [O05 — Admin, service auth and bounded tool surface](feature-map/operations.md#o05) | Admin/tool contracts; role writes, readerQuery and public-query ratchet | **partial** | V10: role/read/creator/manifest tests; hosted grants/admin overrides unproved. | [#255][p255] · [#191][i191] · [#258][i258] |
 | [O06 — Edit captures, golden evals and generator policy](feature-map/operations.md#o06) | Generated/edited pairs / Editing extraction/hypothesis/brief/draft creates capture | **partial** | V: editCaptures/langsmith/llm/llmNode tests; [G02; G07](feature-map/gaps.md) | [#192][i192] |
 | [O07 — Research-pipeline specialist stop paths and deployment tooling](feature-map/operations.md#o07) | Specialist stop paths; Node 26 CI, inert builds, size ratchet and scoped deploy typecheck | **partial** | V10: verify 10/10; workflow/size tests; no deployment/hosted publish run. | [#255][p255] · [#245][p245] · [#233][p233] · [#191][i191] · [#197][i197] |
 
 ## Coverage and limits
 
-The index covers 47 feature/stage rows, all 28 registered web routes, all 41 schema tables, 46 public Convex modules / 249 declarations (including `readerQuery`), all nine worker graphs, all five media job handlers and all 21 registered crons. The [surface index](feature-map/surfaces.md) records the exact mechanical inventory and its limits: an API declaration or URL does not prove a usable UI.
+The index covers 47 feature rows, 28 web routes, 41 schema tables, 46 public Convex modules / 249 declarations (with `readerQuery`), nine worker graphs, five media job handlers and 21 crons. The [surface index](feature-map/surfaces.md) records the mechanical inventory and limits: an API declaration or URL does not prove a usable UI.
 
-A throwaway local Docker Convex now supplies real persistence for L1–L4, with independent table reads, synthetic identity and owned teardown. [G05's environment issue][i190] is closed by [the local workflow PR][plocal]. The default hosted-auth E2E suite remains unrun. Hosted Clerk/JWTs, generators, automatic capture/extraction, media, signers and unexercised controls remain unproved. Local saves do not complete those broader feature rows.
+A throwaway local Docker Convex supplies real persistence for L1–L4 with independent table reads, synthetic identity and owned teardown. [G05's environment issue][i190] is closed by [the local workflow PR][plocal]. The default hosted-auth E2E suite remains unrun. Hosted Clerk/JWTs, generators, automatic capture/extraction, media, signers and unexercised controls remain unproved. Local saves do not complete those broader feature rows.
 
-V10 rechecks local commands, both persisted lifecycle variants, auth fixtures and native rendering. It records an initial concurrent offline failure and successful isolated rerun. [Commands/output][v10commands] distinguish executed proof from source findings; raw logs/traces remain local.
+V10 rechecks local commands, both persisted lifecycle variants, auth fixtures and native rendering, including an initial concurrent offline failure and isolated rerun. [Commands/output][v10commands] separate executed proof from source findings; raw logs stay local. Rows marked **11-24** cite focused reruns at `170bcfc2`; they are not a new checkpoint.
 
 ## Scope decisions preserved
 
@@ -107,3 +107,7 @@ Recipe loop closure is already planned but gated by eval acceptance; render vali
 [p255]: https://github.com/Resonant-Projects/frequency-music/pull/255
 [p245]: https://github.com/Resonant-Projects/frequency-music/pull/245
 [p233]: https://github.com/Resonant-Projects/frequency-music/pull/233
+[p260]: https://github.com/Resonant-Projects/frequency-music/pull/260
+[p261]: https://github.com/Resonant-Projects/frequency-music/pull/261
+[p264]: https://github.com/Resonant-Projects/frequency-music/pull/264
+[i258]: https://github.com/Resonant-Projects/frequency-music/issues/258
