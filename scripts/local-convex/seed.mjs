@@ -1,14 +1,15 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { makeFunctionReference } from "convex/server";
-import { localClient, readRun } from "./client.mjs";
+import { localClient, readRun, localRole } from "./client.mjs";
 
 const run = process.argv[2];
+const role = localRole();
 const { directory } = readRun(run);
 const client = localClient(run);
 const userId = await client.mutation(
   makeFunctionReference("localVerification:seed"),
-  {},
+  { role },
 );
 const identity = {
   subject: userId,
@@ -17,4 +18,6 @@ const identity = {
   name: "Synthetic local operator",
 };
 writeFileSync(resolve(directory, "identity.json"), JSON.stringify(identity));
-console.log(JSON.stringify({ status: "seeded", syntheticUserId: userId }));
+console.log(
+  JSON.stringify({ status: "seeded", role, syntheticUserId: userId }),
+);

@@ -1,19 +1,28 @@
 // Copied only into the disposable deployment, never the application convex/.
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import schema from "./schema";
 
 export const seed = mutation({
-  args: {}, returns: v.id("users"),
-  handler: async (ctx) => {
+  args: { role: v.optional(v.union(v.literal("admin"), v.literal("follower"), v.literal("none"))) },
+  returns: v.id("users"),
+  handler: async (ctx, args) => {
     if (await ctx.db.query("users").first()) throw new Error("Local seed requires an empty database");
+    const role = args.role ?? "admin";
     const now = Date.now();
     const id = await ctx.db.insert("users", {
       clerkUserId: "local-verification", displayName: "Synthetic local operator",
-      role: "admin", createdAt: now, updatedAt: now,
+      role: role === "follower" ? "follower" : "admin", createdAt: now, updatedAt: now,
     });
+    if (role === "none") {
+      // A well-formed users id whose row no longer exists: signed in, no role.
+      await ctx.db.delete(id);
+      return id;
+    }
     // Existing app writes use the identity subject as a users id. Decision
     // ownership resolves that same subject through by_clerkUserId.
     await ctx.db.patch(id, { clerkUserId: id });
+    if (role === "follower") return id;
     await ctx.db.insert("sources", {
       type: "url", dedupeKey: "url:https://example.invalid/local-recovery",
       canonicalUrl: "https://example.invalid/local-recovery", title: "Local recovery seed",
@@ -34,4 +43,24 @@ export const snapshot = query({
     listeningSessions: await ctx.db.query("listeningSessions").collect(),
     feeds: await ctx.db.query("feeds").collect(),
   }),
+});
+
+// FNV-1a over the serialized rows, so an in-place update changes the census.
+function contentHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return hash.toString(16).padStart(8, "0");
+}
+
+// Row count and content hash for every application table.
+export const census = query({
+  args: {}, returns: v.any(),
+  handler: async (ctx) => {
+    const tables: Record<string, { count: number; hash: string }> = {};
+    for (const name of Object.keys(schema.tables).toSorted()) {
+      const rows = await ctx.db.query(name as any).collect();
+      tables[name] = { count: rows.length, hash: contentHash(JSON.stringify(rows)) };
+    }
+    return tables;
+  },
 });

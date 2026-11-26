@@ -67,6 +67,17 @@ readback, and feed creation/disable. They do not claim automatic URL capture,
 extraction, generator quality, real audio, renderer/media operation, signers,
 publication, hosted authentication or every lifecycle edge case.
 
+`--role follower` or `--role none` on `exercise`/`run` seeds a signed-in identity
+without a writer role instead (a `follower` row, or a well-formed users id whose
+row was deleted) and runs `web/tests/local/forbidden.spec.ts` in place of the four
+journeys. Each probe clicks one write control, records the visible
+`role=alert`/`role=status` text, whether that alert is in the viewport, console
+lines and page errors to `forbidden-<role>.json`, and saves a viewport screenshot.
+It asserts only that every Convex write the click sent came back with
+structured error code `FORBIDDEN` and that a content-hash census of every
+application table is unchanged; how the UI should surface the refusal is open
+(#258). The default `admin` role is unchanged.
+
 Screenshots, traces, independent synthetic row snapshots, deploy output and cleanup
 receipts remain in the ignored run directory. Teardown removes only resources whose
 Docker labels match this checkout/run, stops the recorded relay, checks that its

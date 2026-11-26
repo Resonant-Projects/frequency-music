@@ -1,10 +1,11 @@
 import { defineConfig } from "@playwright/test";
-import { readRun } from "../../../scripts/local-convex/client.mjs";
+import { localRole, readRun } from "../../../scripts/local-convex/client.mjs";
 
 const { directory, info } = readRun(process.env.LOCAL_CONVEX_RUN);
 export default defineConfig({
   testDir: ".",
-  testMatch: "journeys.spec.ts",
+  // Writer journeys need the seeded admin; other roles run the refusal probe.
+  testMatch: localRole() === "admin" ? "journeys.spec.ts" : "forbidden.spec.ts",
   workers: 1,
   retries: 0,
   timeout: 30000,
