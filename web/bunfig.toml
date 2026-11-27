@@ -1,0 +1,7 @@
+[install]
+# Second layer behind the package proxy's 24-hour release-age gate: never
+# resolve an npm version published less than 24 hours (86400 seconds) ago.
+minimumReleaseAge = 86400
+# First-party packages publish straight to npmjs.org and are exempt at the
+# proxy, so a fresh first-party release is not held back here either.
+minimumReleaseAgeExcludes = ["@resonant-projects/clerk-solidjs"]
