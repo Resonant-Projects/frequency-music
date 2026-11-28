@@ -232,7 +232,7 @@ export function boundPassages<SourceId extends string>(
   hits: readonly PassageHit<SourceId>[],
   maxChars = PASSAGE_RESPONSE_MAX_CHARS,
 ): PassageSearchResult<SourceId> {
-  // eslint-disable-next-line unicorn/no-array-sort -- The agent's ES target does not include Array#toSorted.
+  // Copy-then-sort, not toSorted: the agent's ES target lacks Array#toSorted.
   return packPassages(
     [...hits].sort((a, b) => b.score - a.score),
     maxChars,

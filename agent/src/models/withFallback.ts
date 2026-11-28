@@ -151,7 +151,6 @@ export class FallbackChatModel extends BaseChatModel<CodexSdkCallOptions> {
   }
 
   // Codex cannot bind tools; delegate tool binding entirely to the fallback.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override bindTools(tools: any, kwargs?: any): any {
     return (
       this.fallback as unknown as {
@@ -163,7 +162,6 @@ export class FallbackChatModel extends BaseChatModel<CodexSdkCallOptions> {
   // Structured output is supported by the primary (Codex) via outputSchema.
   // Bind the converted schema as a call option and route it through this
   // wrapper's _generate so the Codex->OpenRouter fallback still applies.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override withStructuredOutput(outputSchema: any, config?: any): any {
     const jsonSchema = toOutputJsonSchema(outputSchema);
     const bound = this.withConfig({ outputSchema: jsonSchema });

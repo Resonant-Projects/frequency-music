@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-underscore-dangle -- Convex rows carry `_id` and `_creationTime`. */
 import { describe, expect, test } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { internal } from "../convex/_generated/api";

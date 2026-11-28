@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle -- Convex fixture ids are named `_id`. */
 import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vite-plus/test";
 import { api } from "./_generated/api";
