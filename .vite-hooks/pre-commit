@@ -10,3 +10,6 @@ if command -v node >/dev/null 2>&1; then
 else
   vp node scripts/check-file-tokens.mjs
 fi
+
+# Run the root lint gate CI runs, reporting errors only (warnings stay in CI logs).
+vp run lint:check --quiet
