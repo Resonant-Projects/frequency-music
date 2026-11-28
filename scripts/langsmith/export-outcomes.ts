@@ -137,7 +137,7 @@ async function main() {
     process.env.LANGSMITH_API_KEY ?? process.env.LANGCHAIN_API_KEY,
   );
 
-  const convex = new ConvexHttpClient(CONVEX_URL);
+  const convex = new ConvexHttpClient(CONVEX_URL as string);
   const rows = await collectOutcomeRows(convex, limit);
 
   if (!rows.length) {

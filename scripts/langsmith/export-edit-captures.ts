@@ -29,7 +29,7 @@ const ENTITY_FILE: Record<string, string> = {
 };
 
 async function main() {
-  const client = new ConvexHttpClient(CONVEX_URL);
+  const client = new ConvexHttpClient(CONVEX_URL as string);
   const rows = await client.query(api.editCaptures.listUnexported, {
     limit: 500,
     devBypassSecret,
