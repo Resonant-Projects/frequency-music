@@ -129,7 +129,7 @@ describe("rendered audio in general feedback", () => {
         artifactId,
         storageId,
       });
-      return artifactId as Id<"audioArtifacts">;
+      return artifactId;
     };
     const results = [];
     for (let member = 0; member < members; member++) {
@@ -408,10 +408,10 @@ describe("tournament drafts in the shared review path", () => {
         [0, 1].map(async (i) => {
           const claim = (await ctx.db.get(f.ids.claimIds[i]!))!;
           return {
-            claimId: claim._id as string,
+            claimId: claim._id,
             text: claim.text,
-            sourceId: claim.sourceId as string,
-            extractionId: claim.extractionId as string,
+            sourceId: claim.sourceId,
+            extractionId: claim.extractionId,
           };
         }),
       ),

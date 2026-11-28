@@ -394,7 +394,7 @@ export async function buildWeeklyBriefDraft(
   const hypotheses = await Promise.all(
     brief.recommendedHypothesisIds.map((id) => db.get("hypotheses", id)),
   );
-  const failures = await deriveFailureArchiveEntries(db as any);
+  const failures = await deriveFailureArchiveEntries(db);
   const referencedFailures = failures.filter((failure) =>
     (brief.referencedFailureKeys ?? []).includes(failure.key),
   );
@@ -513,7 +513,7 @@ export async function buildCampaignDraft(
     db,
     compositions.map((row) => row._id),
   );
-  const failures = await deriveFailureArchiveEntries(db as any);
+  const failures = await deriveFailureArchiveEntries(db);
   const relevantFailures = failures.filter((failure) =>
     failure.supportingIds.thesisIds.some((id) =>
       campaign.thesisIds.includes(id),
@@ -607,7 +607,7 @@ export async function buildThesisDraft(
     db,
     compositions.map((row) => row._id),
   );
-  const failures = await deriveFailureArchiveEntries(db as any);
+  const failures = await deriveFailureArchiveEntries(db);
   const relevantFailures = failures.filter((failure) =>
     failure.supportingIds.thesisIds.includes(thesis._id),
   );
@@ -1069,7 +1069,7 @@ export const update = mutation({
       ...(args.primaryRef !== undefined ? { primaryRef: args.primaryRef } : {}),
       ...(reviewSensitiveChanged && artifact.status !== "draft"
         ? {
-            status: "draft" as ArtifactStatus,
+            status: "draft",
             ...(artifact.status === "published"
               ? { publishedAt: undefined }
               : {}),

@@ -20,8 +20,7 @@ const STAKE_HINTS = [
 ];
 
 export const whyThisMattersEvaluator = (run: Run, _example?: Example) => {
-  const w = (run.outputs as Record<string, unknown> | undefined)
-    ?.whyThisMatters;
+  const w = run.outputs?.whyThisMatters;
   if (typeof w !== "string" || w.trim().length < 20) {
     return {
       key: "why_this_matters",

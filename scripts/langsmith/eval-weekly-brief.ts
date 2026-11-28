@@ -9,7 +9,7 @@ const REQUIRED_SECTIONS = ["thesis", "recommend", "studio", "todo"];
 
 /** schema-lite: bodyMd exists and mentions each required section heading. */
 const briefSchemaLite = (run: Run, _example?: Example) => {
-  const outputs = run.outputs as Record<string, unknown> | undefined;
+  const outputs = run.outputs;
   const body = outputs?.bodyMd;
   if (typeof body !== "string" || body.trim().length < 40) {
     return { key: "brief_schema_lite", score: 0, comment: "missing bodyMd" };
@@ -25,11 +25,11 @@ const briefSchemaLite = (run: Run, _example?: Example) => {
 
 /** thesis-reference: brief references at least one active thesis by title. */
 const thesisReferenceCheck = (run: Run, example?: Example) => {
-  const bodyValue = (run.outputs as Record<string, unknown> | undefined)
-    ?.bodyMd;
+  const bodyValue = run.outputs?.bodyMd;
   const body = stringifyPromptValue(bodyValue ?? "").toLowerCase();
-  const theses = ((example?.inputs as Record<string, unknown> | undefined)
-    ?.theses ?? []) as Array<Record<string, unknown>>;
+  const theses = (example?.inputs?.theses ?? []) as Array<
+    Record<string, unknown>
+  >;
   if (!Array.isArray(theses) || theses.length === 0) {
     return {
       key: "thesis_reference",
@@ -55,8 +55,7 @@ const CONTRADICTION_RE =
 
 /** contradiction-mention: brief surfaces a contradiction / low-yield / weak path. */
 const contradictionMentionCheck = (run: Run, _example?: Example) => {
-  const bodyValue = (run.outputs as Record<string, unknown> | undefined)
-    ?.bodyMd;
+  const bodyValue = run.outputs?.bodyMd;
   const body = stringifyPromptValue(bodyValue ?? "");
   const hit = CONTRADICTION_RE.test(body);
   return {

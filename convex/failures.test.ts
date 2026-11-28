@@ -279,7 +279,7 @@ describe("failure archive derivation", () => {
       ],
     });
 
-    const entries = await deriveFailureArchiveEntries(db as any);
+    const entries = await deriveFailureArchiveEntries(db);
     const repeatEntries = entries.filter(
       (entry) => entry.reason === "repeat_no_expand_composition",
     );
@@ -341,7 +341,7 @@ describe("failure archive derivation", () => {
       })),
     });
 
-    const hits = await projectFailureArchiveHitsForHypotheses(db as any, [
+    const hits = await projectFailureArchiveHitsForHypotheses(db, [
       hypothesis as any,
     ]);
 

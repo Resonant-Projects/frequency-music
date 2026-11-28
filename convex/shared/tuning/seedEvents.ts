@@ -121,7 +121,7 @@ function progressionDegrees(value: string): number[] | null {
   if (!tokens) return null;
   const degrees = tokens.map(romanDegree);
   return degrees.length > 0 && degrees.every((degree) => degree !== null)
-    ? (degrees as number[])
+    ? degrees
     : null;
 }
 

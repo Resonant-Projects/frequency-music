@@ -96,7 +96,7 @@ async function getPageContent(pageId: string): Promise<string> {
       | { rich_text?: RichTextElement[] }
       | undefined;
     if (content?.rich_text) {
-      const text = (content.rich_text as RichTextElement[])
+      const text = content.rich_text
         .map((element) =>
           typeof element.plain_text === "string" ? element.plain_text : "",
         )

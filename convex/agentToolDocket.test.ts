@@ -103,7 +103,7 @@ describe("Wave 2 tool bindings", () => {
       },
     ]);
     await agentToolByName.getDocketCard.run(ctx, { cardId: "card" });
-    expect(getFunctionName(runQuery.mock.calls[1]![0]! as never)).toBe(
+    expect(getFunctionName(runQuery.mock.calls[1]![0] as never)).toBe(
       "docket:card",
     );
     runMutation.mockResolvedValue({
@@ -226,7 +226,7 @@ describe("Wave 2 tool bindings", () => {
         _handler: (ctx: unknown, request: Request) => Promise<Response>;
       }
     )._handler(
-      { runAction } as never,
+      { runAction },
       new Request("https://local.test", {
         method: "POST",
         body: JSON.stringify({ secret: "wrong", command, proposal }),

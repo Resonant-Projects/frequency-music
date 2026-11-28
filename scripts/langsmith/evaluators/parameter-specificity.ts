@@ -4,8 +4,9 @@ import { stringifyPromptValue } from "../eval-helper";
 const UNIT_TOKENS = ["hz", "bpm", "cents", "ratio", "tet", ":", "/", "°"];
 
 export const parameterSpecificityEvaluator = (run: Run, _example?: Example) => {
-  const params = (run.outputs as Record<string, unknown> | undefined)
-    ?.compositionParameters as Array<Record<string, unknown>> | undefined;
+  const params = run.outputs?.compositionParameters as
+    | Array<Record<string, unknown>>
+    | undefined;
   if (!Array.isArray(params) || params.length === 0) {
     return { key: "parameter_specificity", score: 0, comment: "no parameters" };
   }

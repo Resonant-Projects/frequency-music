@@ -4,7 +4,6 @@ import { api, internal } from "./_generated/api";
 import {
   computeRecommendedActionContext,
   type RecommendationContext,
-  type RecommendedAction,
 } from "./campaigns";
 import {
   countPendingDraftsByKind,
@@ -752,10 +751,7 @@ export const loadBriefContext = internalQuery({
     const [recommendationContext, editorialSignals, loopReport] =
       await Promise.all([
         computeRecommendedActionContext(ctx.db, { limit: 5 }),
-        computeEditorialSignals(
-          ctx.db as unknown as Parameters<typeof computeEditorialSignals>[0],
-          8,
-        ),
+        computeEditorialSignals(ctx.db, 8),
         computeLoopReport(ctx.db),
       ]);
     const extraActiveTheses =
@@ -957,7 +953,7 @@ Theses: ${
     ),
     referencedFailureKeys: recentFailures.map((failure) => failure.key),
     studioPrompts: parsed.studioPrompts,
-    recommendedActions: recommendedActions as RecommendedAction[],
+    recommendedActions,
     loopReport,
     todo: parsed.todo.length > 0 ? parsed.todo : undefined,
   });

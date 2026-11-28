@@ -2,8 +2,7 @@ import { describe, expect, test } from "vite-plus/test";
 import { MIN_TEXT_LENGTH, TEXT_CAP, capText, fetchViaJina } from "./fetchText";
 
 function fakeFetch(status: number, body: string): typeof fetch {
-  return (() =>
-    Promise.resolve(new Response(body, { status }))) as unknown as typeof fetch;
+  return () => Promise.resolve(new Response(body, { status }));
 }
 
 describe("fetchViaJina", () => {
@@ -33,7 +32,7 @@ describe("fetchViaJina", () => {
 
   test("targets the Jina reader URL", async () => {
     let seenUrl = "";
-    const spy = ((input: string | Request | URL) => {
+    const spy = (input: string | Request | URL) => {
       seenUrl =
         typeof input === "string"
           ? input
@@ -41,7 +40,7 @@ describe("fetchViaJina", () => {
             ? input.href
             : input.url;
       return Promise.resolve(new Response("text", { status: 200 }));
-    }) as unknown as typeof fetch;
+    };
     await fetchViaJina("https://example.com/article?x=1", { fetchImpl: spy });
     expect(seenUrl).toBe("https://r.jina.ai/https://example.com/article?x=1");
   });

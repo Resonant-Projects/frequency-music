@@ -254,7 +254,7 @@ const prompts: Record<string, EvalPrompt> = {
 };
 
 const scoreField = (run: Run) => {
-  const value = (run.outputs as Record<string, unknown> | undefined)?.quality;
+  const value = run.outputs?.quality;
   return { key: "quality", score: typeof value === "number" ? value : 0 };
 };
 

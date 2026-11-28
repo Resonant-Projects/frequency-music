@@ -6,7 +6,6 @@ import { mutation, query } from "./_generated/server";
 import { requireAuth } from "./auth";
 import { creatorOf } from "./creatorIdentity";
 import {
-  type DbReader,
   getBranchFailureStatusForComposition,
   getFailureStatusForComposition,
 } from "./failures";
@@ -152,11 +151,11 @@ export const getLineage = query({
 
     const latestListeningSession = listeningSessions[0];
     const localFailureStatus = await getFailureStatusForComposition(
-      ctx.db as DbReader,
+      ctx.db,
       composition._id,
     );
     const branchFailureStatus = await getBranchFailureStatusForComposition(
-      ctx.db as DbReader,
+      ctx.db,
       composition._id,
     );
 

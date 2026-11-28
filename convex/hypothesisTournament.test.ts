@@ -49,10 +49,10 @@ async function evidence(indexes = [0, 1]) {
       indexes.map(async (i) => {
         const claim = (await ctx.db.get(f.ids.claimIds[i]!))!;
         return {
-          claimId: claim._id as string,
+          claimId: claim._id,
           text: claim.text,
-          sourceId: claim.sourceId as string,
-          extractionId: claim.extractionId as string,
+          sourceId: claim.sourceId,
+          extractionId: claim.extractionId,
         };
       }),
     ),

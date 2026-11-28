@@ -20,9 +20,7 @@ import "varlock/auto-load";
 import { Client } from "langsmith";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 import {
-  type LineageLike,
   type OutcomeRow,
   formatOutcomeTable,
   groupByPromptVersion,
@@ -83,13 +81,13 @@ async function collectOutcomeRows(
     const lineages = await Promise.all(
       batch.map((composition) =>
         client.query(api.compositions.getLineage, {
-          id: composition._id as Id<"compositions">,
+          id: composition._id,
         }),
       ),
     );
     for (const lineage of lineages) {
       if (!lineage) continue;
-      const row = outcomeRowFromLineage(lineage as unknown as LineageLike);
+      const row = outcomeRowFromLineage(lineage);
       if (row) rows.push(row);
     }
   }
@@ -114,8 +112,7 @@ async function pushToLangSmith(rows: OutcomeRow[]): Promise<void> {
   // Dedup on compositionId (one label per composition).
   const existing = new Set<string>();
   for await (const ex of client.listExamples({ datasetId: dataset.id })) {
-    const compositionId = (ex.metadata as Record<string, unknown> | undefined)
-      ?.compositionId;
+    const compositionId = ex.metadata?.compositionId;
     if (typeof compositionId === "string") existing.add(compositionId);
   }
 

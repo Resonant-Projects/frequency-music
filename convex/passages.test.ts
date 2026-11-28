@@ -169,7 +169,7 @@ const searchTool = (t: T, args: Record<string, unknown>) =>
   t.action(api.agentTools.searchSourcePassages, {
     agentSecret: AGENT_SECRET,
     ...args,
-  } as never) as Promise<PassageSearchResult<Id<"sources">>>;
+  }) as Promise<PassageSearchResult<Id<"sources">>>;
 
 describe("passage indexing hooks", () => {
   test("text writes schedule indexing instead of indexing inline", async () => {

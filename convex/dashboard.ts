@@ -695,11 +695,11 @@ export async function computeEditorialSignals(db: DbReader, limit = 24) {
   if (outputLimit === 0) {
     return { concepts: [], highYieldClusters: [], lowYieldClusters: [] };
   }
-  const concepts = (await db
+  const concepts = await db
     .query("concepts")
     .withIndex("by_mentionCount")
     .order("desc")
-    .take(MAX_EDITORIAL_CANDIDATES)) as Doc<"concepts">[];
+    .take(MAX_EDITORIAL_CANDIDATES);
 
   const rows = await Promise.all(
     concepts.map(async (concept) => {
@@ -903,7 +903,7 @@ export const editorialSignals = query({
     ),
   }),
   handler: async (ctx, args) => {
-    return await computeEditorialSignals(ctx.db as DbReader, args.limit ?? 24);
+    return await computeEditorialSignals(ctx.db, args.limit ?? 24);
   },
 });
 

@@ -323,7 +323,7 @@ describe("completeMeans / readMeansForExperiment", () => {
     const readProject = vi.fn().mockResolvedValue(partial);
     const { sleeps, sleep } = recorder();
     await expect(
-      readMeansForExperiment({ readProject } as never, completed, wait, sleep),
+      readMeansForExperiment({ readProject }, completed, wait, sleep),
     ).rejects.toThrow(
       "after 5 reads over 0.0 s of waiting (why_this_matters: 2/4 scores); refusing partial scores",
     );
@@ -336,7 +336,7 @@ describe("completeMeans / readMeansForExperiment", () => {
     const { sleeps, sleep } = recorder();
     await expect(
       readMeansForExperiment(
-        { readProject } as never,
+        { readProject },
         completed,
         DEFAULT_STATS_WAIT,
         sleep,
@@ -393,7 +393,7 @@ describe("completeMeans / readMeansForExperiment", () => {
     const { sleeps, sleep } = recorder();
     await expect(
       readMeansForExperiment(
-        { readProject } as never,
+        { readProject },
         completed,
         { ...wait, timeoutMs: 0 },
         sleep,
@@ -405,7 +405,7 @@ describe("completeMeans / readMeansForExperiment", () => {
   test("rejects a wait that could never advance", async () => {
     const readProject = vi.fn().mockResolvedValue(partial);
     await expect(
-      readMeansForExperiment({ readProject } as never, completed, {
+      readMeansForExperiment({ readProject }, completed, {
         ...wait,
         initialDelayMs: 0,
       }),

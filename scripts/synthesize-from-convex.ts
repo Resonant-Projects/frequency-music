@@ -1620,7 +1620,7 @@ async function publishFinalOutput(
     hypothesisId,
     title: finalOutput.recipe.title,
     bodyMd: finalOutput.recipe.bodyMd,
-    parameters: finalOutput.recipe.parameters as never[],
+    parameters: finalOutput.recipe.parameters,
     dawChecklist: finalOutput.recipe.dawChecklist,
     protocol: finalOutput.recipe.protocol as never,
   });

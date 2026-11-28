@@ -183,7 +183,7 @@ describe("recording transcript capture", () => {
     await expect(
       t.mutation(internal.transcriptCapture.recordTranscriptCapture, {
         sourceId: id,
-        agentRunId: scoutRun as Id<"agentRuns">,
+        agentRunId: scoutRun,
         outcome: "captured",
         transcript,
         model: "m",
