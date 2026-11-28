@@ -11,5 +11,6 @@ else
   vp node scripts/check-file-tokens.mjs
 fi
 
-# Run the root lint gate CI runs, reporting errors only (warnings stay in CI logs).
+# Run CI's root lint gate, errors only. It lints the working tree, not the
+# staged snapshot, so CI stays the check on exactly what was committed.
 vp run lint:check --quiet
