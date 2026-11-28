@@ -619,7 +619,7 @@ export const listArchive = query({
   },
   returns: v.array(failureArchiveEntryValidator),
   handler: async (ctx, args) => {
-    const archive = await deriveFilteredFailureArchive(ctx.db as DbReader, {
+    const archive = await deriveFilteredFailureArchive(ctx.db, {
       reason: args.reason,
       thesisId: args.thesisId,
     });
@@ -653,11 +653,7 @@ async function deriveEntryByKey(
     const thesis = hypothesis.thesisId
       ? await db.get("theses", hypothesis.thesisId)
       : null;
-    return buildHypothesisEntry(
-      hypothesis,
-      thesis,
-      reason as "contradicted_hypothesis" | "retired_hypothesis",
-    );
+    return buildHypothesisEntry(hypothesis, thesis, reason);
   }
 
   if (type === "recipe") {

@@ -167,9 +167,7 @@ async function insertExtraction(
             type: parameter.type ?? kind,
             value: parameter.value,
             details: parameter.details,
-            registryStatus:
-              registry?.status ??
-              (parameter.registryStatus as Doc<"extractions">["compositionParameters"][number]["registryStatus"]),
+            registryStatus: registry?.status ?? parameter.registryStatus,
             canonicalKind,
           };
         },

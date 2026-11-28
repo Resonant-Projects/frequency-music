@@ -883,7 +883,7 @@ export const upsertExternal = internalMutation({
     contentChanged: v.boolean(),
   }),
   handler: async (ctx, args) => {
-    return await upsertExternalSource(ctx, args as ExternalUpsertArgs);
+    return await upsertExternalSource(ctx, args);
   },
 });
 

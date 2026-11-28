@@ -2,7 +2,7 @@ import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const c = new ConvexHttpClient(process.env.CONVEX_URL!);
+const c = new ConvexHttpClient(process.env.CONVEX_URL);
 
 async function main() {
   // Hypotheses

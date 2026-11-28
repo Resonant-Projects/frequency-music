@@ -90,7 +90,7 @@ describe("Source recovery and projection", () => {
         }),
       ).toBeNull();
       if (assigned) {
-        await t.run((ctx) => ctx.db.patch(assigned!, { status: "running" }));
+        await t.run((ctx) => ctx.db.patch(assigned, { status: "running" }));
         if (status === "recovering")
           expect(
             await t.query(internal.operationFailures.getCaptureRecovery, {

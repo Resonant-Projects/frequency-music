@@ -313,7 +313,7 @@ async function materialize(
       )
       .unique();
     if (existing) await ctx.db.replace(existing._id, row as never);
-    else await ctx.db.insert("hypothesisCandidates", row as never);
+    else await ctx.db.insert("hypothesisCandidates", row);
   }
 }
 
@@ -764,7 +764,7 @@ export const duplicateCorpus = internalQuery({
     const drafts = pending.flatMap((draft) => {
       const payload = draft.amendedPayload ?? draft.payload;
       return payload && "statement" in payload
-        ? [{ id: draft._id as string, statement: payload.statement }]
+        ? [{ id: draft._id, statement: payload.statement }]
         : [];
     });
     return { stale, drafts };

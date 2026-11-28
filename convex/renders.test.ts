@@ -77,7 +77,7 @@ async function claim(t: T): Promise<ClaimedMediaJob> {
     rendererVersion: RENDERER_VERSION_FOR_JOBS,
   });
   if (!job) throw new Error("no job claimed");
-  return job as ClaimedMediaJob;
+  return job;
 }
 
 // What the media handler does for one member: mint, upload, attach.

@@ -5,7 +5,7 @@ import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { getDevBypassSecret } from "./lib/convexClient";
 
-const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
 interface SummaryItem {
   sourceId: string;

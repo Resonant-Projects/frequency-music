@@ -16,7 +16,6 @@ import { createHash } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ConvexHttpClient } from "convex/browser";
-import type { Doc } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
 import {
   buildExportEntry,
@@ -50,7 +49,7 @@ function parseArgs(): { outputDir: string } {
 
 async function main() {
   const { outputDir } = parseArgs();
-  const client = new ConvexHttpClient(CONVEX_URL!);
+  const client = new ConvexHttpClient(CONVEX_URL);
 
   console.log(`Querying published editorial artifacts from ${CONVEX_URL}...`);
 
@@ -83,11 +82,10 @@ async function main() {
     const { artifact, validation, campaignSlug, thesisSlugs } = item;
     if (!validation.canPublish) continue;
 
-    const rendered = buildExportEntry(
-      artifact as unknown as Doc<"editorialArtifacts">,
-      APP_BASE_URL,
-      { campaignSlug, thesisSlugs },
-    );
+    const rendered = buildExportEntry(artifact, APP_BASE_URL, {
+      campaignSlug,
+      thesisSlugs,
+    });
 
     await writeFile(join(outputDir, rendered.path), rendered.markdown, "utf8");
     const exportSha = createHash("sha256")

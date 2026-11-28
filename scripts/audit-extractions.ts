@@ -9,7 +9,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 import { getDevBypassSecret } from "./lib/convexClient";
 
-const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
 async function main() {
   const devBypassSecret = getDevBypassSecret();

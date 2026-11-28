@@ -11,7 +11,7 @@ export function tracedGenerate<T>(
   }
   try {
     const wrapped = traceable(fn, { name, metadata });
-    return wrapped() as Promise<T>;
+    return wrapped();
   } catch (e) {
     console.warn(`[langsmith] trace setup failed for ${name}:`, e);
     return fn();

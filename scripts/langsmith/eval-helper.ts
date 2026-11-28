@@ -188,7 +188,7 @@ function appendUsageLog(
  */
 export async function generateModelText(
   call: ModelTextCall,
-  generate: GenerateTextFn = generateText as unknown as GenerateTextFn,
+  generate: GenerateTextFn = generateText,
   usageLogPath: string | undefined = process.env[EVAL_USAGE_LOG_ENV],
 ): Promise<string> {
   if (!isDirectAnthropicModel(call.model)) {
@@ -276,10 +276,8 @@ function defaultDeps(): RunEvalDeps {
       evaluate(target, {
         ...options,
         client,
-      } as Parameters<
-        typeof evaluate
-      >[1]) as unknown as Promise<EvaluateResultsLike>,
-    generate: generateText as unknown as GenerateTextFn,
+      } as Parameters<typeof evaluate>[1]),
+    generate: generateText,
     log: (line) => console.log(line),
     error: (line) => console.error(line),
   };

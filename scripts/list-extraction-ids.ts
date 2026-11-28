@@ -6,7 +6,7 @@ import "varlock/auto-load";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api";
 
-const client = new ConvexHttpClient(process.env.CONVEX_URL!);
+const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
 interface ExtractionRow {
   _id: string;

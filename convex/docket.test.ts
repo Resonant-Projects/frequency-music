@@ -296,7 +296,7 @@ test("delivery admission suppresses crashes, admits changed content and binds co
   expect(
     (await t.mutation(internal.docket.recordDelivery, changedArgs)).admitted,
   ).toBe(false);
-  const posting = (await t.run((ctx) => ctx.db.get(updated.deliveryId!)))!;
+  const posting = (await t.run((ctx) => ctx.db.get(updated.deliveryId)))!;
   vi.setSystemTime(posting.postingAt + 86400000);
   expect(
     (await t.mutation(internal.docket.recordDelivery, changedArgs)).admitted,

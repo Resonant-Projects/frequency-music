@@ -39,7 +39,7 @@ type MigrationBatchResult = {
 
 async function main() {
   const apply = process.argv.includes("--apply");
-  const client = new ConvexHttpClient(CONVEX_URL as string);
+  const client = new ConvexHttpClient(CONVEX_URL);
 
   let cursor: string | null = null;
   let isDone = false;
