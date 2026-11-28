@@ -22,7 +22,7 @@ export default defineConfig({
       suspicious: "warn",
       perf: "warn",
     },
-    plugins: ["typescript", "unicorn", "import", "promise"],
+    plugins: ["typescript", "unicorn", "import", "promise", "vitest"],
     ignorePatterns: [
       "convex/_generated/**",
       "node_modules/**",
@@ -44,6 +44,13 @@ export default defineConfig({
       "no-await-in-loop": "off",
       "unicorn/prefer-string-replace-all": "warn",
       "vite-plus/prefer-vite-plus-imports": "error",
+      // Vitest accepts a failure message as expect's second argument.
+      "vitest/valid-expect": ["error", { maxArgs: 2 }],
+      "vitest/no-identical-title": "error",
+      // Not adopted yet: existing suites break these widely (issue #276).
+      "vitest/no-conditional-expect": "off",
+      "vitest/require-mock-type-parameters": "off",
+      "vitest/require-to-throw-message": "off",
     },
     overrides: [
       {

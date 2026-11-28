@@ -34,9 +34,9 @@ async function insertBrief(t: ReturnType<typeof convexTest>, createdAt = 1) {
 }
 
 // Episodes and narrate jobs for a brief are created after it; the queries
-// range their indexes from the brief's creation time, so rows land just past
-// it (convex-test bumps `_creationTime` by a fraction of a millisecond when
-// two inserts share one, so Date.now() alone could fall before it).
+// range their indexes from the brief's creation time, so rows land just
+// past it (convex-test bumps `_creationTime` by a fraction of a millisecond
+// when two inserts share one, so Date.now() alone could fall before it).
 async function insertEpisode(
   t: ReturnType<typeof convexTest>,
   briefId: Id<"weeklyBriefs">,

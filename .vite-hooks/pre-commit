@@ -10,3 +10,7 @@ if command -v node >/dev/null 2>&1; then
 else
   vp node scripts/check-file-tokens.mjs
 fi
+
+# Run CI's root lint gate, errors only. It lints the working tree, not the
+# staged snapshot, so CI stays the check on exactly what was committed.
+vp run lint:check --quiet
