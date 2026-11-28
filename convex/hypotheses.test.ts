@@ -1,4 +1,4 @@
-/* eslint-disable no-underscore-dangle */
+/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { describe, expect, test } from "vite-plus/test";
 import type { Id } from "./_generated/dataModel";
 import { selectUnlinkedExtractionCandidates } from "./hypotheses";

@@ -36,7 +36,6 @@ export interface EvalPrompt {
 }
 
 export function stringifyPromptValue(value: unknown): string {
-  // oxlint-disable-next-line typescript/no-base-to-string -- Preserve the legacy prompt interpolation for dataset values.
   return String(value);
 }
 

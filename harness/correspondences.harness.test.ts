@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle -- Convex document ids are named `_id`. */
 import { describe, expect, onTestFinished, test, vi } from "vite-plus/test";
 import { convexTest } from "convex-test";
 import { api, internal } from "../convex/_generated/api";

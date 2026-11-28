@@ -365,7 +365,7 @@ export class CodexSdkChatModel extends BaseChatModel<CodexSdkCallOptions> {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // `any` keeps this override assignable to every BaseChatModel overload.
   override withStructuredOutput(outputSchema: any, config?: any): any {
     const jsonSchema = toOutputJsonSchema(outputSchema);
     const bound = this.withConfig({ outputSchema: jsonSchema });
